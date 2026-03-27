@@ -1,4 +1,13 @@
 /* 全局样式 */
+:root {
+  --ui-font-scale: 1.1;
+  --ui-font-size-xs: 12.1px;
+  --ui-font-size-sm: 13.2px;
+  --ui-font-size-base: 15.4px;
+  --ui-font-size-md: 17.6px;
+  --ui-font-size-lg: 19.8px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -8,6 +17,70 @@
 html, body {
   height: 100%;
   overflow: hidden;
+  font-size: var(--ui-font-size-base);
+  line-height: 1.5;
+}
+
+body {
+  color: #303133;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+.el-button,
+.el-input__inner,
+.el-textarea__inner,
+.el-form-item__label,
+.el-select-dropdown__item,
+.el-dropdown-menu__item,
+.el-menu-item,
+.el-submenu__title,
+.el-radio__label,
+.el-checkbox__label,
+.el-descriptions-item__label,
+.el-descriptions-item__content,
+.el-pagination,
+.el-table,
+.el-tag,
+.el-tabs__item,
+.el-step__title,
+.el-step__description,
+.el-alert__title,
+.el-alert__description {
+  font-size: var(--ui-font-size-base);
+}
+
+.el-dialog__title,
+.el-card__header,
+.el-page-header__title {
+  font-size: var(--ui-font-size-md);
+}
+
+.el-form-item__error,
+.el-table .cell,
+.el-tag--mini,
+.el-button--mini,
+.el-button--small,
+.el-input--mini .el-input__inner,
+.el-input--small .el-input__inner,
+.el-textarea--mini .el-textarea__inner,
+.el-textarea--small .el-textarea__inner,
+.el-checkbox__label,
+.el-radio__label {
+  font-size: var(--ui-font-size-sm);
+}
+
+.el-table th,
+.el-table td {
+  padding-top: 13px;
+  padding-bottom: 13px;
 }
 
 /* 滚动条样式 */
@@ -34,7 +107,7 @@ html, body {
   padding: 3px 8px;
   border-radius: 3px;
   color: white;
-  font-size: 12px;
+  font-size: var(--ui-font-size-xs);
   display: inline-block;
 }
 
@@ -107,4 +180,3 @@ html, body {
   display: flex;
   gap: 10px;
 }
-

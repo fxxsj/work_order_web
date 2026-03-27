@@ -1,8 +1,29 @@
 <template>
   <div v-loading="pageLoading" class="workorder-form">
-    <el-card>
+    <el-card class="workorder-shell">
       <div slot="header" class="form-header">
-        <span>{{ isEdit ? '编辑施工单' : '新建施工单' }}</span>
+        <div class="header-copy">
+          <p class="header-eyebrow">
+            Production Ticket
+          </p>
+          <div class="header-title-row">
+            <span>{{ isEdit ? '编辑施工单' : '新建施工单' }}</span>
+            <el-tag size="mini" effect="plain" class="mode-tag">
+              {{ isEdit ? '编辑模式' : '新建模式' }}
+            </el-tag>
+            <el-tag
+              v-if="isApproved"
+              size="mini"
+              type="success"
+              effect="dark"
+            >
+              已审核
+            </el-tag>
+          </div>
+          <p class="header-subtitle">
+            先确认客户与交期，再补充产品、工序和物料，系统会自动联动默认配置与关联资源。
+          </p>
+        </div>
         <div class="header-actions">
           <el-button size="small" @click="handleCancel">
             取消
@@ -36,15 +57,83 @@
         </div>
       </div>
 
+      <section class="form-hero">
+        <div class="hero-main">
+          <div class="hero-kicker">
+            生产编排概览
+          </div>
+          <h2 class="hero-title">
+            {{ selectedCustomerName || '先确认客户与交付节奏' }}
+          </h2>
+          <p class="hero-subtitle">
+            <template v-if="form.order_date || form.delivery_date">
+              <span v-if="form.order_date">下单 {{ form.order_date }}</span>
+              <span
+                v-if="form.order_date && form.delivery_date"
+                class="hero-dot"
+              ></span>
+              <span v-if="form.delivery_date">计划交付 {{ form.delivery_date }}</span>
+            </template>
+            <template v-else>
+              选择客户、交期与产品后，系统会自动补齐默认工序、物料和图稿关联。
+            </template>
+          </p>
+
+          <div class="hero-chip-row">
+            <div class="hero-chip">
+              <span class="hero-chip-label">产品</span>
+              <strong>{{ validProductCount }}</strong>
+            </div>
+            <div class="hero-chip">
+              <span class="hero-chip-label">工序</span>
+              <strong>{{ selectedProcessIds.length }}</strong>
+            </div>
+            <div class="hero-chip">
+              <span class="hero-chip-label">物料</span>
+              <strong>{{ validMaterialCount }}</strong>
+            </div>
+            <div class="hero-chip">
+              <span class="hero-chip-label">关联资源</span>
+              <strong>{{ linkedAssetCount }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-label">当前模式</span>
+            <strong class="hero-stat-value">{{ isEdit ? '编辑施工单' : '创建施工单' }}</strong>
+            <span class="hero-stat-meta">
+              {{ isApproved ? '已审核单据，仅允许有限修改' : '可继续完善并保存或提交审核' }}
+            </span>
+          </div>
+          <div class="hero-stat" :class="`priority-${selectedPriorityMeta.value}`">
+            <span class="hero-stat-label">优先级</span>
+            <strong class="hero-stat-value">{{ selectedPriorityMeta.label }}</strong>
+            <span class="hero-stat-meta">按交期与生产排程决定处理顺序</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-label">生产数量</span>
+            <strong class="hero-stat-value">{{ form.production_quantity || 0 }}</strong>
+            <span class="hero-stat-meta">产品数量变化会联动刷新拼版数量</span>
+          </div>
+          <div v-if="isEdit" class="hero-stat">
+            <span class="hero-stat-label">施工单号</span>
+            <strong class="hero-stat-value">{{ form.order_number || '-' }}</strong>
+            <span class="hero-stat-meta">单号由系统生成并作为任务追踪主键</span>
+          </div>
+        </div>
+      </section>
+
       <el-form
         ref="form"
         :model="form"
         :rules="rules"
         label-width="120px"
-        class="form-container"
+        class="form-container workorder-form-main"
       >
         <!-- 施工单号（编辑时显示） -->
-        <el-form-item v-if="isEdit" label="施工单号">
+        <el-form-item v-if="isEdit" label="施工单号" class="order-number-item">
           <el-input v-model="form.order_number" disabled>
             <template slot="append">
               <span style="color: #909399;">系统自动生成</span>
@@ -53,7 +142,7 @@
         </el-form-item>
 
         <!-- 基本信息 -->
-        <el-divider content-position="left">
+        <el-divider content-position="left" class="section-divider">
           基本信息
         </el-divider>
 
@@ -161,7 +250,7 @@
         </el-row>
 
         <!-- 产品信息 -->
-        <el-divider content-position="left">
+        <el-divider content-position="left" class="section-divider">
           产品信息
           <el-button
             type="primary"
@@ -176,7 +265,12 @@
         </el-divider>
 
         <div v-if="form.products.length > 0" class="product-table-wrapper">
-          <el-table :data="form.products" border style="width: 100%">
+          <el-table
+            :data="form.products"
+            border
+            style="width: 100%"
+            class="editor-table"
+          >
             <el-table-column label="产品名称" min-width="200">
               <template slot-scope="scope">
                 <el-select
@@ -258,7 +352,7 @@
         </div>
 
         <!-- 图稿和刀模 -->
-        <el-divider content-position="left">
+        <el-divider content-position="left" class="section-divider">
           图稿和刀模
         </el-divider>
 
@@ -350,7 +444,7 @@
         </el-row>
 
         <!-- 印刷信息 -->
-        <el-divider content-position="left">
+        <el-divider content-position="left" class="section-divider">
           印刷信息
         </el-divider>
 
@@ -417,7 +511,7 @@
         </el-row>
 
         <!-- 工序选择 -->
-        <el-divider content-position="left">
+        <el-divider content-position="left" class="section-divider">
           工序选择
           <el-tag
             v-if="selectedProcessIds.length > 0"
@@ -446,7 +540,7 @@
         </div>
 
         <!-- 物料信息 -->
-        <el-divider content-position="left">
+        <el-divider content-position="left" class="section-divider">
           物料信息
           <el-button
             type="primary"
@@ -461,7 +555,12 @@
         </el-divider>
 
         <div v-if="form.materials.length > 0" class="material-table-wrapper">
-          <el-table :data="form.materials" border style="width: 100%">
+          <el-table
+            :data="form.materials"
+            border
+            style="width: 100%"
+            class="editor-table"
+          >
             <el-table-column label="物料名称" width="200">
               <template slot-scope="scope">
                 <el-select
@@ -534,7 +633,7 @@
         </div>
 
         <!-- 任务信息 -->
-        <el-divider content-position="left">
+        <el-divider content-position="left" class="section-divider">
           任务信息
         </el-divider>
 
@@ -546,7 +645,7 @@
         />
 
         <!-- 其他信息 -->
-        <el-divider content-position="left">
+        <el-divider content-position="left" class="section-divider">
           其他信息
         </el-divider>
 
@@ -734,6 +833,27 @@ export default {
     },
     isApproved() {
       return this.form.approval_status === 'approved'
+    },
+    selectedCustomerName() {
+      const customer = this.customerList.find(item => item.id === this.form.customer)
+      return customer ? customer.name : ''
+    },
+    selectedPriorityMeta() {
+      return this.priorityOptions.find(item => item.value === this.form.priority) || this.priorityOptions[1]
+    },
+    validProductCount() {
+      return this.form.products.filter(item => item.product).length
+    },
+    validMaterialCount() {
+      return this.form.materials.filter(item => item.material).length
+    },
+    linkedAssetCount() {
+      return (
+        (this.form.artworks || []).length +
+        (this.form.dies || []).length +
+        (this.form.foiling_plates || []).length +
+        (this.form.embossing_plates || []).length
+      )
     },
     // 交货日期选择器选项
     deliveryDatePickerOptions() {
@@ -1321,120 +1441,443 @@ export default {
 
 <style scoped>
 .workorder-form {
-  padding: 20px;
+  --page-bg: #eef6f4;
+  --panel-bg: #fcfffd;
+  --panel-elevated: #f6fbf9;
+  --line-soft: rgba(41, 108, 95, 0.12);
+  --line-strong: rgba(32, 122, 102, 0.22);
+  --ink-strong: #173a33;
+  --ink: #2e5a52;
+  --ink-soft: #6a877f;
+  --accent: #22a486;
+  --accent-deep: #177961;
+  --accent-wash: rgba(34, 164, 134, 0.12);
+  --shadow-soft: 0 22px 52px rgba(26, 94, 79, 0.08);
+  --shadow-strong: 0 28px 70px rgba(20, 87, 74, 0.12);
+  padding: clamp(16px, 2.2vw, 28px);
+  background:
+    radial-gradient(circle at top left, rgba(57, 177, 151, 0.12), transparent 34%),
+    linear-gradient(180deg, #edf6f3 0%, #f7fbfa 100%);
+}
+
+.workorder-shell {
+  border: 1px solid var(--line-soft);
+  border-radius: 30px;
+  overflow: hidden;
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-soft);
+}
+
+.workorder-shell::before {
+  content: '';
+  display: block;
+  height: 6px;
+  background: linear-gradient(90deg, #1b8d74 0%, #53c8af 58%, #a6e6d9 100%);
 }
 
 .form-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 24px;
+  padding: 8px 8px 0;
+}
+
+.header-copy {
+  min-width: 0;
+}
+
+.header-eyebrow {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .form-header span {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: clamp(24px, 2.8vw, 34px);
+  font-weight: 700;
+  line-height: 1.08;
+  color: var(--ink-strong);
+}
+
+.mode-tag {
+  border-color: rgba(34, 164, 134, 0.2);
+  color: var(--accent-deep);
+  background: rgba(34, 164, 134, 0.1);
+}
+
+.header-subtitle {
+  max-width: 720px;
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-soft);
 }
 
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 10px;
 }
 
+.header-actions ::v-deep .el-button {
+  min-width: 112px;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border-color: rgba(27, 121, 97, 0.14);
+  color: var(--ink);
+  background: #fff;
+  box-shadow: 0 12px 24px rgba(28, 87, 74, 0.06);
+}
+
+.header-actions ::v-deep .el-button--primary,
+.header-actions ::v-deep .el-button--success {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 100%);
+}
+
+.header-actions ::v-deep .el-button--info {
+  color: var(--accent-deep);
+  border-color: rgba(34, 164, 134, 0.18);
+  background: rgba(34, 164, 134, 0.09);
+}
+
+.form-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  gap: 22px;
+  margin: 0 22px;
+  padding: 24px 28px 28px;
+  border: 1px solid var(--line-soft);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(26, 142, 115, 0.12), rgba(26, 142, 115, 0.02)),
+    linear-gradient(180deg, #fbfefd 0%, #f4fbf8 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.hero-main {
+  min-width: 0;
+}
+
+.hero-kicker {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent-deep);
+}
+
+.hero-title {
+  margin: 0;
+  font-size: clamp(28px, 3.6vw, 44px);
+  line-height: 1.04;
+  color: var(--ink-strong);
+}
+
+.hero-subtitle {
+  margin: 14px 0 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.hero-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(23, 121, 97, 0.35);
+}
+
+.hero-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.hero-chip {
+  min-width: 104px;
+  padding: 12px 14px;
+  border: 1px solid rgba(23, 121, 97, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 10px 20px rgba(21, 90, 76, 0.05);
+}
+
+.hero-chip-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+}
+
+.hero-chip strong {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink-strong);
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hero-stat {
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(27, 121, 97, 0.12);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 12px 26px rgba(19, 82, 70, 0.05);
+}
+
+.hero-stat.priority-low {
+  background: linear-gradient(180deg, rgba(103, 194, 58, 0.12), rgba(255, 255, 255, 0.88));
+}
+
+.hero-stat.priority-normal {
+  background: linear-gradient(180deg, rgba(64, 158, 255, 0.11), rgba(255, 255, 255, 0.88));
+}
+
+.hero-stat.priority-high {
+  background: linear-gradient(180deg, rgba(230, 162, 60, 0.14), rgba(255, 255, 255, 0.88));
+}
+
+.hero-stat.priority-urgent {
+  background: linear-gradient(180deg, rgba(245, 108, 108, 0.14), rgba(255, 255, 255, 0.88));
+}
+
+.hero-stat-label {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+}
+
+.hero-stat-value {
+  margin: 10px 0 8px;
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--ink-strong);
+}
+
+.hero-stat-meta {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
 .form-container {
-  max-width: 1000px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 34px 38px;
 }
 
-/* 产品表格容器 */
+.workorder-form-main ::v-deep .el-form-item {
+  margin-bottom: 22px;
+}
+
+.workorder-form-main ::v-deep .el-form-item__label {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.workorder-form-main ::v-deep .el-input__inner,
+.workorder-form-main ::v-deep .el-textarea__inner,
+.workorder-form-main ::v-deep .el-input-number__decrease,
+.workorder-form-main ::v-deep .el-input-number__increase {
+  border-radius: 16px;
+  border-color: var(--line-soft);
+}
+
+.workorder-form-main ::v-deep .el-input__inner,
+.workorder-form-main ::v-deep .el-textarea__inner {
+  min-height: 48px;
+  color: var(--ink-strong);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfefd 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.workorder-form-main ::v-deep .el-textarea__inner {
+  min-height: 118px;
+  padding-top: 14px;
+}
+
+.workorder-form-main ::v-deep .el-input__inner:focus,
+.workorder-form-main ::v-deep .el-textarea__inner:focus {
+  border-color: rgba(34, 164, 134, 0.55);
+  box-shadow: 0 0 0 4px rgba(34, 164, 134, 0.12);
+}
+
+.workorder-form-main ::v-deep .el-input-number {
+  width: 100%;
+}
+
+.workorder-form-main ::v-deep .el-input-group__append {
+  border-radius: 0 16px 16px 0;
+  border-color: var(--line-soft);
+  background: rgba(34, 164, 134, 0.08);
+  color: var(--ink-soft);
+}
+
+.order-number-item {
+  padding: 18px 20px 2px;
+  border: 1px dashed rgba(34, 164, 134, 0.24);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(34, 164, 134, 0.06), rgba(255, 255, 255, 0.5));
+}
+
 .product-table-wrapper {
-  margin-bottom: 20px;
-  margin-left: 40px;
+  margin-bottom: 24px;
 }
 
-/* 工序选择容器 */
-.process-wrapper {
-  margin-bottom: 20px;
-  margin-left: 40px;
-}
-
-/* 物料表格容器 */
+.process-wrapper,
+.product-table-wrapper,
 .material-table-wrapper {
-  margin-bottom: 20px;
-  margin-left: 40px;
-}
-
-/* 产品列表空状态样式 */
-.empty-product-hint {
-  background: #f5f7fa;
-  padding: 20px;
-  text-align: center;
-  color: #909399;
-  border-radius: 4px;
-  margin-bottom: 20px;
+  padding: 18px 20px 22px;
+  border: 1px solid var(--line-soft);
+  border-radius: 24px;
+  background: linear-gradient(180deg, var(--panel-elevated) 0%, #ffffff 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .hint-text {
+  margin-top: 14px;
   font-size: 12px;
-  color: #909399;
-  margin-top: 10px;
+  line-height: 1.6;
+  color: var(--ink-soft);
 }
 
-/* 工序选择样式 */
 .process-checkbox-group {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
 }
 
 .process-checkbox {
-  width: 150px;
-  margin-right: 20px;
-  margin-bottom: 15px;
+  width: 100%;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.process-section {
-  background: #f5f7fa;
-  padding: 15px;
-  border-radius: 4px;
-  margin-bottom: 20px;
+.process-checkbox.is-checked {
+  transform: translateY(-1px);
+  border-color: rgba(34, 164, 134, 0.34);
+  background: rgba(34, 164, 134, 0.09);
+  box-shadow: 0 12px 20px rgba(24, 102, 84, 0.08);
 }
 
-.process-section .el-form-item {
-  margin-bottom: 15px;
+.process-checkbox ::v-deep .el-checkbox__label {
+  padding-left: 10px;
+  color: var(--ink);
+  white-space: normal;
+  line-height: 1.45;
 }
 
-.process-section .el-checkbox {
-  margin-right: 15px;
-  margin-bottom: 8px;
+.process-checkbox.is-checked ::v-deep .el-checkbox__label {
+  color: var(--ink-strong);
 }
 
 .no-process-hint {
-  color: #909399;
+  margin-top: 12px;
   font-size: 13px;
+  color: var(--ink-soft);
 }
 
-/* 物料表格样式 */
+.empty-product-hint,
 .empty-material-hint {
-  background: #f5f7fa;
-  padding: 20px;
+  margin-bottom: 24px;
+  padding: 28px 24px;
   text-align: center;
-  color: #909399;
-  border-radius: 4px;
-  margin-bottom: 20px;
+  color: var(--ink-soft);
+  border-radius: 24px;
+  border: 1px dashed rgba(34, 164, 134, 0.24);
+  background:
+    radial-gradient(circle at top, rgba(34, 164, 134, 0.12), transparent 55%),
+    linear-gradient(180deg, #f6fbf9 0%, #ffffff 100%);
 }
 
-/* 底部操作按钮 */
+.editor-table ::v-deep .el-table__header-wrapper th {
+  border-bottom-color: rgba(27, 121, 97, 0.12);
+  background: rgba(34, 164, 134, 0.08);
+  color: var(--ink);
+}
+
+.editor-table ::v-deep .el-table,
+.editor-table ::v-deep .el-table__expanded-cell {
+  color: var(--ink);
+  background: transparent;
+}
+
+.editor-table ::v-deep .el-table td,
+.editor-table ::v-deep .el-table th.is-leaf {
+  border-bottom-color: rgba(27, 121, 97, 0.1);
+}
+
+.editor-table ::v-deep .el-table::before {
+  display: none;
+}
+
 .form-actions {
   margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #e4e7ed;
-  text-align: center;
+  padding-top: 24px;
+  border-top: 1px solid rgba(27, 121, 97, 0.12);
+  text-align: left;
 }
 
-/* 分割线样式 */
-.el-divider--horizontal {
-  margin: 25px 0 20px;
+.form-actions ::v-deep .el-button {
+  min-width: 116px;
+  height: 42px;
+  border-radius: 999px;
 }
 
-/* 响应式 */
+.form-actions ::v-deep .el-button + .el-button {
+  margin-left: 10px;
+}
+
+.section-divider {
+  margin: 34px 0 18px;
+}
+
+.section-divider ::v-deep .el-divider__text {
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 164, 134, 0.18);
+  background: #f8fcfb;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent-deep);
+  box-shadow: 0 8px 18px rgba(17, 92, 77, 0.04);
+}
+
 @media (max-width: 768px) {
   .workorder-form {
     padding: 10px;
@@ -1443,20 +1886,47 @@ export default {
   .form-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 18px;
+    padding: 4px 0 0;
   }
 
   .header-actions {
     width: 100%;
-    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
-  .product-item .el-row {
-    flex-direction: column;
+  .header-actions ::v-deep .el-button {
+    flex: 1 1 150px;
   }
 
-  .product-item .el-col {
+  .form-hero {
+    grid-template-columns: 1fr;
+    margin: 0 12px;
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .hero-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .form-container {
+    padding: 22px 14px 30px;
+  }
+
+  .process-wrapper,
+  .product-table-wrapper,
+  .material-table-wrapper {
+    padding: 14px;
+  }
+
+  .form-actions {
+    text-align: left;
+  }
+
+  .form-actions ::v-deep .el-button {
     width: 100%;
+    margin-left: 0 !important;
     margin-bottom: 10px;
   }
 }
