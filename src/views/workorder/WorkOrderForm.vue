@@ -705,6 +705,8 @@ import { workOrderTaskAPI } from '@/api/modules/workorder-task'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
 import { debounce } from '@/utils/debounce'
+// 导入常量
+import { PriorityChoices } from '@/constants'
 
 // 导入子组件
 import TaskSection from './components/TaskSection.vue'
@@ -795,13 +797,8 @@ export default {
         ]
       },
 
-      // 优先级选项
-      priorityOptions: [
-        { label: '低', value: 'low', color: '#67C23A' },
-        { label: '普通', value: 'normal', color: '#409EFF' },
-        { label: '高', value: 'high', color: '#E6A23C' },
-        { label: '紧急', value: 'urgent', color: '#F56C6C' }
-      ],
+      // 优先级选项（使用常量）
+      priorityOptions: PriorityChoices,
 
       // 印刷形式选项
       printingTypeOptions: [

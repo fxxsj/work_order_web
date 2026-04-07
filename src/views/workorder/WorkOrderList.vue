@@ -20,13 +20,15 @@
               v-model="filters.status"
               placeholder="状态"
               clearable
+              style="width: 100%;"
               @change="handleSearchDebounced"
             >
-              <el-option label="待开始" value="pending" />
-              <el-option label="进行中" value="in_progress" />
-              <el-option label="已暂停" value="paused" />
-              <el-option label="已完成" value="completed" />
-              <el-option label="已取消" value="cancelled" />
+              <el-option
+                v-for="item in WorkOrderStatusChoices"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
             </el-select>
           </el-col>
           <el-col :span="3">
@@ -34,12 +36,17 @@
               v-model="filters.priority"
               placeholder="优先级"
               clearable
+              style="width: 100%;"
               @change="handleSearchDebounced"
             >
-              <el-option label="低" value="low" />
-              <el-option label="普通" value="normal" />
-              <el-option label="高" value="high" />
-              <el-option label="紧急" value="urgent" />
+              <el-option
+                v-for="item in PriorityChoices"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              >
+                <span :style="{ color: item.color }">{{ item.label }}</span>
+              </el-option>
             </el-select>
           </el-col>
           <el-col v-if="isSalesperson" :span="3">
@@ -47,11 +54,17 @@
               v-model="filters.approval_status"
               placeholder="审核状态"
               clearable
+              style="width: 100%;"
               @change="handleSearchDebounced"
             >
-              <el-option label="待审核" value="pending" />
-              <el-option label="已通过" value="approved" />
-              <el-option label="已拒绝" value="rejected" />
+              <el-option
+                v-for="item in ApprovalStatusChoices"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              >
+                <span :style="{ color: item.color }">{{ item.label }}</span>
+              </el-option>
             </el-select>
           </el-col>
           <el-col :span="isSalesperson ? 10 : 10" style="text-align: right;">
@@ -208,6 +221,11 @@ import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import Pagination from '@/components/common/Pagination.vue'
+import {
+  WorkOrderStatusChoices,
+  PriorityChoices,
+  ApprovalStatusChoices
+} from '@/constants'
 
 export default {
   name: 'WorkOrderList',
@@ -226,7 +244,12 @@ export default {
         priority: '',
         approval_status: ''
       },
-      ordering: '-created_at'
+      ordering: '-created_at',
+
+      // 常量（用于模板）
+      WorkOrderStatusChoices,
+      PriorityChoices,
+      ApprovalStatusChoices
     }
   },
   computed: {

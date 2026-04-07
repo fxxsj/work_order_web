@@ -9,8 +9,12 @@
                 <i class="el-icon-s-order"></i>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ stats.total_count || 0 }}</div>
-                <div class="stat-label">总记录数</div>
+                <div class="stat-value">
+                  {{ stats.total_count || 0 }}
+                </div>
+                <div class="stat-label">
+                  总记录数
+                </div>
               </div>
             </div>
           </el-card>
@@ -22,8 +26,12 @@
                 <i class="el-icon-plus"></i>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ stats.action_type_stats?.create || 0 }}</div>
-                <div class="stat-label">创建</div>
+                <div class="stat-value">
+                  {{ stats.action_type_stats?.create || 0 }}
+                </div>
+                <div class="stat-label">
+                  创建
+                </div>
               </div>
             </div>
           </el-card>
@@ -35,8 +43,12 @@
                 <i class="el-icon-edit"></i>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ stats.action_type_stats?.update || 0 }}</div>
-                <div class="stat-label">更新</div>
+                <div class="stat-value">
+                  {{ stats.action_type_stats?.update || 0 }}
+                </div>
+                <div class="stat-label">
+                  更新
+                </div>
               </div>
             </div>
           </el-card>
@@ -48,8 +60,12 @@
                 <i class="el-icon-delete"></i>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ stats.action_type_stats?.delete || 0 }}</div>
-                <div class="stat-label">删除</div>
+                <div class="stat-value">
+                  {{ stats.action_type_stats?.delete || 0 }}
+                </div>
+                <div class="stat-label">
+                  删除
+                </div>
               </div>
             </div>
           </el-card>
@@ -245,12 +261,16 @@
           </el-descriptions-item>
         </el-descriptions>
         <div class="diff-section">
-          <div class="diff-title">变更内容</div>
+          <div class="diff-title">
+            变更内容
+          </div>
           <pre class="diff-content">{{ formattedDiff }}</pre>
         </div>
       </div>
       <div slot="footer">
-        <el-button @click="diffVisible = false">关闭</el-button>
+        <el-button @click="diffVisible = false">
+          关闭
+        </el-button>
       </div>
     </el-dialog>
 
@@ -297,7 +317,9 @@
         </el-form-item>
       </el-form>
       <div slot="footer">
-        <el-button @click="exportDialogVisible = false">取消</el-button>
+        <el-button @click="exportDialogVisible = false">
+          取消
+        </el-button>
         <el-button type="primary" :loading="exportLoading" @click="handleExport">
           确认导出
         </el-button>
@@ -390,7 +412,9 @@
         @size-change="handleExportPageSizeChange"
       />
       <div slot="footer">
-        <el-button @click="exportListVisible = false">关闭</el-button>
+        <el-button @click="exportListVisible = false">
+          关闭
+        </el-button>
       </div>
     </el-dialog>
   </div>

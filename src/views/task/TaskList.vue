@@ -20,6 +20,7 @@
               v-model="filters.status"
               placeholder="任务状态"
               clearable
+              style="width: 100%;"
               @change="handleSearchDebounced"
             >
               <el-option
@@ -35,6 +36,7 @@
               v-model="filters.task_type"
               placeholder="任务类型"
               clearable
+              style="width: 100%;"
               @change="handleSearchDebounced"
             >
               <el-option
@@ -51,6 +53,7 @@
               placeholder="分派部门"
               clearable
               filterable
+              style="width: 100%;"
               @change="handleSearchDebounced"
             >
               <el-option
@@ -66,6 +69,7 @@
               v-model="filters.priority"
               placeholder="优先级"
               clearable
+              style="width: 100%;"
               @change="handleSearchDebounced"
             >
               <el-option
@@ -73,7 +77,9 @@
                 :key="p.value"
                 :label="p.label"
                 :value="p.value"
-              />
+              >
+                <span :style="{ color: p.color }">{{ p.label }}</span>
+              </el-option>
             </el-select>
           </el-col>
           <el-col :span="3">
@@ -82,6 +88,7 @@
               placeholder="工序"
               clearable
               filterable
+              style="width: 100%;"
               @change="handleSearchDebounced"
             >
               <el-option
@@ -427,6 +434,7 @@ import ErrorHandler from '@/utils/errorHandler'
 import unwrapApiResponse from '@/utils/apiResponse'
 import { debounce } from '@/utils/debounce'
 import taskService from '@/services/TaskService'
+import { PriorityChoices } from '@/constants'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import TaskKanban from '@/components/TaskKanban.vue'
 
@@ -532,12 +540,7 @@ export default {
      * 优先级选项
      */
     priorityOptions() {
-      return [
-        { value: 'low', label: '低' },
-        { value: 'normal', label: '普通' },
-        { value: 'high', label: '高' },
-        { value: 'urgent', label: '紧急' }
-      ]
+      return PriorityChoices
     },
 
     /**

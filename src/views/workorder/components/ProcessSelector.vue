@@ -8,6 +8,7 @@
       :loading="loading"
       :disabled="disabled"
       style="width: 100%;"
+      :clearable="clearable"
       @input="handleInput"
     >
       <el-option
@@ -39,6 +40,11 @@
 import { processAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
+// 工序列表缓存
+let cachedProcessList = []
+let cacheTimestamp = 0
+const CACHE_DURATION = 10 * 60 * 1000 // 10分钟缓存（工序变更较少）
+
 export default {
   name: 'ProcessSelector',
   props: {
@@ -51,6 +57,10 @@ export default {
       default: false
     },
     showHint: {
+      type: Boolean,
+      default: true
+    },
+    clearable: {
       type: Boolean,
       default: true
     }
@@ -67,19 +77,29 @@ export default {
     }
   },
   async created() {
-    await this.loadProcessList()
+    // 优先使用缓存
+    if (cachedProcessList.length > 0 && Date.now() - cacheTimestamp < CACHE_DURATION) {
+      this.processList = cachedProcessList
+    } else {
+      await this.loadProcessList()
+    }
   },
   methods: {
     async loadProcessList() {
       this.loading = true
       try {
-        // 一次性获取所有活跃工序（优化后的方式）
+        // 一次性获取所有活跃工序
         const response = await processAPI.getList({
           is_active: true,
           page_size: 1000,
           ordering: 'sort_order,code'
         })
-        this.processList = response.results || []
+        const list = response.results || []
+
+        // 更新缓存
+        cachedProcessList = list
+        cacheTimestamp = Date.now()
+        this.processList = list
       } catch (error) {
         ErrorHandler.showMessage(error, '加载工序列表失败')
       } finally {
@@ -89,6 +109,11 @@ export default {
     handleInput(value) {
       this.$emit('input', value)
       this.$emit('change', value)
+    },
+    // 清除缓存（供父组件调用）
+    clearCache() {
+      cachedProcessList = []
+      cacheTimestamp = 0
     }
   }
 }
