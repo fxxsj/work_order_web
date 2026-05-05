@@ -35,6 +35,17 @@ class AuthAPI extends BaseAPI {
   }
 
   /**
+   * 为 Django Admin 创建会话
+   * @returns {Promise} 后台会话结果
+   */
+  createAdminSession() {
+    return this.request({
+      url: `${this.baseUrl}admin-session/`,
+      method: 'post'
+    })
+  }
+
+  /**
    * 获取当前用户信息
    * @returns {Promise} 用户信息对象
    */

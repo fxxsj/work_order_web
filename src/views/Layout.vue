@@ -207,7 +207,7 @@
               <el-dropdown-item command="profile">
                 个人信息
               </el-dropdown-item>
-              <el-dropdown-item command="admin">
+              <el-dropdown-item v-if="canAccessAdmin" command="admin">
                 管理后台
               </el-dropdown-item>
               <el-dropdown-item command="logout" divided>
@@ -272,6 +272,9 @@ export default {
     currentUsername() {
       return this.$store.getters['user/currentUser']?.username || '用户'
     },
+    canAccessAdmin() {
+      return this.$store.getters['user/currentUser']?.is_staff === true
+    },
     // 检查是否有查看客户的权限
     canViewCustomer() {
       return this.hasPermission('workorder.view_customer')
@@ -335,11 +338,28 @@ export default {
       // 使用 store getter 检查权限
       return this.$store.getters['user/hasPermission'](permission)
     },
-    handleCommand(command) {
+    async handleCommand(command) {
       if (command === 'profile') {
         this.$router.push('/profile')
       } else if (command === 'admin') {
-        window.open('/admin/', '_blank')
+        const adminWindow = window.open('', '_blank', 'noopener')
+        try {
+          const result = await authAPI.createAdminSession()
+          const adminUrl = result?.admin_url || result?.data?.admin_url || '/admin/'
+          if (adminWindow) {
+            adminWindow.location = adminUrl
+          } else {
+            window.open(adminUrl, '_blank', 'noopener')
+          }
+        } catch (error) {
+          if (adminWindow) {
+            adminWindow.close()
+          }
+          ErrorHandler.handle(error, {
+            context: '打开管理后台',
+            fallbackMessage: '无法进入管理后台，请确认当前账号具备后台权限'
+          })
+        }
       } else if (command === 'logout') {
         this.$confirm('确定要退出登录吗?', '提示', {
           confirmButtonText: '确定',
