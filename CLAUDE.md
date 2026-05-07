@@ -37,4 +37,4 @@ npm run build
 
 ## Skill Activation
 
-- Vue/前端 → `flutter-patterns` (参考)
+本项目为 Vue 2 遗留前端，目前以维护为主，不激活额外 Skill。
