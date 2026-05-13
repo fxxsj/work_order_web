@@ -10,20 +10,22 @@
           @input="handleSearchDebounced"
           @clear="handleSearch"
         >
-          <el-button slot="append" icon="el-icon-search" @click="handleSearch" />
+          <template #append>
+            <el-button :icon="Search" @click="handleSearch" />
+          </template>
         </el-input>
         <div class="header-actions">
           <el-button
             :loading="loading"
-            icon="el-icon-refresh"
+            :icon="RefreshRight"
             @click="handleRefresh"
           >
             刷新
           </el-button>
           <el-button
-            v-if="canCreate()"
+            v-if="canCreate"
             type="primary"
-            icon="el-icon-plus"
+            :icon="Plus"
             @click="handleCreate"
           >
             新建刀模
@@ -31,16 +33,15 @@
         </div>
       </div>
 
-      <!-- 空状态显示 -->
       <el-empty
         v-if="!loading && tableData.length === 0"
         description="暂无刀模数据"
         style="margin-top: 40px;"
       >
         <el-button
-          v-if="canCreate()"
+          v-if="canCreate"
           type="primary"
-          icon="el-icon-plus"
+          :icon="Plus"
           @click="handleCreate"
         >
           创建第一个刀模
@@ -56,7 +57,7 @@
         <el-table-column prop="code" label="刀模编码" width="150" />
         <el-table-column prop="name" label="刀模名称" width="200" />
         <el-table-column label="刀模类型" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag
               :type="getDieTypeTagType(scope.row.die_type)"
               size="small"
@@ -69,7 +70,7 @@
         <el-table-column prop="material" label="材质" width="100" />
         <el-table-column prop="thickness" label="厚度" width="100" />
         <el-table-column label="确认状态" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag v-if="scope.row.confirmed" type="success" size="small">
               已确认
             </el-tag>
@@ -79,7 +80,7 @@
           </template>
         </el-table-column>
         <el-table-column label="包含产品" min-width="250">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag
               v-for="product in scope.row.products"
               :key="product.id"
@@ -92,21 +93,16 @@
             <span v-if="!scope.row.products || scope.row.products.length === 0" style="color: #909399;">-</span>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="notes"
-          label="备注"
-          min-width="150"
-          show-overflow-tooltip
-        />
+        <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
         <el-table-column prop="created_at" label="创建时间" width="180">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ formatDate(scope.row.created_at) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-button
-              v-if="canEdit()"
+              v-if="canEdit"
               type="text"
               size="small"
               @click="handleEdit(scope.row)"
@@ -114,7 +110,7 @@
               编辑
             </el-button>
             <el-button
-              v-if="canDelete()"
+              v-if="canDelete"
               type="text"
               size="small"
               style="color: #F56C6C;"
@@ -126,19 +122,19 @@
         </el-table-column>
       </el-table>
 
-      <Pagination
+      <el-pagination
         v-if="total > 0"
-        :current-page="currentPage"
-        :page-size="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
-        @current-change="handlePageChange"
+        layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
+        @current-change="handlePageChange"
       />
     </el-card>
 
-    <!-- 刀模表单对话框 -->
     <DieFormDialog
-      :visible.sync="dialogVisible"
+      v-model="dialogVisible"
       :dialog-type="dialogType"
       :initial-data="currentRow"
       :loading="formLoading"
@@ -149,160 +145,183 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { dieAPI, productAPI } from '@/api/modules'
-import listPageMixin from '@/mixins/listPageMixin'
-import crudPermissionMixin from '@/mixins/crudPermissionMixin'
-import formDialogMixin from '@/mixins/formDialogMixin'
-import Pagination from '@/components/common/Pagination.vue'
-import DieFormDialog from './components/DieFormDialog.vue'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
+import DieFormDialog from './components/DieFormDialog.vue'
 
-export default {
-  name: 'DieList',
-  components: { Pagination, DieFormDialog },
-  mixins: [listPageMixin, crudPermissionMixin, formDialogMixin],
-  data() {
-    return {
-      // API 服务和权限配置
-      apiService: dieAPI,
-      permissionPrefix: 'die',
+const userStore = useUserStore()
 
-      // 表单相关
-      productList: [],
-      currentRow: null,
-      formLoading: false
+const searchText = ref('')
+const tableData = ref([])
+const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(20)
+
+const dialogVisible = ref(false)
+const dialogType = ref('create')
+const formLoading = ref(false)
+const currentRow = ref(null)
+const productList = ref([])
+
+const canCreate = computed(() => userStore.hasPermission('workorder.add_die'))
+const canEdit = computed(() => userStore.hasPermission('workorder.change_die'))
+const canDelete = computed(() => userStore.hasPermission('workorder.delete_die'))
+
+let searchTimer = null
+
+const handleSearchDebounced = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    handleSearch()
+  }, 300)
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadData()
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadData()
+}
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value
     }
-  },
-  created() {
-    this.loadData()
-    this.loadProductList()
-  },
-  methods: {
-    // 实现 fetchData 方法（listPageMixin 要求）
-    async fetchData() {
-      const params = {
-        page: this.currentPage,
-        page_size: this.pageSize
-      }
-
-      if (this.searchText) {
-        params.search = this.searchText
-      }
-
-      return this.apiService.getList(params)
-    },
-
-    formatDate(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
-
-    async loadProductList() {
-      try {
-        const response = await productAPI.getList({ is_active: true, page_size: 100 })
-        this.productList = response.results || []
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载产品列表')
-      }
-    },
-
-    // 刷新数据
-    handleRefresh() {
-      this.loadData()
-    },
-
-    // 创建刀模
-    handleCreate() {
-      this.currentRow = null
-      this.dialogType = 'create'
-      this.dialogVisible = true
-    },
-
-    // 编辑刀模
-    async handleEdit(row) {
-      try {
-        const detail = await dieAPI.getDetail(row.id)
-        this.currentRow = detail
-        this.dialogType = 'edit'
-        this.dialogVisible = true
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载刀模详情')
-      }
-    },
-
-    // 表单提交处理
-    async handleFormSubmit(data) {
-      this.formLoading = true
-      try {
-        if (this.dialogType === 'edit' && this.currentRow) {
-          await this.apiService.update(this.currentRow.id, data)
-          ErrorHandler.showSuccess('保存成功')
-        } else {
-          await this.apiService.create(data)
-          ErrorHandler.showSuccess('创建成功')
-        }
-
-        this.dialogVisible = false
-        this.loadData()
-      } catch (error) {
-        ErrorHandler.showMessage(error, this.dialogType === 'edit' ? '保存刀模' : '创建刀模')
-      } finally {
-        this.formLoading = false
-      }
-    },
-
-    // 对话框关闭处理
-    handleDialogClose() {
-      this.currentRow = null
-    },
-
-    // 删除刀模
-    async handleDelete(row) {
-      const confirmed = await ErrorHandler.confirm(
-        `确定要删除刀模"${row.name}"吗？此操作不可恢复。`,
-        '删除确认'
-      )
-
-      if (!confirmed) return
-
-      try {
-        await this.apiService.delete(row.id)
-        ErrorHandler.showSuccess('删除成功')
-        this.loadData()
-      } catch (error) {
-        ErrorHandler.showMessage(error, '删除刀模')
-      }
-    },
-
-    // 获取刀模类型标签类型
-    getDieTypeTagType(dieType) {
-      const typeMap = {
-        combined: 'warning',
-        dedicated: 'primary',
-        universal: 'success'
-      }
-      return typeMap[dieType] || 'info'
-    },
-
-    // 获取刀模类型显示文本
-    getDieTypeLabel(dieType) {
-      const labelMap = {
-        combined: '拼版刀模',
-        dedicated: '专用刀模',
-        universal: '通用刀模'
-      }
-      return labelMap[dieType] || dieType
+    if (searchText.value) {
+      params.search = searchText.value
     }
+    const response = await dieAPI.getList(params)
+    tableData.value = response?.results || []
+    total.value = response?.count || 0
+  } catch (error) {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
   }
 }
+
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const loadProductList = async () => {
+  try {
+    const response = await productAPI.getList({ is_active: true, page_size: 100 })
+    productList.value = response?.results || []
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载产品列表')
+  }
+}
+
+const handleRefresh = () => {
+  loadData()
+}
+
+const handleCreate = () => {
+  currentRow.value = null
+  dialogType.value = 'create'
+  dialogVisible.value = true
+}
+
+const handleEdit = async (row) => {
+  try {
+    const detail = await dieAPI.getDetail(row.id)
+    currentRow.value = detail
+    dialogType.value = 'edit'
+    dialogVisible.value = true
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载刀模详情')
+  }
+}
+
+const handleFormSubmit = async (data) => {
+  formLoading.value = true
+  try {
+    if (dialogType.value === 'edit' && currentRow.value) {
+      await dieAPI.update(currentRow.value.id, data)
+      ElMessage.success('保存成功')
+    } else {
+      await dieAPI.create(data)
+      ElMessage.success('创建成功')
+    }
+    dialogVisible.value = false
+    loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, dialogType.value === 'edit' ? '保存刀模' : '创建刀模')
+  } finally {
+    formLoading.value = false
+  }
+}
+
+const handleDialogClose = () => {
+  currentRow.value = null
+}
+
+const handleDelete = async (row) => {
+  const confirmed = await ErrorHandler.confirm(
+    `确定要删除刀模"${row.name}"吗？此操作不可恢复。`,
+    '删除确认'
+  )
+
+  if (!confirmed) return
+
+  try {
+    await dieAPI.delete(row.id)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, '删除刀模')
+  }
+}
+
+const getDieTypeTagType = (dieType) => {
+  const typeMap = {
+    combined: 'warning',
+    dedicated: 'primary',
+    universal: 'success'
+  }
+  return typeMap[dieType] || 'info'
+}
+
+const getDieTypeLabel = (dieType) => {
+  const labelMap = {
+    combined: '拼版刀模',
+    dedicated: '专用刀模',
+    universal: '通用刀模'
+  }
+  return labelMap[dieType] || dieType
+}
+
+onMounted(() => {
+  loadData()
+  loadProductList()
+})
 </script>
 
 <style scoped>
