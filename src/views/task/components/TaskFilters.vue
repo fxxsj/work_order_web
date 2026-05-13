@@ -1,190 +1,29 @@
 <template>
   <div class="task-filters">
     <el-row :gutter="16">
-      <el-col :span="5">
-        <el-select
-          :value="selectedDepartment"
-          placeholder="选择部门"
-          clearable
-          filterable
-          style="width: 100%;"
-          @change="handleDepartmentChange"
-        >
-          <el-option
-            v-for="dept in departments"
-            :key="dept.id"
-            :label="dept.name"
-            :value="dept.id"
-          />
-        </el-select>
-      </el-col>
-      <el-col :span="4">
-        <el-select
-          :value="selectedStatus"
-          placeholder="任务状态"
-          clearable
-          style="width: 100%;"
-          @change="handleStatusChange"
-        >
-          <el-option
-            v-for="item in statusOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-      </el-col>
-      <el-col :span="4">
-        <el-select
-          :value="selectedTaskType"
-          placeholder="任务类型"
-          clearable
-          style="width: 100%;"
-          @change="handleTaskTypeChange"
-        >
-          <el-option
-            v-for="item in taskTypeOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-      </el-col>
-      <el-col :span="5">
-        <el-input
-          :value="searchText"
-          placeholder="搜索任务内容、施工单号"
-          clearable
-          @input="handleSearchInput"
-          @clear="handleClear"
-        >
-          <el-button
-            slot="append"
-            icon="el-icon-search"
-            @click="handleSearch"
-          />
-        </el-input>
-      </el-col>
+      <el-col :span="5"><el-select :model-value="selectedDepartment" placeholder="选择部门" clearable filterable style="width: 100%;" @update:model-value="v => emit('department-change', v)"><el-option v-for="d in departments" :key="d.id" :label="d.name" :value="d.id" /></el-select></el-col>
+      <el-col :span="4"><el-select :model-value="selectedStatus" placeholder="任务状态" clearable style="width: 100%;" @update:model-value="v => emit('status-change', v)"><el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" /></el-option></el-select></el-col>
+      <el-col :span="4"><el-select :model-value="selectedTaskType" placeholder="任务类型" clearable style="width: 100%;" @update:model-value="v => emit('task-type-change', v)"><el-option v-for="t in taskTypeOptions" :key="t.value" :label="t.label" :value="t.value" /></el-option></el-select></el-col>
+      <el-col :span="5"><el-input :model-value="searchText" placeholder="搜索任务内容，施工单号" clearable @update:model-value="v => emit('search-input', v)" @keyup.enter="emit('search')"><template #append><el-button :icon="Search" @click="emit('search')" /></template></el-input></el-col>
       <el-col :span="6" style="text-align: right;">
-        <el-button
-          icon="el-icon-refresh-left"
-          @click="handleReset"
-        >
-          重置
-        </el-button>
-        <el-button
-          :loading="loading"
-          icon="el-icon-refresh"
-          @click="handleRefresh"
-        >
-          刷新
-        </el-button>
-        <el-button
-          type="primary"
-          icon="el-icon-view"
-          @click="handleViewToggle"
-        >
-          {{ isListView ? '看板视图' : '列表视图' }}
-        </el-button>
+        <el-button :icon="RefreshLeft" @click="emit('reset')">重置</el-button>
+        <el-button :loading="loading" :icon="Refresh" @click="emit('refresh')">刷新</el-button>
+        <el-button type="primary" :icon="View" @click="emit('view-toggle')">{{ isListView ? '看板视图' : '列表视图' }}</el-button>
       </el-col>
     </el-row>
   </div>
 </template>
 
-<script>
-// 状态选项
-const STATUS_OPTIONS = [
-  { value: 'pending', label: '待开始' },
-  { value: 'in_progress', label: '进行中' },
-  { value: 'completed', label: '已完成' },
-  { value: 'cancelled', label: '已取消' }
-]
+<script setup>
+import { Search, RefreshLeft, Refresh, View } from '@element-plus/icons-vue'
 
-// 任务类型选项
-const TASK_TYPE_OPTIONS = [
-  { value: 'general', label: '通用任务' },
-  { value: 'plate_making', label: '制版任务' },
-  { value: 'cutting', label: '开料任务' },
-  { value: 'printing', label: '印刷任务' },
-  { value: 'foiling', label: '烫金任务' },
-  { value: 'embossing', label: '压凸任务' },
-  { value: 'die_cutting', label: '模切任务' },
-  { value: 'packaging', label: '包装任务' }
-]
+defineProps({ departments: { type: Array, default: () => [] }, selectedDepartment: { type: [Number, null], default: null }, selectedStatus: { type: String, default: '' }, selectedTaskType: { type: String, default: '' }, searchText: { type: String, default: '' }, isListView: { type: Boolean, default: false }, loading: { type: Boolean, default: false } })
+const emit = defineEmits(['department-change', 'status-change', 'task-type-change', 'search-input', 'search', 'clear', 'reset', 'refresh', 'view-toggle'])
 
-export default {
-  name: 'TaskFilters',
-  props: {
-    departments: {
-      type: Array,
-      default: () => []
-    },
-    selectedDepartment: {
-      type: [Number, null],
-      default: null
-    },
-    selectedStatus: {
-      type: String,
-      default: ''
-    },
-    selectedTaskType: {
-      type: String,
-      default: ''
-    },
-    searchText: {
-      type: String,
-      default: ''
-    },
-    isListView: {
-      type: Boolean,
-      default: false
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    }
-  },
-  data() {
-    return {
-      statusOptions: STATUS_OPTIONS,
-      taskTypeOptions: TASK_TYPE_OPTIONS
-    }
-  },
-  methods: {
-    handleDepartmentChange(value) {
-      this.$emit('department-change', value)
-    },
-    handleStatusChange(value) {
-      this.$emit('status-change', value)
-    },
-    handleTaskTypeChange(value) {
-      this.$emit('task-type-change', value)
-    },
-    handleSearchInput(value) {
-      this.$emit('search-input', value)
-    },
-    handleSearch() {
-      this.$emit('search')
-    },
-    handleClear() {
-      this.$emit('clear')
-    },
-    handleReset() {
-      this.$emit('reset')
-    },
-    handleRefresh() {
-      this.$emit('refresh')
-    },
-    handleViewToggle() {
-      this.$emit('view-toggle')
-    }
-  }
-}
+const statusOptions = [{ value: 'pending', label: '待开始' }, { value: 'in_progress', label: '进行中' }, { value: 'completed', label: '已完成' }, { value: 'cancelled', label: '已取消' }]
+const taskTypeOptions = [{ value: 'general', label: '通用任务' }, { value: 'plate_making', label: '制版任务' }, { value: 'cutting', label: '开料任务' }, { value: 'printing', label: '印刷任务' }, { value: 'foiling', label: '烫金任务' }, { value: 'embossing', label: '压凸任务' }, { value: 'die_cutting', label: '模切任务' }, { value: 'packaging', label: '包装任务' }]
 </script>
 
 <style scoped>
-.task-filters {
-  padding: 10px 0;
-  margin-bottom: 15px;
-}
+.task-filters { padding: 10px 0; margin-bottom: 15px; }
 </style>
