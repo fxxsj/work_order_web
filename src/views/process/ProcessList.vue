@@ -10,13 +10,15 @@
           @input="handleSearchDebounced"
           @clear="handleSearch"
         >
-          <el-button slot="append" icon="el-icon-search" @click="handleSearch" />
+          <template #append>
+            <el-button :icon="Search" @click="handleSearch" />
+          </template>
         </el-input>
         <el-button
-          v-if="canCreate()"
+          v-if="canCreate"
           type="primary"
-          icon="el-icon-plus"
-          @click="showCreateDialog()"
+          :icon="Plus"
+          @click="showCreateDialog"
         >
           新建工序
         </el-button>
@@ -30,29 +32,19 @@
         <el-table-column prop="code" label="工序编码" width="120" />
         <el-table-column prop="name" label="工序名称" width="180" />
         <el-table-column prop="description" label="描述" min-width="200" />
-        <el-table-column
-          prop="standard_duration"
-          label="标准工时(小时)"
-          width="140"
-          align="right"
-        />
-        <el-table-column
-          prop="sort_order"
-          label="排序"
-          width="80"
-          align="center"
-        />
+        <el-table-column prop="standard_duration" label="标准工时(小时)" width="140" align="right" />
+        <el-table-column prop="sort_order" label="排序" width="80" align="center" />
         <el-table-column label="状态" width="100">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag :type="scope.row.is_active ? 'success' : 'info'">
               {{ scope.row.is_active ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-button
-              v-if="canEdit()"
+              v-if="canEdit"
               type="text"
               size="small"
               @click="handleEdit(scope.row)"
@@ -60,7 +52,7 @@
               编辑
             </el-button>
             <el-button
-              v-if="canDelete()"
+              v-if="canDelete"
               type="text"
               size="small"
               style="color: #F56C6C;"
@@ -72,24 +64,24 @@
         </el-table-column>
       </el-table>
 
-      <Pagination
+      <el-pagination
         v-if="total > 0"
-        :current-page="currentPage"
-        :page-size="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
-        @current-change="handlePageChange"
+        layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
+        @current-change="handlePageChange"
       />
     </el-card>
 
-    <!-- 工序表单对话框 -->
     <el-dialog
+      v-model="dialogVisible"
       :title="formTitle"
-      :visible.sync="dialogVisible"
       width="600px"
     >
       <el-form
-        ref="form"
+        ref="formRef"
         :model="form"
         :rules="rules"
         label-width="120px"
@@ -126,128 +118,174 @@
           <el-switch v-model="form.is_active" />
         </el-form-item>
       </el-form>
-      <div slot="footer">
+      <template #footer>
         <el-button @click="dialogVisible = false">
           取消
         </el-button>
         <el-button type="primary" :loading="formLoading" @click="handleSubmit">
           确定
         </el-button>
-      </div>
+      </template>
     </el-dialog>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { Plus, Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { processAPI } from '@/api/modules'
-import crudMixin from '@/mixins/crudMixin'
-import crudPermissionMixin from '@/mixins/crudPermissionMixin'
-import Pagination from '@/components/common/Pagination.vue'
+import { useUserStore } from '@/stores'
+import ErrorHandler from '@/utils/errorHandler'
 
-export default {
-  name: 'ProcessList',
-  components: { Pagination },
-  mixins: [crudMixin, crudPermissionMixin],
-  data() {
-    return {
-      // API 服务和权限配置
-      apiService: processAPI,
-      permissionPrefix: 'process',
+const userStore = useUserStore()
 
-      // 表单相关
-      formInitialValues: {
-        code: '',
-        name: '',
-        description: '',
-        standard_duration: 0,
-        sort_order: 0,
-        is_active: true
-      },
-      form: {},  // 将在 created 中初始化
-      rules: {
-        code: [
-          { required: true, message: '请输入工序编码', trigger: 'blur' }
-        ],
-        name: [
-          { required: true, message: '请输入工序名称', trigger: 'blur' }
-        ]
-      }
+const searchText = ref('')
+const tableData = ref([])
+const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(20)
+
+const dialogVisible = ref(false)
+const dialogType = ref('create')
+const formLoading = ref(false)
+const currentRow = ref(null)
+const formRef = ref(null)
+
+const formInitialValues = {
+  code: '',
+  name: '',
+  description: '',
+  standard_duration: 0,
+  sort_order: 0,
+  is_active: true
+}
+
+const form = reactive({ ...formInitialValues })
+
+const rules = {
+  code: [
+    { required: true, message: '请输入工序编码', trigger: 'blur' }
+  ],
+  name: [
+    { required: true, message: '请输入工序名称', trigger: 'blur' }
+  ]
+}
+
+const formTitle = computed(() => dialogType.value === 'edit' ? '编辑工序' : '新建工序')
+const canCreate = computed(() => userStore.hasPermission('workorder.add_process'))
+const canEdit = computed(() => userStore.hasPermission('workorder.change_process'))
+const canDelete = computed(() => userStore.hasPermission('workorder.delete_process'))
+
+let searchTimer = null
+
+const handleSearchDebounced = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    handleSearch()
+  }, 300)
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadData()
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadData()
+}
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value
     }
-  },
-  computed: {
-    formTitle() {
-      return this.dialogType === 'edit' ? '编辑工序' : '新建工序'
+    if (searchText.value) {
+      params.search = searchText.value
     }
-  },
-  watch: {
-    // 监听对话框显示状态，编辑时填充表单
-    dialogVisible(val) {
-      if (val && this.dialogType === 'edit' && this.currentRow) {
-        this.form = {
-          code: this.currentRow.code,
-          name: this.currentRow.name,
-          description: this.currentRow.description || '',
-          standard_duration: this.currentRow.standard_duration,
-          sort_order: this.currentRow.sort_order,
-          is_active: this.currentRow.is_active
-        }
-      }
+    const response = await processAPI.getList(params)
+    tableData.value = response?.results || []
+    total.value = response?.count || 0
+  } catch (error) {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const showCreateDialog = () => {
+  resetForm()
+  dialogType.value = 'create'
+  currentRow.value = null
+  dialogVisible.value = true
+}
+
+const handleEdit = (row) => {
+  dialogType.value = 'edit'
+  currentRow.value = row
+  Object.assign(form, {
+    code: row.code,
+    name: row.name,
+    description: row.description || '',
+    standard_duration: row.standard_duration,
+    sort_order: row.sort_order,
+    is_active: row.is_active
+  })
+  dialogVisible.value = true
+}
+
+const resetForm = () => {
+  Object.assign(form, formInitialValues)
+}
+
+const handleSubmit = async () => {
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  formLoading.value = true
+  try {
+    if (dialogType.value === 'edit') {
+      await processAPI.update(currentRow.value.id, form)
+      ElMessage.success('保存成功')
+    } else {
+      await processAPI.create(form)
+      ElMessage.success('创建成功')
     }
-  },
-  created() {
-    // 初始化表单
-    this.form = { ...this.formInitialValues }
-    this.loadData()
-  },
-  methods: {
-    // 实现 fetchData 方法（listPageMixin 要求）
-    async fetchData() {
-      const params = {
-        page: this.currentPage,
-        page_size: this.pageSize
-      }
+    dialogVisible.value = false
+    loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, dialogType.value === 'edit' ? '保存失败' : '创建失败')
+  } finally {
+    formLoading.value = false
+  }
+}
 
-      if (this.searchText) {
-        params.search = this.searchText
-      }
-
-      return this.apiService.getList(params)
-    },
-
-    showCreateDialog() {
-      this.resetForm()
-      this.handleCreate()
-    },
-
-    resetForm() {
-      this.form = { ...this.formInitialValues }
-    },
-
-    async handleSubmit() {
-      this.$refs.form.validate(async (valid) => {
-        if (!valid) return false
-
-        this.formLoading = true
-        try {
-          if (this.dialogType === 'edit') {
-            await this.apiService.update(this.currentRow.id, this.form)
-            this.showSuccess('保存成功')
-          } else {
-            await this.apiService.create(this.form)
-            this.showSuccess('创建成功')
-          }
-
-          this.dialogVisible = false
-          this.loadData()
-        } catch (error) {
-          this.showMessage(error, this.dialogType === 'edit' ? '保存失败' : '创建失败')
-        } finally {
-          this.formLoading = false
-        }
-      })
+const handleDelete = async (row) => {
+  try {
+    await ErrorHandler.confirm(`确定要删除工序"${row.name}"吗？`)
+    await processAPI.delete(row.id)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ErrorHandler.showMessage(error, '删除')
     }
   }
 }
+
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style scoped>
