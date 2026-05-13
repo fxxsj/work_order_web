@@ -10,19 +10,20 @@
           @input="handleSearchDebounced"
           @clear="handleSearch"
         >
-          <el-button slot="append" icon="el-icon-search" @click="handleSearch" />
+          <template #append>
+            <el-button :icon="Search" @click="handleSearch" />
+          </template>
         </el-input>
         <el-button
-          v-if="canCreate()"
+          v-if="canCreate"
           type="primary"
-          icon="el-icon-plus"
+          :icon="Plus"
           @click="showCreateDialog"
         >
           新建压凸版
         </el-button>
       </div>
 
-      <!-- 表格：仅在有数据时显示 -->
       <el-table
         v-if="tableData.length > 0"
         v-loading="loading"
@@ -34,16 +35,15 @@
         <el-table-column prop="size" label="尺寸" width="150" />
         <el-table-column prop="material" label="材质" width="120" />
         <el-table-column prop="thickness" label="厚度" width="100" />
-        <!-- 确认状态列 -->
         <el-table-column label="确认状态" width="120" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag :type="scope.row.confirmed ? 'success' : 'info'">
               {{ scope.row.confirmed ? '已确认' : '待确认' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="包含产品" min-width="200">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag
               v-for="product in scope.row.products"
               :key="product.id"
@@ -54,21 +54,16 @@
             <span v-if="!scope.row.products || scope.row.products.length === 0" style="color: #909399;">-</span>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="notes"
-          label="备注"
-          min-width="150"
-          show-overflow-tooltip
-        />
+        <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
         <el-table-column prop="created_at" label="创建时间" width="180">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ formatDate(scope.row.created_at) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180" fixed="right">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-button
-              v-if="!scope.row.confirmed && canEdit()"
+              v-if="!scope.row.confirmed && canEdit"
               type="text"
               size="small"
               @click="handleConfirmPlate(scope.row)"
@@ -76,7 +71,7 @@
               确认
             </el-button>
             <el-button
-              v-if="canEdit()"
+              v-if="canEdit"
               type="text"
               size="small"
               @click="handleEdit(scope.row)"
@@ -84,7 +79,7 @@
               编辑
             </el-button>
             <el-button
-              v-if="canDelete()"
+              v-if="canDelete"
               type="text"
               size="small"
               style="color: #F56C6C;"
@@ -96,36 +91,33 @@
         </el-table-column>
       </el-table>
 
-      <Pagination
+      <el-pagination
         v-if="total > 0"
-        :current-page="currentPage"
-        :page-size="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
-        @current-change="handlePageChange"
+        layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
+        @current-change="handlePageChange"
       />
 
-      <!-- 空状态（完善版） -->
       <el-empty
         v-if="!loading && tableData.length === 0"
         :description="hasFilters ? '未找到匹配的压凸版' : '暂无压凸版数据'"
         :image-size="200"
         style="margin-top: 50px;"
       >
-        <!-- 有筛选条件时显示重置按钮 -->
         <el-button v-if="hasFilters" type="primary" @click="handleReset">
           重置筛选
         </el-button>
-        <!-- 无筛选条件时显示创建按钮 -->
-        <el-button v-else-if="canCreate()" type="primary" @click="showCreateDialog">
+        <el-button v-else-if="canCreate" type="primary" @click="showCreateDialog">
           创建第一个压凸版
         </el-button>
       </el-empty>
     </el-card>
 
-    <!-- 表单对话框组件 -->
     <embossing-plate-form-dialog
-      :visible.sync="dialogVisible"
+      v-model="dialogVisible"
       :dialog-type="dialogType"
       :embossing-plate="currentEmbossingPlate"
       :loading="formLoading"
@@ -135,170 +127,187 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { Plus, Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { embossingPlateAPI, productAPI } from '@/api/modules'
-import listPageMixin from '@/mixins/listPageMixin'
-import crudPermissionMixin from '@/mixins/crudPermissionMixin'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
-import Pagination from '@/components/common/Pagination.vue'
 import EmbossingPlateFormDialog from './components/EmbossingPlateFormDialog.vue'
 
-export default {
-  name: 'EmbossingPlateList',
-  components: { Pagination, EmbossingPlateFormDialog },
-  mixins: [listPageMixin, crudPermissionMixin],
+const userStore = useUserStore()
 
-  data() {
-    return {
-      // API 服务和权限配置
-      apiService: embossingPlateAPI,
-      permissionPrefix: 'embossingplate',
+const searchText = ref('')
+const tableData = ref([])
+const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(20)
 
-      // 对话框相关
-      dialogVisible: false,
-      dialogType: 'create',
-      formLoading: false,
-      currentEmbossingPlate: null,
+const dialogVisible = ref(false)
+const dialogType = ref('create')
+const formLoading = ref(false)
+const currentEmbossingPlate = ref(null)
+const productList = ref([])
 
-      // 产品列表
-      productList: []
+const canCreate = computed(() => userStore.hasPermission('workorder.add_embossingplate'))
+const canEdit = computed(() => userStore.hasPermission('workorder.change_embossingplate'))
+const canDelete = computed(() => userStore.hasPermission('workorder.delete_embossingplate'))
+const hasFilters = computed(() => !!searchText.value)
+
+let searchTimer = null
+
+const handleSearchDebounced = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    handleSearch()
+  }, 300)
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadData()
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadData()
+}
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value
     }
-  },
-
-  computed: {
-    // 是否有筛选条件
-    hasFilters() {
-      return !!this.searchText
+    if (searchText.value) {
+      params.search = searchText.value
     }
-  },
+    const response = await embossingPlateAPI.getList(params)
+    tableData.value = response?.results || []
+    total.value = response?.count || 0
+  } catch (error) {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
+  }
+}
 
-  created() {
-    this.loadData()
-    this.loadProductList()
-  },
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
 
-  methods: {
-    // 实现 fetchData 方法（listPageMixin 要求）
-    async fetchData() {
-      const params = {
-        page: this.currentPage,
-        page_size: this.pageSize
-      }
+const loadProductList = async () => {
+  try {
+    const response = await productAPI.getList({ is_active: true, page_size: 100 })
+    productList.value = response?.results || []
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载产品列表失败')
+  }
+}
 
-      if (this.searchText) {
-        params.search = this.searchText
-      }
+const showCreateDialog = () => {
+  dialogType.value = 'create'
+  currentEmbossingPlate.value = null
+  dialogVisible.value = true
+}
 
-      return this.apiService.getList(params)
-    },
+const handleEdit = async (row) => {
+  try {
+    const detail = await embossingPlateAPI.getDetail(row.id)
+    currentEmbossingPlate.value = detail
+    dialogType.value = 'edit'
+    dialogVisible.value = true
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载压凸版详情失败')
+  }
+}
 
-    formatDate(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
-
-    async loadProductList() {
-      try {
-        const response = await productAPI.getList({ is_active: true, page_size: 100 })
-        this.productList = response.results || []
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载产品列表失败')
-      }
-    },
-
-    showCreateDialog() {
-      this.dialogType = 'create'
-      this.currentEmbossingPlate = null
-      this.dialogVisible = true
-    },
-
-    async handleEdit(row) {
-      try {
-        const detail = await embossingPlateAPI.getDetail(row.id)
-        this.currentEmbossingPlate = detail
-        this.dialogType = 'edit'
-        this.dialogVisible = true
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载压凸版详情失败')
-      }
-    },
-
-    async handleDelete(row) {
-      try {
-        await ErrorHandler.confirm(`确定要删除压凸版"${row.name}"吗？此操作不可撤销。`)
-        await this.apiService.delete(row.id)
-        ErrorHandler.showSuccess('删除成功')
-        await this.loadData()
-      } catch (error) {
-        if (error !== 'cancel') {
-          ErrorHandler.showMessage(error, '删除失败')
-        }
-      }
-    },
-
-    async handleConfirmPlate(row) {
-      try {
-        await ErrorHandler.confirm(`确定要确认压凸版"${row.name}"吗？确认后关键字段将不可修改。`)
-        await embossingPlateAPI.confirm(row.id)
-        ErrorHandler.showSuccess('确认成功')
-        await this.loadData()
-      } catch (error) {
-        if (error !== 'cancel') {
-          ErrorHandler.showMessage(error, '确认失败')
-        }
-      }
-    },
-
-    async handleFormConfirm({ form, productItems }) {
-      this.formLoading = true
-      try {
-        const data = { ...form }
-
-        // 新建时如果没有编码则删除该字段，让后端自动生成
-        if (this.dialogType === 'create' && !data.code) {
-          delete data.code
-        }
-
-        // 处理产品数据
-        data.products_data = productItems
-          .filter(item => item.product)
-          .map(item => ({
-            product: item.product,
-            quantity: item.quantity || 1
-          }))
-
-        if (this.dialogType === 'edit') {
-          await this.apiService.update(this.currentEmbossingPlate.id, data)
-          ErrorHandler.showSuccess('保存成功')
-        } else {
-          await this.apiService.create(data)
-          ErrorHandler.showSuccess('创建成功')
-        }
-
-        this.dialogVisible = false
-        await this.loadData()
-      } catch (error) {
-        ErrorHandler.showMessage(error, this.dialogType === 'edit' ? '保存失败' : '创建失败')
-      } finally {
-        this.formLoading = false
-      }
-    },
-
-    // 重置筛选条件
-    handleReset() {
-      this.searchText = ''
-      this.currentPage = 1
-      this.loadData()
+const handleDelete = async (row) => {
+  try {
+    await ErrorHandler.confirm(`确定要删除压凸版"${row.name}"吗？此操作不可撤销。`)
+    await embossingPlateAPI.delete(row.id)
+    ElMessage.success('删除成功')
+    await loadData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ErrorHandler.showMessage(error, '删除失败')
     }
   }
 }
+
+const handleConfirmPlate = async (row) => {
+  try {
+    await ErrorHandler.confirm(`确定要确认压凸版"${row.name}"吗？确认后关键字段将不可修改。`)
+    await embossingPlateAPI.confirm(row.id)
+    ElMessage.success('确认成功')
+    await loadData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ErrorHandler.showMessage(error, '确认失败')
+    }
+  }
+}
+
+const handleFormConfirm = async ({ form, productItems }) => {
+  formLoading.value = true
+  try {
+    const data = { ...form }
+
+    if (dialogType.value === 'create' && !data.code) {
+      delete data.code
+    }
+
+    data.products_data = productItems
+      .filter(item => item.product)
+      .map(item => ({
+        product: item.product,
+        quantity: item.quantity || 1
+      }))
+
+    if (dialogType.value === 'edit') {
+      await embossingPlateAPI.update(currentEmbossingPlate.value.id, data)
+      ElMessage.success('保存成功')
+    } else {
+      await embossingPlateAPI.create(data)
+      ElMessage.success('创建成功')
+    }
+
+    dialogVisible.value = false
+    await loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, dialogType.value === 'edit' ? '保存失败' : '创建失败')
+  } finally {
+    formLoading.value = false
+  }
+}
+
+const handleReset = () => {
+  searchText.value = ''
+  currentPage.value = 1
+  loadData()
+}
+
+onMounted(() => {
+  loadData()
+  loadProductList()
+})
 </script>
 
 <style scoped>
