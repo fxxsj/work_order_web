@@ -11,17 +11,19 @@
             @input="handleSearchDebounced"
             @clear="handleSearch"
           >
-            <el-button slot="append" icon="el-icon-search" @click="handleSearch" />
+            <template #append>
+              <el-button :icon="Search" @click="handleSearch" />
+            </template>
           </el-input>
         </div>
         <div class="action-group">
-          <el-button icon="el-icon-refresh" @click="loadData">
+          <el-button :icon="RefreshRight" @click="loadData">
             刷新
           </el-button>
           <el-button
-            v-if="canCreate()"
+            v-if="canCreate"
             type="primary"
-            icon="el-icon-plus"
+            :icon="Plus"
             @click="showDialog()"
           >
             新建图稿
@@ -35,18 +37,13 @@
         style="width: 100%; margin-top: 20px;"
       >
         <el-table-column label="图稿编码" width="180">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ scope.row.code || (scope.row.base_code + (scope.row.version > 1 ? '-v' + scope.row.version : '')) }}
           </template>
         </el-table-column>
         <el-table-column prop="name" label="图稿名称" width="200" />
-        <el-table-column
-          prop="color_display"
-          label="色数"
-          width="200"
-          align="center"
-        >
-          <template slot-scope="scope">
+        <el-table-column prop="color_display" label="色数" width="200" align="center">
+          <template #default="scope">
             <el-tag v-if="scope.row.color_display && scope.row.color_display !== '-'">
               {{ scope.row.color_display }}
             </el-tag>
@@ -55,7 +52,7 @@
         </el-table-column>
         <el-table-column prop="imposition_size" label="拼版尺寸" width="180" />
         <el-table-column label="确认状态" width="120" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag
               :type="scope.row.confirmed ? 'success' : 'info'"
               size="small"
@@ -71,7 +68,7 @@
           </template>
         </el-table-column>
         <el-table-column label="关联刀模" min-width="200">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag
               v-for="(code, index) in scope.row.die_codes"
               :key="index"
@@ -83,7 +80,7 @@
           </template>
         </el-table-column>
         <el-table-column label="关联烫金版" min-width="200">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag
               v-for="(code, index) in scope.row.foiling_plate_codes"
               :key="index"
@@ -96,7 +93,7 @@
           </template>
         </el-table-column>
         <el-table-column label="关联压凸版" min-width="200">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag
               v-for="(code, index) in scope.row.embossing_plate_codes"
               :key="index"
@@ -109,7 +106,7 @@
           </template>
         </el-table-column>
         <el-table-column label="包含产品" min-width="200">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag
               v-for="product in scope.row.products"
               :key="product.id"
@@ -120,21 +117,16 @@
             <span v-if="!scope.row.products || scope.row.products.length === 0" style="color: #909399;">-</span>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="notes"
-          label="备注"
-          min-width="150"
-          show-overflow-tooltip
-        />
+        <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
         <el-table-column prop="created_at" label="创建时间" width="180">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ formatDate(scope.row.created_at) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180" fixed="right">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-button
-              v-if="canEdit()"
+              v-if="canEdit"
               type="text"
               size="small"
               @click="showDialog(scope.row)"
@@ -142,7 +134,7 @@
               编辑
             </el-button>
             <el-button
-              v-if="canEdit()"
+              v-if="canEdit"
               type="text"
               size="small"
               @click="createNewVersion(scope.row)"
@@ -150,7 +142,7 @@
               创建新版本
             </el-button>
             <el-button
-              v-if="!scope.row.confirmed && canConfirm()"
+              v-if="!scope.row.confirmed && canConfirm"
               type="text"
               size="small"
               style="color: #67C23A;"
@@ -159,7 +151,7 @@
               确认
             </el-button>
             <el-button
-              v-if="canDelete()"
+              v-if="canDelete"
               type="text"
               size="small"
               style="color: #F56C6C;"
@@ -171,30 +163,29 @@
         </el-table-column>
       </el-table>
 
-      <Pagination
+      <el-pagination
         v-if="total > 0"
-        :current-page="currentPage"
-        :page-size="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
-        @current-change="handlePageChange"
+        layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
+        @current-change="handlePageChange"
       />
 
-      <!-- 空状态 -->
       <el-empty
         v-if="!loading && tableData.length === 0"
         description="暂无图稿数据"
         :image-size="200"
       >
-        <el-button v-if="canCreate()" type="primary" @click="showDialog()">
+        <el-button v-if="canCreate" type="primary" @click="showDialog()">
           创建第一个图稿
         </el-button>
       </el-empty>
     </el-card>
 
-    <!-- 图稿表单对话框 -->
     <ArtworkFormDialog
-      :visible.sync="dialogVisible"
+      v-model="dialogVisible"
       :artwork="currentArtwork"
       :loading="formLoading"
       :product-list="productList"
@@ -206,180 +197,212 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { artworkAPI, productAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
-import listPageMixin from '@/mixins/listPageMixin'
-import crudPermissionMixin from '@/mixins/crudPermissionMixin'
-import Pagination from '@/components/common/Pagination.vue'
-import ArtworkFormDialog from './components/ArtworkFormDialog.vue'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
+import ArtworkFormDialog from './components/ArtworkFormDialog.vue'
 
-export default {
-  name: 'ArtworkList',
-  components: { Pagination, ArtworkFormDialog },
-  mixins: [listPageMixin, crudPermissionMixin],
-  data() {
-    return {
-      // API 服务和权限配置
-      apiService: artworkAPI,
-      permissionPrefix: 'artwork',
+const userStore = useUserStore()
 
-      // 对话框状态
-      dialogVisible: false,
-      formLoading: false,
-      currentArtwork: null,
+const searchText = ref('')
+const tableData = ref([])
+const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(20)
 
-      // 下拉列表数据
-      productList: [],
-      dieList: [],
-      foilingPlateList: [],
-      embossingPlateList: []
+const dialogVisible = ref(false)
+const formLoading = ref(false)
+const currentArtwork = ref(null)
+
+const productList = ref([])
+const dieList = ref([])
+const foilingPlateList = ref([])
+const embossingPlateList = ref([])
+
+const canCreate = computed(() => userStore.hasPermission('workorder.add_artwork'))
+const canEdit = computed(() => userStore.hasPermission('workorder.change_artwork'))
+const canDelete = computed(() => userStore.hasPermission('workorder.delete_artwork'))
+const canConfirm = computed(() => userStore.hasPermission('workorder.change_artwork'))
+
+let searchTimer = null
+
+const handleSearchDebounced = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    handleSearch()
+  }, 300)
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadData()
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadData()
+}
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value
     }
-  },
-  created() {
-    this.loadData()
-    this.loadProductList()
-    this.loadDieList()
-    this.loadFoilingPlateList()
-    this.loadEmbossingPlateList()
-  },
-  methods: {
-    // 实现 fetchData 方法（listPageMixin 要求）
-    async fetchData() {
-      const params = {
-        page: this.currentPage,
-        page_size: this.pageSize
-      }
+    if (searchText.value) {
+      params.search = searchText.value
+    }
+    const response = await artworkAPI.getList(params)
+    tableData.value = response?.results || []
+    total.value = response?.count || 0
+  } catch (error) {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
+  }
+}
 
-      if (this.searchText) {
-        params.search = this.searchText
-      }
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
 
-      return this.apiService.getList(params)
-    },
+const loadProductList = async () => {
+  try {
+    const response = await productAPI.getList({ is_active: true, page_size: 100 })
+    productList.value = response?.results || []
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载产品列表失败')
+  }
+}
 
-    canConfirm() {
-      // 设计部用户可以确认图稿，这里可以根据用户部门判断
-      // 暂时使用 change_artwork 权限
-      return this.checkPermission('change')
-    },
+const loadDieList = async () => {
+  try {
+    const response = await dieAPI.getList({ page_size: 100 })
+    dieList.value = response?.results || []
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载刀模列表失败')
+  }
+}
 
-    formatDate(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
+const loadFoilingPlateList = async () => {
+  try {
+    const response = await foilingPlateAPI.getList({ page_size: 100 })
+    foilingPlateList.value = response?.results || []
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载烫金版列表失败')
+  }
+}
 
-    async loadProductList() {
-      try {
-        const response = await productAPI.getList({ is_active: true, page_size: 100 })
-        this.productList = response.results || []
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载产品列表失败')
-      }
-    },
+const loadEmbossingPlateList = async () => {
+  try {
+    const response = await embossingPlateAPI.getList({ page_size: 100 })
+    embossingPlateList.value = response?.results || []
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载压凸版列表失败')
+  }
+}
 
-    async loadDieList() {
-      try {
-        const response = await dieAPI.getList({ page_size: 100 })
-        this.dieList = response.results || []
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载刀模列表失败')
-      }
-    },
-
-    async loadFoilingPlateList() {
-      try {
-        const response = await foilingPlateAPI.getList({ page_size: 100 })
-        this.foilingPlateList = response.results || []
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载烫金版列表失败')
-      }
-    },
-
-    async loadEmbossingPlateList() {
-      try {
-        const response = await embossingPlateAPI.getList({ page_size: 100 })
-        this.embossingPlateList = response.results || []
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载压凸版列表失败')
-      }
-    },
-
-    async handleConfirm(row) {
-      try {
-        await ErrorHandler.confirm('确认该图稿？', '确认操作')
-        await artworkAPI.confirm(row.id)
-        ErrorHandler.showSuccess('图稿已确认')
-        this.loadData()
-      } catch (error) {
-        if (error !== 'cancel') {
-          ErrorHandler.showMessage(error, '确认失败')
-        }
-      }
-    },
-
-    async createNewVersion(row) {
-      const fullCode = row.code || (row.base_code + (row.version > 1 ? '-v' + row.version : ''))
-      try {
-        await ErrorHandler.confirm(`确定要基于 "${fullCode}" 创建新版本吗？`, '创建新版本')
-        await artworkAPI.createVersion(row.id)
-        ErrorHandler.showSuccess('新版本创建成功')
-        this.loadData()
-      } catch (error) {
-        if (error !== 'cancel') {
-          ErrorHandler.showMessage(error, '创建新版本失败')
-        }
-      }
-    },
-
-    // 打开对话框
-    async showDialog(row = null) {
-      if (row) {
-        // 编辑模式：加载详情
-        try {
-          const detail = await artworkAPI.getDetail(row.id)
-          this.currentArtwork = detail
-        } catch (error) {
-          ErrorHandler.showMessage(error, '加载图稿详情失败')
-          return
-        }
-      } else {
-        // 创建模式
-        this.currentArtwork = null
-      }
-      this.dialogVisible = true
-    },
-
-    // 处理表单提交
-    async handleFormConfirm(formData) {
-      this.formLoading = true
-      try {
-        if (this.currentArtwork) {
-          // 编辑模式
-          await this.apiService.update(this.currentArtwork.id, formData)
-          ErrorHandler.showSuccess('保存成功')
-        } else {
-          // 创建模式
-          await this.apiService.create(formData)
-          ErrorHandler.showSuccess('创建成功')
-        }
-        this.dialogVisible = false
-        this.loadData()
-      } catch (error) {
-        ErrorHandler.showMessage(error, this.currentArtwork ? '保存失败' : '创建失败')
-      } finally {
-        this.formLoading = false
-      }
+const handleConfirm = async (row) => {
+  try {
+    await ErrorHandler.confirm('确认该图稿？', '确认操作')
+    await artworkAPI.confirm(row.id)
+    ElMessage.success('图稿已确认')
+    loadData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ErrorHandler.showMessage(error, '确认失败')
     }
   }
 }
+
+const createNewVersion = async (row) => {
+  const fullCode = row.code || (row.base_code + (row.version > 1 ? '-v' + row.version : ''))
+  try {
+    await ErrorHandler.confirm(`确定要基于 "${fullCode}" 创建新版本吗？`, '创建新版本')
+    await artworkAPI.createVersion(row.id)
+    ElMessage.success('新版本创建成功')
+    loadData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ErrorHandler.showMessage(error, '创建新版本失败')
+    }
+  }
+}
+
+const showDialog = async (row = null) => {
+  if (row) {
+    try {
+      const detail = await artworkAPI.getDetail(row.id)
+      currentArtwork.value = detail
+    } catch (error) {
+      ErrorHandler.showMessage(error, '加载图稿详情失败')
+      return
+    }
+  } else {
+    currentArtwork.value = null
+  }
+  dialogVisible.value = true
+}
+
+const handleFormConfirm = async (formData) => {
+  formLoading.value = true
+  try {
+    if (currentArtwork.value) {
+      await artworkAPI.update(currentArtwork.value.id, formData)
+      ElMessage.success('保存成功')
+    } else {
+      await artworkAPI.create(formData)
+      ElMessage.success('创建成功')
+    }
+    dialogVisible.value = false
+    loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, currentArtwork.value ? '保存失败' : '创建失败')
+  } finally {
+    formLoading.value = false
+  }
+}
+
+const handleDelete = async (row) => {
+  try {
+    await ErrorHandler.confirm(`确定要删除图稿"${row.name}"吗？`)
+    await artworkAPI.delete(row.id)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ErrorHandler.showMessage(error, '删除失败')
+    }
+  }
+}
+
+onMounted(() => {
+  loadData()
+  loadProductList()
+  loadDieList()
+  loadFoilingPlateList()
+  loadEmbossingPlateList()
+})
 </script>
 
 <style scoped>
