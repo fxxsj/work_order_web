@@ -1,7 +1,6 @@
 <template>
   <div class="supplier-list">
     <el-card>
-      <!-- 头部区域：筛选 + 操作 -->
       <div class="header-section">
         <div class="filter-group">
           <el-input
@@ -9,10 +8,12 @@
             placeholder="搜索供应商名称/编码"
             style="width: 250px;"
             clearable
-            @keyup.enter.native="handleSearch"
+            @keyup.enter="handleSearch"
             @clear="handleSearch"
           >
-            <el-button slot="append" icon="el-icon-search" @click="handleSearch" />
+            <template #append>
+              <el-button :icon="Search" @click="handleSearch" />
+            </template>
           </el-input>
           <el-select
             v-model="filters.status"
@@ -27,9 +28,9 @@
         </div>
         <div class="action-group">
           <el-button
-            v-if="canCreate()"
+            v-if="canCreate"
             type="primary"
-            icon="el-icon-plus"
+            :icon="Plus"
             @click="showCreateDialog"
           >
             新增供应商
@@ -37,7 +38,6 @@
         </div>
       </div>
 
-      <!-- 数据表格 -->
       <el-table
         v-if="tableData.length > 0"
         v-loading="loading"
@@ -52,23 +52,18 @@
         <el-table-column prop="phone" label="联系电话" width="150" />
         <el-table-column prop="email" label="邮箱" width="200" />
         <el-table-column prop="status" label="状态" width="100">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag :type="scope.row.status === 'active' ? 'success' : 'info'">
               {{ scope.row.status_display }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="material_count" label="供应物料数" width="120" />
-        <el-table-column
-          prop="notes"
-          label="备注"
-          min-width="200"
-          show-overflow-tooltip
-        />
+        <el-table-column prop="notes" label="备注" min-width="200" show-overflow-tooltip />
         <el-table-column label="操作" width="150" fixed="right">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-button
-              v-if="canEdit()"
+              v-if="canEdit"
               type="text"
               size="small"
               @click="showEditDialog(scope.row)"
@@ -76,7 +71,7 @@
               编辑
             </el-button>
             <el-button
-              v-if="canDelete()"
+              v-if="canDelete"
               type="text"
               size="small"
               class="danger-text"
@@ -88,32 +83,30 @@
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <Pagination
+      <el-pagination
         v-if="total > 0"
-        :current-page="currentPage"
-        :page-size="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
-        @current-change="handlePageChange"
+        layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
+        @current-change="handlePageChange"
       />
 
-      <!-- 空状态显示 -->
       <el-empty
         v-if="!loading && tableData.length === 0"
         description="暂无供应商数据"
         :image-size="200"
         style="margin-top: 50px;"
       >
-        <el-button v-if="canCreate()" type="primary" @click="showCreateDialog">
+        <el-button v-if="canCreate" type="primary" @click="showCreateDialog">
           创建第一个供应商
         </el-button>
       </el-empty>
     </el-card>
 
-    <!-- 供应商表单对话框 -->
     <supplier-form-dialog
-      :visible.sync="dialogVisible"
+      v-model="dialogVisible"
       :dialog-type="dialogType"
       :supplier="currentRow"
       :loading="dialogLoading"
@@ -122,113 +115,122 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, reactive, onMounted } from 'vue'
+import { Plus, Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { supplierAPI } from '@/api/modules'
-import listPageMixin from '@/mixins/listPageMixin'
-import crudPermissionMixin from '@/mixins/crudPermissionMixin'
-import Pagination from '@/components/common/Pagination.vue'
-import SupplierFormDialog from './components/SupplierFormDialog.vue'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
+import SupplierFormDialog from './components/SupplierFormDialog.vue'
 
-export default {
-  name: 'SupplierList',
+const userStore = useUserStore()
 
-  components: {
-    Pagination,
-    SupplierFormDialog
-  },
+const searchText = ref('')
+const tableData = ref([])
+const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(20)
 
-  mixins: [listPageMixin, crudPermissionMixin],
+const dialogVisible = ref(false)
+const dialogType = ref('create')
+const dialogLoading = ref(false)
+const currentRow = ref(null)
+const filters = reactive({
+  status: ''
+})
 
-  data() {
-    return {
-      // API 服务和权限配置
-      apiService: supplierAPI,
-      permissionPrefix: 'supplier',
+const canCreate = computed(() => userStore.hasPermission('workorder.add_supplier'))
+const canEdit = computed(() => userStore.hasPermission('workorder.change_supplier'))
+const canDelete = computed(() => userStore.hasPermission('workorder.delete_supplier'))
 
-      // 对话框状态
-      dialogVisible: false,
-      dialogType: 'create',
-      dialogLoading: false,
-      currentRow: null
+const handleSearch = () => {
+  currentPage.value = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadData()
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadData()
+}
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value
     }
-  },
+    if (searchText.value) {
+      params.search = searchText.value
+    }
+    if (filters.status) {
+      params.status = filters.status
+    }
+    const response = await supplierAPI.getList(params)
+    tableData.value = response?.results || []
+    total.value = response?.count || 0
+  } catch (error) {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
+  }
+}
 
-  created() {
-    this.loadData()
-  },
+const showCreateDialog = () => {
+  dialogType.value = 'create'
+  currentRow.value = null
+  dialogVisible.value = true
+}
 
-  methods: {
-    /**
-     * 获取数据（listPageMixin 要求）
-     */
-    async fetchData() {
-      const params = {
-        page: this.currentPage,
-        page_size: this.pageSize,
-        search: this.searchText || undefined,
-        status: this.filters.status || undefined
-      }
-      return await this.apiService.getList(params)
-    },
+const showEditDialog = (row) => {
+  dialogType.value = 'edit'
+  currentRow.value = { ...row }
+  dialogVisible.value = true
+}
 
-    /**
-     * 显示新增对话框
-     */
-    showCreateDialog() {
-      this.dialogType = 'create'
-      this.currentRow = null
-      this.dialogVisible = true
-    },
+const handleFormConfirm = async (formData) => {
+  dialogLoading.value = true
+  try {
+    if (dialogType.value === 'create') {
+      await supplierAPI.create(formData)
+      ElMessage.success('创建成功')
+    } else {
+      await supplierAPI.update(formData.id, formData)
+      ElMessage.success('更新成功')
+    }
+    dialogVisible.value = false
+    await loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, dialogType.value === 'create' ? '创建' : '更新')
+  } finally {
+    dialogLoading.value = false
+  }
+}
 
-    /**
-     * 显示编辑对话框
-     */
-    showEditDialog(row) {
-      this.dialogType = 'edit'
-      this.currentRow = { ...row }
-      this.dialogVisible = true
-    },
-
-    /**
-     * 处理表单确认
-     */
-    async handleFormConfirm(formData) {
-      this.dialogLoading = true
-      try {
-        if (this.dialogType === 'create') {
-          await this.apiService.create(formData)
-          ErrorHandler.showSuccess('创建成功')
-        } else {
-          await this.apiService.update(formData.id, formData)
-          ErrorHandler.showSuccess('更新成功')
-        }
-        this.dialogVisible = false
-        await this.loadData()
-      } catch (error) {
-        ErrorHandler.showMessage(error, this.dialogType === 'create' ? '创建' : '更新')
-      } finally {
-        this.dialogLoading = false
-      }
-    },
-
-    /**
-     * 处理删除
-     */
-    async handleDelete(row) {
-      try {
-        await ErrorHandler.confirm(`确定要删除供应商"${row.name}"吗？`)
-        await this.apiService.delete(row.id)
-        ErrorHandler.showSuccess('删除成功')
-        await this.loadData()
-      } catch (error) {
-        if (error !== 'cancel') {
-          ErrorHandler.showMessage(error, '删除')
-        }
-      }
+const handleDelete = async (row) => {
+  try {
+    await ErrorHandler.confirm(`确定要删除供应商"${row.name}"吗？`)
+    await supplierAPI.delete(row.id)
+    ElMessage.success('删除成功')
+    await loadData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ErrorHandler.showMessage(error, '删除')
     }
   }
 }
+
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style scoped>
