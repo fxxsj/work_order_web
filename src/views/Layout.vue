@@ -1,6 +1,5 @@
 <template>
   <el-container class="layout-container">
-    <!-- 侧边栏 -->
     <el-aside width="200px" class="sidebar">
       <div class="logo">
         <h2>施工单系统</h2>
@@ -13,7 +12,6 @@
         active-text-color="#409EFF"
         router
       >
-        <!-- ========== 核心业务区 ========== -->
         <el-menu-item index="/dashboard">
           <i class="el-icon-s-home"></i>
           <span>工作台</span>
@@ -23,9 +21,8 @@
           <span>施工单</span>
         </el-menu-item>
 
-        <!-- ========== 任务管理（日常操作） ========== -->
         <el-submenu index="/tasks">
-          <template slot="title">
+          <template #title>
             <i class="el-icon-s-order"></i>
             <span>任务管理</span>
           </template>
@@ -47,9 +44,8 @@
           </el-menu-item>
         </el-submenu>
 
-        <!-- ========== 业务数据区 ========== -->
         <el-submenu v-if="canViewProduct || canViewMaterial || canViewProductGroup" index="/product-material">
-          <template slot="title">
+          <template #title>
             <i class="el-icon-shopping-bag-2"></i>
             <span>产品物料</span>
           </template>
@@ -66,8 +62,9 @@
             <span>产品组管理</span>
           </el-menu-item>
         </el-submenu>
+
         <el-submenu v-if="canViewArtwork || canViewDie || canViewFoilingPlate || canViewEmbossingPlate" index="/plate-making">
-          <template slot="title">
+          <template #title>
             <i class="el-icon-printer"></i>
             <span>制版管理</span>
           </template>
@@ -88,8 +85,9 @@
             <span>压凸版管理</span>
           </el-menu-item>
         </el-submenu>
+
         <el-submenu v-if="canViewPurchaseOrder || canViewSalesOrder" index="/purchase">
-          <template slot="title">
+          <template #title>
             <i class="el-icon-shopping-cart-2"></i>
             <span>采购销售</span>
           </template>
@@ -103,9 +101,8 @@
           </el-menu-item>
         </el-submenu>
 
-        <!-- ========== 仓储财务区 ========== -->
         <el-submenu index="/inventory">
-          <template slot="title">
+          <template #title>
             <i class="el-icon-box"></i>
             <span>库存管理</span>
           </template>
@@ -122,8 +119,9 @@
             <span>质量检验</span>
           </el-menu-item>
         </el-submenu>
+
         <el-submenu index="/finance">
-          <template slot="title">
+          <template #title>
             <i class="el-icon-wallet"></i>
             <span>财务管理</span>
           </template>
@@ -145,9 +143,8 @@
           </el-menu-item>
         </el-submenu>
 
-        <!-- ========== 系统设置（高权限，低频使用） ========== -->
         <el-submenu v-if="canViewCustomer || canViewSupplier || canViewDepartment || canViewProcess || canViewAuditLog" index="/system">
-          <template slot="title">
+          <template #title>
             <i class="el-icon-setting"></i>
             <span>系统设置</span>
           </template>
@@ -179,22 +176,19 @@
       </el-menu>
     </el-aside>
 
-    <!-- 主内容区 -->
     <el-container>
-      <!-- 顶部导航栏 -->
       <el-header class="header">
         <div class="header-left">
           <el-breadcrumb separator="/">
             <el-breadcrumb-item :to="{ path: '/' }">
               首页
             </el-breadcrumb-item>
-            <el-breadcrumb-item v-if="$route.meta.title">
-              {{ $route.meta.title }}
+            <el-breadcrumb-item v-if="route.meta.title">
+              {{ route.meta.title }}
             </el-breadcrumb-item>
           </el-breadcrumb>
         </div>
         <div class="header-right">
-          <!-- 通知中心 -->
           <notification-center />
 
           <el-dropdown @command="handleCommand">
@@ -203,22 +197,23 @@
               <span>{{ currentUsername }}</span>
               <i class="el-icon-arrow-down el-icon--right"></i>
             </span>
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="profile">
-                个人信息
-              </el-dropdown-item>
-              <el-dropdown-item v-if="canAccessAdmin" command="admin">
-                管理后台
-              </el-dropdown-item>
-              <el-dropdown-item command="logout" divided>
-                退出登录
-              </el-dropdown-item>
-            </el-dropdown-menu>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="profile">
+                  个人信息
+                </el-dropdown-item>
+                <el-dropdown-item v-if="canAccessAdmin" command="admin">
+                  管理后台
+                </el-dropdown-item>
+                <el-dropdown-item command="logout" divided>
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
           </el-dropdown>
         </div>
       </el-header>
 
-      <!-- 内容区域 -->
       <el-main class="main-content">
         <router-view />
       </el-main>
@@ -226,196 +221,97 @@
   </el-container>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { authAPI } from '@/api/modules'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
 import NotificationCenter from '@/components/NotificationCenter.vue'
 
-export default {
-  name: 'Layout',
-  components: {
-    NotificationCenter
-  },
-  computed: {
-    activeMenu() {
-      const route = this.$route
-      const { path } = route
-      // 处理详情页等子路由
-      if (path.startsWith('/workorders')) {
-        return '/workorders'
-      }
-      if (path.startsWith('/processes')) {
-        return '/processes'
-      }
-      if (path.startsWith('/artworks') || path.startsWith('/dies') ||
-          path.startsWith('/foiling-plates') || path.startsWith('/embossing-plates')) {
-        return '/plate-making'
-      }
-      if (path.startsWith('/tasks')) {
-        return '/tasks'
-      }
-      if (path.startsWith('/suppliers') || path.startsWith('/purchase-orders') || path.startsWith('/sales-orders')) {
-        return '/purchase'
-      }
-      if (path.startsWith('/inventory')) {
-        return '/inventory'
-      }
-      if (path.startsWith('/finance')) {
-        return '/finance'
-      }
-      if (path.startsWith('/audit-logs')) {
-        return '/audit-logs'
-      }
-      return path
-    },
-    currentUsername() {
-      return this.$store.getters['user/currentUser']?.username || '用户'
-    },
-    canAccessAdmin() {
-      return this.$store.getters['user/currentUser']?.is_staff === true
-    },
-    // 检查是否有查看客户的权限
-    canViewCustomer() {
-      return this.hasPermission('workorder.view_customer')
-    },
-    // 检查是否有查看部门的权限
-    canViewDepartment() {
-      return this.hasPermission('workorder.view_department')
-    },
-    // 检查是否有查看工序的权限
-    canViewProcess() {
-      return this.hasPermission('workorder.view_process')
-    },
-    // 检查是否有查看产品的权限
-    canViewProduct() {
-      return this.hasPermission('workorder.view_product')
-    },
-    // 检查是否有查看物料的权限
-    canViewMaterial() {
-      return this.hasPermission('workorder.view_material')
-    },
-    // 检查是否有查看图稿的权限
-    canViewArtwork() {
-      return this.hasPermission('workorder.view_artwork')
-    },
-    // 检查是否有查看刀模的权限
-    canViewDie() {
-      return this.hasPermission('workorder.view_die')
-    },
-    // 检查是否有查看烫金版的权限
-    canViewFoilingPlate() {
-      return this.hasPermission('workorder.view_foilingplate')
-    },
-    // 检查是否有查看压凸版的权限
-    canViewEmbossingPlate() {
-      return this.hasPermission('workorder.view_embossingplate')
-    },
-    // 检查是否有查看产品组的权限
-    canViewProductGroup() {
-      return this.hasPermission('workorder.view_productgroup')
-    },
-    // 检查是否有查看供应商的权限
-    canViewSupplier() {
-      return this.hasPermission('workorder.view_supplier')
-    },
-    // 检查是否有查看采购单的权限
-    canViewPurchaseOrder() {
-      return this.hasPermission('workorder.view_purchaseorder')
-    },
-    // 检查是否有查看销售订单的权限
-    canViewSalesOrder() {
-      return this.hasPermission('workorder.view_salesorder')
-    },
-    // 检查是否有查看审计日志的权限
-    canViewAuditLog() {
-      return this.hasPermission('workorder.view_auditlog')
-    }
-  },
-  methods: {
-    // 检查用户是否有指定权限
-    hasPermission(permission) {
-      // 使用 store getter 检查权限
-      return this.$store.getters['user/hasPermission'](permission)
-    },
-    async handleCommand(command) {
-      if (command === 'profile') {
-        this.$router.push('/profile')
-      } else if (command === 'admin') {
-        const adminWindow = window.open('', '_blank', 'noopener')
-        try {
-          const result = await authAPI.createAdminSession()
-          const adminUrl = result?.admin_url || result?.data?.admin_url || '/admin/'
-          if (adminWindow) {
-            adminWindow.location = adminUrl
-          } else {
-            window.open(adminUrl, '_blank', 'noopener')
-          }
-        } catch (error) {
-          if (adminWindow) {
-            adminWindow.close()
-          }
-          ErrorHandler.handle(error, {
-            context: '打开管理后台',
-            fallbackMessage: '无法进入管理后台，请确认当前账号具备后台权限'
-          })
-        }
-      } else if (command === 'logout') {
-        this.$confirm('确定要退出登录吗?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(async () => {
-          try {
-            // 显示加载提示
-            const loading = this.$loading({
-              lock: true,
-              text: '正在退出登录...',
-              spinner: 'el-icon-loading',
-              background: 'rgba(0, 0, 0, 0.7)'
-            })
+const router = useRouter()
+const route = useRoute()
+const userStore = useUserStore()
 
-            try {
-              // 调用后端 logout API
-              await authAPI.logout()
-            } catch (e) {
-              // 忽略 logout API 错误，继续清除本地状态
-              logger.warn('后端登出API调用失败，但继续清除本地状态', e)
-            }
+const activeMenu = computed(() => {
+  const path = route.path
+  if (path.startsWith('/workorders')) return '/workorders'
+  if (path.startsWith('/processes')) return '/processes'
+  if (path.startsWith('/artworks') || path.startsWith('/dies') ||
+      path.startsWith('/foiling-plates') || path.startsWith('/embossing-plates')) return '/plate-making'
+  if (path.startsWith('/tasks')) return '/tasks'
+  if (path.startsWith('/suppliers') || path.startsWith('/purchase-orders') || path.startsWith('/sales-orders')) return '/purchase'
+  if (path.startsWith('/inventory')) return '/inventory'
+  if (path.startsWith('/finance')) return '/finance'
+  if (path.startsWith('/audit-logs')) return '/audit-logs'
+  return path
+})
 
-            // 清除用户状态（使用正确的 action 名称）
-            await this.$store.dispatch('user/logout')
+const currentUsername = computed(() => userStore.currentUser?.username || '用户')
+const canAccessAdmin = computed(() => userStore.currentUser?.is_staff === true)
+const canViewCustomer = computed(() => userStore.hasPermission('workorder.view_customer'))
+const canViewDepartment = computed(() => userStore.hasPermission('workorder.view_department'))
+const canViewProcess = computed(() => userStore.hasPermission('workorder.view_process'))
+const canViewProduct = computed(() => userStore.hasPermission('workorder.view_product'))
+const canViewMaterial = computed(() => userStore.hasPermission('workorder.view_material'))
+const canViewArtwork = computed(() => userStore.hasPermission('workorder.view_artwork'))
+const canViewDie = computed(() => userStore.hasPermission('workorder.view_die'))
+const canViewFoilingPlate = computed(() => userStore.hasPermission('workorder.view_foilingplate'))
+const canViewEmbossingPlate = computed(() => userStore.hasPermission('workorder.view_embossingplate'))
+const canViewProductGroup = computed(() => userStore.hasPermission('workorder.view_productgroup'))
+const canViewSupplier = computed(() => userStore.hasPermission('workorder.view_supplier'))
+const canViewPurchaseOrder = computed(() => userStore.hasPermission('workorder.view_purchaseorder'))
+const canViewSalesOrder = computed(() => userStore.hasPermission('workorder.view_salesorder'))
+const canViewAuditLog = computed(() => userStore.hasPermission('workorder.view_auditlog'))
 
-            // 清除完成后关闭加载提示
-            loading.close()
-
-            // 显示成功提示
-            this.$message({
-              message: '已退出登录',
-              type: 'success',
-              duration: 2000
-            })
-
-            // 延迟跳转，让用户看到成功提示
-            setTimeout(() => {
-              // 使用 window.location.href 跳转到登录页，完全刷新页面
-              window.location.href = '/login'
-            }, 500)
-          } catch (error) {
-            ErrorHandler.handle(error, 'Layout.logout')
-            this.$message.error('退出登录时发生错误，请刷新页面')
-
-            // 即使出错，也清除本地状态并跳转
-            await this.$store.dispatch('user/logout')
-            setTimeout(() => {
-              window.location.href = '/login'
-            }, 1000)
-          }
-        }).catch(() => {
-          // 用户取消操作
-        })
+const handleCommand = (command) => {
+  if (command === 'profile') {
+    router.push('/profile')
+  } else if (command === 'admin') {
+    const adminWindow = window.open('', '_blank', 'noopener')
+    authAPI.createAdminSession().then(result => {
+      const adminUrl = result?.admin_url || result?.data?.admin_url || '/admin/'
+      if (adminWindow) {
+        adminWindow.location = adminUrl
+      } else {
+        window.open(adminUrl, '_blank', 'noopener')
       }
-    }
+    }).catch(error => {
+      if (adminWindow) adminWindow.close()
+      ErrorHandler.handle(error, {
+        context: '打开管理后台',
+        fallbackMessage: '无法进入管理后台，请确认当前账号具备后台权限'
+      })
+    })
+  } else if (command === 'logout') {
+    ElMessageBox.confirm('确定要退出登录吗?', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(async () => {
+      const loading = ElLoading.service({
+        lock: true,
+        text: '正在退出登录...',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.7)'
+      })
+
+      try {
+        await authAPI.logout()
+      } catch (e) {
+        logger.warn('后端登出API调用失败，但继续清除本地状态', e)
+      }
+
+      userStore.clearUser()
+      loading.close()
+      ElMessage.success('已退出登录')
+
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 500)
+    }).catch(() => {})
   }
 }
 </script>
