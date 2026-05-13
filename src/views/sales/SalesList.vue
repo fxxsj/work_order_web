@@ -1,27 +1,12 @@
-<!-- 销售订单管理 -->
 <template>
   <div class="sales-order-list">
     <el-card>
-      <!-- 头部搜索栏 -->
       <div class="header-section">
         <div class="filter-group">
-          <el-input
-            v-model="filters.search"
-            placeholder="搜索订单号/客户名称"
-            style="width: 220px;"
-            clearable
-            @keyup.enter.native="handleSearch"
-            @clear="handleSearch"
-          >
-            <el-button slot="append" icon="el-icon-search" @click="handleSearch" />
+          <el-input v-model="filters.search" placeholder="搜索订单号/客户名称" style="width: 220px;" clearable @keyup.enter="handleSearch" @clear="handleSearch">
+            <template #append><el-button :icon="Search" @click="handleSearch" /></template>
           </el-input>
-          <el-select
-            v-model="filters.status"
-            placeholder="订单状态"
-            clearable
-            style="width: 120px;"
-            @change="handleSearch"
-          >
+          <el-select v-model="filters.status" placeholder="订单状态" clearable style="width: 120px;" @change="handleSearch">
             <el-option label="草稿" value="draft" />
             <el-option label="已提交" value="submitted" />
             <el-option label="已审核" value="approved" />
@@ -30,702 +15,163 @@
             <el-option label="已完成" value="completed" />
             <el-option label="已取消" value="cancelled" />
           </el-select>
-          <el-select
-            v-model="filters.payment_status"
-            placeholder="付款状态"
-            clearable
-            style="width: 120px;"
-            @change="handleSearch"
-          >
+          <el-select v-model="filters.payment_status" placeholder="付款状态" clearable style="width: 120px;" @change="handleSearch">
             <el-option label="未付款" value="unpaid" />
             <el-option label="部分付款" value="partial" />
             <el-option label="已付款" value="paid" />
           </el-select>
         </div>
         <div class="action-group">
-          <el-button icon="el-icon-refresh" @click="loadData">
-            刷新
-          </el-button>
-          <el-button
-            type="success"
-            icon="el-icon-s-operation"
-            :disabled="!canBatchConvert"
-            @click="handleBatchConvert"
-          >
-            批量转换
-          </el-button>
-          <el-button
-            v-if="canCreate()"
-            type="primary"
-            icon="el-icon-plus"
-            @click="handleAdd"
-          >
-            新建销售订单
-          </el-button>
+          <el-button :icon="RefreshRight" @click="loadData">刷新</el-button>
+          <el-button type="success" :icon="Operation" :disabled="!canBatchConvert" @click="handleBatchConvert">批量转换</el-button>
+          <el-button v-if="canCreate" type="primary" :icon="Plus" @click="handleAdd">新建销售订单</el-button>
         </div>
       </div>
 
-      <!-- 数据表格 -->
-      <el-table
-        v-if="tableData.length > 0"
-        ref="salesTable"
-        v-loading="loading"
-        :data="tableData"
-        style="width: 100%; margin-top: 20px;"
-        @selection-change="handleSelectionChange"
-        @sort-change="handleSortChange"
-      >
+      <el-table v-if="tableData.length > 0" ref="salesTable" v-loading="loading" :data="tableData" style="width: 100%; margin-top: 20px;" @selection-change="handleSelectionChange" @sort-change="handleSortChange">
         <el-table-column type="selection" width="55" />
-        <el-table-column
-          prop="order_number"
-          label="订单号"
-          width="150"
-          fixed="left"
-        >
-          <template slot-scope="scope">
-            <el-link type="primary" @click="handleView(scope.row)">
-              {{ scope.row.order_number }}
-            </el-link>
-          </template>
+        <el-table-column prop="order_number" label="订单号" width="150" fixed="left">
+          <template #default="scope"><el-link type="primary" @click="handleView(scope.row)">{{ scope.row.order_number }}</el-link></template>
         </el-table-column>
-        <el-table-column
-          prop="customer_name"
-          label="客户名称"
-          width="150"
-          show-overflow-tooltip
-        />
+        <el-table-column prop="customer_name" label="客户名称" width="150" show-overflow-tooltip />
         <el-table-column prop="order_date" label="订单日期" width="120" />
-        <el-table-column prop="delivery_date" label="交货日期" width="120">
-          <template slot-scope="scope">
-            <span :class="{ 'text-danger': isOverdue(scope.row) }">
-              {{ scope.row.delivery_date }}
-              <el-tooltip v-if="isOverdue(scope.row)" content="已逾期" placement="top">
-                <i class="el-icon-warning" style="color: #f56c6c;"></i>
-              </el-tooltip>
-            </span>
+        <el-table-column label="交货日期" width="120">
+          <template #default="scope">
+            <span :class="{ 'text-danger': isOverdue(scope.row) }">{{ scope.row.delivery_date }}</span>
+            <el-tooltip v-if="isOverdue(scope.row)" content="已逾期" placement="top"><i class="el-icon-warning" style="color: #f56c6c;"></i></el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="total_amount"
-          label="订单金额"
-          width="120"
-          align="right"
-        >
-          <template slot-scope="scope">
-            <span class="amount-text">¥{{ formatAmount(scope.row.total_amount) }}</span>
-          </template>
+        <el-table-column prop="total_amount" label="订单金额" width="120" align="right">
+          <template #default="scope"><span class="amount-text">¥{{ formatAmount(scope.row.total_amount) }}</span></template>
         </el-table-column>
-        <el-table-column
-          prop="status"
-          label="订单状态"
-          width="100"
-          align="center"
-        >
-          <template slot-scope="scope">
-            <el-tag :type="getStatusType(scope.row.status)" effect="plain">
-              {{ getStatusText(scope.row.status) }}
-            </el-tag>
-          </template>
+        <el-table-column label="订单状态" width="100" align="center">
+          <template #default="scope"><el-tag :type="getStatusType(scope.row.status)" effect="plain">{{ getStatusText(scope.row.status) }}</el-tag></template>
         </el-table-column>
-        <el-table-column
-          prop="payment_status"
-          label="付款状态"
-          width="100"
-          align="center"
-        >
-          <template slot-scope="scope">
-            <el-tag :type="getPaymentStatusType(scope.row.payment_status)" effect="plain">
-              {{ getPaymentStatusText(scope.row.payment_status) }}
-            </el-tag>
-          </template>
+        <el-table-column label="付款状态" width="100" align="center">
+          <template #default="scope"><el-tag :type="getPaymentStatusType(scope.row.payment_status)" effect="plain">{{ getPaymentStatusText(scope.row.payment_status) }}</el-tag></template>
         </el-table-column>
-        <el-table-column
-          prop="items_count"
-          label="明细数"
-          width="80"
-          align="center"
-        >
-          <template slot-scope="scope">
-            <el-tag size="mini" type="info">
-              {{ scope.row.items_count || 0 }}
-            </el-tag>
-          </template>
+        <el-table-column prop="items_count" label="明细数" width="80" align="center">
+          <template #default="scope"><el-tag size="mini" type="info">{{ scope.row.items_count || 0 }}</el-tag></template>
         </el-table-column>
-        <el-table-column
-          label="操作"
-          width="200"
-          fixed="right"
-          align="center"
-        >
-          <template slot-scope="scope">
+        <el-table-column label="操作" width="200" fixed="right" align="center">
+          <template #default="scope">
             <div class="action-buttons">
-              <el-tooltip v-if="canEdit(scope.row)" content="编辑订单" placement="top">
-                <el-button
-                  size="mini"
-                  type="primary"
-                  icon="el-icon-edit"
-                  @click="handleEdit(scope.row)"
-                />
-              </el-tooltip>
-              <el-tooltip v-if="canConvert(scope.row)" content="转换为施工单" placement="top">
-                <el-button
-                  size="mini"
-                  type="success"
-                  icon="el-icon-s-operation"
-                  @click="handleConvert(scope.row)"
-                />
-              </el-tooltip>
-              <el-tooltip v-if="scope.row.status === 'draft'" content="提交审核" placement="top">
-                <el-button
-                  size="mini"
-                  type="success"
-                  icon="el-icon-upload2"
-                  @click="handleSubmit(scope.row)"
-                />
-              </el-tooltip>
+              <el-tooltip v-if="canEdit(scope.row)" content="编辑订单" placement="top"><el-button size="mini" type="primary" :icon="Edit" @click="handleEdit(scope.row)" /></el-tooltip>
+              <el-tooltip v-if="canConvert(scope.row)" content="转换为施工单" placement="top"><el-button size="mini" type="success" :icon="Operation" @click="handleConvert(scope.row)" /></el-tooltip>
+              <el-tooltip v-if="scope.row.status === 'draft'" content="提交审核" placement="top"><el-button size="mini" type="success" :icon="Upload" @click="handleSubmit(scope.row)" /></el-tooltip>
               <template v-if="scope.row.status === 'submitted'">
-                <el-tooltip content="审核通过" placement="top">
-                  <el-button
-                    size="mini"
-                    type="success"
-                    icon="el-icon-check"
-                    @click="handleApprove(scope.row)"
-                  />
-                </el-tooltip>
-                <el-tooltip content="审核拒绝" placement="top">
-                  <el-button
-                    size="mini"
-                    type="warning"
-                    icon="el-icon-close"
-                    @click="handleReject(scope.row)"
-                  />
-                </el-tooltip>
+                <el-tooltip content="审核通过" placement="top"><el-button size="mini" type="success" :icon="Check" @click="handleApprove(scope.row)" /></el-tooltip>
+                <el-tooltip content="审核拒绝" placement="top"><el-button size="mini" type="warning" :icon="Close" @click="handleReject(scope.row)" /></el-tooltip>
               </template>
-              <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, scope.row)">
-                <el-button size="mini" type="text" icon="el-icon-more" />
-                <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="detail">
-                    <i class="el-icon-view"></i> 查看详情
-                  </el-dropdown-item>
-                  <el-dropdown-item v-if="canCancel(scope.row)" command="cancel" divided>
-                    <i class="el-icon-remove-outline"></i> 取消订单
-                  </el-dropdown-item>
-                  <el-dropdown-item v-if="canDelete()" command="delete" divided>
-                    <i class="el-icon-delete"></i> 删除订单
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </el-dropdown>
+              <el-tooltip content="查看详情" placement="top"><el-button size="mini" :icon="View" @click="handleView(scope.row)" /></el-tooltip>
             </div>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <Pagination
-        v-if="total > 0"
-        :current-page="currentPage"
-        :page-size="pageSize"
-        :total="total"
-        @current-change="handlePageChange"
-        @size-change="handleSizeChange"
-      />
-
-      <!-- 空状态显示 -->
-      <el-empty
-        v-if="!loading && tableData.length === 0"
-        description="暂无销售订单数据"
-        :image-size="200"
-        style="margin-top: 50px;"
-      >
-        <el-button v-if="canCreate()" type="primary" @click="handleAdd">
-          创建第一个销售订单
-        </el-button>
-        <el-button v-if="hasFilters" @click="handleReset">
-          重置筛选
-        </el-button>
-      </el-empty>
+      <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
+      <el-empty v-if="!loading && tableData.length === 0" description="暂无销售订单数据" />
     </el-card>
-
-    <!-- 新建/编辑订单对话框 -->
-    <el-dialog
-      :title="dialogMode === 'add' ? '新建销售订单' : '编辑销售订单'"
-      :visible.sync="dialogVisible"
-      width="80%"
-      :close-on-click-modal="false"
-      @closed="handleDialogClose"
-    >
-      <div v-if="submitErrors.length" style="color: red; margin-bottom: 10px;">
-        <div v-for="error in submitErrors" :key="error">
-          {{ error }}
-        </div>
-      </div>
-      <sales-order-form
-        v-if="dialogVisible"
-        :form-data="submitForm"
-        :dialog-mode="dialogMode"
-        @submit="handleFormSubmit"
-        @cancel="dialogVisible = false"
-      />
-    </el-dialog>
-
-    <!-- 审核/拒绝对话框 -->
-    <el-dialog title="审核销售订单" :visible.sync="approveVisible" width="50%">
-      <div v-if="approveErrors.length" style="color: red; margin-bottom: 10px;">
-        <div v-for="error in approveErrors" :key="error">
-          {{ error }}
-        </div>
-      </div>
-      <el-form :model="approveForm">
-        <el-form-item label="审核意见">
-          <el-input
-            v-model="approveForm.approval_comment"
-            type="textarea"
-            rows="4"
-            placeholder="请输入审核意见"
-          />
-        </el-form-item>
-      </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="approveVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmApprove">通过</el-button>
-        <el-button type="danger" @click="confirmReject">拒绝</el-button>
-      </span>
-    </el-dialog>
-
-    <!-- 订单详情对话框 -->
-    <el-dialog
-      title="销售订单详情"
-      :visible.sync="detailVisible"
-      width="90%"
-      :close-on-click-modal="false"
-      @closed="handleDetailClose"
-    >
-      <sales-order-detail
-        v-if="detailVisible && currentOrderId"
-        :order-id="currentOrderId"
-        @refresh="fetchData"
-        @edit="handleEditFromDetail"
-        @close="detailVisible = false"
-      />
-    </el-dialog>
   </div>
 </template>
 
-<script>
-import { salesOrderAPI, workOrderFlowAPI } from '@/api/modules'
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { Plus, Search, RefreshRight, Edit, View, Operation, Upload, Check, Close } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { salesOrderAPI } from '@/api/modules'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
-import SalesOrderForm from './SalesForm.vue'
-import SalesOrderDetail from './SalesDetail.vue'
-import Pagination from '@/components/common/Pagination.vue'
-import listPageMixin from '@/mixins/listPageMixin'
-import crudPermissionMixin from '@/mixins/crudPermissionMixin'
 
-export default {
-  name: 'SalesOrderList',
-  components: {
-    SalesOrderForm,
-    SalesOrderDetail,
-    Pagination
-  },
-  mixins: [listPageMixin, crudPermissionMixin],
-  data() {
-    return {
-      // API 服务和权限配置
-      apiService: salesOrderAPI,
-      permissionPrefix: 'salesorder',
+const router = useRouter()
+const userStore = useUserStore()
 
-      loading: false,
-      tableData: [],
-      filters: {
-        search: '',
-        status: '',
-        payment_status: ''
-      },
-      dialogVisible: false,
-      dialogMode: 'add',
-      submitForm: null,
-      submitErrors: [],
-      approveForm: {
-        approval_comment: ''
-      },
-      approveErrors: [],
-      approveVisible: false,
-      approveOrder: null,
-      detailVisible: false,
-      currentOrderId: null,
-      selectedRows: []
-    }
-  },
-  computed: {
-    hasFilters() {
-      return this.filters.search || this.filters.status || this.filters.payment_status
-    },
-    canBatchConvert() {
-      return this.selectedRows.some(row => row.status === 'approved')
-    }
-  },
-  mounted() {
-    this.loadData()
-  },
-  methods: {
-    // 实现 fetchData 方法（listPageMixin 要求）
-    async fetchData() {
-      const params = {
-        page: this.currentPage,
-        page_size: this.pageSize,
-        search: this.filters.search || undefined,
-        status: this.filters.status || undefined,
-        payment_status: this.filters.payment_status || undefined
-      }
-      return await this.apiService.getList(params)
-    },
+const tableData = ref([])
+const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(20)
+const salesTable = ref(null)
+const selectedRows = ref([])
 
-    async loadData() {
-      this.loading = true
-      try {
-        const response = await this.fetchData()
-        this.tableData = response.results || []
-        this.total = response.count || 0
-        this.selectedRows = []
-      } catch (error) {
-        ErrorHandler.showMessage(error, '获取销售订单列表失败')
-      } finally {
-        this.loading = false
-      }
-    },
+const filters = reactive({ search: '', status: '', payment_status: '' })
+const canCreate = computed(() => userStore.hasPermission('workorder.add_salesorder'))
+const canBatchConvert = computed(() => selectedRows.value.length > 0)
 
-    handleSearch() {
-      this.currentPage = 1
-      this.loadData()
-    },
-    handleReset() {
-      this.filters = { search: '', status: '', payment_status: '' }
-      this.currentPage = 1
-      this.loadData()
-    },
-    handleSizeChange(size) {
-      this.pageSize = size
-      this.currentPage = 1
-      this.loadData()
-    },
-    handlePageChange(page) {
-      this.currentPage = page
-      this.loadData()
-    },
-    handleSortChange(column) {
-      if (!column.prop) return
-    },
-    handleSelectionChange(rows) {
-      this.selectedRows = rows || []
-    },
-    handleView(row) {
-      this.currentOrderId = row.id
-      this.detailVisible = true
-    },
-    handleAdd() {
-      this.dialogMode = 'add'
-      this.submitForm = {}
-      this.submitErrors = []
-      this.dialogVisible = true
-    },
-    async handleEdit(row) {
-      try {
-        const response = await salesOrderAPI.getDetail(row.id)
-        this.dialogMode = 'edit'
-        this.submitForm = response
-        this.submitErrors = []
-        this.dialogVisible = true
-      } catch (error) {
-        ErrorHandler.showMessage(error, '获取订单详情失败')
-      }
-    },
-    async handleDelete(row) {
-      try {
-        const confirmed = await ErrorHandler.confirm(
-          `确定要删除销售订单"${row.order_number}"吗？此操作不可撤销。`,
-          '确认删除'
-        )
-        if (!confirmed) return
+const handleSearch = () => { currentPage.value = 1; loadData() }
+const handlePageChange = (page) => { currentPage.value = page; loadData() }
+const handleSizeChange = (size) => { pageSize.value = size; currentPage.value = 1; loadData() }
+const handleSelectionChange = (rows) => { selectedRows.value = rows }
+const handleSortChange = ({ prop, order }) => { /* TODO */ }
 
-        await salesOrderAPI.delete(row.id)
-        ErrorHandler.showSuccess('删除成功')
-        await this.loadData()
-      } catch (error) {
-        if (error !== 'cancel') {
-          ErrorHandler.showMessage(error, '删除失败')
-        }
-      }
-    },
-    async handleSubmit(row) {
-      try {
-        const confirmed = await ErrorHandler.confirm(
-          `确定要提交销售订单"${row.order_number}"吗？`,
-          '提交确认'
-        )
-        if (!confirmed) return
-
-        await salesOrderAPI.submit(row.id)
-        ErrorHandler.showSuccess('提交成功')
-        await this.loadData()
-      } catch (error) {
-        if (error !== 'cancel') {
-          const errors = error.response?.data?.errors || []
-          ErrorHandler.showMessage(error, errors[0] || '提交失败')
-        }
-      }
-    },
-    canConvert(row) {
-      return row.status === 'approved'
-    },
-    async handleConvert(row) {
-      try {
-        const confirmed = await ErrorHandler.confirm(
-          `确定将销售订单"${row.order_number}"转换为施工单吗？`,
-          '转换确认'
-        )
-        if (!confirmed) return
-
-        const response = await workOrderFlowAPI.createFromSalesOrder({
-          sales_order_id: row.id
-        })
-        ErrorHandler.showSuccess(`已创建施工单 ${response.order_number || ''}`)
-        await this.loadData()
-      } catch (error) {
-        ErrorHandler.showMessage(error, '转换施工单失败')
-      }
-    },
-    async handleBatchConvert() {
-      const approvedRows = this.selectedRows.filter(row => row.status === 'approved')
-      if (approvedRows.length === 0) {
-        ErrorHandler.showMessage(null, '请选择已审核的销售订单')
-        return
-      }
-      try {
-        const confirmed = await ErrorHandler.confirm(
-          `确定将选中的 ${approvedRows.length} 个销售订单转换为施工单吗？`,
-          '批量转换确认'
-        )
-        if (!confirmed) return
-
-        const response = await workOrderFlowAPI.createFromSalesOrders({
-          sales_order_ids: approvedRows.map(row => row.id)
-        })
-        const createdCount = response.created ? response.created.length : 0
-        const failedCount = response.failed ? response.failed.length : 0
-        const message = `成功 ${createdCount} 个，失败 ${failedCount} 个`
-        if (failedCount > 0) {
-          ErrorHandler.showMessage(null, message)
-        } else {
-          ErrorHandler.showSuccess(message)
-        }
-        if (this.$refs.salesTable) {
-          this.$refs.salesTable.clearSelection()
-        }
-        await this.loadData()
-      } catch (error) {
-        ErrorHandler.showMessage(error, '批量转换失败')
-      }
-    },
-    async handleFormSubmit(formData) {
-      try {
-        if (this.dialogMode === 'add') {
-          await salesOrderAPI.create(formData)
-          ErrorHandler.showSuccess('创建成功')
-        } else {
-          await salesOrderAPI.update(this.submitForm.id, formData)
-          ErrorHandler.showSuccess('更新成功')
-        }
-        this.dialogVisible = false
-        await this.loadData()
-      } catch (error) {
-        const responseData = error.response?.data || {}
-        this.submitErrors = responseData.errors ||
-          responseData.detail ? [responseData.detail] :
-          Object.keys(responseData).length > 0 ?
-            Object.entries(responseData).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`) :
-            ['保存失败，请检查输入']
-        if (this.submitErrors.length > 0) {
-          ErrorHandler.showMessage(error, this.submitErrors[0])
-        }
-      }
-    },
-    handleApprove(row) {
-      this.approveOrder = row
-      this.approveForm.approval_comment = ''
-      this.approveErrors = []
-      this.approveVisible = true
-    },
-    async confirmApprove() {
-      try {
-        await salesOrderAPI.approve(this.approveOrder.id, { approval_comment: this.approveForm.approval_comment })
-        ErrorHandler.showSuccess('审核通过')
-        this.approveVisible = false
-        await this.loadData()
-      } catch (error) {
-        this.approveErrors = error.response?.data?.errors || []
-        ErrorHandler.showMessage(error, '审核失败')
-      }
-    },
-    handleReject(row) {
-      this.approveOrder = row
-      this.approveForm.approval_comment = ''
-      this.approveErrors = []
-      this.approveVisible = true
-    },
-    async confirmReject() {
-      try {
-        await salesOrderAPI.reject(this.approveOrder.id, { reason: this.approveForm.approval_comment })
-        ErrorHandler.showSuccess('已拒绝')
-        this.approveVisible = false
-        await this.loadData()
-      } catch (error) {
-        this.approveErrors = error.response?.data?.errors || []
-        ErrorHandler.showMessage(error, '拒绝失败')
-      }
-    },
-    async handleCancel(row) {
-      try {
-        const confirmed = await ErrorHandler.confirm(
-          `确定要取消销售订单"${row.order_number}"吗？`,
-          '取消确认'
-        )
-        if (!confirmed) return
-
-        await salesOrderAPI.cancel(row.id, { reason: '用户取消' })
-        ErrorHandler.showSuccess('已取消')
-        await this.loadData()
-      } catch (error) {
-        if (error !== 'cancel') {
-          ErrorHandler.showMessage(error, '取消失败')
-        }
-      }
-    },
-    handleCommand(command, row) {
-      const commands = {
-        detail: () => this.handleView(row),
-        cancel: () => this.handleCancel(row),
-        delete: () => this.handleDelete(row)
-      }
-      commands[command]?.()
-    },
-    handleDialogClose() {
-      this.submitForm = null
-      this.submitErrors = []
-    },
-    handleDetailClose() {
-      this.currentOrderId = null
-    },
-    async handleEditFromDetail(orderId) {
-      try {
-        const response = await salesOrderAPI.getDetail(orderId)
-        this.dialogMode = 'edit'
-        this.submitForm = response
-        this.submitErrors = []
-        this.detailVisible = false
-        this.dialogVisible = true
-      } catch (error) {
-        ErrorHandler.showMessage(error, '获取订单详情失败')
-      }
-    },
-    getStatusType(status) {
-      const typeMap = {
-        draft: 'info',
-        submitted: 'warning',
-        approved: 'primary',
-        rejected: 'danger',
-        in_production: 'success',
-        completed: 'success',
-        cancelled: 'danger'
-      }
-      return typeMap[status] || 'info'
-    },
-    getStatusText(status) {
-      const statusMap = {
-        draft: '草稿',
-        submitted: '已提交',
-        approved: '已审核',
-        rejected: '已拒绝',
-        in_production: '生产中',
-        completed: '已完成',
-        cancelled: '已取消'
-      }
-      return statusMap[status] || '未知'
-    },
-    getPaymentStatusType(status) {
-      const typeMap = {
-        unpaid: 'danger',
-        partial: 'warning',
-        paid: 'success'
-      }
-      return typeMap[status] || 'info'
-    },
-    getPaymentStatusText(status) {
-      const statusMap = {
-        unpaid: '未付款',
-        partial: '部分付款',
-        paid: '已付款'
-      }
-      return statusMap[status] || '未知'
-    },
-    canEdit(row) {
-      return row.status === 'draft'
-    },
-    canCancel(row) {
-      return ['draft', 'submitted'].includes(row.status)
-    },
-    isOverdue(row) {
-      if (!row.delivery_date) return false
-      const deliveryDate = new Date(row.delivery_date)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      return deliveryDate < today && !['completed', 'cancelled'].includes(row.status)
-    },
-    formatAmount(amount) {
-      if (!amount) return '0.00'
-      return parseFloat(amount).toFixed(2)
-    }
-  }
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params = { page: currentPage.value, page_size: pageSize.value }
+    if (filters.search) params.search = filters.search
+    if (filters.status) params.status = filters.status
+    if (filters.payment_status) params.payment_status = filters.payment_status
+    const response = await salesOrderAPI.getList(params)
+    tableData.value = response?.results || []
+    total.value = response?.count || 0
+  } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
 }
+
+const handleAdd = () => { router.push('/sales/create') }
+const handleView = (row) => { router.push(`/sales/${row.id}`) }
+const handleEdit = (row) => { router.push(`/sales/${row.id}/edit`) }
+
+const canEdit = (row) => row.status === 'draft' && userStore.hasPermission('workorder.change_salesorder')
+const canConvert = (row) => ['approved', 'in_production'].includes(row.status) && userStore.hasPermission('workorder.add_workorder')
+
+const handleConvert = async (row) => {
+  try {
+    await ErrorHandler.confirm(`确定要将订单"${row.order_number}"转换为施工单？`)
+    const response = await salesOrderAPI.convertToWorkOrder(row.id)
+    ElMessage.success('转换成功')
+    router.push(`/workorders/${response.work_order_id || response.id}`)
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '转换失败') }
+}
+
+const handleBatchConvert = async () => {
+  try {
+    await ErrorHandler.confirm(`确定要将 ${selectedRows.value.length} 个订单转换为施工单？`)
+    const orderIds = selectedRows.value.map(r => r.id)
+    const response = await salesOrderAPI.batchConvertToWorkOrder(orderIds)
+    ElMessage.success(`成功转换 ${response.success_count} 个订单`)
+    selectedRows.value = []
+    loadData()
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '批量转换失败') }
+}
+
+const handleSubmit = async (row) => {
+  try { await salesOrderAPI.submit(row.id); ElMessage.success('提交成功'); loadData() } catch (error) { ErrorHandler.showMessage(error, '提交失败') }
+}
+
+const handleApprove = async (row) => {
+  try { await salesOrderAPI.approve(row.id); ElMessage.success('审核通过'); loadData() } catch (error) { ErrorHandler.showMessage(error, '审核失败') }
+}
+
+const handleReject = async (row) => {
+  try { await salesOrderAPI.reject(row.id); ElMessage.success('已拒绝'); loadData() } catch (error) { ErrorHandler.showMessage(error, '操作失败') }
+}
+
+const isOverdue = (row) => row.delivery_date && new Date(row.delivery_date) < new Date() && !['completed', 'cancelled'].includes(row.status)
+const formatAmount = (amount) => amount ? amount.toLocaleString() : '0.00'
+const getStatusType = (status) => ({ draft: 'info', submitted: 'primary', approved: 'success', rejected: 'danger', in_production: 'warning', completed: 'success', cancelled: 'info' })[status] || 'info')
+const getStatusText = (status) => ({ draft: '草稿', submitted: '已提交', approved: '已审核', rejected: '已拒绝', in_production: '生产中', completed: '已完成', cancelled: '已取消' })[status] || status)
+const getPaymentStatusType = (status) => ({ unpaid: 'danger', partial: 'warning', paid: 'success' })[status] || 'info')
+const getPaymentStatusText = (status) => ({ unpaid: '未付款', partial: '部分付款', paid: '已付款' })[status] || status)
+
+onMounted(() => { loadData() })
 </script>
 
 <style scoped>
-.sales-order-list {
-  padding: 20px;
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.filter-group,
-.action-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.table-action-buttons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-}
-
-.table-action-buttons .el-button {
-  margin-left: 0;
-  padding: 5px 8px;
-}
-
-.amount-text {
-  font-weight: 600;
-  color: #303133;
-}
-
-.text-danger {
-  color: #f56c6c;
-}
+.sales-order-list { padding: 20px; }
+.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.text-danger { color: #f56c6c; font-weight: bold; }
+.amount-text { font-weight: 500; }
+.action-buttons { display: flex; gap: 4px; justify-content: center; }
 </style>
