@@ -10,25 +10,26 @@
           @input="handleSearchDebounced"
           @clear="handleSearch"
         >
-          <el-button slot="append" icon="el-icon-search" @click="handleSearch" />
+          <template #append>
+            <el-button :icon="Search" @click="handleSearch" />
+          </template>
         </el-input>
         <el-button
-          v-if="canCreate()"
+          v-if="canCreate"
           type="primary"
-          icon="el-icon-plus"
-          @click="showCreateDialog()"
+          :icon="Plus"
+          @click="showCreateDialog"
         >
           新建客户
         </el-button>
       </div>
 
-      <!-- 空状态显示 -->
       <el-empty
         v-if="!loading && tableData.length === 0"
         description="暂无客户数据"
         :image-size="200"
       >
-        <el-button v-if="canCreate()" type="primary" @click="showCreateDialog()">
+        <el-button v-if="canCreate" type="primary" @click="showCreateDialog">
           创建第一个客户
         </el-button>
       </el-empty>
@@ -44,20 +45,20 @@
         <el-table-column prop="phone" label="联系电话" width="150" />
         <el-table-column prop="email" label="邮箱" width="200" />
         <el-table-column prop="salesperson_name" label="业务员" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ scope.row.salesperson_name || '-' }}
           </template>
         </el-table-column>
         <el-table-column prop="address" label="地址" min-width="200" />
         <el-table-column prop="created_at" label="创建时间" width="180">
-          <template slot-scope="scope">
-            {{ scope.row.created_at | formatDateTime }}
+          <template #default="scope">
+            {{ formatDateTime(scope.row.created_at) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-button
-              v-if="canEdit()"
+              v-if="canEdit"
               type="text"
               size="small"
               @click="handleEdit(scope.row)"
@@ -65,7 +66,7 @@
               编辑
             </el-button>
             <el-button
-              v-if="canDelete()"
+              v-if="canDelete"
               type="text"
               size="small"
               style="color: #F56C6C;"
@@ -77,25 +78,25 @@
         </el-table-column>
       </el-table>
 
-      <Pagination
+      <el-pagination
         v-if="total > 0"
-        :current-page="currentPage"
-        :page-size="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
-        @current-change="handlePageChange"
+        layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
+        @current-change="handlePageChange"
       />
     </el-card>
 
-    <!-- 客户表单对话框 -->
     <el-dialog
+      v-model="dialogVisible"
       :title="formTitle"
-      :visible.sync="dialogVisible"
       width="600px"
       @close="resetForm"
     >
       <el-form
-        ref="form"
+        ref="formRef"
         :model="form"
         :rules="rules"
         label-width="100px"
@@ -145,28 +146,44 @@
           />
         </el-form-item>
       </el-form>
-      <div slot="footer">
+      <template #footer>
         <el-button @click="dialogVisible = false">
           取消
         </el-button>
         <el-button type="primary" :loading="formLoading" @click="handleSubmit">
           确定
         </el-button>
-      </div>
+      </template>
     </el-dialog>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { Plus, Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { customerAPI, authAPI } from '@/api/modules'
-import listPageMixin from '@/mixins/listPageMixin'
-import crudPermissionMixin from '@/mixins/crudPermissionMixin'
-import formDialogMixin from '@/mixins/formDialogMixin'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import unwrapApiResponse from '@/utils/apiResponse'
-import Pagination from '@/components/common/Pagination.vue'
+import { formatDateTime } from '@/utils/filter'
 
-// 表单初始值（避免重复定义）
+const userStore = useUserStore()
+
+const searchText = ref('')
+const tableData = ref([])
+const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(20)
+
+const dialogVisible = ref(false)
+const dialogType = ref('create')
+const currentRow = ref(null)
+const formLoading = ref(false)
+const salespersonList = ref([])
+const formRef = ref(null)
+
 const formInitialValues = {
   name: '',
   contact_person: '',
@@ -177,143 +194,142 @@ const formInitialValues = {
   notes: ''
 }
 
-export default {
-  name: 'CustomerList',
-  components: { Pagination },
-  mixins: [listPageMixin, crudPermissionMixin, formDialogMixin],
-  data() {
-    return {
-      // API 服务和权限配置
-      apiService: customerAPI,
-      permissionPrefix: 'customer',
+const form = reactive({ ...formInitialValues })
 
-      // 表单相关
-      form: { ...formInitialValues },
-      formLoading: false,
-      salespersonList: [],
-      rules: {
-        name: [
-          { required: true, message: '请输入客户名称', trigger: 'blur' }
-        ]
-      }
+const rules = {
+  name: [
+    { required: true, message: '请输入客户名称', trigger: 'blur' }
+  ]
+}
+
+const formTitle = computed(() => dialogType.value === 'edit' ? '编辑客户' : '新建客户')
+const canCreate = computed(() => userStore.hasPermission('workorder.add_customer'))
+const canEdit = computed(() => userStore.hasPermission('workorder.change_customer'))
+const canDelete = computed(() => userStore.hasPermission('workorder.delete_customer'))
+
+let searchTimer = null
+
+const handleSearchDebounced = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    handleSearch()
+  }, 300)
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadData()
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadData()
+}
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value
     }
-  },
-  computed: {
-    // 自定义对话框标题（不与 mixin 的 dialogTitle data 属性冲突）
-    formTitle() {
-      return this.dialogType === 'edit' ? '编辑客户' : '新建客户'
+    if (searchText.value) {
+      params.search = searchText.value
     }
-  },
-  watch: {
-    // 监听对话框显示状态，编辑时填充表单
-    dialogVisible(val) {
-      if (val && this.dialogType === 'edit' && this.currentRow) {
-        this.form = {
-          name: this.currentRow.name,
-          contact_person: this.currentRow.contact_person || '',
-          phone: this.currentRow.phone || '',
-          email: this.currentRow.email || '',
-          address: this.currentRow.address || '',
-          salesperson: this.currentRow.salesperson || null,
-          notes: this.currentRow.notes || ''
-        }
-        // 清除验证
-        this.$nextTick(() => {
-          this.$refs.form?.clearValidate()
-        })
-      }
+    const response = await customerAPI.getList(params)
+    const result = unwrapApiResponse(response)
+    tableData.value = result?.results || []
+    total.value = result?.count || 0
+  } catch (error) {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadSalespersons = async () => {
+  try {
+    const response = await authAPI.getSalespersons()
+    salespersonList.value = unwrapApiResponse(response) || []
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载业务员列表失败')
+  }
+}
+
+const showCreateDialog = () => {
+  resetForm()
+  dialogType.value = 'create'
+  currentRow.value = null
+  dialogVisible.value = true
+}
+
+const resetForm = () => {
+  Object.assign(form, formInitialValues)
+  nextTick(() => {
+    formRef.value?.clearValidate()
+  })
+}
+
+const handleEdit = (row) => {
+  dialogType.value = 'edit'
+  currentRow.value = row
+  Object.assign(form, {
+    name: row.name,
+    contact_person: row.contact_person || '',
+    phone: row.phone || '',
+    email: row.email || '',
+    address: row.address || '',
+    salesperson: row.salesperson || null,
+    notes: row.notes || ''
+  })
+  dialogVisible.value = true
+}
+
+const handleSubmit = async () => {
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return false
+
+  formLoading.value = true
+  try {
+    if (dialogType.value === 'edit') {
+      await customerAPI.update(currentRow.value.id, form)
+      ElMessage.success('保存成功')
+    } else {
+      await customerAPI.create(form)
+      ElMessage.success('创建成功')
     }
-  },
-  created() {
-    this.loadData()
-    this.loadSalespersons()
-  },
-  methods: {
-    // 实现 fetchData 方法（listPageMixin 要求）
-    async fetchData() {
-      const params = {
-        page: this.currentPage,
-        page_size: this.pageSize
-      }
+    dialogVisible.value = false
+    loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, dialogType.value === 'edit' ? '保存失败' : '创建失败')
+  } finally {
+    formLoading.value = false
+  }
+}
 
-      if (this.searchText) {
-        params.search = this.searchText
-      }
-
-      return this.apiService.getList(params)
-    },
-
-    async loadSalespersons() {
-      try {
-        const salespersons = await authAPI.getSalespersons()
-        this.salespersonList = unwrapApiResponse(salespersons) || []
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载业务员列表失败')
-      }
-    },
-
-    // 显示创建对话框（覆盖 formDialogMixin 的方法）
-    showCreateDialog() {
-      this.resetForm()
-      this.dialogType = 'create'
-      this.currentRow = null
-      this.dialogVisible = true
-    },
-
-    // 重置表单（使用 formInitialValues 避免重复定义）
-    resetForm() {
-      this.form = { ...formInitialValues }
-      this.$nextTick(() => {
-        this.$refs.form?.clearValidate()
-      })
-    },
-
-    async handleSubmit() {
-      this.$refs.form.validate(async (valid) => {
-        if (!valid) return false
-
-        this.formLoading = true
-        try {
-          if (this.dialogType === 'edit') {
-            await this.apiService.update(this.currentRow.id, this.form)
-            ErrorHandler.showSuccess('保存成功')
-          } else {
-            await this.apiService.create(this.form)
-            ErrorHandler.showSuccess('创建成功')
-          }
-
-          this.dialogVisible = false
-          this.loadData()
-        } catch (error) {
-          ErrorHandler.showMessage(error, this.dialogType === 'edit' ? '保存失败' : '创建失败')
-        } finally {
-          this.formLoading = false
-        }
-      })
-    },
-
-    // 编辑客户
-    handleEdit(row) {
-      this.dialogType = 'edit'
-      this.currentRow = row
-      this.dialogVisible = true
-    },
-
-    // 删除客户（使用 ErrorHandler）
-    async handleDelete(row) {
-      try {
-        await ErrorHandler.confirm(`确定要删除客户"${row.name}"吗？`)
-        await this.apiService.delete(row.id)
-        ErrorHandler.showSuccess('删除成功')
-        await this.loadData()
-      } catch (error) {
-        if (error !== 'cancel' && error.message !== 'cancel') {
-          ErrorHandler.showMessage(error, '删除失败')
-        }
-      }
+const handleDelete = async (row) => {
+  try {
+    await ErrorHandler.confirm(`确定要删除客户"${row.name}"吗？`)
+    await customerAPI.delete(row.id)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch (error) {
+    if (error !== 'cancel' && error.message !== 'cancel') {
+      ErrorHandler.showMessage(error, '删除失败')
     }
   }
 }
+
+onMounted(() => {
+  loadData()
+  loadSalespersons()
+})
 </script>
 
 <style scoped>
