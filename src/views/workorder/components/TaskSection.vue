@@ -21,7 +21,7 @@
 
 <script setup>
 const props = defineProps({ tasks: { type: Array, default: () => [] }, taskStats: { type: Object, default: () => ({}) }, loading: { type: Boolean, default: false } })
-const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', draft: 'warning' })[s] || 'info')
+const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', draft: 'warning' })[s] || 'info';
 </script>
 
 <style scoped>

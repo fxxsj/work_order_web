@@ -12,6 +12,6 @@
 
 <script setup>
 defineProps({ task: { type: Object, required: true } })
-const getMaterialStatusTagType = (s) => ({ pending: 'info', ordered: 'primary', received: 'success', cut: 'warning', completed: 'success' })[s] || 'info')
+const getMaterialStatusTagType = (s) => ({ pending: 'info', ordered: 'primary', received: 'success', cut: 'warning', completed: 'success' })[s] || 'info';
 const getMaterialStatusText = (s) => ({ pending: '待采购', ordered: '已下单', received: '已回料', cut: '已开料', completed: '已完成' })[s] || s
 </script>

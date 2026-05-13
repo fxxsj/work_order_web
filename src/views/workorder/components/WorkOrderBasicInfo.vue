@@ -28,7 +28,7 @@ const props = defineProps({
 })
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-'
-const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', paused: 'warning', completed: 'success', cancelled: 'danger' })[s] || 'info')
-const getApprovalType = (s) => ({ pending: 'warning', approved: 'success', rejected: 'danger' })[s] || 'info')
-const getPriorityType = (s) => ({ low: 'info', normal: 'primary', high: 'danger', urgent: 'danger' })[s] || 'info')
+const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', paused: 'warning', completed: 'success', cancelled: 'danger' })[s] || 'info';
+const getApprovalType = (s) => ({ pending: 'warning', approved: 'success', rejected: 'danger' })[s] || 'info';
+const getPriorityType = (s) => ({ low: 'info', normal: 'primary', high: 'danger', urgent: 'danger' })[s] || 'info';
 </script>

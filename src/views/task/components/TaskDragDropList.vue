@@ -69,10 +69,10 @@ const handleDropUnassigned = () => {
 const resetDrag = () => { dragOverOperator.value = null; dragOverColumn.value = null; draggedTask.value = null; draggedFromOperator.value = null }
 
 const getPriorityClass = (task) => `priority-${task.work_order__priority || 'normal'}`
-const getPriorityType = (p) => ({ low: 'info', normal: 'info', high: 'warning', urgent: 'danger' })[p] || 'info')
-const getPriorityLabel = (p) => ({ low: '低', normal: '普通', high: '高', urgent: '紧急' })[p] || '普通')
-const getStatusType = (s) => ({ draft: 'info', pending: 'warning', in_progress: 'primary', completed: 'success', cancelled: 'danger' })[s] || 'info')
-const getStatusLabel = (s) => ({ draft: '草稿', pending: '待开始', in_progress: '进行中', completed: '已完成', cancelled: '已取消' })[s] || s
+const getPriorityType = (p) => ({ low: 'info', normal: 'info', high: 'warning', urgent: 'danger' })[p] || 'info';
+const getPriorityLabel = (p) => ({ low: '低', normal: '普通', high: '高', urgent: '紧急' })[p] || '普通';
+const getStatusType = (s) => ({ draft: 'info', pending: 'warning', in_progress: 'primary', completed: 'success', cancelled: 'danger' })[s] || 'info';
+const getStatusLabel = (s) => ({ draft: '草稿', pending: '待开始', in_progress: '进行中', completed: '已完成', cancelled: '已取消' })[s] || s;
 </script>
 
 <style scoped>

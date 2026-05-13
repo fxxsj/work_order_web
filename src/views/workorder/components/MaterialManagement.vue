@@ -20,8 +20,8 @@ const props = defineProps({ materials: { type: Array, default: () => [] }, edita
 const emit = defineEmits(['add-material', 'update-status'])
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-'
-const getStatusType = (s) => ({ pending: 'info', ordered: 'primary', received: 'success', cut: 'warning', completed: 'success' })[s] || 'info')
-const getStatusText = (s) => ({ pending: '待采购', ordered: '已下单', received: '已回料', cut: '已开料', completed: '已完成' })[s] || s)
+const getStatusType = (s) => ({ pending: 'info', ordered: 'primary', received: 'success', cut: 'warning', completed: 'success' })[s] || 'info';
+const getStatusText = (s) => ({ pending: '待采购', ordered: '已下单', received: '已回料', cut: '已开料', completed: '已完成' })[s] || s;
 </script>
 
 <style scoped>

@@ -85,8 +85,6 @@ import { ElMessage } from 'element-plus'
 import { assignmentRuleAPI, processAPI, departmentAPI, dispatchConfigAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
-import ProcessList from './components/ProcessList.vue'
-import DepartmentPriorityPanel from './components/DepartmentPriorityPanel.vue'
 
 const userStore = useUserStore()
 

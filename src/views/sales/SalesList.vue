@@ -159,10 +159,10 @@ const handleReject = async (row) => {
 
 const isOverdue = (row) => row.delivery_date && new Date(row.delivery_date) < new Date() && !['completed', 'cancelled'].includes(row.status)
 const formatAmount = (amount) => amount ? amount.toLocaleString() : '0.00'
-const getStatusType = (status) => ({ draft: 'info', submitted: 'primary', approved: 'success', rejected: 'danger', in_production: 'warning', completed: 'success', cancelled: 'info' })[status] || 'info')
-const getStatusText = (status) => ({ draft: '草稿', submitted: '已提交', approved: '已审核', rejected: '已拒绝', in_production: '生产中', completed: '已完成', cancelled: '已取消' })[status] || status)
-const getPaymentStatusType = (status) => ({ unpaid: 'danger', partial: 'warning', paid: 'success' })[status] || 'info')
-const getPaymentStatusText = (status) => ({ unpaid: '未付款', partial: '部分付款', paid: '已付款' })[status] || status)
+const getStatusType = (status) => ({ draft: 'info', submitted: 'primary', approved: 'success', rejected: 'danger', in_production: 'warning', completed: 'success', cancelled: 'info' })[status] || 'info';
+const getStatusText = (status) => ({ draft: '草稿', submitted: '已提交', approved: '已审核', rejected: '已拒绝', in_production: '生产中', completed: '已完成', cancelled: '已取消' })[status] || status;
+const getPaymentStatusType = (status) => ({ unpaid: 'danger', partial: 'warning', paid: 'success' })[status] || 'info';
+const getPaymentStatusText = (status) => ({ unpaid: '未付款', partial: '部分付款', paid: '已付款' })[status] || status;
 
 onMounted(() => { loadData() })
 </script>

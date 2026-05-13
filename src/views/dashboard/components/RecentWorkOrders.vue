@@ -20,8 +20,8 @@ defineProps({ recentOrders: { type: Array, default: () => [] } })
 const router = useRouter()
 const goTo = (path) => router.push(path)
 
-const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', paused: 'warning', cancelled: 'danger' })[s] || 'info')
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-'
+const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', paused: 'warning', cancelled: 'danger' })[s] || 'info';
+const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-';
 </script>
 
 <style scoped>

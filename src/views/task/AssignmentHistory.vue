@@ -124,7 +124,7 @@ const loadDepartments = async () => {
 
 const goToWorkOrder = (row) => { if (row.work_order_id) router.push(`/workorders/${row.work_order_id}`) }
 
-const getActionTypeTag = (type) => ({ assign: 'success', unassign: 'warning', transfer: 'primary', complete: 'info' })[type] || 'info')
+const getActionTypeTag = (type) => ({ assign: 'success', unassign: 'warning', transfer: 'primary', complete: 'info' })[type] || 'info';
 
 const handleExport = async () => {
   try {

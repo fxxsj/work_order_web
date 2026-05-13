@@ -14,7 +14,7 @@
 <script setup>
 const props = defineProps({ tasks: { type: Array, default: () => [] } })
 
-const getTaskStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', draft: 'warning', cancelled: 'danger' })[s] || 'info')
+const getTaskStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', draft: 'warning', cancelled: 'danger' })[s] || 'info';
 const calculateTaskProgress = (t) => t.production_quantity ? Math.round(((t.quantity_completed || 0) / t.production_quantity) * 100) : 0
 const getProgressColor = (t) => calculateTaskProgress(t) === 100 ? '#67C23A' : '#409EFF'
 </script>

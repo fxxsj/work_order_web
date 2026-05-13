@@ -27,8 +27,8 @@ const emit = defineEmits(['add-process', 'start-process', 'complete-process', 'c
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-'
 const getProcessColor = (s) => ({ pending: '#909399', in_progress: '#409EFF', completed: '#67C23A', draft: '#E6A23C' }[s] || '#909399')
-const getProcessStatusType = (s) => ({ pending: 'info', in_progress: '', completed: 'success', draft: 'warning' }[s] || 'info')
-const getTaskStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', draft: 'warning' }[s] || 'info')
+const getProcessStatusType = (s) => ({ pending: 'info', in_progress: '', completed: 'success', draft: 'warning' }[s] || 'info';
+const getTaskStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', draft: 'warning' }[s] || 'info';
 const getProcessDepartment = (p) => p.department_name || '-'
 const calculateProcessProgress = (p) => p.tasks?.length ? Math.round((p.tasks.filter(t => t.status === 'completed').length / p.tasks.length) * 100) : 0
 </script>

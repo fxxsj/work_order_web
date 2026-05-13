@@ -126,8 +126,8 @@ const handleReject = async () => { try { await salesOrderAPI.reject(route.params
 
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('zh-CN') : '-'
 const formatAmount = (amount) => amount ? amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '0.00'
-const getStatusType = (status) => ({ draft: 'info', submitted: 'primary', approved: 'success', rejected: 'danger', in_production: 'warning', completed: 'success', cancelled: 'info' })[status] || 'info')
-const getPaymentStatusType = (status) => ({ unpaid: 'danger', partial: 'warning', paid: 'success' })[status] || 'info')
+const getStatusType = (status) => ({ draft: 'info', submitted: 'primary', approved: 'success', rejected: 'danger', in_production: 'warning', completed: 'success', cancelled: 'info' })[status] || 'info';
+const getPaymentStatusType = (status) => ({ unpaid: 'danger', partial: 'warning', paid: 'success' })[status] || 'info';
 
 onMounted(() => { loadData() })
 </script>

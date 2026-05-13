@@ -17,6 +17,6 @@
 <script setup>
 defineProps({ data: { type: Array, default: () => [] }, loading: { type: Boolean, default: false } })
 const emit = defineEmits(['view', 'edit', 'ship'])
-const getStatusType = (s) => ({ pending: 'info', shipped: 'primary', in_transit: 'warning', received: 'success', rejected: 'danger' })[s] || 'info')
+const getStatusType = (s) => ({ pending: 'info', shipped: 'primary', in_transit: 'warning', received: 'success', rejected: 'danger' })[s] || 'info';
 const getTrackingUrl = (row) => `https://www.baidu.com/s?wd=${row.tracking_number || ''}`
 </script>

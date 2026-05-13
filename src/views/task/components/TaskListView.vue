@@ -17,7 +17,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <div style="margin-top: 20px; text-align: right;"><el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]" :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange" @current-change="handleCurrentChange" /></div>
+    <div style="margin-top: 20px; text-align: right;"><el-pagination :current-page="currentPage" :page-size="pageSize" :page-sizes="[10, 20, 50, 100]" :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="v => emit('page-size-change', v)" @current-change="v => emit('page-change', v)" /></div>
   </div>
 </template>
 
@@ -27,22 +27,22 @@ import { Edit, User, Check } from '@element-plus/icons-vue'
 const props = defineProps({ tasks: { type: Array, default: () => [] }, editable: { type: Boolean, default: false }, loading: { type: Boolean, default: false }, total: { type: Number, default: 0 }, currentPage: { type: Number, default: 1 }, pageSize: { type: Number, default: 20 } })
 const emit = defineEmits(['row-click', 'task-update', 'task-assign', 'task-complete', 'page-size-change', 'page-change'])
 
-const getTaskTypeTagType = (type) => ({ plate_making: 'success', cutting: 'info', printing: 'primary', foiling: 'warning', embossing: 'warning', die_cutting: 'warning', packaging: 'info', general: 'info' })[type] || '')
-const getStatusTagType = (status) => ({ pending: 'info', in_progress: 'primary', completed: 'success', cancelled: 'danger' })[status] || 'info')
-const getTaskDeadline = (task) => task.deadline || task.due_date || null
-const calculateProgress = (task) => task.production_quantity ? Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100) : 0
-const getProgressColor = (task) => calculateProgress(task) === 100 ? '#67C23A' : '#409EFF'
-const isOverdue = (task) => { const dl = getTaskDeadline(task); return dl && new Date(dl) < new Date() }
-const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString('zh-CN') : '-'
+const getTaskTypeTagType = (type) => ({ plate_making: 'success', cutting: 'info', printing: 'primary', foiling: 'warning', embossing: 'warning', die_cutting: 'warning', packaging: 'info', general: 'info' })[type] || '';
+const getStatusTagType = (status) => ({ pending: 'info', in_progress: 'primary', completed: 'success', cancelled: 'danger' })[status] || 'info';
+const getTaskDeadline = (task) => task.deadline || task.due_date || null;
+const calculateProgress = (task) => task.production_quantity ? Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100) : 0;
+const getProgressColor = (task) => calculateProgress(task) === 100 ? '#67C23A' : '#409EFF';
+const isOverdue = (task) => { const dl = getTaskDeadline(task); return dl && new Date(dl) < new Date() };
+const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString('zh-CN') : '-';
 
-const canUpdate = (task) => props.editable && task.status !== 'completed' && task.status !== 'cancelled'
-const canAssign = (task) => props.editable && task.status !== 'completed'
-const canComplete = (task) => props.editable && task.status !== 'completed'
+const canUpdate = (task) => props.editable && task.status !== 'completed' && task.status !== 'cancelled';
+const canAssign = (task) => props.editable && task.status !== 'completed';
+const canComplete = (task) => props.editable && task.status !== 'completed';
 
-const handleRowClick = (row) => emit('row-click', row)
-const handleUpdate = (task) => emit('task-update', task)
-const handleAssign = (task) => emit('task-assign', task)
-const handleComplete = (task) => emit('task-complete', task)
+const handleRowClick = (row) => emit('row-click', row);
+const handleUpdate = (task) => emit('task-update', task);
+const handleAssign = (task) => emit('task-assign', task);
+const handleComplete = (task) => emit('task-complete', task);
 const handleSizeChange = (size) => emit('page-size-change', size)
 const handleCurrentChange = (page) => emit('page-change', page)
 </script>

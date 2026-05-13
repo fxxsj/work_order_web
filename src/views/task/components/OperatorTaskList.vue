@@ -48,7 +48,7 @@ const emit = defineEmits(['task-click', 'claim', 'update', 'complete'])
 const userStore = useUserStore()
 const currentUser = computed(() => userStore.currentUser)
 
-const getStatusType = (status) => ({ pending: 'info', in_progress: 'primary', completed: 'success', cancelled: 'danger' })[status] || 'info')
+const getStatusType = (status) => ({ pending: 'info', in_progress: 'primary', completed: 'success', cancelled: 'danger' })[status] || 'info';
 const getProgress = (task) => task.production_quantity ? Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100) : 0
 const isMyTask = (task) => task.assigned_operator === currentUser.value?.id
 const canComplete = (task) => isMyTask(task) && ['pending', 'in_progress'].includes(task.status)

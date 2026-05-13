@@ -17,8 +17,8 @@ const props = defineProps({ status: { type: String, required: true }, title: { t
 const emit = defineEmits(['task-click', 'task-update', 'task-assign', 'task-complete'])
 
 const taskCount = computed(() => props.tasks.length)
-const headerClass = computed(() => ({ pending: 'pending', in_progress: 'in-progress', completed: 'completed' })[props.status] || ''))
-const emptyText = computed(() => ({ pending: '暂无待开始任务', in_progress: '暂无进行中任务', completed: '暂无已完成任务' })[props.status] || '暂无任务'))
+const headerClass = computed(() => ({ pending: 'pending', in_progress: 'in-progress', completed: 'completed' })[props.status] || '');
+const emptyText = computed(() => ({ pending: '暂无待开始任务', in_progress: '暂无进行中任务', completed: '暂无已完成任务' })[props.status] || '暂无任务');
 
 const handleTaskClick = (t) => emit('task-click', t)
 const handleTaskUpdate = (t) => emit('task-update', t)

@@ -19,9 +19,9 @@ const emit = defineEmits(['view-all'])
 const router = useRouter()
 const goTo = (path) => router.push(path)
 
-const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success' })[s] || 'info')
-const getStatusDisplay = (s) => ({ pending: '待开始', in_progress: '进行中', completed: '已完成' })[s] || s)
-const getProgress = (t) => t.production_quantity ? Math.round(((t.quantity_completed || 0) / t.production_quantity) * 100) : 0
+const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success' })[s] || 'info';
+const getStatusDisplay = (s) => ({ pending: '待开始', in_progress: '进行中', completed: '已完成' })[s] || s;
+const getProgress = (t) => t.production_quantity ? Math.round(((t.quantity_completed || 0) / t.production_quantity) * 100) : 0;
 </script>
 
 <style scoped>

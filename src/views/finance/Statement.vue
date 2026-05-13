@@ -58,13 +58,13 @@ const fetchStats = async () => {
 onMounted(() => { loadData(); fetchStats() })
 
 const handleSearch = () => { currentPage.value = 1; loadData() }
-const handlePageChange = (page) => { currentPage.value = page; loadData() }
-const handleView = (row) => console.log('View', row)
-const handleConfirm = (row) => console.log('Confirm', row)
-const handleCreate = () => { form.statement_date = new Date().toISOString().split('T')[0]; formDialogVisible.value = true }
-const handleGenerate = () => formRef.value?.validate((valid) => { if (valid) console.log('Generate', form) })
-const handlePrint = () => window.print()
-const getStatusType = (s) => ({ draft: 'info', sent: 'warning', confirmed: 'success', disputed: 'danger' })[s] || 'info')
+const handlePageChange = (page) => { currentPage.value = page; loadData() };
+const handleView = (row) => console.log('View', row);
+const handleConfirm = (row) => console.log('Confirm', row);
+const handleCreate = () => { form.statement_date = new Date().toISOString().split('T')[0]; formDialogVisible.value = true };
+const handleGenerate = () => formRef.value?.validate((valid) => { if (valid) console.log('Generate', form) });
+const handlePrint = () => window.print();
+const getStatusType = (s) => ({ draft: 'info', sent: 'warning', confirmed: 'success', disputed: 'danger' })[s] || 'info';
 </script>
 
 <style scoped>

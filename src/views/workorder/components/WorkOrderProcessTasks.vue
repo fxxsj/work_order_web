@@ -27,7 +27,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['add-process', 'process-click', 'view-mode-change'])
-const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', draft: 'warning' })[s] || 'info')
+const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', draft: 'warning' })[s] || 'info';
 </script>
 
 <style scoped>

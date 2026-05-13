@@ -21,7 +21,7 @@ const props = defineProps({ materials: { type: Array, default: () => [] } })
 const emit = defineEmits(['add-material', 'update-material'])
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-'
-const getStatusType = (s) => ({ pending: 'info', ordered: 'primary', received: 'success', cut: 'warning', completed: 'success' })[s] || 'info')
+const getStatusType = (s) => ({ pending: 'info', ordered: 'primary', received: 'success', cut: 'warning', completed: 'success' })[s] || 'info';
 </script>
 
 <style scoped>

@@ -23,5 +23,5 @@ import { computed } from 'vue'
 const props = defineProps({ visible: { type: Boolean, default: false }, detailData: { type: Object, default: null } })
 const emit = defineEmits(['update:visible'])
 const dialogVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })
-const getStatusType = (s) => ({ pending: 'info', submitted: 'primary', approved: 'success', received: 'warning' })[s] || 'info')
+const getStatusType = (s) => ({ pending: 'info', submitted: 'primary', approved: 'success', received: 'warning' })[s] || 'info';
 </script>

@@ -21,7 +21,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { User, DataLine, Clock, Warning, Edit, User, Check } from '@element-plus/icons-vue'
+import { User, DataLine, Clock, Warning, Edit, Check } from '@element-plus/icons-vue'
 
 const props = defineProps({ task: { type: Object, required: true }, editable: { type: Boolean, default: false } })
 const emit = defineEmits(['click', 'update', 'assign', 'complete'])

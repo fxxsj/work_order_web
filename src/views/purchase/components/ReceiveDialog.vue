@@ -28,7 +28,7 @@ const emit = defineEmits(['submit', 'update:visible'])
 
 const form = reactive({ received_date: '', delivery_note_number: '' })
 const dialogVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })
-const getStatusType = (s) => ({ pending: 'info', submitted: 'primary', approved: 'success', received: 'warning', cancelled: 'danger' })[s] || 'info')
+const getStatusType = (s) => ({ pending: 'info', submitted: 'primary', approved: 'success', received: 'warning', cancelled: 'danger' })[s] || 'info';
 const handleSubmit = () => emit('submit', form)
 const handleClose = () => { form.received_date = ''; form.delivery_note_number = '' }
 </script>
