@@ -10,26 +10,27 @@
           @input="handleSearchDebounced"
           @clear="handleSearch"
         >
-          <el-button slot="append" icon="el-icon-search" @click="handleSearch" />
+          <template #append>
+            <el-button :icon="Search" @click="handleSearch" />
+          </template>
         </el-input>
         <el-button
-          v-if="canCreate()"
+          v-if="canCreate"
           type="primary"
-          icon="el-icon-plus"
-          @click="handleAdd()"
+          :icon="Plus"
+          @click="handleAdd"
         >
           新增产品组
         </el-button>
       </div>
 
-      <!-- 空状态显示 -->
       <el-empty
         v-if="!loading && tableData.length === 0"
         description="暂无产品组数据"
         :image-size="200"
         style="margin-top: 40px;"
       >
-        <el-button v-if="canCreate()" type="primary" @click="handleAdd()">
+        <el-button v-if="canCreate" type="primary" @click="handleAdd">
           创建第一个产品组
         </el-button>
       </el-empty>
@@ -44,39 +45,29 @@
         <el-table-column prop="code" label="编码" width="150" />
         <el-table-column prop="name" label="名称" />
         <el-table-column prop="description" label="描述" show-overflow-tooltip />
-        <el-table-column
-          prop="is_active"
-          label="状态"
-          width="100"
-          align="center"
-        >
-          <template slot-scope="scope">
+        <el-table-column prop="is_active" label="状态" width="100" align="center">
+          <template #default="scope">
             <el-tag :type="scope.row.is_active ? 'success' : 'info'" size="small">
               {{ scope.row.is_active ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="items_count"
-          label="子项数量"
-          width="100"
-          align="center"
-        >
-          <template slot-scope="scope">
+        <el-table-column prop="items_count" label="子项数量" width="100" align="center">
+          <template #default="scope">
             {{ scope.row.items ? scope.row.items.length : 0 }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-button
-              v-if="canEdit()"
+              v-if="canEdit"
               size="mini"
               @click="handleEdit(scope.row)"
             >
               编辑
             </el-button>
             <el-button
-              v-if="canDelete()"
+              v-if="canDelete"
               size="mini"
               type="danger"
               @click="handleDelete(scope.row)"
@@ -87,25 +78,25 @@
         </el-table-column>
       </el-table>
 
-      <Pagination
+      <el-pagination
         v-if="total > 0"
-        :current-page="currentPage"
-        :page-size="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
-        @current-change="handlePageChange"
+        layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
+        @current-change="handlePageChange"
       />
     </el-card>
 
-    <!-- 新增/编辑对话框 -->
     <el-dialog
+      v-model="dialogVisible"
       :title="dialogTitle"
-      :visible.sync="dialogVisible"
       width="800px"
       @close="handleDialogClose"
     >
       <el-form
-        ref="form"
+        ref="formRef"
         :model="form"
         :rules="rules"
         label-width="120px"
@@ -125,11 +116,7 @@
           />
         </el-form-item>
         <el-form-item label="状态">
-          <el-switch
-            v-model="form.is_active"
-            active-text="启用"
-            inactive-text="禁用"
-          />
+          <el-switch v-model="form.is_active" />
         </el-form-item>
 
         <el-divider content-position="left">
@@ -140,7 +127,7 @@
           <el-button
             type="primary"
             size="small"
-            icon="el-icon-plus"
+            :icon="Plus"
             @click="addItem"
           >
             添加子产品
@@ -152,7 +139,7 @@
               style="width: 100%"
             >
               <el-table-column label="产品" min-width="200">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <el-select
                     v-model="scope.row.product"
                     placeholder="请选择产品"
@@ -169,7 +156,7 @@
                 </template>
               </el-table-column>
               <el-table-column label="子产品名称" min-width="180">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <el-input
                     v-model="scope.row.item_name"
                     placeholder="如：天盒、地盒"
@@ -178,7 +165,7 @@
                 </template>
               </el-table-column>
               <el-table-column label="排序" width="120" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <el-input-number
                     v-model="scope.row.sort_order"
                     :min="0"
@@ -188,11 +175,11 @@
                 </template>
               </el-table-column>
               <el-table-column label="操作" width="100" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <el-button
                     type="danger"
-                    size="mini"
-                    icon="el-icon-delete"
+                    size="small"
+                    :icon="Delete"
                     :disabled="form.items.length <= 1"
                     @click="removeItem(scope.$index)"
                   />
@@ -202,27 +189,44 @@
           </div>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template #footer>
         <el-button @click="dialogVisible = false">
           取消
         </el-button>
         <el-button type="primary" :loading="formLoading" @click="handleSubmit">
           确定
         </el-button>
-      </div>
+      </template>
     </el-dialog>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { Plus, Search, Delete } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { productGroupAPI, productAPI } from '@/api/modules'
-import listPageMixin from '@/mixins/listPageMixin'
-import crudPermissionMixin from '@/mixins/crudPermissionMixin'
-import formDialogMixin from '@/mixins/formDialogMixin'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
-import Pagination from '@/components/common/Pagination.vue'
 
-// 表单初始值
+const userStore = useUserStore()
+
+const searchText = ref('')
+const tableData = ref([])
+const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(20)
+
+const dialogVisible = ref(false)
+const dialogType = ref('create')
+const dialogTitle = ref('新增产品组')
+const formLoading = ref(false)
+const currentRow = ref(null)
+const formRef = ref(null)
+
+const productList = ref([])
+
 const getFormInitialValues = () => ({
   id: null,
   code: '',
@@ -238,210 +242,205 @@ const getFormInitialValues = () => ({
   ]
 })
 
-export default {
-  name: 'ProductGroupList',
-  components: { Pagination },
-  mixins: [listPageMixin, crudPermissionMixin, formDialogMixin],
-  data() {
-    return {
-      // API 服务和权限配置
-      apiService: productGroupAPI,
-      permissionPrefix: 'productgroup',
+const form = reactive(getFormInitialValues())
 
-      // 表单相关
-      productList: [],
-      formLoading: false,
-      form: getFormInitialValues(),
-      rules: {
-        code: [
-          { required: true, message: '请输入编码', trigger: 'blur' }
-        ],
-        name: [
-          { required: true, message: '请输入名称', trigger: 'blur' }
-        ]
-      }
+const rules = {
+  code: [
+    { required: true, message: '请输入编码', trigger: 'blur' }
+  ],
+  name: [
+    { required: true, message: '请输入名称', trigger: 'blur' }
+  ]
+}
+
+const canCreate = computed(() => userStore.hasPermission('workorder.add_productgroup'))
+const canEdit = computed(() => userStore.hasPermission('workorder.change_productgroup'))
+const canDelete = computed(() => userStore.hasPermission('workorder.delete_productgroup'))
+
+let searchTimer = null
+
+const handleSearchDebounced = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    handleSearch()
+  }, 300)
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadData()
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadData()
+}
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value
     }
-  },
-  watch: {
-    // 监听对话框显示状态，编辑时填充表单
-    dialogVisible(val) {
-      if (!val) {
-        this.$nextTick(() => {
-          if (this.$refs.form) {
-            this.$refs.form.clearValidate()
-          }
-        })
-      }
+    if (searchText.value) {
+      params.search = searchText.value
     }
-  },
-  created() {
-    this.loadData()
-    this.loadProductList()
-  },
-  methods: {
-    // 实现 fetchData 方法（listPageMixin 要求）
-    async fetchData() {
-      const params = {
-        page: this.currentPage,
-        page_size: this.pageSize
-      }
-
-      if (this.searchText) {
-        params.search = this.searchText
-      }
-
-      return this.apiService.getList(params)
-    },
-
-    async loadProductList() {
-      try {
-        const response = await productAPI.getList({ page_size: 1000 })
-        this.productList = response.results || []
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载产品列表')
-      }
-    },
-
-    handleAdd() {
-      this.dialogType = 'create'
-      this.dialogTitle = '新增产品组'
-      this.currentRow = null
-      this.form = getFormInitialValues()
-      this.dialogVisible = true
-    },
-
-    async handleEdit(row) {
-      this.dialogType = 'edit'
-      this.dialogTitle = '编辑产品组'
-      this.currentRow = row
-
-      try {
-        const detail = await this.apiService.getDetail(row.id)
-        this.form = {
-          id: detail.id,
-          code: detail.code,
-          name: detail.name,
-          description: detail.description || '',
-          is_active: detail.is_active,
-          items: detail.items && detail.items.length > 0
-            ? detail.items.map(item => ({
-              id: item.id,
-              product: item.product,
-              item_name: item.item_name,
-              sort_order: item.sort_order
-            }))
-            : [
-              {
-                product: null,
-                item_name: '',
-                sort_order: 0
-              }
-            ]
-        }
-        this.dialogVisible = true
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载详情')
-      }
-    },
-
-    async handleDelete(row) {
-      const confirmed = await ErrorHandler.confirm(
-        `确定要删除产品组"${row.name}"吗？此操作不可撤销。`
-      )
-      if (!confirmed) return
-
-      try {
-        await this.apiService.delete(row.id)
-        ErrorHandler.showSuccess('删除成功')
-        await this.loadData()
-      } catch (error) {
-        ErrorHandler.showMessage(error, '删除失败')
-      }
-    },
-
-    addItem() {
-      this.form.items.push({
-        product: null,
-        item_name: '',
-        sort_order: this.form.items.length
-      })
-    },
-
-    removeItem(index) {
-      this.form.items.splice(index, 1)
-    },
-
-    async handleSubmit() {
-      this.$refs.form.validate(async (valid) => {
-        if (!valid) {
-          return false
-        }
-
-        // 验证子产品列表
-        if (!this.form.items || this.form.items.length === 0) {
-          ErrorHandler.showWarning('请至少添加一个子产品')
-          return
-        }
-
-        for (let i = 0; i < this.form.items.length; i++) {
-          const item = this.form.items[i]
-          if (!item.product) {
-            ErrorHandler.showWarning(`请选择第 ${i + 1} 个子产品的产品`)
-            return
-          }
-          if (!item.item_name) {
-            ErrorHandler.showWarning(`请输入第 ${i + 1} 个子产品的名称`)
-            return
-          }
-        }
-
-        this.formLoading = true
-        try {
-          // 构建提交数据，包含 items
-          const data = {
-            code: this.form.code,
-            name: this.form.name,
-            description: this.form.description,
-            is_active: this.form.is_active,
-            items_write: this.form.items.map(item => ({
-              product: item.product,
-              item_name: item.item_name,
-              sort_order: item.sort_order
-            }))
-          }
-
-          if (this.form.id) {
-            // 更新
-            await this.apiService.update(this.form.id, data)
-            ErrorHandler.showSuccess('更新成功')
-          } else {
-            // 创建
-            await this.apiService.create(data)
-            ErrorHandler.showSuccess('创建成功')
-          }
-
-          this.dialogVisible = false
-          this.loadData()
-        } catch (error) {
-          ErrorHandler.showMessage(error, this.form.id ? '更新失败' : '创建失败')
-        } finally {
-          this.formLoading = false
-        }
-      })
-    },
-
-    // 对话框关闭处理
-    handleDialogClose() {
-      this.$refs.form && this.$refs.form.resetFields()
-      this.form = getFormInitialValues()
-    },
-
-    // 自定义重置表单方法（formDialogMixin 会调用）
-    customResetForm() {
-      this.form = getFormInitialValues()
-    }
+    const response = await productGroupAPI.getList(params)
+    tableData.value = response?.results || []
+    total.value = response?.count || 0
+  } catch (error) {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
   }
 }
+
+const loadProductList = async () => {
+  try {
+    const response = await productAPI.getList({ page_size: 1000 })
+    productList.value = response?.results || []
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载产品列表')
+  }
+}
+
+const handleAdd = () => {
+  dialogType.value = 'create'
+  dialogTitle.value = '新增产品组'
+  currentRow.value = null
+  Object.assign(form, getFormInitialValues())
+  dialogVisible.value = true
+}
+
+const handleEdit = async (row) => {
+  dialogType.value = 'edit'
+  dialogTitle.value = '编辑产品组'
+  currentRow.value = row
+
+  try {
+    const detail = await productGroupAPI.getDetail(row.id)
+    Object.assign(form, {
+      id: detail.id,
+      code: detail.code,
+      name: detail.name,
+      description: detail.description || '',
+      is_active: detail.is_active,
+      items: detail.items && detail.items.length > 0
+        ? detail.items.map(item => ({
+          id: item.id,
+          product: item.product,
+          item_name: item.item_name,
+          sort_order: item.sort_order
+        }))
+        : [
+          {
+            product: null,
+            item_name: '',
+            sort_order: 0
+          }
+        ]
+    })
+    dialogVisible.value = true
+  } catch (error) {
+    ErrorHandler.showMessage(error, '加载详情')
+  }
+}
+
+const handleDelete = async (row) => {
+  const confirmed = await ErrorHandler.confirm(
+    `确定要删除产品组"${row.name}"吗？此操作不可撤销。`
+  )
+  if (!confirmed) return
+
+  try {
+    await productGroupAPI.delete(row.id)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, '删除失败')
+  }
+}
+
+const addItem = () => {
+  form.items.push({
+    product: null,
+    item_name: '',
+    sort_order: form.items.length
+  })
+}
+
+const removeItem = (index) => {
+  form.items.splice(index, 1)
+}
+
+const handleSubmit = async () => {
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  if (!form.items || form.items.length === 0) {
+    ElMessage.warning('请至少添加一个子产品')
+    return
+  }
+
+  for (let i = 0; i < form.items.length; i++) {
+    const item = form.items[i]
+    if (!item.product) {
+      ElMessage.warning(`请选择第 ${i + 1} 个子产品的产品`)
+      return
+    }
+    if (!item.item_name) {
+      ElMessage.warning(`请输入第 ${i + 1} 个子产品的名称`)
+      return
+    }
+  }
+
+  formLoading.value = true
+  try {
+    const data = {
+      code: form.code,
+      name: form.name,
+      description: form.description,
+      is_active: form.is_active,
+      items_write: form.items.map(item => ({
+        product: item.product,
+        item_name: item.item_name,
+        sort_order: item.sort_order
+      }))
+    }
+
+    if (form.id) {
+      await productGroupAPI.update(form.id, data)
+      ElMessage.success('更新成功')
+    } else {
+      await productGroupAPI.create(data)
+      ElMessage.success('创建成功')
+    }
+
+    dialogVisible.value = false
+    loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, form.id ? '更新失败' : '创建失败')
+  } finally {
+    formLoading.value = false
+  }
+}
+
+const handleDialogClose = () => {
+  formRef.value?.resetFields()
+  Object.assign(form, getFormInitialValues())
+}
+
+onMounted(() => {
+  loadData()
+  loadProductList()
+})
 </script>
 
 <style scoped>
