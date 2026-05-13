@@ -1,69 +1,29 @@
 <template>
   <div class="header-actions">
-    <el-button icon="el-icon-back" @click="$emit('back')">
-      返回
-    </el-button>
+    <el-button :icon="Back" @click="emit('back')">返回</el-button>
     <div>
-      <el-button icon="el-icon-printer" @click="$emit('print')">
-        打印
-      </el-button>
-      <el-button
-        v-if="canEdit"
-        type="primary"
-        icon="el-icon-edit"
-        style="margin-left: 10px;"
-        @click="$emit('edit')"
-      >
-        编辑
-      </el-button>
+      <el-button :icon="Printer" @click="emit('print')">打印</el-button>
+      <el-button v-if="canEdit" type="primary" :icon="Edit" style="margin-left: 10px;" @click="emit('edit')">编辑</el-button>
       <el-dropdown style="margin-left: 10px;" @command="handleStatusChange">
-        <el-button type="success">
-          更改状态<i class="el-icon-arrow-down el-icon--right"></i>
-        </el-button>
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="pending">
-            待开始
-          </el-dropdown-item>
-          <el-dropdown-item command="in_progress">
-            进行中
-          </el-dropdown-item>
-          <el-dropdown-item command="paused">
-            已暂停
-          </el-dropdown-item>
-          <el-dropdown-item command="completed">
-            已完成
-          </el-dropdown-item>
-          <el-dropdown-item command="cancelled">
-            已取消
-          </el-dropdown-item>
-        </el-dropdown-menu>
+        <el-button type="success">更改状态<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="pending">待开始</el-dropdown-item>
+            <el-dropdown-item command="in_progress">进行中</el-dropdown-item>
+            <el-dropdown-item command="paused">已暂停</el-dropdown-item>
+            <el-dropdown-item command="completed">已完成</el-dropdown-item>
+            <el-dropdown-item command="cancelled">已取消</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
       </el-dropdown>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'WorkOrderHeaderActions',
-  props: {
-    canEdit: {
-      type: Boolean,
-      default: true
-    }
-  },
-  methods: {
-    handleStatusChange(command) {
-      this.$emit('status-change', command)
-    }
-  }
-}
-</script>
+<script setup>
+import { Back, Printer, Edit, ArrowDown } from '@element-plus/icons-vue'
 
-<style scoped>
-.header-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-</style>
+const props = defineProps({ canEdit: { type: Boolean, default: false } })
+const emit = defineEmits(['back', 'print', 'edit', 'status-change'])
+const handleStatusChange = (command) => emit('status-change', command)
+</script>
