@@ -1,15 +1,16 @@
 <template>
   <div class="profile-container">
     <el-card class="profile-card">
-      <div slot="header" class="card-header">
-        <span class="title">个人信息</span>
-      </div>
+      <template #header>
+        <div class="card-header">
+          <span class="title">个人信息</span>
+        </div>
+      </template>
 
       <el-tabs v-model="activeTab" type="border-card">
-        <!-- 基本信息标签页 -->
         <el-tab-pane label="基本信息" name="basic">
           <el-form
-            ref="profileForm"
+            ref="profileFormRef"
             :model="profileForm"
             :rules="profileRules"
             label-width="100px"
@@ -60,10 +61,9 @@
           </el-form>
         </el-tab-pane>
 
-        <!-- 修改密码标签页 -->
         <el-tab-pane label="修改密码" name="password">
           <el-form
-            ref="passwordForm"
+            ref="passwordFormRef"
             :model="passwordForm"
             :rules="passwordRules"
             label-width="100px"
@@ -128,147 +128,129 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { authAPI } from '@/api/modules'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 
-export default {
-  name: 'Profile',
-  data() {
-    // 验证确认密码
-    const validateConfirmPassword = (rule, value, callback) => {
-      if (value !== this.passwordForm.new_password) {
-        callback(new Error('两次输入的密码不一致'))
-      } else {
-        callback()
-      }
-    }
+const router = useRouter()
+const userStore = useUserStore()
 
-    return {
-      activeTab: 'basic',
-      updateLoading: false,
-      passwordLoading: false,
-      profileForm: {
-        email: '',
-        first_name: '',
-        last_name: ''
-      },
-      passwordForm: {
-        old_password: '',
-        new_password: '',
-        confirm_password: ''
-      },
-      profileRules: {
-        email: [
-          { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-        ]
-      },
-      passwordRules: {
-        old_password: [
-          { required: true, message: '请输入旧密码', trigger: 'blur' }
-        ],
-        new_password: [
-          { required: true, message: '请输入新密码', trigger: 'blur' },
-          { min: 6, message: '密码长度至少为6位', trigger: 'blur' }
-        ],
-        confirm_password: [
-          { required: true, message: '请再次输入新密码', trigger: 'blur' },
-          { validator: validateConfirmPassword, trigger: 'blur' }
-        ]
-      }
-    }
-  },
-  computed: {
-    currentUser() {
-      return this.$store.getters['user/currentUser'] || {}
-    }
-  },
-  mounted() {
-    this.initProfileForm()
-  },
-  methods: {
-    initProfileForm() {
-      if (this.currentUser) {
-        this.profileForm = {
-          email: this.currentUser.email || '',
-          first_name: this.currentUser.first_name || '',
-          last_name: this.currentUser.last_name || ''
-        }
-      }
-    },
+const activeTab = ref('basic')
+const updateLoading = ref(false)
+const passwordLoading = ref(false)
+const profileFormRef = ref(null)
+const passwordFormRef = ref(null)
 
-    resetProfileForm() {
-      this.initProfileForm()
-      this.$message.info('已重置为原始信息')
-    },
+const profileForm = reactive({
+  email: '',
+  first_name: '',
+  last_name: ''
+})
 
-    async handleUpdateProfile() {
-      const valid = await this.$refs.profileForm.validate().catch(() => false)
-      if (!valid) {
-        return false
-      }
+const passwordForm = reactive({
+  old_password: '',
+  new_password: '',
+  confirm_password: ''
+})
 
-      this.updateLoading = true
-      try {
-        const result = await authAPI.updateProfile(this.profileForm)
+const currentUser = computed(() => userStore.currentUser || {})
 
-        // 更新 store 中的用户信息
-        this.$store.dispatch('user/initUser', result)
+const validateConfirmPassword = (rule, value, callback) => {
+  if (value !== passwordForm.new_password) {
+    callback(new Error('两次输入的密码不一致'))
+  } else {
+    callback()
+  }
+}
 
-        this.$message({
-          message: result.message || '个人信息更新成功',
-          type: 'success',
-          duration: 2000
-        })
-      } catch (error) {
-        ErrorHandler.handle(error, 'Profile.handleUpdateProfile')
-        this.$message.error(error.response?.data?.error || '个人信息更新失败')
-      } finally {
-        this.updateLoading = false
-      }
-    },
+const profileRules = {
+  email: [
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+  ]
+}
 
-    resetPasswordForm() {
-      this.passwordForm = {
-        old_password: '',
-        new_password: '',
-        confirm_password: ''
-      }
-      this.$refs.passwordForm?.clearValidate()
-      this.$message.info('已清空密码表单')
-    },
+const passwordRules = {
+  old_password: [
+    { required: true, message: '请输入旧密码', trigger: 'blur' }
+  ],
+  new_password: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度至少为6位', trigger: 'blur' }
+  ],
+  confirm_password: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { validator: validateConfirmPassword, trigger: 'blur' }
+  ]
+}
 
-    async handleChangePassword() {
-      const valid = await this.$refs.passwordForm.validate().catch(() => false)
-      if (!valid) {
-        return false
-      }
+onMounted(() => {
+  initProfileForm()
+})
 
-      this.passwordLoading = true
-      try {
-        await authAPI.changePassword(this.passwordForm)
+const initProfileForm = () => {
+  if (currentUser.value) {
+    profileForm.email = currentUser.value.email || ''
+    profileForm.first_name = currentUser.value.first_name || ''
+    profileForm.last_name = currentUser.value.last_name || ''
+  }
+}
 
-        this.$message({
-          message: '密码修改成功，请重新登录',
-          type: 'success',
-          duration: 2000
-        })
+const resetProfileForm = () => {
+  initProfileForm()
+  ElMessage.info('已重置为原始信息')
+}
 
-        // 清空表单
-        this.resetPasswordForm()
+const handleUpdateProfile = async () => {
+  const valid = await profileFormRef.value.validate().catch(() => false)
+  if (!valid) {
+    return false
+  }
 
-        // 延迟后退出登录
-        setTimeout(() => {
-          this.$store.dispatch('user/logout')
-          this.$router.push('/login')
-        }, 2000)
-      } catch (error) {
-        ErrorHandler.handle(error, 'Profile.handleChangePassword')
-        this.$message.error(error.response?.data?.error || '密码修改失败')
-      } finally {
-        this.passwordLoading = false
-      }
-    }
+  updateLoading.value = true
+  try {
+    const result = await authAPI.updateProfile(profileForm)
+    userStore.setUser({ ...currentUser.value, ...result })
+    ElMessage.success(result.message || '个人信息更新成功')
+  } catch (error) {
+    ErrorHandler.handle(error, 'Profile.handleUpdateProfile')
+    ElMessage.error(error.response?.data?.error || '个人信息更新失败')
+  } finally {
+    updateLoading.value = false
+  }
+}
+
+const resetPasswordForm = () => {
+  passwordForm.old_password = ''
+  passwordForm.new_password = ''
+  passwordForm.confirm_password = ''
+  passwordFormRef.value?.clearValidate()
+  ElMessage.info('已清空密码表单')
+}
+
+const handleChangePassword = async () => {
+  const valid = await passwordFormRef.value.validate().catch(() => false)
+  if (!valid) {
+    return false
+  }
+
+  passwordLoading.value = true
+  try {
+    await authAPI.changePassword(passwordForm)
+    ElMessage.success('密码修改成功，请重新登录')
+    resetPasswordForm()
+    setTimeout(() => {
+      userStore.clearUser()
+      router.push('/login')
+    }, 2000)
+  } catch (error) {
+    ErrorHandler.handle(error, 'Profile.handleChangePassword')
+    ElMessage.error(error.response?.data?.error || '密码修改失败')
+  } finally {
+    passwordLoading.value = false
   }
 }
 </script>
