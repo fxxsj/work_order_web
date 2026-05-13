@@ -1,11 +1,8 @@
 <template>
   <div class="invoice-container">
-    <!-- 统计卡片（与 TaskStats 样式一致） -->
     <invoice-stats :stats="stats" :loading="statsLoading" />
 
-    <!-- 主内容卡片 -->
     <el-card>
-      <!-- 头部搜索栏（与 Board.vue 一致） -->
       <div class="header-section">
         <div class="filter-group">
           <el-select
@@ -45,21 +42,19 @@
             @input="handleSearchDebounced"
             @clear="handleSearch"
           >
-            <el-button slot="append" icon="el-icon-search" @click="handleSearch" />
+            <template #append>
+              <el-button :icon="Search" @click="handleSearch" />
+            </template>
           </el-input>
         </div>
         <div class="action-group">
-          <el-button
-            :loading="loading"
-            icon="el-icon-refresh"
-            @click="loadData"
-          >
+          <el-button :loading="loading" :icon="RefreshRight" @click="loadData">
             刷新
           </el-button>
           <el-button
-            v-if="canCreate()"
+            v-if="canCreate"
             type="primary"
-            icon="el-icon-plus"
+            :icon="Plus"
             @click="handleCreate"
           >
             新建发票
@@ -67,7 +62,6 @@
         </div>
       </div>
 
-      <!-- 数据表格 -->
       <el-table
         v-if="tableData.length > 0"
         v-loading="loading"
@@ -78,172 +72,83 @@
         <el-table-column prop="invoice_number" label="发票号码" width="150" />
         <el-table-column prop="invoice_type_display" label="发票类型" width="120" />
         <el-table-column prop="customer_name" label="客户名称" width="150" />
-        <el-table-column
-          prop="amount"
-          label="金额(不含税)"
-          width="120"
-          align="right"
-        >
-          <template slot-scope="scope">
+        <el-table-column prop="amount" label="金额(不含税)" width="120" align="right">
+          <template #default="scope">
             ¥{{ scope.row.amount ? scope.row.amount.toLocaleString() : '-' }}
           </template>
         </el-table-column>
-        <el-table-column
-          prop="tax_amount"
-          label="税额"
-          width="100"
-          align="right"
-        >
-          <template slot-scope="scope">
+        <el-table-column prop="tax_amount" label="税额" width="100" align="right">
+          <template #default="scope">
             ¥{{ scope.row.tax_amount ? scope.row.tax_amount.toLocaleString() : '-' }}
           </template>
         </el-table-column>
-        <el-table-column
-          prop="total_amount"
-          label="价税合计"
-          width="120"
-          align="right"
-        >
-          <template slot-scope="scope">
+        <el-table-column prop="total_amount" label="价税合计" width="120" align="right">
+          <template #default="scope">
             ¥{{ scope.row.total_amount ? scope.row.total_amount.toLocaleString() : '-' }}
           </template>
         </el-table-column>
         <el-table-column prop="issue_date" label="开票日期" width="120" />
         <el-table-column label="状态" width="100">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag :type="getStatusType(scope.row.status)">
               {{ scope.row.status_display }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
-          <template slot-scope="scope">
-            <el-button type="text" size="small" @click="handleView(scope.row)">
-              查看
-            </el-button>
-            <el-button
-              v-if="canEdit() && scope.row.status === 'draft'"
-              type="text"
-              size="small"
-              @click="handleEdit(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="canEdit() && scope.row.status === 'draft'"
-              type="text"
-              size="small"
-              style="color: #E6A23C;"
-              @click="handleSubmit(scope.row)"
-            >
-              提交
-            </el-button>
+          <template #default="scope">
+            <el-button type="text" size="small" @click="handleView(scope.row)">查看</el-button>
+            <el-button v-if="canEdit && scope.row.status === 'draft'" type="text" size="small" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button v-if="canEdit && scope.row.status === 'draft'" type="text" size="small" style="color: #E6A23C;" @click="handleSubmit(scope.row)">提交</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <Pagination
+      <el-pagination
         v-if="total > 0"
-        :current-page="currentPage"
-        :page-size="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
-        @current-change="handlePageChange"
+        layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
+        @current-change="handlePageChange"
       />
 
-      <!-- 空状态 -->
       <el-empty
         v-if="!loading && tableData.length === 0"
         description="暂无发票数据"
         :image-size="200"
         style="margin-top: 50px;"
       >
-        <el-button v-if="hasFilters" type="primary" @click="handleReset">
-          重置筛选
-        </el-button>
-        <el-button v-else-if="canCreate()" type="primary" @click="handleCreate">
-          创建第一个发票
-        </el-button>
+        <el-button v-if="hasFilters" type="primary" @click="handleReset">重置筛选</el-button>
+        <el-button v-else-if="canCreate" type="primary" @click="handleCreate">创建第一个发票</el-button>
       </el-empty>
     </el-card>
 
-    <!-- 发票详情对话框 -->
-    <el-dialog
-      :visible.sync="detailDialogVisible"
-      title="发票详情"
-      width="800px"
-      :close-on-click-modal="false"
-    >
+    <el-dialog v-model="detailDialogVisible" title="发票详情" width="800px" :close-on-click-modal="false">
       <el-descriptions v-if="currentInvoice" :column="2" border>
-        <el-descriptions-item label="发票号码">
-          {{ currentInvoice.invoice_number }}
-        </el-descriptions-item>
-        <el-descriptions-item label="发票类型">
-          {{ currentInvoice.invoice_type_display }}
-        </el-descriptions-item>
-        <el-descriptions-item label="客户名称">
-          {{ currentInvoice.customer_name }}
-        </el-descriptions-item>
-        <el-descriptions-item label="状态">
-          {{ currentInvoice.status_display }}
-        </el-descriptions-item>
-        <el-descriptions-item label="金额(不含税)">
-          ¥{{ currentInvoice.amount ? currentInvoice.amount.toLocaleString() : '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="税率">
-          {{ currentInvoice.tax_rate }}%
-        </el-descriptions-item>
-        <el-descriptions-item label="税额">
-          ¥{{ currentInvoice.tax_amount ? currentInvoice.tax_amount.toLocaleString() : '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="价税合计">
-          ¥{{ currentInvoice.total_amount ? currentInvoice.total_amount.toLocaleString() : '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="开票日期">
-          {{ currentInvoice.issue_date || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="关联单号" :span="2">
-          {{ currentInvoice.sales_order_number || currentInvoice.work_order_number || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2">
-          {{ currentInvoice.notes || '-' }}
-        </el-descriptions-item>
+        <el-descriptions-item label="发票号码">{{ currentInvoice.invoice_number }}</el-descriptions-item>
+        <el-descriptions-item label="发票类型">{{ currentInvoice.invoice_type_display }}</el-descriptions-item>
+        <el-descriptions-item label="客户名称">{{ currentInvoice.customer_name }}</el-descriptions-item>
+        <el-descriptions-item label="状态">{{ currentInvoice.status_display }}</el-descriptions-item>
+        <el-descriptions-item label="金额(不含税)">¥{{ currentInvoice.amount ? currentInvoice.amount.toLocaleString() : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="税率">{{ currentInvoice.tax_rate }}%</el-descriptions-item>
+        <el-descriptions-item label="税额">¥{{ currentInvoice.tax_amount ? currentInvoice.tax_amount.toLocaleString() : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="价税合计">¥{{ currentInvoice.total_amount ? currentInvoice.total_amount.toLocaleString() : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="开票日期">{{ currentInvoice.issue_date || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="关联单号" :span="2">{{ currentInvoice.sales_order_number || currentInvoice.work_order_number || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2">{{ currentInvoice.notes || '-' }}</el-descriptions-item>
       </el-descriptions>
-
-      <template slot="footer">
-        <el-button @click="detailDialogVisible = false">
-          关闭
-        </el-button>
+      <template #footer>
+        <el-button @click="detailDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
 
-    <!-- 新建/编辑发票对话框 -->
-    <el-dialog
-      :visible.sync="formDialogVisible"
-      :title="isEdit ? '编辑发票' : '新建发票'"
-      width="600px"
-      :close-on-click-modal="false"
-    >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="100px"
-      >
+    <el-dialog v-model="formDialogVisible" :title="isEdit ? '编辑发票' : '新建发票'" width="600px" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="客户" prop="customer">
-          <el-select
-            v-model="form.customer"
-            placeholder="请选择客户"
-            filterable
-            style="width: 100%;"
-          >
-            <el-option
-              v-for="customer in customerList"
-              :key="customer.id"
-              :label="customer.name"
-              :value="customer.id"
-            />
+          <el-select v-model="form.customer" placeholder="请选择客户" filterable style="width: 100%;">
+            <el-option v-for="customer in customerList" :key="customer.id" :label="customer.name" :value="customer.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="发票类型" prop="invoice_type">
@@ -254,61 +159,52 @@
           </el-select>
         </el-form-item>
         <el-form-item label="开票日期" prop="issue_date">
-          <el-date-picker
-            v-model="form.issue_date"
-            type="date"
-            placeholder="请选择日期"
-            style="width: 100%;"
-          />
+          <el-date-picker v-model="form.issue_date" type="date" placeholder="请选择日期" style="width: 100%;" />
         </el-form-item>
         <el-form-item label="金额(不含税)" prop="amount">
-          <el-input-number
-            v-model="form.amount"
-            :min="0"
-            :precision="2"
-            style="width: 100%;"
-          />
+          <el-input-number v-model="form.amount" :min="0" :precision="2" style="width: 100%;" />
         </el-form-item>
         <el-form-item label="税率" prop="tax_rate">
-          <el-input-number
-            v-model="form.tax_rate"
-            :min="0"
-            :max="100"
-            style="width: 100%;"
-          />
+          <el-input-number v-model="form.tax_rate" :min="0" :max="100" style="width: 100%;" />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="form.notes"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注"
-          />
+          <el-input v-model="form.notes" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
-
-      <template slot="footer">
-        <el-button @click="formDialogVisible = false">
-          取消
-        </el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSave">
-          保存
-        </el-button>
+      <template #footer>
+        <el-button @click="formDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { invoiceAPI, customerAPI } from '@/api/modules'
-import InvoiceStats from './components/InvoiceStats.vue'
-import Pagination from '@/components/common/Pagination.vue'
-import listPageMixin from '@/mixins/listPageMixin'
-import crudPermissionMixin from '@/mixins/crudPermissionMixin'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
-import unwrapApiResponse from '@/utils/apiResponse'
+import InvoiceStats from './components/InvoiceStats.vue'
 
-// 表单初始值常量
+const userStore = useUserStore()
+
+const tableData = ref([])
+const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(20)
+const statsLoading = ref(false)
+const submitting = ref(false)
+const customerList = ref([])
+const currentInvoice = ref(null)
+const stats = ref({})
+const detailDialogVisible = ref(false)
+const formDialogVisible = ref(false)
+const isEdit = ref(false)
+const formRef = ref(null)
+
 const FORM_INITIAL = {
   id: null,
   customer: null,
@@ -319,259 +215,193 @@ const FORM_INITIAL = {
   notes: ''
 }
 
-export default {
-  name: 'InvoiceList',
-  components: {
-    InvoiceStats,
-    Pagination
-  },
-  mixins: [listPageMixin, crudPermissionMixin],
+const form = reactive({ ...FORM_INITIAL })
 
-  data() {
-    return {
-      // API 服务和权限配置
-      apiService: invoiceAPI,
-      permissionPrefix: 'invoice',
+const rules = {
+  customer: [{ required: true, message: '请选择客户', trigger: 'change' }],
+  invoice_type: [{ required: true, message: '请选择发票类型', trigger: 'change' }],
+  issue_date: [{ required: true, message: '请选择开票日期', trigger: 'change' }],
+  amount: [{ required: true, message: '请输入金额', trigger: 'blur' }]
+}
 
-      // 页面状态
-      statsLoading: false,
-      submitting: false,
+const filters = reactive({
+  status: '',
+  customer: '',
+  invoice_number: ''
+})
 
-      // 数据
-      customerList: [],
-      currentInvoice: null,
-      stats: {},
+const hasFilters = computed(() => filters.status || filters.customer || filters.invoice_number)
+const canCreate = computed(() => userStore.hasPermission('workorder.add_invoice'))
+const canEdit = computed(() => userStore.hasPermission('workorder.change_invoice'))
 
-      // 对话框
-      detailDialogVisible: false,
-      formDialogVisible: false,
-      isEdit: false,
+let searchTimer = null
 
-      // 表单数据
-      form: { ...FORM_INITIAL },
+const handleSearchDebounced = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => { handleSearch() }, 300)
+}
 
-      // 表单验证规则
-      rules: {
-        customer: [{ required: true, message: '请选择客户', trigger: 'change' }],
-        invoice_type: [{ required: true, message: '请选择发票类型', trigger: 'change' }],
-        issue_date: [{ required: true, message: '请选择开票日期', trigger: 'change' }],
-        amount: [{ required: true, message: '请输入金额', trigger: 'blur' }]
-      },
+const handleSearch = () => {
+  currentPage.value = 1
+  loadData()
+}
 
-      // 筛选条件
-      filters: {
-        status: '',
-        customer: '',
-        invoice_number: ''
-      },
+const handleReset = () => {
+  Object.assign(filters, { status: '', customer: '', invoice_number: '' })
+  currentPage.value = 1
+  loadData()
+}
 
-      // 搜索防抖定时器
-      searchTimer: null
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadData()
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadData()
+}
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value
     }
-  },
+    if (filters.status) params.status = filters.status
+    if (filters.customer) params.customer = filters.customer
+    if (filters.invoice_number) params.search = filters.invoice_number
 
-  computed: {
-    hasFilters() {
-      return this.filters.status || this.filters.customer || this.filters.invoice_number
+    const response = await invoiceAPI.getList(params)
+    tableData.value = response?.results || []
+    total.value = response?.count || 0
+  } catch (error) {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const fetchStats = async () => {
+  statsLoading.value = true
+  try {
+    const response = await invoiceAPI.getSummary()
+    const payload = response?.data || response
+    const summary = payload?.summary || {}
+    const byStatus = payload?.by_status || []
+
+    let pendingAmount = 0
+    let receivedAmount = 0
+    try {
+      const listResponse = await invoiceAPI.getList({ page_size: 1000 })
+      const list = listResponse?.results || []
+      pendingAmount = list.filter(i => i.status === 'issued' || i.status === 'sent').reduce((sum, i) => sum + (i.total_amount || 0), 0)
+      receivedAmount = list.filter(i => i.status === 'received').reduce((sum, i) => sum + (i.total_amount || 0), 0)
+    } catch (e) {}
+
+    stats.value = {
+      total_count: summary.total_count || 0,
+      draft_count: byStatus.find(row => row.status === 'draft')?.count || 0,
+      pending_amount: pendingAmount,
+      received_amount: receivedAmount
     }
-  },
-  created() {
-    this.loadData()
-    this.fetchStats()
-    this.fetchCustomers()
-  },
+  } catch (error) {
+    stats.value = {}
+  } finally {
+    statsLoading.value = false
+  }
+}
 
-  methods: {
-    // 实现 fetchData 方法（listPageMixin 要求）
-    async fetchData() {
-      const params = {
-        page: this.currentPage,
-        page_size: this.pageSize,
-        ...(this.filters.status && { status: this.filters.status }),
-        ...(this.filters.customer && { customer: this.filters.customer }),
-        ...(this.filters.invoice_number && { search: this.filters.invoice_number })
-      }
-      return await this.apiService.getList(params)
-    },
+const fetchCustomers = async () => {
+  try {
+    const response = await customerAPI.getList({ page_size: 1000 })
+    customerList.value = response?.results || []
+  } catch (error) {}
+}
 
-    async fetchStats() {
-      this.statsLoading = true
-      try {
-        const response = await invoiceAPI.getSummary()
-        const payload = unwrapApiResponse(response)
-        const summary = payload?.summary || {}
-        const byStatus = payload?.by_status || []
-        const findCount = (status) => {
-          const item = byStatus.find(row => row.status === status)
-          return item ? item.count || 0 : 0
-        }
+const handleView = async (row) => {
+  try {
+    const response = await invoiceAPI.getDetail(row.id)
+    currentInvoice.value = response
+    detailDialogVisible.value = true
+  } catch (error) {
+    ErrorHandler.showMessage(error, '获取发票详情失败')
+  }
+}
 
-        // 金额维度后端未按状态汇总，使用列表计算（受分页限制）
-        let pendingAmount = 0
-        let receivedAmount = 0
-        try {
-          const listResponse = await this.apiService.getList({ page_size: 1000 })
-          const list = listResponse.results || []
-          pendingAmount = list
-            .filter(i => i.status === 'issued' || i.status === 'sent')
-            .reduce((sum, i) => sum + (i.total_amount || 0), 0)
-          receivedAmount = list
-            .filter(i => i.status === 'received')
-            .reduce((sum, i) => sum + (i.total_amount || 0), 0)
-        } catch (e) {
-          pendingAmount = 0
-          receivedAmount = 0
-        }
+const handleCreate = () => {
+  if (!canCreate.value) return
+  isEdit.value = false
+  Object.assign(form, FORM_INITIAL)
+  formDialogVisible.value = true
+}
 
-        this.stats = {
-          total_count: summary.total_count || 0,
-          draft_count: findCount('draft'),
-          pending_amount: pendingAmount,
-          received_amount: receivedAmount
-        }
-      } catch (error) {
-        // 降级：基于本地数据计算统计
-        try {
-          const response = await this.apiService.getList({ page_size: 1000 })
-          const list = response.results || []
-          this.stats = {
-            total_count: list.length,
-            draft_count: list.filter(i => i.status === 'draft').length,
-            pending_amount: list
-              .filter(i => i.status === 'issued' || i.status === 'sent')
-              .reduce((sum, i) => sum + (i.total_amount || 0), 0),
-            received_amount: list
-              .filter(i => i.status === 'received')
-              .reduce((sum, i) => sum + (i.total_amount || 0), 0)
-          }
-        } catch (e) {
-          this.stats = {}
-        }
-      } finally {
-        this.statsLoading = false
-      }
-    },
+const handleEdit = (row) => {
+  if (!canEdit.value) return
+  isEdit.value = true
+  Object.assign(form, {
+    id: row.id,
+    customer: row.customer,
+    invoice_type: row.invoice_type,
+    issue_date: row.issue_date,
+    amount: row.amount,
+    tax_rate: row.tax_rate,
+    notes: row.notes || ''
+  })
+  formDialogVisible.value = true
+}
 
-    async fetchCustomers() {
-      try {
-        const response = await customerAPI.getList({ page_size: 1000 })
-        this.customerList = response.results || []
-      } catch (error) {
-        // 静默处理
-      }
-    },
-
-    // 搜索防抖处理
-    handleSearchDebounced() {
-      if (this.searchTimer) {
-        clearTimeout(this.searchTimer)
-      }
-      this.searchTimer = setTimeout(() => {
-        this.handleSearch()
-      }, 300)
-    },
-
-    handleSearch() {
-      this.currentPage = 1
-      this.loadData()
-    },
-
-    handleReset() {
-      this.filters = { status: '', customer: '', invoice_number: '' }
-      this.currentPage = 1
-      this.loadData()
-    },
-
-    async handleView(row) {
-      try {
-        const response = await invoiceAPI.getDetail(row.id)
-        this.currentInvoice = response
-        this.detailDialogVisible = true
-      } catch (error) {
-        ErrorHandler.showMessage(error, '获取发票详情失败')
-      }
-    },
-
-    handleCreate() {
-      if (!this.canCreate()) return
-      this.isEdit = false
-      this.form = { ...FORM_INITIAL }
-      this.formDialogVisible = true
-    },
-
-    handleEdit(row) {
-      if (!this.canEdit()) return
-      this.isEdit = true
-      this.form = {
-        id: row.id,
-        customer: row.customer,
-        invoice_type: row.invoice_type,
-        issue_date: row.issue_date,
-        amount: row.amount,
-        tax_rate: row.tax_rate,
-        notes: row.notes || ''
-      }
-      this.formDialogVisible = true
-    },
-
-    async handleSubmit() {
-      try {
-        await ErrorHandler.confirm('确认提交该发票？')
-        await invoiceAPI.submit(this.form.id)
-        ErrorHandler.showSuccess('提交成功')
-        this.loadData()
-        this.fetchStats()
-      } catch (error) {
-        if (error !== 'cancel') {
-          ErrorHandler.showMessage(error, '提交失败')
-        }
-      }
-    },
-
-    async handleSave() {
-      this.submitting = true
-      try {
-        this.$refs.formRef.validate(async (valid) => {
-          if (!valid) return
-
-          const data = { ...this.form }
-          if (data.id) {
-            delete data.id
-            await invoiceAPI.update(this.form.id, data)
-            ErrorHandler.showSuccess('发票更新成功')
-          } else {
-            await invoiceAPI.create(data)
-            ErrorHandler.showSuccess('发票创建成功')
-          }
-
-          this.formDialogVisible = false
-          this.loadData()
-          this.fetchStats()
-        })
-      } catch (error) {
-        ErrorHandler.showMessage(error, this.isEdit ? '更新发票失败' : '创建发票失败')
-      } finally {
-        this.submitting = false
-      }
-    },
-
-    resetForm() {
-      this.form = { ...FORM_INITIAL }
-    },
-
-    getStatusType(status) {
-      const typeMap = {
-        draft: 'info',
-        issued: 'warning',
-        sent: 'primary',
-        received: 'success',
-        cancelled: 'danger',
-        refunded: 'danger'
-      }
-      return typeMap[status] || ''
+const handleSubmit = async (row) => {
+  try {
+    await ErrorHandler.confirm('确认提交该发票？')
+    await invoiceAPI.submit(row.id)
+    ElMessage.success('提交成功')
+    loadData()
+    fetchStats()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ErrorHandler.showMessage(error, '提交失败')
     }
   }
 }
+
+const handleSave = async () => {
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  submitting.value = true
+  try {
+    const data = { ...form }
+    if (data.id) {
+      delete data.id
+      await invoiceAPI.update(form.id, data)
+      ElMessage.success('发票更新成功')
+    } else {
+      await invoiceAPI.create(data)
+      ElMessage.success('发票创建成功')
+    }
+    formDialogVisible.value = false
+    loadData()
+    fetchStats()
+  } catch (error) {
+    ErrorHandler.showMessage(error, isEdit.value ? '更新发票失败' : '创建发票失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+const getStatusType = (status) => {
+  const typeMap = { draft: 'info', issued: 'warning', sent: 'primary', received: 'success', cancelled: 'danger', refunded: 'danger' }
+  return typeMap[status] || ''
+}
+
+onMounted(() => {
+  loadData()
+  fetchStats()
+  fetchCustomers()
+})
 </script>
 
 <style scoped>
@@ -587,16 +417,11 @@ export default {
   gap: 10px;
 }
 
-.filter-group {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
+.filter-group,
 .action-group {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
