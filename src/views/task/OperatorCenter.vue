@@ -1,293 +1,109 @@
 <template>
   <div class="operator-center">
-    <!-- Summary cards row -->
     <el-row :gutter="20" class="summary-row">
-      <el-col :span="6">
-        <el-card class="summary-card">
-          <div class="stat-value">
-            {{ summary.my_total || 0 }}
-          </div>
-          <div class="stat-label">
-            我的任务
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="summary-card pending">
-          <div class="stat-value">
-            {{ summary.my_pending || 0 }}
-          </div>
-          <div class="stat-label">
-            待开始
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="summary-card progress">
-          <div class="stat-value">
-            {{ summary.my_in_progress || 0 }}
-          </div>
-          <div class="stat-label">
-            进行中
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="summary-card claimable">
-          <div class="stat-value">
-            {{ summary.claimable_count || 0 }}
-          </div>
-          <div class="stat-label">
-            可认领
-          </div>
-        </el-card>
-      </el-col>
+      <el-col :span="6"><el-card class="summary-card"><div class="stat-value">{{ summary.my_total || 0 }}</div><div class="stat-label">我的任务</div></el-card></el-col>
+      <el-col :span="6"><el-card class="summary-card pending"><div class="stat-value">{{ summary.my_pending || 0 }}</div><div class="stat-label">待开始</div></el-card></el-col>
+      <el-col :span="6"><el-card class="summary-card progress"><div class="stat-value">{{ summary.my_in_progress || 0 }}</div><div class="stat-label">进行中</div></el-card></el-col>
+      <el-col :span="6"><el-card class="summary-card claimable"><div class="stat-value">{{ summary.claimable_count || 0 }}</div><div class="stat-label">可认领</div></el-card></el-col>
     </el-row>
 
-    <!-- Two-column layout: My Tasks | Claimable Tasks -->
     <el-row :gutter="20" class="task-pools">
-      <!-- My Tasks -->
       <el-col :span="12">
-        <el-card class="task-pool-card">
-          <div slot="header" class="card-header">
-            <span>我的任务</span>
-            <el-tag :type="getPoolType('my')">
-              {{ summary.my_total || 0 }}
-            </el-tag>
-          </div>
+        <el-card>
+          <template #header>
+            <div class="card-header"><span>我的任务</span><el-tag :type="getPoolType('my')">{{ summary.my_total || 0 }}</el-tag></div>
+          </template>
           <el-tabs v-model="myTasksActiveTab">
-            <el-tab-pane label="全部" name="all">
-              <OperatorTaskList
-                :tasks="myTasks"
-                :empty-text="'暂无任务'"
-                :show-update-buttons="true"
-                @task-click="handleTaskClick"
-                @update="showUpdateDialog"
-                @complete="showCompleteDialog"
-              />
-            </el-tab-pane>
-            <el-tab-pane label="待开始" name="pending">
-              <OperatorTaskList
-                :tasks="myTasksByStatus('pending')"
-                :empty-text="'暂无待开始任务'"
-                :show-update-buttons="true"
-                @task-click="handleTaskClick"
-                @update="showUpdateDialog"
-                @complete="showCompleteDialog"
-              />
-            </el-tab-pane>
-            <el-tab-pane label="进行中" name="in_progress">
-              <OperatorTaskList
-                :tasks="myTasksByStatus('in_progress')"
-                :empty-text="'暂无进行中任务'"
-                :show-update-buttons="true"
-                @task-click="handleTaskClick"
-                @update="showUpdateDialog"
-                @complete="showCompleteDialog"
-              />
-            </el-tab-pane>
+            <el-tab-pane label="全部" name="all"><operator-task-list :tasks="myTasks" :empty-text="'暂无任务'" :show-update-buttons="true" @task-click="handleTaskClick" @update="showUpdateDialog" @complete="showCompleteDialog" /></el-tab-pane>
+            <el-tab-pane label="待开始" name="pending"><operator-task-list :tasks="myTasksByStatus('pending')" :empty-text="'暂无待开始任务'" :show-update-buttons="true" @task-click="handleTaskClick" @update="showUpdateDialog" @complete="showCompleteDialog" /></el-tab-pane>
+            <el-tab-pane label="进行中" name="in_progress"><operator-task-list :tasks="myTasksByStatus('in_progress')" :empty-text="'暂无进行中任务'" :show-update-buttons="true" @task-click="handleTaskClick" @update="showUpdateDialog" @complete="showCompleteDialog" /></el-tab-pane>
           </el-tabs>
         </el-card>
       </el-col>
-
-      <!-- Claimable Tasks -->
       <el-col :span="12">
-        <el-card class="task-pool-card">
-          <div slot="header" class="card-header">
-            <span>可认领任务</span>
-            <el-tag type="warning">
-              {{ summary.claimable_count || 0 }}
-            </el-tag>
-          </div>
-          <OperatorTaskList
-            :tasks="claimableTasks"
-            :show-claim-button="true"
-            :claiming-task-id="claimingTaskId"
-            :empty-text="'暂无可认领任务'"
-            @claim="handleClaim"
-            @task-click="handleTaskClick"
-          />
+        <el-card>
+          <template #header>
+            <div class="card-header"><span>可认领任务</span><el-tag type="warning">{{ summary.claimable_count || 0 }}</el-tag></div>
+          </template>
+          <operator-task-list :tasks="claimableTasks" :empty-text="'暂无可认领任务'" :show-claim-button="true" @task-click="handleTaskClick" @claim="handleClaim" />
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- Task Update Dialog -->
-    <OperatorTaskUpdateDialog
-      :visible.sync="updateDialogVisible"
-      :task="currentTask"
-      @success="handleUpdateSuccess"
-    />
+    <update-task-dialog :visible="updateDialogVisible" :task="currentTask" @confirm="handleUpdateTask" @update:visible="updateDialogVisible = $event" />
+    <complete-task-dialog :visible="completeDialogVisible" :task="currentTask" @confirm="handleCompleteTask" @update:visible="completeDialogVisible = $event" />
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { workOrderTaskAPI } from '@/api/modules'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
-import unwrapApiResponse from '@/utils/apiResponse'
 import OperatorTaskList from './components/OperatorTaskList.vue'
-import OperatorTaskUpdateDialog from './components/OperatorTaskUpdateDialog.vue'
+import UpdateTaskDialog from './components/UpdateTaskDialog.vue'
+import CompleteTaskDialog from './components/CompleteTaskDialog.vue'
 
-export default {
-  name: 'OperatorCenter',
+const router = useRouter()
+const userStore = useUserStore()
 
-  components: {
-    OperatorTaskList,
-    OperatorTaskUpdateDialog
-  },
+const summary = ref({})
+const myTasks = ref([])
+const claimableTasks = ref([])
+const myTasksActiveTab = ref('all')
 
-  data() {
-    return {
-      loading: false,
-      myTasks: [],
-      claimableTasks: [],
-      summary: {},
-      myTasksActiveTab: 'all',
-      claimingTaskId: null,
-      updateDialogVisible: false,
-      currentTask: null
-    }
-  },
+const updateDialogVisible = ref(false)
+const completeDialogVisible = ref(false)
+const currentTask = ref(null)
 
-  computed: {
-    isOperator() {
-      return !this.$store.getters['user/hasPermission']('workorder.change_workorder')
-    },
-    myTasksByStatus() {
-      return (status) => this.myTasks.filter(t => t.status === status)
-    },
-    currentUser() {
-      return this.$store.getters['user/currentUser']
-    }
-  },
+const myTasksByStatus = (status) => myTasks.value.filter(t => t.status === status)
 
-  created() {
-    if (!this.isOperator) {
-      this.$message.warning('此页面仅供操作员使用')
-      this.$router.push('/tasks')
-      return
-    }
-    this.loadData()
-  },
+const getPoolType = (pool) => pool === 'my' ? 'primary' : 'info'
 
-  methods: {
-    async loadData() {
-      this.loading = true
-      try {
-        const response = await workOrderTaskAPI.getOperatorCenterData()
-        const payload = unwrapApiResponse(response)
-        this.myTasks = payload?.my_tasks || []
-        this.claimableTasks = payload?.claimable_tasks || []
-        this.summary = payload?.summary || {}
-      } catch (error) {
-        ErrorHandler.showMessage(error, '加载任务中心')
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async handleClaim(task) {
-      try {
-        this.claimingTaskId = task.id
-        await workOrderTaskAPI.claimTask(task.id)
-        ErrorHandler.showSuccess('任务认领成功')
-        await this.loadData()
-      } catch (error) {
-        ErrorHandler.handleTaskError(error)
-      } finally {
-        this.claimingTaskId = null
-      }
-    },
-
-    handleTaskClick(task) {
-      this.$router.push(`/tasks?task=${task.id}`)
-    },
-
-    showUpdateDialog(task) {
-      this.currentTask = { ...task }
-      this.updateDialogVisible = true
-    },
-
-    showCompleteDialog(task) {
-      this.currentTask = { ...task }
-      this.updateDialogVisible = true
-      // Set complete mode after dialog opens
-      this.$nextTick(() => {
-        // Find the dialog component and set its mode
-        const dialog = this.$children.find(c => c.$options.name === 'OperatorTaskUpdateDialog')
-        if (dialog) {
-          dialog.updateMode = 'complete'
-        }
-      })
-    },
-
-    async handleUpdateSuccess() {
-      await this.loadData()
-    },
-
-    isMyTask(task) {
-      return task.assigned_operator === this.currentUser?.id
-    },
-
-    canComplete(task) {
-      return this.isMyTask(task) && ['pending', 'in_progress'].includes(task.status)
-    },
-
-    getPoolType(pool) {
-      return pool === 'claimable' ? 'warning' : 'primary'
-    }
-  }
+const loadData = async () => {
+  try {
+    const [summaryRes, myTasksRes, claimableRes] = await Promise.all([
+      workOrderTaskAPI.getOperatorSummary(),
+      workOrderTaskAPI.getMyTasks(),
+      workOrderTaskAPI.getClaimableTasks()
+    ])
+    summary.value = summaryRes?.data || summaryRes || {}
+    myTasks.value = myTasksRes?.results || []
+    claimableTasks.value = claimableRes?.results || []
+  } catch (error) { ErrorHandler.showMessage(error, '加载数据失败') }
 }
+
+const handleTaskClick = (task) => { router.push(`/workorders/${task.work_order_process_info?.work_order?.id}`) }
+
+const showUpdateDialog = (task) => { currentTask.value = task; updateDialogVisible.value = true }
+const showCompleteDialog = (task) => { currentTask.value = task; completeDialogVisible.value = true }
+
+const handleUpdateTask = async (data) => {
+  try { await workOrderTaskAPI.updateQuantity(currentTask.value.id, data); ElMessage.success('更新成功'); updateDialogVisible.value = false; loadData() } catch (error) { ErrorHandler.showMessage(error, '更新失败') }
+}
+
+const handleCompleteTask = async (data) => {
+  try { await workOrderTaskAPI.complete(currentTask.value.id, data); ElMessage.success('任务完成'); completeDialogVisible.value = false; loadData() } catch (error) { ErrorHandler.showMessage(error, '完成任务失败') }
+}
+
+const handleClaim = async (task) => {
+  try { await workOrderTaskAPI.claim(task.id); ElMessage.success('认领成功'); loadData() } catch (error) { ErrorHandler.showMessage(error, '认领失败') }
+}
+
+onMounted(() => { loadData() })
 </script>
 
 <style scoped>
-.operator-center {
-  padding: 20px;
-}
-
-.summary-row {
-  margin-bottom: 20px;
-}
-
-.summary-card {
-  text-align: center;
-  cursor: default;
-}
-
-.summary-card .stat-value {
-  font-size: 36px;
-  font-weight: bold;
-  color: #409EFF;
-  margin-bottom: 10px;
-}
-
-.summary-card.pending .stat-value {
-  color: #E6A23C;
-}
-
-.summary-card.progress .stat-value {
-  color: #67C23A;
-}
-
-.summary-card.claimable .stat-value {
-  color: #F56C6C;
-}
-
-.summary-card .stat-label {
-  font-size: 14px;
-  color: #606266;
-}
-
-.task-pools {
-  margin-top: 20px;
-}
-
-.task-pool-card {
-  min-height: 500px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.operator-center { padding: 20px; }
+.summary-row { margin-bottom: 20px; }
+.summary-card { text-align: center; padding: 20px 0; }
+.summary-card .stat-value { font-size: 32px; font-weight: bold; color: #303133; }
+.summary-card .stat-label { font-size: 14px; color: #909399; margin-top: 8px; }
+.summary-card.pending .stat-value { color: #E6A23C; }
+.summary-card.progress .stat-value { color: #409EFF; }
+.summary-card.claimable .stat-value { color: #67C23A; }
+.task-pools { margin-top: 20px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; }
 </style>
