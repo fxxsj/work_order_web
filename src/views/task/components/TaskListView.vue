@@ -1,234 +1,55 @@
 <template>
   <div class="task-list-view">
-    <el-table
-      v-loading="loading"
-      :data="tasks"
-      border
-      style="width: 100%"
-      @row-click="handleRowClick"
-    >
-      <el-table-column
-        prop="id"
-        label="任务ID"
-        width="80"
-        align="center"
-      />
-
-      <el-table-column label="施工单号" width="150">
-        <template slot-scope="scope">
-          {{ scope.row.work_order_process_info?.work_order?.order_number || '-' }}
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        prop="work_content"
-        label="任务内容"
-        min-width="200"
-        show-overflow-tooltip
-      />
-
-      <el-table-column label="任务类型" width="120">
-        <template slot-scope="scope">
-          <el-tag :type="getTaskTypeTagType(scope.row.task_type)" size="small">
-            {{ scope.row.task_type_display }}
-          </el-tag>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="状态" width="100" align="center">
-        <template slot-scope="scope">
-          <el-tag :type="getStatusTagType(scope.row.status)" size="small">
-            {{ scope.row.status_display }}
-          </el-tag>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="操作员" width="120">
-        <template slot-scope="scope">
-          {{ scope.row.assigned_operator_name || '未分配' }}
-        </template>
-      </el-table-column>
-
-      <el-table-column label="进度" width="150">
-        <template slot-scope="scope">
-          <el-progress
-            :percentage="calculateProgress(scope.row)"
-            :color="getProgressColor(scope.row)"
-          />
-        </template>
-      </el-table-column>
-
-      <el-table-column label="截止日期" width="120">
-        <template slot-scope="scope">
-          <span :class="{ 'text-overdue': isOverdue(scope.row) }">
-            {{ formatDate(getTaskDeadline(scope.row)) }}
-          </span>
-        </template>
-      </el-table-column>
-
+    <el-table v-loading="loading" :data="tasks" border style="width: 100%" @row-click="handleRowClick">
+      <el-table-column prop="id" label="任务ID" width="80" align="center" />
+      <el-table-column label="施工单号" width="150"><template #default="scope">{{ scope.row.work_order_process_info?.work_order?.order_number || '-' }}</template></el-table-column>
+      <el-table-column prop="work_content" label="任务内容" min-width="200" show-overflow-tooltip />
+      <el-table-column label="任务类型" width="120"><template #default="scope"><el-tag :type="getTaskTypeTagType(scope.row.task_type)" size="small">{{ scope.row.task_type_display }}</el-tag></template></el-table-column>
+      <el-table-column label="状态" width="100" align="center"><template #default="scope"><el-tag :type="getStatusTagType(scope.row.status)" size="small">{{ scope.row.status_display }}</el-tag></template></el-table-column>
+      <el-table-column label="操作员" width="120"><template #default="scope">{{ scope.row.assigned_operator_name || '未分配' }}</template></el-table-column>
+      <el-table-column label="进度" width="150"><template #default="scope"><el-progress :percentage="calculateProgress(scope.row)" :color="getProgressColor(scope.row)" /></template></el-table-column>
+      <el-table-column label="截止日期" width="120"><template #default="scope"><span :class="{ 'text-overdue': isOverdue(scope.row) }">{{ formatDate(getTaskDeadline(scope.row)) }}</span></template></el-table-column>
       <el-table-column label="操作" width="250" fixed="right">
-        <template slot-scope="scope">
-          <el-button
-            v-if="canUpdate(scope.row)"
-            type="primary"
-            size="mini"
-            icon="el-icon-edit"
-            @click.stop="handleUpdate(scope.row)"
-          >
-            更新
-          </el-button>
-          <el-button
-            v-if="canAssign(scope.row)"
-            type="warning"
-            size="mini"
-            icon="el-icon-user"
-            @click.stop="handleAssign(scope.row)"
-          >
-            分派
-          </el-button>
-          <el-button
-            v-if="canComplete(scope.row)"
-            type="success"
-            size="mini"
-            icon="el-icon-check"
-            @click.stop="handleComplete(scope.row)"
-          >
-            完成
-          </el-button>
+        <template #default="scope">
+          <el-button v-if="canUpdate(scope.row)" type="primary" size="small" :icon="Edit" @click.stop="handleUpdate(scope.row)">更新</el-button>
+          <el-button v-if="canAssign(scope.row)" type="warning" size="small" :icon="User" @click.stop="handleAssign(scope.row)">分派</el-button>
+          <el-button v-if="canComplete(scope.row)" type="success" size="small" :icon="Check" @click.stop="handleComplete(scope.row)">完成</el-button>
         </template>
       </el-table-column>
     </el-table>
-
-    <!-- 分页 -->
-    <div style="margin-top: 20px; text-align: right;">
-      <el-pagination
-        :current-page="currentPage"
-        :page-sizes="[10, 20, 50, 100]"
-        :page-size="pageSize"
-        :total="total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
+    <div style="margin-top: 20px; text-align: right;"><el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]" :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange" @current-change="handleCurrentChange" /></div>
   </div>
 </template>
 
-<script>
-import { taskService, permissionService } from '@/services'
+<script setup>
+import { Edit, User, Check } from '@element-plus/icons-vue'
 
-export default {
-  name: 'TaskListView',
-  props: {
-    tasks: {
-      type: Array,
-      default: () => []
-    },
-    editable: {
-      type: Boolean,
-      default: false
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    total: {
-      type: Number,
-      default: 0
-    },
-    currentPage: {
-      type: Number,
-      default: 1
-    },
-    pageSize: {
-      type: Number,
-      default: 20
-    }
-  },
-  methods: {
-    getTaskTypeTagType(taskType) {
-      const typeMap = {
-        plate_making: 'success',
-        cutting: 'info',
-        printing: 'primary',
-        foiling: 'warning',
-        embossing: 'warning',
-        die_cutting: 'warning',
-        packaging: 'info',
-        general: 'info'
-      }
-      return typeMap[taskType] || ''
-    },
-    getStatusTagType(status) {
-      return taskService.getStatusType(status)
-    },
-    getTaskDeadline(task) {
-      return taskService.getTaskDeadline(task)
-    },
-    calculateProgress(task) {
-      return taskService.calculateProgress(task)
-    },
-    getProgressColor(task) {
-      const progress = this.calculateProgress(task)
-      return progress === 100 ? '#67C23A' : '#409EFF'
-    },
-    isOverdue(task) {
-      return taskService.isOverdue(task)
-    },
-    formatDate(dateStr) {
-      if (!dateStr) return '-'
-      const date = new Date(dateStr)
-      return date.toLocaleDateString('zh-CN')
-    },
-    canUpdate(task) {
-      if (!this.editable) return false
-      return task.status !== 'completed' && task.status !== 'cancelled'
-    },
-    canAssign(task) {
-      if (!this.editable) return false
-      return permissionService.canOperateTask(task, 'assign')
-    },
-    canComplete(task) {
-      if (!this.editable) return false
-      return taskService.canComplete(task)
-    },
-    handleRowClick(row) {
-      this.$emit('row-click', row)
-    },
-    handleUpdate(task) {
-      this.$emit('task-update', task)
-    },
-    handleAssign(task) {
-      this.$emit('task-assign', task)
-    },
-    handleComplete(task) {
-      this.$emit('task-complete', task)
-    },
-    handleSizeChange(size) {
-      this.$emit('page-size-change', size)
-    },
-    handleCurrentChange(page) {
-      this.$emit('page-change', page)
-    }
-  }
-}
+const props = defineProps({ tasks: { type: Array, default: () => [] }, editable: { type: Boolean, default: false }, loading: { type: Boolean, default: false }, total: { type: Number, default: 0 }, currentPage: { type: Number, default: 1 }, pageSize: { type: Number, default: 20 } })
+const emit = defineEmits(['row-click', 'task-update', 'task-assign', 'task-complete', 'page-size-change', 'page-change'])
+
+const getTaskTypeTagType = (type) => ({ plate_making: 'success', cutting: 'info', printing: 'primary', foiling: 'warning', embossing: 'warning', die_cutting: 'warning', packaging: 'info', general: 'info' })[type] || '')
+const getStatusTagType = (status) => ({ pending: 'info', in_progress: 'primary', completed: 'success', cancelled: 'danger' })[status] || 'info')
+const getTaskDeadline = (task) => task.deadline || task.due_date || null
+const calculateProgress = (task) => task.production_quantity ? Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100) : 0
+const getProgressColor = (task) => calculateProgress(task) === 100 ? '#67C23A' : '#409EFF'
+const isOverdue = (task) => { const dl = getTaskDeadline(task); return dl && new Date(dl) < new Date() }
+const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString('zh-CN') : '-'
+
+const canUpdate = (task) => props.editable && task.status !== 'completed' && task.status !== 'cancelled'
+const canAssign = (task) => props.editable && task.status !== 'completed'
+const canComplete = (task) => props.editable && task.status !== 'completed'
+
+const handleRowClick = (row) => emit('row-click', row)
+const handleUpdate = (task) => emit('task-update', task)
+const handleAssign = (task) => emit('task-assign', task)
+const handleComplete = (task) => emit('task-complete', task)
+const handleSizeChange = (size) => emit('page-size-change', size)
+const handleCurrentChange = (page) => emit('page-change', page)
 </script>
 
 <style scoped>
-.task-list-view {
-  margin-top: 20px;
-}
-
-.text-overdue {
-  color: #F56C6C;
-  font-weight: bold;
-}
-
-.el-table {
-  cursor: pointer;
-}
-
-.el-table .el-table__row:hover {
-  background-color: #F5F7FA;
-}
+.task-list-view { margin-top: 20px; }
+.text-overdue { color: #F56C6C; font-weight: bold; }
+.el-table { cursor: pointer; }
+.el-table :deep(.el-table__row:hover) { background-color: #F5F7FA; }
 </style>
