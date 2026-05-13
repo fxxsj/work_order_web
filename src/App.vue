@@ -1,13 +1,13 @@
 <template>
-  <div id="app">
-    <router-view />
-  </div>
+  <router-view />
 </template>
 
-<script>
-export default {
-  name: 'App'
-}
+<script setup>
+import { useUserStore } from '@/stores'
+
+// 初始化用户状态
+const userStore = useUserStore()
+userStore.restoreSession()
 </script>
 
 <style>

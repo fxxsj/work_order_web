@@ -1,25 +1,74 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import Layout from '@/views/Layout.vue'
-import store from '@/store'
+import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores'
 import { authAPI } from '@/api/modules'
 
-Vue.use(VueRouter)
+// 路由懒加载 - Vue Router 4 语法
+const Login = () => import('@/views/Login.vue')
+const Layout = () => import('@/views/Layout.vue')
+const Dashboard = () => import('@/views/Dashboard.vue')
 
-// 防止重复导航的标志
-let isAuthChecking = false
-let authCheckPromise = null
+// 施工单管理
+const WorkOrderList = () => import('@/views/workorder/WorkOrderList.vue')
+const WorkOrderForm = () => import('@/views/workorder/WorkOrderForm.vue')
+const WorkOrderDetail = () => import('@/views/workorder/WorkOrderDetail.vue')
 
-// P2 优化: 使用 Webpack 魔法注释优化代码分割
-// webpackChunkName: 为 chunk 命名，便于识别
-// webpackPrefetch: 浏览器空闲时预加载资源
-// webpackPreload: 与父 chunk 并行加载（优先级高于 prefetch）
+// 基础数据管理
+const CustomerList = () => import('@/views/customer/CustomerList.vue')
+const DepartmentList = () => import('@/views/department/DepartmentList.vue')
+const ProcessList = () => import('@/views/process/ProcessList.vue')
+const ProductList = () => import('@/views/product/ProductList.vue')
+const MaterialList = () => import('@/views/material/MaterialList.vue')
+const ProductGroupList = () => import('@/views/product-group/ProductGroupList.vue')
+
+// 版和模具管理
+const ArtworkList = () => import('@/views/artwork/ArtworkList.vue')
+const DieList = () => import('@/views/die/DieList.vue')
+const FoilingPlateList = () => import('@/views/foiling-plate/FoilingPlateList.vue')
+const EmbossingPlateList = () => import('@/views/embossing-plate/EmbossingPlateList.vue')
+
+// 供应商和采购
+const SupplierList = () => import('@/views/supplier/SupplierList.vue')
+const PurchaseOrderList = () => import('@/views/purchase/PurchaseList.vue')
+
+// 销售订单
+const SalesOrderList = () => import('@/views/sales/SalesList.vue')
+const SalesForm = () => import('@/views/sales/SalesForm.vue')
+const SalesDetail = () => import('@/views/sales/SalesDetail.vue')
+
+// 任务管理
+const TaskList = () => import('@/views/task/TaskList.vue')
+const OperatorCenter = () => import('@/views/task/OperatorCenter.vue')
+const SupervisorDashboard = () => import('@/views/task/SupervisorDashboard.vue')
+const TaskBoard = () => import('@/views/task/Board.vue')
+const TaskStats = () => import('@/views/task/Stats.vue')
+const AssignmentHistory = () => import('@/views/task/AssignmentHistory.vue')
+const AssignmentRule = () => import('@/views/task/AssignmentRule.vue')
+
+// 通知中心
+const Notification = () => import('@/views/Notification.vue')
+
+// 财务管理
+const InvoiceList = () => import('@/views/finance/Invoice.vue')
+const PaymentList = () => import('@/views/finance/Payment.vue')
+const CostList = () => import('@/views/finance/Cost.vue')
+const StatementList = () => import('@/views/finance/Statement.vue')
+
+// 库存管理
+const StockList = () => import('@/views/inventory/Stock.vue')
+const DeliveryList = () => import('@/views/inventory/Delivery.vue')
+const QualityList = () => import('@/views/inventory/Quality.vue')
+
+// 用户设置
+const Profile = () => import('@/views/Profile.vue')
+
+// 审计日志
+const AuditLogList = () => import('@/views/audit/AuditLogList.vue')
 
 const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import(/* webpackChunkName: "login" */ '@/views/Login.vue'),
+    component: Login,
     meta: { title: '登录', requiresAuth: false }
   },
   {
@@ -28,289 +77,275 @@ const routes = [
     redirect: '/dashboard',
     meta: { requiresAuth: true },
     children: [
-      // 核心页面 - 使用 preload
       {
         path: 'dashboard',
         name: 'Dashboard',
-        component: () => import(/* webpackChunkName: "dashboard" */ /* webpackPreload: true */ '@/views/Dashboard.vue'),
+        component: Dashboard,
         meta: { title: '工作台', requiresAuth: true }
       },
-
-      // 施工单管理 - 按功能分组
       {
         path: 'workorders',
         name: 'WorkOrderList',
-        component: () => import(/* webpackChunkName: "workorder-list" */ '@/views/workorder/WorkOrderList.vue'),
+        component: WorkOrderList,
         meta: { title: '施工单列表', requiresAuth: true }
       },
       {
         path: 'workorders/create',
         name: 'WorkOrderCreate',
-        component: () => import(/* webpackChunkName: "workorder-form" */ '@/views/workorder/WorkOrderForm.vue'),
+        component: WorkOrderForm,
         meta: { title: '新建施工单', requiresAuth: true }
       },
       {
         path: 'workorders/:id',
         name: 'WorkOrderDetail',
-        component: () => import(/* webpackChunkName: "workorder-detail" */ /* webpackPrefetch: true */ '@/views/workorder/WorkOrderDetail.vue'),
+        component: WorkOrderDetail,
         meta: { title: '施工单详情', requiresAuth: true }
       },
       {
         path: 'workorders/:id/edit',
         name: 'WorkOrderEdit',
-        component: () => import(/* webpackChunkName: "workorder-form" */ '@/views/workorder/WorkOrderForm.vue'),
+        component: WorkOrderForm,
         props: true,
         meta: { title: '编辑施工单', requiresAuth: true }
       },
-
-      // 基础数据管理 - 合并到单个 chunk
       {
         path: 'customers',
         name: 'CustomerList',
-        component: () => import(/* webpackChunkName: "basic-data" */ '@/views/customer/CustomerList.vue'),
+        component: CustomerList,
         meta: { title: '客户管理', requiresAuth: true }
       },
       {
         path: 'departments',
         name: 'DepartmentList',
-        component: () => import(/* webpackChunkName: "basic-data" */ '@/views/department/DepartmentList.vue'),
+        component: DepartmentList,
         meta: { title: '部门管理', requiresAuth: true }
       },
       {
         path: 'processes',
         name: 'ProcessList',
-        component: () => import(/* webpackChunkName: "basic-data" */ '@/views/process/ProcessList.vue'),
+        component: ProcessList,
         meta: { title: '工序管理', requiresAuth: true }
       },
       {
         path: 'products',
         name: 'ProductList',
-        component: () => import(/* webpackChunkName: "basic-data" */ '@/views/product/ProductList.vue'),
+        component: ProductList,
         meta: { title: '产品管理', requiresAuth: true }
       },
       {
         path: 'materials',
         name: 'MaterialList',
-        component: () => import(/* webpackChunkName: "basic-data" */ '@/views/material/MaterialList.vue'),
+        component: MaterialList,
         meta: { title: '物料管理', requiresAuth: true }
       },
       {
         path: 'product-groups',
         name: 'ProductGroupList',
-        component: () => import(/* webpackChunkName: "basic-data" */ '@/views/product-group/ProductGroupList.vue'),
+        component: ProductGroupList,
         meta: { title: '产品组管理', requiresAuth: true }
       },
-
-      // 版和模具管理 - 合并到单个 chunk
       {
         path: 'artworks',
         name: 'ArtworkList',
-        component: () => import(/* webpackChunkName: "plate-management" */ '@/views/artwork/ArtworkList.vue'),
+        component: ArtworkList,
         meta: { title: '图稿管理', requiresAuth: true }
       },
       {
         path: 'dies',
         name: 'DieList',
-        component: () => import(/* webpackChunkName: "plate-management" */ '@/views/die/DieList.vue'),
+        component: DieList,
         meta: { title: '刀模管理', requiresAuth: true }
       },
       {
         path: 'foiling-plates',
         name: 'FoilingPlateList',
-        component: () => import(/* webpackChunkName: "plate-management" */ '@/views/foiling-plate/FoilingPlateList.vue'),
+        component: FoilingPlateList,
         meta: { title: '烫金版管理', requiresAuth: true }
       },
       {
         path: 'embossing-plates',
         name: 'EmbossingPlateList',
-        component: () => import(/* webpackChunkName: "plate-management" */ '@/views/embossing-plate/EmbossingPlateList.vue'),
+        component: EmbossingPlateList,
         meta: { title: '压凸版管理', requiresAuth: true }
       },
-
-      // 供应商和采购 - 合并到单个 chunk
       {
         path: 'suppliers',
         name: 'SupplierList',
-        component: () => import(/* webpackChunkName: "purchase" */ '@/views/supplier/SupplierList.vue'),
+        component: SupplierList,
         meta: { title: '供应商管理', requiresAuth: true }
       },
       {
         path: 'purchase-orders',
         name: 'PurchaseOrderList',
-        component: () => import(/* webpackChunkName: "purchase" */ '@/views/purchase/PurchaseList.vue'),
+        component: PurchaseOrderList,
         meta: { title: '采购单管理', requiresAuth: true }
       },
-
-      // 销售订单 - 单独 chunk
       {
         path: 'sales-orders',
         name: 'SalesOrderList',
-        component: () => import(/* webpackChunkName: "sales-list" */ '@/views/sales/SalesList.vue'),
+        component: SalesOrderList,
         meta: { title: '销售订单管理', requiresAuth: true }
       },
       {
         path: 'sales-orders/create',
         name: 'SalesOrderCreate',
-        component: () => import(/* webpackChunkName: "sales-form" */ '@/views/sales/SalesForm.vue'),
+        component: SalesForm,
         meta: { title: '新建销售订单', requiresAuth: true }
       },
       {
         path: 'sales-orders/:id',
         name: 'SalesOrderDetail',
-        component: () => import(/* webpackChunkName: "sales-detail" */ /* webpackPrefetch: true */ '@/views/sales/SalesDetail.vue'),
+        component: SalesDetail,
         meta: { title: '销售订单详情', requiresAuth: true }
       },
       {
         path: 'sales-orders/:id/edit',
         name: 'SalesOrderEdit',
-        component: () => import(/* webpackChunkName: "sales-form" */ '@/views/sales/SalesForm.vue'),
+        component: SalesForm,
         meta: { title: '编辑销售订单', requiresAuth: true }
       },
-
-      // 任务管理 - 单独 chunk，使用 prefetch
       {
         path: 'tasks',
         name: 'TaskList',
-        component: () => import(/* webpackChunkName: "task-list" */ /* webpackPrefetch: true */ '@/views/task/TaskList.vue'),
+        component: TaskList,
         meta: { title: '任务管理', requiresAuth: true }
       },
       {
         path: 'tasks/operator',
         name: 'OperatorCenter',
-        component: () => import(/* webpackChunkName: "task-operator" */ '@/views/task/OperatorCenter.vue'),
+        component: OperatorCenter,
         meta: { title: '操作员任务中心', requiresAuth: true }
       },
       {
         path: 'tasks/supervisor',
         name: 'SupervisorDashboard',
-        component: () => import(/* webpackChunkName: "task-supervisor" */ '@/views/task/SupervisorDashboard.vue'),
+        component: SupervisorDashboard,
         meta: { title: '主管看板', requiresAuth: true }
       },
       {
         path: 'tasks/board',
         name: 'TaskBoard',
-        component: () => import(/* webpackChunkName: "task-board" */ '@/views/task/Board.vue'),
+        component: TaskBoard,
         meta: { title: '部门任务看板', requiresAuth: true }
       },
       {
         path: 'tasks/stats',
         name: 'TaskStats',
-        component: () => import(/* webpackChunkName: "task-stats" */ '@/views/task/Stats.vue'),
+        component: TaskStats,
         meta: { title: '协作统计', requiresAuth: true }
       },
       {
         path: 'tasks/assignment-history',
         name: 'AssignmentHistory',
-        component: () => import(/* webpackChunkName: "task-config" */ '@/views/task/AssignmentHistory.vue'),
+        component: AssignmentHistory,
         meta: { title: '分派历史', requiresAuth: true }
       },
       {
         path: 'tasks/assignment-rules',
         name: 'AssignmentRule',
-        component: () => import(/* webpackChunkName: "task-config" */ '@/views/task/AssignmentRule.vue'),
+        component: AssignmentRule,
         meta: { title: '分派规则配置', requiresAuth: true }
       },
-
-      // 通知中心 - 使用 prefetch
       {
         path: 'notifications',
         name: 'Notification',
-        component: () => import(/* webpackChunkName: "notification" */ /* webpackPrefetch: true */ '@/views/Notification.vue'),
+        component: Notification,
         meta: { title: '通知中心', requiresAuth: true }
       },
-
-      // 财务管理 - 合并到单个 chunk
       {
         path: 'finance/invoices',
         name: 'InvoiceList',
-        component: () => import(/* webpackChunkName: "finance" */ '@/views/finance/Invoice.vue'),
+        component: InvoiceList,
         meta: { title: '发票管理', requiresAuth: true }
       },
       {
         path: 'finance/payments',
         name: 'PaymentList',
-        component: () => import(/* webpackChunkName: "finance" */ '@/views/finance/Payment.vue'),
+        component: PaymentList,
         meta: { title: '收款管理', requiresAuth: true }
       },
       {
         path: 'finance/costs',
         name: 'CostList',
-        component: () => import(/* webpackChunkName: "finance" */ '@/views/finance/Cost.vue'),
+        component: CostList,
         meta: { title: '成本核算', requiresAuth: true }
       },
       {
         path: 'finance/statements',
         name: 'StatementList',
-        component: () => import(/* webpackChunkName: "finance" */ '@/views/finance/Statement.vue'),
+        component: StatementList,
         meta: { title: '对账管理', requiresAuth: true }
       },
-
-      // 库存管理 - 合并到单个 chunk
       {
         path: 'inventory/stocks',
         name: 'StockList',
-        component: () => import(/* webpackChunkName: "inventory" */ '@/views/inventory/Stock.vue'),
+        component: StockList,
         meta: { title: '成品库存', requiresAuth: true }
       },
       {
         path: 'inventory/delivery',
         name: 'DeliveryList',
-        component: () => import(/* webpackChunkName: "inventory" */ '@/views/inventory/Delivery.vue'),
+        component: DeliveryList,
         meta: { title: '发货管理', requiresAuth: true }
       },
       {
         path: 'inventory/quality',
         name: 'QualityList',
-        component: () => import(/* webpackChunkName: "inventory" */ '@/views/inventory/Quality.vue'),
+        component: QualityList,
         meta: { title: '质量检验', requiresAuth: true }
       },
-
-      // 用户设置
       {
         path: 'profile',
         name: 'Profile',
-        component: () => import(/* webpackChunkName: "profile" */ '@/views/Profile.vue'),
+        component: Profile,
         meta: { title: '个人信息', requiresAuth: true }
       },
-
-      // 审计日志
       {
         path: 'audit-logs',
         name: 'AuditLogList',
-        component: () => import(/* webpackChunkName: "audit-log" */ '@/views/audit/AuditLogList.vue'),
+        component: AuditLogList,
         meta: { title: '审计日志', requiresAuth: true }
       }
     ]
   }
 ]
 
-const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
-  routes
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL || '/'),
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
+    }
+  }
 })
+
+// 防止重复导航的标志
+let isAuthChecking = false
+let authCheckPromise = null
 
 // 全局路由守卫
 router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
 
   // 设置页面标题
-  document.title = to.meta.title ? `${to.meta.title} - 印刷施工单跟踪系统` : '印刷施工单跟踪系统'
+  document.title = to.meta.title
+    ? `${to.meta.title} - 印刷施工单跟踪系统`
+    : '印刷施工单跟踪系统'
 
-  // 如果页面需要认证
   if (requiresAuth) {
-    // 检查是否已有用户信息（使用新的模块化 API）
-    if (!store.getters['user/currentUser']) {
-      // 如果正在检查认证，等待完成而不是发起新请求
+    const userStore = useUserStore()
+
+    if (!userStore.currentUser) {
       if (isAuthChecking && authCheckPromise) {
         try {
           await authCheckPromise
-          // 检查是否已登录
-          if (store.getters['user/currentUser']) {
+          if (userStore.currentUser) {
             next()
             return
           }
-          // 未登录，重定向到登录页
           next({ path: '/login', query: { redirect: to.fullPath }, replace: true })
           return
         } catch (error) {
@@ -319,14 +354,13 @@ router.beforeEach(async (to, from, next) => {
         }
       }
 
-      // 开始新的认证检查
       isAuthChecking = true
       authCheckPromise = (async () => {
         try {
           const response = await authAPI.getCurrentUser()
           const userInfo = response?.data || response
           if (response?.success && userInfo && userInfo.id) {
-            store.dispatch('user/initUser', userInfo)
+            userStore.setUser(userInfo)
             return true
           }
           return false
@@ -343,7 +377,6 @@ router.beforeEach(async (to, from, next) => {
         if (isLoggedIn) {
           next()
         } else {
-          // 未登录，跳转到登录页，携带重定向信息（使用 replace 避免导航历史问题）
           next({ path: '/login', query: { redirect: to.fullPath }, replace: true })
         }
       } catch (error) {
@@ -353,11 +386,14 @@ router.beforeEach(async (to, from, next) => {
       next()
     }
   } else {
-    // 不需要认证的页面，如果已登录且访问登录页，跳转到首页（使用新的模块化 API）
-    if (to.path === '/login' && store.getters['user/currentUser']) {
-      // 如果有重定向参数，跳转到重定向页面
-      const redirect = to.query.redirect || from.fullPath || '/'
-      next(redirect)
+    if (to.path === '/login') {
+      const userStore = useUserStore()
+      if (userStore.currentUser) {
+        const redirect = to.query.redirect || from.fullPath || '/'
+        next(redirect)
+      } else {
+        next()
+      }
     } else {
       next()
     }

@@ -15,7 +15,7 @@
  *   }
  * }
  */
-import { MessageBox } from 'element-ui'
+import { ElMessageBox } from 'element-plus'
 import listPageMixin from './listPageMixin'
 import ErrorHandler from '@/utils/errorHandler'
 

@@ -2,7 +2,7 @@
  * 统一错误处理器
  * 提供统一的错误处理和消息显示
  */
-import { Message, MessageBox } from 'element-ui'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import logger from '@/utils/logger'
 
 export class ErrorHandler {
@@ -108,7 +108,7 @@ export class ErrorHandler {
     }
 
     // 显示确认对话框
-    MessageBox.confirm(message, '任务冲突', {
+    ElMessageBox.confirm(message, '任务冲突', {
       confirmButtonText: retry?.action_text || '刷新页面',
       cancelButtonText: '取消',
       type: 'warning'
@@ -160,7 +160,7 @@ export class ErrorHandler {
    */
   static showMessage(error, context = '') {
     const { message } = this.handle(error, context)
-    Message.error(message)
+    ElMessage.error(message)
   }
 
   /**
@@ -168,7 +168,7 @@ export class ErrorHandler {
    * @param {string} message - 消息内容
    */
   static showSuccess(message) {
-    Message.success(message)
+    ElMessage.success(message)
   }
 
   /**
@@ -176,7 +176,7 @@ export class ErrorHandler {
    * @param {string} message - 消息内容
    */
   static showWarning(message) {
-    Message.warning(message)
+    ElMessage.warning(message)
   }
 
   /**
@@ -184,7 +184,7 @@ export class ErrorHandler {
    * @param {string} message - 消息内容
    */
   static showInfo(message) {
-    Message.info(message)
+    ElMessage.info(message)
   }
 
   /**
@@ -237,7 +237,7 @@ export class ErrorHandler {
       type: 'warning'
     }
 
-    return MessageBox.confirm(message, title, { ...defaultOptions, ...options })
+    return ElMessageBox.confirm(message, title, { ...defaultOptions, ...options })
       .then(() => true)
       .catch(() => false)
   }
