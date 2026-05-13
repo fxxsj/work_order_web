@@ -1,459 +1,135 @@
 <template>
   <div class="task-stats">
-    <!-- 统计摘要（卡片外部，与任务看板风格统一） -->
-    <div v-if="summary" class="summary-section">
-      <el-row :gutter="20">
-        <el-col :span="8">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon" style="background-color: #409EFF;">
-                <i class="el-icon-user"></i>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">
-                  {{ summary.total_operators }}
-                </div>
-                <div class="stat-label">
-                  操作员总数
-                </div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="8">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon" style="background-color: #909399;">
-                <i class="el-icon-s-order"></i>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">
-                  {{ summary.total_tasks }}
-                </div>
-                <div class="stat-label">
-                  任务总数
-                </div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="8">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon" style="background-color: #67C23A;">
-                <i class="el-icon-circle-check"></i>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">
-                  {{ summary.total_completed_tasks }}
-                </div>
-                <div class="stat-label">
-                  已完成任务
-                </div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
-      <el-row :gutter="20" style="margin-top: 20px;">
-        <el-col :span="8">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon" style="background-color: #E6A23C;">
-                <i class="el-icon-s-data"></i>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">
-                  {{ summary.total_completed_quantity }}
-                </div>
-                <div class="stat-label">
-                  完成总数
-                </div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="8">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon" style="background-color: #F56C6C;">
-                <i class="el-icon-warning"></i>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">
-                  {{ summary.total_defective_quantity }}
-                </div>
-                <div class="stat-label">
-                  不良品总数
-                </div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="8">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <div
-                class="stat-icon"
-                :style="{ backgroundColor: summary.overall_defective_rate > 5 ? '#F56C6C' : '#67C23A' }"
-              >
-                <i class="el-icon-pie-chart"></i>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">
-                  {{ summary.overall_defective_rate }}%
-                </div>
-                <div class="stat-label">
-                  总体不良品率
-                </div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
-    </div>
-
-    <!-- 主内容卡片 -->
     <el-card>
-      <!-- 筛选条件 -->
-      <div class="filter-section">
-        <el-row :gutter="20">
-          <el-col :span="6">
-            <el-date-picker
-              v-model="filters.start_date"
-              type="date"
-              placeholder="开始日期"
-              format="yyyy-MM-dd"
-              value-format="yyyy-MM-dd"
-              style="width: 100%;"
-              @change="handleSearch"
-            />
-          </el-col>
-          <el-col :span="6">
-            <el-date-picker
-              v-model="filters.end_date"
-              type="date"
-              placeholder="结束日期"
-              format="yyyy-MM-dd"
-              value-format="yyyy-MM-dd"
-              style="width: 100%;"
-              @change="handleSearch"
-            />
-          </el-col>
-          <el-col :span="6">
-            <el-select
-              v-model="filters.department_id"
-              placeholder="部门筛选"
-              clearable
-              filterable
-              style="width: 100%;"
-              @change="handleSearch"
-            >
-              <el-option
-                v-for="dept in departmentList"
-                :key="dept.id"
-                :label="dept.name"
-                :value="dept.id"
-              />
-            </el-select>
-          </el-col>
-          <el-col :span="6" style="text-align: right;">
-            <el-button icon="el-icon-refresh-left" @click="handleReset">
-              重置
-            </el-button>
-            <el-button
-              type="primary"
-              icon="el-icon-refresh"
-              style="margin-left: 10px;"
-              @click="loadData"
-            >
-              刷新
-            </el-button>
-          </el-col>
-        </el-row>
-      </div>
+      <template #header>
+        <div class="card-header">
+          <span class="title">任务统计</span>
+          <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 280px;" @change="loadStats" />
+        </div>
+      </template>
 
-      <!-- 空状态显示 -->
-      <el-empty
-        v-if="!loading && statsList.length === 0"
-        description="暂无统计数据"
-        :image-size="200"
-      >
-        <p style="color: #909399; font-size: 14px;">
-          请调整筛选条件或等待任务完成
-        </p>
-      </el-empty>
+      <el-row :gutter="20">
+        <el-col :span="8"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><el-icon><User /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.total_operators || 0 }}</div><div class="stat-label">操作员总数</div></div></div></el-card></el-col>
+        <el-col :span="8"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #909399;"><el-icon><Document /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.total_tasks || 0 }}</div><div class="stat-label">任务总数</div></div></div></el-card></el-col>
+        <el-col :span="8"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #67C23A;"><el-icon><CircleCheck /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.total_completed_tasks || 0 }}</div><div class="stat-label">已完成任务</div></div></div></el-card></el-col>
+      </el-row>
 
-      <!-- 操作员统计表格 -->
-      <el-table
-        v-else
-        v-loading="loading"
-        :data="statsList"
-        border
-        style="width: 100%; margin-top: 20px;"
-        :default-sort="{prop: 'total_completed_quantity', order: 'descending'}"
-      >
-        <el-table-column
-          prop="operator_name"
-          label="操作员"
-          width="150"
-          fixed="left"
-        >
-          <template slot-scope="scope">
-            <div>
-              <div style="font-weight: bold;">
-                {{ scope.row.operator_name }}
-              </div>
-              <div style="font-size: 12px; color: #909399;">
-                {{ scope.row.operator_username }}
-              </div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="departments" label="所属部门" width="200">
-          <template slot-scope="scope">
-            <el-tag
-              v-for="dept in scope.row.departments"
-              :key="dept"
-              size="small"
-              style="margin-right: 5px;"
-            >
-              {{ dept }}
-            </el-tag>
-            <span v-if="scope.row.departments.length === 0" style="color: #909399;">未分配</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="total_tasks"
-          label="任务总数"
-          width="100"
-          sortable
-        >
-          <template slot-scope="scope">
-            <el-tag size="small">
-              {{ scope.row.total_tasks }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="任务状态" width="220">
-          <template slot-scope="scope">
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-              <div>
-                <el-tag type="success" size="small">
-                  已完成: {{ scope.row.completed_tasks }}
-                </el-tag>
-              </div>
-              <div>
-                <el-tag type="warning" size="small">
-                  进行中: {{ scope.row.in_progress_tasks }}
-                </el-tag>
-                <el-tag type="info" size="small" style="margin-left: 5px;">
-                  待开始: {{ scope.row.pending_tasks }}
-                </el-tag>
-              </div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="completion_rate"
-          label="完成率"
-          width="100"
-          sortable
-        >
-          <template slot-scope="scope">
-            <el-progress
-              :percentage="scope.row.completion_rate"
-              :color="getProgressColor(scope.row.completion_rate)"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="total_completed_quantity"
-          label="完成总数"
-          width="120"
-          sortable
-        >
-          <template slot-scope="scope">
-            <span style="font-weight: bold; color: #409EFF;">{{ scope.row.total_completed_quantity }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="total_defective_quantity"
-          label="不良品数"
-          width="120"
-          sortable
-        >
-          <template slot-scope="scope">
-            <span style="color: #F56C6C;">{{ scope.row.total_defective_quantity }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="defective_rate"
-          label="不良品率"
-          width="120"
-          sortable
-        >
-          <template slot-scope="scope">
-            <el-tag
-              :type="getDefectiveRateType(scope.row.defective_rate)"
-              size="small"
-            >
-              {{ scope.row.defective_rate }}%
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="avg_completion_hours"
-          label="平均完成时间(小时)"
-          width="150"
-          sortable
-        >
-          <template slot-scope="scope">
-            <span v-if="scope.row.avg_completion_hours !== null">
-              {{ scope.row.avg_completion_hours }} 小时
-            </span>
-            <span v-else style="color: #909399;">-</span>
-          </template>
-        </el-table-column>
-      </el-table>
+      <el-row :gutter="20" style="margin-top: 20px;">
+        <el-col :span="8"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #E6A23C;"><el-icon><DataAnalysis /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.total_completed_quantity || 0 }}</div><div class="stat-label">完成总数</div></div></div></el-card></el-col>
+        <el-col :span="8"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #F56C6C;"><el-icon><Warning /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.overdue_tasks || 0 }}</div><div class="stat-label">逾期任务</div></div></div></el-card></el-col>
+        <el-col :span="8"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><el-icon><Clock /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.pending_tasks || 0 }}</div><div class="stat-label">待处理任务</div></div></div></el-card></el-col>
+      </el-row>
+
+      <el-divider />
+
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <div class="chart-section">
+            <h4>部门任务分布</h4>
+            <div ref="deptChartRef" style="height: 300px;"></div>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="chart-section">
+            <h4>任务完成趋势</h4>
+            <div ref="trendChartRef" style="height: 300px;"></div>
+          </div>
+        </el-col>
+      </el-row>
+
+      <el-divider />
+
+      <el-row :gutter="20">
+        <el-col :span="24">
+          <div class="table-section">
+            <h4>操作员任务统计</h4>
+            <el-table :data="operatorStats" border style="margin-top: 15px;">
+              <el-table-column prop="operator_name" label="操作员" width="150" />
+              <el-table-column prop="total_tasks" label="任务数" width="100" align="center" />
+              <el-table-column prop="completed_tasks" label="已完成" width="100" align="center" />
+              <el-table-column prop="in_progress_tasks" label="进行中" width="100" align="center" />
+              <el-table-column prop="completed_quantity" label="完成数量" width="120" align="center" />
+              <el-table-column prop="avg_time" label="平均耗时" width="120" align="center">
+                <template #default="scope">{{ scope.row.avg_time ? scope.row.avg_time.toFixed(1) + 'h' : '-' }}</template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </el-col>
+      </el-row>
     </el-card>
   </div>
 </template>
 
-<script>
-import { workOrderTaskAPI, departmentAPI } from '@/api/modules'
+<script setup>
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { workOrderTaskAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
-import unwrapApiResponse from '@/utils/apiResponse'
 
-export default {
-  name: 'TaskStats',
-  data() {
-    return {
-      loading: false,
-      statsList: [],
-      summary: null,
-      departmentList: [],
-      filters: {
-        start_date: null,
-        end_date: null,
-        department_id: null
-      }
-    }
-  },
-  mounted() {
-    this.loadDepartmentList()
-    this.loadData()
-  },
-  methods: {
-    async loadDepartmentList() {
-      try {
-        const res = await departmentAPI.getList({ page_size: 1000 })
-        this.departmentList = res.results || []
-      } catch (error) {
-        ErrorHandler.handle(error, 'TaskStats.loadDepartmentList')
-        ErrorHandler.showMessage(error, '加载部门列表')
-      }
-    },
-    async loadData() {
-      this.loading = true
-      try {
-        const params = {}
-        if (this.filters.start_date) {
-          params.start_date = this.filters.start_date
-        }
-        if (this.filters.end_date) {
-          params.end_date = this.filters.end_date
-        }
-        if (this.filters.department_id) {
-          params.department_id = this.filters.department_id
-        }
+const dateRange = ref([])
+const summary = ref({})
+const operatorStats = ref([])
+const deptChartRef = ref(null)
+const trendChartRef = ref(null)
+let deptChart = null
+let trendChart = null
 
-        const res = await workOrderTaskAPI.getCollaborationStats(params)
-        const payload = unwrapApiResponse(res)
-        this.statsList = payload?.results || []
-        this.summary = payload?.summary || null
-      } catch (error) {
-        ErrorHandler.handle(error, 'TaskStats.loadStatistics')
-        ErrorHandler.showMessage(error, '加载统计数据')
-      } finally {
-        this.loading = false
-      }
-    },
-    handleSearch() {
-      this.loadData()
-    },
-    handleReset() {
-      this.filters = {
-        start_date: null,
-        end_date: null,
-        department_id: null
-      }
-      this.loadData()
-    },
-    getProgressColor(percentage) {
-      if (percentage >= 80) return '#67C23A'
-      if (percentage >= 50) return '#E6A23C'
-      return '#F56C6C'
-    },
-    getDefectiveRateType(rate) {
-      if (rate > 5) return 'danger'
-      if (rate > 2) return 'warning'
-      return 'success'
+const loadStats = async () => {
+  try {
+    const params = {}
+    if (dateRange.value && dateRange.value.length === 2) {
+      params.start_date = dateRange.value[0]
+      params.end_date = dateRange.value[1]
     }
+    const response = await workOrderTaskAPI.getStats(params)
+    summary.value = response?.summary || response || {}
+    operatorStats.value = response?.by_operator || []
+    initCharts()
+  } catch (error) { ErrorHandler.showMessage(error, '加载统计数据失败') }
+}
+
+const initCharts = async () => {
+  if (typeof window === 'undefined' || !window.echarts) return
+  const echarts = window.echarts
+
+  if (deptChartRef.value) {
+    deptChart = echarts.init(deptChartRef.value)
+    const deptData = operatorStats.value.map(o => ({ name: o.operator_name, value: o.total_tasks }))
+    deptChart.setOption({
+      tooltip: { trigger: 'item' },
+      series: [{ type: 'pie', radius: '60%', data: deptData, emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } } }]
+    })
+  }
+
+  if (trendChartRef.value) {
+    trendChart = echarts.init(trendChartRef.value)
+    const dates = summary.value.daily_completed?.map(d => d.date) || []
+    const values = summary.value.daily_completed?.map(d => d.count) || []
+    trendChart.setOption({
+      tooltip: { trigger: 'axis' },
+      xAxis: { type: 'category', data: dates },
+      yAxis: { type: 'value' },
+      series: [{ data: values, type: 'line', smooth: true, areaStyle: { opacity: 0.3 }, itemStyle: { color: '#409EFF' } }]
+    })
   }
 }
+
+const handleResize = () => { deptChart?.resize(); trendChart?.resize() }
+
+onMounted(() => { loadStats(); window.addEventListener('resize', handleResize) })
+onUnmounted(() => { window.removeEventListener('resize', handleResize); deptChart?.dispose(); trendChart?.dispose() })
 </script>
 
 <style scoped>
-.task-stats {
-  padding: 20px;
-}
-
-.filter-section {
-  margin-bottom: 20px;
-}
-
-.summary-section {
-  margin-bottom: 20px;
-}
-
-/* 统计卡片样式（与任务看板 TaskStats 组件保持一致） */
-.stat-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.stat-content {
-  display: flex;
-  align-items: center;
-}
-
-.stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-  margin-right: 12px;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #303133;
-  line-height: 1;
-  margin-bottom: 6px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #909399;
-}
+.task-stats { padding: 20px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+.title { font-weight: bold; font-size: 16px; }
+.stat-card { border-radius: 10px; }
+.stat-content { display: flex; align-items: center; gap: 12px; }
+.stat-icon { width: 48px; height: 48px; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+.stat-value { font-size: 24px; font-weight: bold; }
+.stat-label { font-size: 12px; color: #909399; }
+.chart-section { padding: 10px; }
+.chart-section h4 { margin-bottom: 15px; color: #303133; }
+.table-section h4 { margin-bottom: 10px; color: #303133; }
 </style>
