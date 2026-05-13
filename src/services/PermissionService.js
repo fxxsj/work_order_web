@@ -84,13 +84,13 @@ class PermissionService {
     }
 
     // 业务员可以查看自己的客户或自己创建的施工单
-    if (this.hasRole('业务员')) {
+    if (this.hasRole('sales')) {
       return workOrder.customer?.salesperson?.id === this.currentUser.id ||
              workOrder.created_by?.id === this.currentUser.id
     }
 
     // 生产主管可以查看本部门相关的施工单
-    if (this.hasRole('生产主管') && this.hasPermission('workorder.view')) {
+    if (this.hasRole('supervisor') && this.hasPermission('workorder.view_workorder')) {
       return this.canViewDepartmentWorkOrder(workOrder)
     }
 
@@ -128,10 +128,10 @@ class PermissionService {
 
     // 已审核通过的施工单有保护字段
     if (workOrder.approval_status === 'approved') {
-      return this.hasPermission('workorder.change_approved')
+      return this.hasPermission('workorder.change_approved_workorder')
     }
 
-    return this.hasPermission('workorder.change')
+    return this.hasPermission('workorder.change_workorder')
   }
 
   /**
@@ -150,7 +150,7 @@ class PermissionService {
       return false
     }
 
-    return this.hasPermission('workorder.delete')
+    return this.hasPermission('workorder.delete_workorder')
   }
 
   /**
@@ -164,12 +164,12 @@ class PermissionService {
       return true
     }
 
-    if (!this.hasPermission('workorder.approve')) {
+    if (!this.hasPermission('workorder.approve_workorder')) {
       return false
     }
 
     // 业务员只能审核自己的客户
-    if (this.hasRole('业务员')) {
+    if (this.hasRole('sales')) {
       return workOrder.customer?.salesperson?.id === this.currentUser.id
     }
 
@@ -204,7 +204,7 @@ class PermissionService {
         return true
       }
 
-      if (this.hasRole('生产主管') && task.assigned_department) {
+      if (this.hasRole('supervisor') && task.assigned_department) {
         const userDepartments = this.currentUser.profile?.departments || []
         return userDepartments.some(dept =>
           dept.id === task.assigned_department
@@ -227,7 +227,7 @@ class PermissionService {
       }
 
       // 生产主管可以操作本部门的任务
-      if (this.hasRole('生产主管') && this.hasPermission('workorder.change_workorder')) {
+      if (this.hasRole('supervisor') && this.hasPermission('workorder.change_workordertask')) {
         if (task.assigned_department) {
           const userDepartments = this.currentUser.profile?.departments || []
           return userDepartments.some(dept =>
@@ -246,7 +246,7 @@ class PermissionService {
 
     // 分派权限
     if (action === 'assign') {
-      return this.hasPermission('workorder.assign_task')
+      return this.hasPermission('workorder.change_workordertask')
     }
 
     return false
@@ -260,7 +260,7 @@ class PermissionService {
   getEditableFields(workOrder) {
     // 如果已审核通过，只能编辑部分字段
     if (workOrder.approval_status === 'approved') {
-      if (this.hasPermission('workorder.change_approved')) {
+      if (this.hasPermission('workorder.change_approved_workorder')) {
         // 有特殊权限的用户可以编辑更多字段
         return []
       }
@@ -270,7 +270,7 @@ class PermissionService {
     }
 
     // 待审核或未提交的施工单，有编辑权限的用户可以编辑所有字段
-    if (this.hasPermission('workorder.change')) {
+    if (this.hasPermission('workorder.change_workorder')) {
       // 返回所有可编辑的字段列表
       return [
         'customer',
@@ -360,15 +360,15 @@ class PermissionService {
     if (typeof menu === 'string') {
       // 菜单路径到权限的映射
       const menuPermissionMap = {
-        '/workorders': 'workorder.view',
-        '/tasks': 'task.view',
-        '/customers': 'customer.view',
-        '/products': 'product.view',
-        '/materials': 'material.view',
-        '/artworks': 'artwork.view',
-        '/reports': 'report.view',
-        '/settings': 'setting.view',
-        '/admin': 'admin.access'
+        '/workorders': 'workorder.view_workorder',
+        '/tasks': 'workorder.view_workordertask',
+        '/customers': 'workorder.view_customer',
+        '/products': 'workorder.view_product',
+        '/materials': 'workorder.view_material',
+        '/artworks': 'workorder.view_artwork',
+        '/reports': 'workorder.view_workorder',
+        '/settings': 'workorder.view_workorder',
+        '/admin': 'auth.change_group'
       }
 
       menuObj = {
@@ -406,9 +406,9 @@ class PermissionService {
     }
 
     const exportPermissionMap = {
-      workorder: 'workorder.export_workorder',
-      task: 'workorder.export_task',
-      customer: 'workorder.export_customer'
+      workorder: 'workorder.view_workorder',
+      task: 'workorder.view_workordertask',
+      customer: 'workorder.view_customer'
     }
 
     // 如果有具体的导出权限，允许导出
@@ -418,12 +418,12 @@ class PermissionService {
 
     // 如果有查看权限，也允许导出
     const viewPermissionMap = {
-      workorder: 'workorder.view',
-      task: 'workorder.view',
-      customer: 'workorder.view'
+      workorder: 'workorder.view_workorder',
+      task: 'workorder.view_workordertask',
+      customer: 'workorder.view_customer'
     }
 
-    return this.hasPermission(viewPermissionMap[dataType] || 'workorder.view')
+    return this.hasPermission(viewPermissionMap[dataType] || 'workorder.view_workorder')
   }
 
   /**

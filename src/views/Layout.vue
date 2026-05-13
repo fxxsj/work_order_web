@@ -305,11 +305,11 @@ export default {
     },
     // 检查是否有查看烫金版的权限
     canViewFoilingPlate() {
-      return this.hasPermission('workorder.view_foiling-plate')
+      return this.hasPermission('workorder.view_foilingplate')
     },
     // 检查是否有查看压凸版的权限
     canViewEmbossingPlate() {
-      return this.hasPermission('workorder.view_embossing-plate')
+      return this.hasPermission('workorder.view_embossingplate')
     },
     // 检查是否有查看产品组的权限
     canViewProductGroup() {

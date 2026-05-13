@@ -152,7 +152,7 @@ export default {
     return {
       // API 服务和权限配置
       apiService: embossingPlateAPI,
-      permissionPrefix: 'embossing-plate',
+      permissionPrefix: 'embossingplate',
 
       // 对话框相关
       dialogVisible: false,

@@ -159,7 +159,7 @@ export default {
     return {
       // API 服务和权限配置
       apiService: foilingPlateAPI,
-      permissionPrefix: 'foiling-plate',
+      permissionPrefix: 'foilingplate',
 
       // 对话框相关
       dialogVisible: false,
