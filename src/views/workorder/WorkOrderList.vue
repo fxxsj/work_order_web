@@ -1,7 +1,6 @@
 <template>
   <div class="workorder-list">
     <el-card>
-      <!-- 搜索和筛选 -->
       <div class="filter-section">
         <el-row :gutter="20">
           <el-col :span="5">
@@ -12,7 +11,9 @@
               @input="handleSearchDebounced"
               @clear="handleSearchDebounced"
             >
-              <el-button slot="append" icon="el-icon-search" @click="handleSearch" />
+              <template #append>
+                <el-button :icon="Search" @click="handleSearch" />
+              </template>
             </el-input>
           </el-col>
           <el-col :span="3">
@@ -69,15 +70,15 @@
           </el-col>
           <el-col :span="isSalesperson ? 10 : 10" style="text-align: right;">
             <el-button
-              icon="el-icon-refresh"
+              :icon="RefreshRight"
               circle
               title="重置筛选"
               @click="handleReset"
             />
             <el-button
-              v-if="canExport()"
+              v-if="canExport"
               type="success"
-              icon="el-icon-download"
+              :icon="Download"
               :loading="exporting"
               style="margin-left: 10px;"
               @click="handleExport"
@@ -86,7 +87,7 @@
             </el-button>
             <el-button
               type="primary"
-              icon="el-icon-plus"
+              :icon="Plus"
               style="margin-left: 10px;"
               @click="handleCreate"
             >
@@ -96,7 +97,6 @@
         </el-row>
       </div>
 
-      <!-- 骨架屏 -->
       <SkeletonLoader
         v-if="loading && tableData.length === 0"
         type="table"
@@ -106,7 +106,6 @@
         style="margin-top: 20px;"
       />
 
-      <!-- 表格 -->
       <el-table
         v-else
         v-loading="loading && tableData.length > 0"
@@ -114,45 +113,29 @@
         style="width: 100%; margin-top: 20px;"
         @row-click="handleRowClick"
       >
-        <el-table-column
-          prop="order_number"
-          label="施工单号"
-          width="150"
-          fixed
-        />
+        <el-table-column prop="order_number" label="施工单号" width="150" fixed />
         <el-table-column prop="customer_name" label="客户" width="150" />
         <el-table-column prop="salesperson_name" label="业务员" width="100">
-          <template slot-scope="scope">
-            {{ scope.row.salesperson_name || '-' }}
-          </template>
+          <template #default="scope">{{ scope.row.salesperson_name || '-' }}</template>
         </el-table-column>
         <el-table-column prop="product_name" label="产品名称" min-width="200" />
-        <el-table-column
-          prop="quantity"
-          label="生产数量"
-          width="120"
-          align="right"
-        >
-          <template slot-scope="scope">
+        <el-table-column prop="quantity" label="生产数量" width="120" align="right">
+          <template #default="scope">
             {{ (scope.row.production_quantity || 0) + (scope.row.defective_quantity || 0) }} 车
           </template>
         </el-table-column>
         <el-table-column label="状态" width="100">
-          <template slot-scope="scope">
-            <span :class="'status-badge status-' + scope.row.status">
-              {{ scope.row.status_display }}
-            </span>
+          <template #default="scope">
+            <span :class="'status-badge status-' + scope.row.status">{{ scope.row.status_display }}</span>
           </template>
         </el-table-column>
         <el-table-column label="优先级" width="100">
-          <template slot-scope="scope">
-            <span :class="'status-badge priority-' + scope.row.priority">
-              {{ scope.row.priority_display }}
-            </span>
+          <template #default="scope">
+            <span :class="'status-badge priority-' + scope.row.priority">{{ scope.row.priority_display }}</span>
           </template>
         </el-table-column>
         <el-table-column label="进度" width="150">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-progress
               :percentage="scope.row.progress_percentage"
               :color="scope.row.progress_percentage === 100 ? '#67C23A' : '#409EFF'"
@@ -160,211 +143,265 @@
           </template>
         </el-table-column>
         <el-table-column prop="order_date" label="下单日期" width="120">
-          <template slot-scope="scope">
-            {{ scope.row.order_date | formatDate }}
-          </template>
+          <template #default="scope">{{ formatDate(scope.row.order_date) }}</template>
         </el-table-column>
         <el-table-column prop="delivery_date" label="交货日期" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <span :style="getDeliveryDateStyle(scope.row.delivery_date, scope.row.status)">
-              {{ scope.row.delivery_date | formatDate }}
+              {{ formatDate(scope.row.delivery_date) }}
             </span>
           </template>
         </el-table-column>
         <el-table-column prop="manager_name" label="制表人" width="100" />
         <el-table-column label="操作" width="180" fixed="right">
-          <template slot-scope="scope">
-            <el-button type="text" size="small" @click.stop="handleView(scope.row)">
-              查看
-            </el-button>
-            <el-button
-              v-if="canEdit()"
-              type="text"
-              size="small"
-              @click.stop="handleEdit(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="canDelete()"
-              type="text"
-              size="small"
-              style="color: #F56C6C;"
-              @click.stop="handleDelete(scope.row)"
-            >
-              删除
-            </el-button>
+          <template #default="scope">
+            <el-button type="text" size="small" @click.stop="handleView(scope.row)">查看</el-button>
+            <el-button v-if="canEdit" type="text" size="small" @click.stop="handleEdit(scope.row)">编辑</el-button>
+            <el-button v-if="canDelete" type="text" size="small" style="color: #F56C6C;" @click.stop="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <Pagination
+      <el-pagination
         v-if="total > 0"
-        :current-page="currentPage"
-        :page-size="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
-        @current-change="handlePageChange"
+        layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
+        @current-change="handlePageChange"
       />
     </el-card>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { Plus, Search, RefreshRight, Download } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { workOrderAPI } from '@/api/modules'
-import listPageMixin from '@/mixins/listPageMixin'
-import crudPermissionMixin from '@/mixins/crudPermissionMixin'
-import exportMixin from '@/mixins/exportMixin'
-import { debounce } from '@/utils/debounce'
+import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
-import Pagination from '@/components/common/Pagination.vue'
-import {
-  WorkOrderStatusChoices,
-  PriorityChoices,
-  ApprovalStatusChoices
-} from '@/constants'
+import { WorkOrderStatusChoices, PriorityChoices, ApprovalStatusChoices } from '@/constants'
+import { formatDate } from '@/utils/filter'
 
-export default {
-  name: 'WorkOrderList',
-  components: { SkeletonLoader, Pagination },
-  mixins: [listPageMixin, crudPermissionMixin, exportMixin],
-  data() {
-    return {
-      // API 服务和权限配置
-      apiService: workOrderAPI,
-      permissionPrefix: 'workorder',
+const router = useRouter()
+const route = useRoute()
+const userStore = useUserStore()
 
-      // 自定义数据
-      filters: {
-        search: '',
-        status: '',
-        priority: '',
-        approval_status: ''
-      },
-      ordering: '-created_at',
+const searchText = ref('')
+const tableData = ref([])
+const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(20)
+const exporting = ref(false)
 
-      // 常量（用于模板）
-      WorkOrderStatusChoices,
-      PriorityChoices,
-      ApprovalStatusChoices
+const filters = reactive({
+  search: '',
+  status: '',
+  priority: '',
+  approval_status: ''
+})
+const ordering = ref('-created_at')
+
+const isSalesperson = computed(() => {
+  const userInfo = userStore.currentUser
+  return userInfo && userInfo.is_salesperson
+})
+
+const canExport = computed(() => userStore.hasPermission('workorder.view_workorder'))
+const canEdit = computed(() => userStore.hasPermission('workorder.change_workorder'))
+const canDelete = computed(() => userStore.hasPermission('workorder.delete_workorder'))
+
+let searchTimer = null
+
+const handleSearchDebounced = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    handleSearch()
+  }, 300)
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+  loadData()
+}
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadData()
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadData()
+}
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value,
+      ordering: ordering.value
     }
-  },
-  computed: {
-    // 检查用户是否为业务员
-    isSalesperson() {
-      const userInfo = this.$store.getters['user/currentUser']
-      return userInfo && userInfo.is_salesperson
-    }
-  },
-  async created() {
-    // 检查URL参数中是否有筛选条件
-    if (this.$route.query.approval_status) {
-      this.filters.approval_status = this.$route.query.approval_status
-    }
-    if (this.$route.query.status) {
-      this.filters.status = this.$route.query.status
-    }
-    if (this.$route.query.priority) {
-      this.filters.priority = this.$route.query.priority
-    }
-    if (this.$route.query.ordering) {
-      const allowedOrdering = new Set([
-        'created_at', '-created_at',
-        'order_date', '-order_date',
-        'delivery_date', '-delivery_date',
-        'order_number', '-order_number'
-      ])
-      if (allowedOrdering.has(this.$route.query.ordering)) {
-        this.ordering = this.$route.query.ordering
-      }
-    }
-    this.loadData()
-  },
-  methods: {
-    /**
-     * 获取数据（listPageMixin 要求实现）
-     */
-    async fetchData() {
-      const params = {
-        page: this.currentPage,
-        page_size: this.pageSize,
-        ordering: this.ordering
-      }
-      if (this.filters.search) params.search = this.filters.search
-      if (this.filters.status) params.status = this.filters.status
-      if (this.filters.priority) params.priority = this.filters.priority
-      if (this.filters.approval_status) params.approval_status = this.filters.approval_status
-      return await this.apiService.getList(params)
-    },
-    handleSearch() { this.currentPage = 1; this.loadData() },
-    handleSearchDebounced: debounce(function () { this.currentPage = 1; this.loadData() }, 300),
-    handleReset() {
-      this.filters = {
-        search: '',
-        status: '',
-        priority: '',
-        approval_status: ''
-      }
-      this.ordering = '-created_at'
-      this.currentPage = 1
-      if (Object.keys(this.$route.query).length > 0) {
-        this.$router.replace({ query: {} }).catch(err => {
-          if (err.name !== 'NavigationDuplicated') logger.warn('导航错误', err)
-        })
-      }
-      this.loadData()
-    },
-    handleCreate() { this.$router.push('/workorders/create') },
-    handleView(row) { this.$router.push(`/workorders/${row.id}`) },
-    handleEdit(row) { if (row.approval_status === 'approved') { this.$confirm('该施工单已审核通过。核心字段（产品、工序、版选择等）不能修改，非核心字段（备注、交货日期等）可以修改。确定要继续编辑吗？', '编辑已审核的施工单', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }).then(() => { this.$router.push(`/workorders/${row.id}/edit`) }).catch(() => {}) } else { this.$router.push(`/workorders/${row.id}/edit`) } },
-    handleRowClick(row) { this.handleView(row) },
-    handleDelete(row) { this.$confirm(`确定要删除施工单 ${row.order_number} 吗？`, '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }).then(async () => { try { await workOrderAPI.delete(row.id); ErrorHandler.showSuccess('删除成功'); this.loadData() } catch (error) { ErrorHandler.showMessage(error, '删除施工单') } }).catch(() => {}) },
-    getDeliveryDateStyle(date, status) {
-      if (status === 'completed' || status === 'cancelled') return {}
-      const diffDays = Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24))
-      if (diffDays < 0) return { color: '#F56C6C', fontWeight: 'bold' }
-      if (diffDays <= 3) return { color: '#E6A23C', fontWeight: 'bold' }
-      return {}
-    },
-    async handleExport() {
-      try {
-        this.exporting = true
-        const params = {}
-        if (this.filters.search) params.search = this.filters.search
-        if (this.filters.status) params.status = this.filters.status
-        if (this.filters.priority) params.priority = this.filters.priority
-        if (this.filters.approval_status) params.approval_status = this.filters.approval_status
-        const now = new Date()
-        const filename = `施工单列表_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.xlsx`
-        params.filename = filename
-        const response = await workOrderAPI.export(params)
-        const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-        const url = window.URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = filename
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        window.URL.revokeObjectURL(url)
-        ErrorHandler.showSuccess('导出成功')
-      } catch (error) {
-        if (error.response && error.response.data) {
-          const reader = new FileReader()
-          reader.onload = () => { ErrorHandler.showMessage({ message: reader.result }, '导出') }
-          reader.readAsText(error.response.data)
-        } else { ErrorHandler.showMessage(error, '导出') }
-      } finally { this.exporting = false }
-    }
+    if (filters.search) params.search = filters.search
+    if (filters.status) params.status = filters.status
+    if (filters.priority) params.priority = filters.priority
+    if (filters.approval_status) params.approval_status = filters.approval_status
+
+    const response = await workOrderAPI.getList(params)
+    tableData.value = response?.results || []
+    total.value = response?.count || 0
+  } catch (error) {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
   }
 }
+
+const handleReset = () => {
+  Object.assign(filters, {
+    search: '',
+    status: '',
+    priority: '',
+    approval_status: ''
+  })
+  ordering.value = '-created_at'
+  currentPage.value = 1
+  if (Object.keys(route.query).length > 0) {
+    router.replace({ query: {} }).catch(err => {
+      if (err.name !== 'NavigationDuplicated') logger.warn('导航错误', err)
+    })
+  }
+  loadData()
+}
+
+const handleCreate = () => {
+  router.push('/workorders/create')
+}
+
+const handleView = (row) => {
+  router.push(`/workorders/${row.id}`)
+}
+
+const handleEdit = (row) => {
+  if (row.approval_status === 'approved') {
+    ElMessageBox.confirm('该施工单已审核通过。核心字段（产品、工序、版选择等）不能修改，非核心字段（备注、交货日期等）可以修改。确定要继续编辑吗？', '编辑已审核的施工单', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
+      router.push(`/workorders/${row.id}/edit`)
+    }).catch(() => {})
+  } else {
+    router.push(`/workorders/${row.id}/edit`)
+  }
+}
+
+const handleRowClick = (row) => {
+  handleView(row)
+}
+
+const handleDelete = (row) => {
+  ElMessageBox.confirm(`确定要删除施工单 ${row.order_number} 吗？`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      await workOrderAPI.delete(row.id)
+      ElMessage.success('删除成功')
+      loadData()
+    } catch (error) {
+      ErrorHandler.showMessage(error, '删除施工单')
+    }
+  }).catch(() => {})
+}
+
+const getDeliveryDateStyle = (date, status) => {
+  if (status === 'completed' || status === 'cancelled') return {}
+  const diffDays = Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24))
+  if (diffDays < 0) return { color: '#F56C6C', fontWeight: 'bold' }
+  if (diffDays <= 3) return { color: '#E6A23C', fontWeight: 'bold' }
+  return {}
+}
+
+const handleExport = async () => {
+  try {
+    exporting.value = true
+    const params = {}
+    if (filters.search) params.search = filters.search
+    if (filters.status) params.status = filters.status
+    if (filters.priority) params.priority = filters.priority
+    if (filters.approval_status) params.approval_status = filters.approval_status
+    const now = new Date()
+    const filename = `施工单列表_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.xlsx`
+    params.filename = filename
+    const response = await workOrderAPI.export(params)
+    const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    if (error.response && error.response.data) {
+      const reader = new FileReader()
+      reader.onload = () => { ErrorHandler.showMessage({ message: reader.result }, '导出') }
+      reader.readAsText(error.response.data)
+    } else {
+      ErrorHandler.showMessage(error, '导出')
+    }
+  } finally {
+    exporting.value = false
+  }
+}
+
+onMounted(() => {
+  if (route.query.approval_status) {
+    filters.approval_status = route.query.approval_status
+  }
+  if (route.query.status) {
+    filters.status = route.query.status
+  }
+  if (route.query.priority) {
+    filters.priority = route.query.priority
+  }
+  if (route.query.ordering) {
+    const allowedOrdering = new Set([
+      'created_at', '-created_at',
+      'order_date', '-order_date',
+      'delivery_date', '-delivery_date',
+      'order_number', '-order_number'
+    ])
+    if (allowedOrdering.has(route.query.ordering)) {
+      ordering.value = route.query.ordering
+    }
+  }
+  loadData()
+})
 </script>
 
 <style scoped>
-.workorder-list { padding: 20px; }
-.filter-section { margin-bottom: 20px; }
-.el-table { cursor: pointer; }
+.workorder-list {
+  padding: 20px;
+}
+
+.filter-section {
+  margin-bottom: 20px;
+}
+
+.el-table {
+  cursor: pointer;
+}
 </style>
