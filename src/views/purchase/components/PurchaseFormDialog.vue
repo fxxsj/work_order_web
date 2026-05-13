@@ -1,324 +1,146 @@
 <template>
-  <el-dialog
-    :title="isEdit ? '编辑采购单' : '新增采购单'"
-    :visible.sync="dialogVisible"
-    width="900px"
-    @close="handleClose"
-  >
-    <el-form
-      ref="form"
-      :model="localForm"
-      :rules="rules"
-      label-width="100px"
-    >
+  <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑采购单' : '新增采购单'" width="900px" @close="handleClose">
+    <el-form ref="formRef" :model="localForm" :rules="rules" label-width="100px">
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="供应商" prop="supplier">
-            <el-select
-              v-model="localForm.supplier"
-              placeholder="请选择供应商"
-              filterable
-              style="width: 100%"
-            >
-              <el-option
-                v-for="item in supplierOptions"
-                :key="item.id"
-                :label="item.name"
-                :value="item.id"
-              />
+            <el-select v-model="localForm.supplier" placeholder="请选择供应商" filterable style="width: 100%">
+              <el-option v-for="item in supplierOptions" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="关联施工单">
-            <el-select
-              v-model="localForm.work_order"
-              placeholder="请选择施工单"
-              clearable
-              filterable
-              style="width: 100%"
-              @change="handleWorkOrderChange"
-            >
-              <el-option
-                v-for="item in workOrderOptions"
-                :key="item.id"
-                :label="item.order_number"
-                :value="item.id"
-              />
+            <el-select v-model="localForm.work_order" placeholder="请选择施工单" clearable filterable style="width: 100%" @change="handleWorkOrderChange">
+              <el-option v-for="item in workOrderOptions" :key="item.id" :label="item.order_number" :value="item.id" />
             </el-select>
           </el-form-item>
         </el-col>
       </el-row>
-      <el-form-item label="备注">
-        <el-input
-          v-model="localForm.notes"
-          type="textarea"
-          :rows="2"
-          placeholder="请输入备注"
-        />
-      </el-form-item>
+      <el-form-item label="备注"><el-input v-model="localForm.notes" type="textarea" :rows="2" placeholder="请输入备注" /></el-form-item>
+
       <el-divider>采购明细</el-divider>
-      <el-button
-        size="small"
-        type="primary"
-        icon="el-icon-plus"
-        @click="handleAddItem"
-      >
-        添加明细
-      </el-button>
+      <el-button size="small" type="primary" :icon="Plus" @click="handleAddItem">添加明细</el-button>
       <el-table :data="localForm.items" border style="margin-top: 10px">
         <el-table-column label="物料" width="250">
-          <template slot-scope="scope">
-            <el-select
-              v-model="scope.row.material"
-              placeholder="请选择物料"
-              filterable
-              style="width: 100%"
-              @change="handleMaterialChange(scope.row)"
-            >
-              <el-option
-                v-for="item in materialOptions"
-                :key="item.id"
-                :label="`${item.code} - ${item.name}`"
-                :value="item.id"
-              />
+          <template #default="scope">
+            <el-select v-model="scope.row.material" placeholder="请选择物料" filterable style="width: 100%" @change="handleMaterialChange(scope.row)">
+              <el-option v-for="item in materialOptions" :key="item.id" :label="`${item.code} - ${item.name}`" :value="item.id" />
             </el-select>
           </template>
         </el-table-column>
         <el-table-column label="采购数量" width="150">
-          <template slot-scope="scope">
-            <el-input-number
-              v-model="scope.row.quantity"
-              :min="1"
-              :precision="2"
-              style="width: 100%"
-            />
-          </template>
+          <template #default="scope"><el-input-number v-model="scope.row.quantity" :min="1" :precision="2" style="width: 100%" /></template>
         </el-table-column>
         <el-table-column label="单价" width="150">
-          <template slot-scope="scope">
-            <el-input-number
-              v-model="scope.row.unit_price"
-              :min="0"
-              :precision="2"
-              style="width: 100%"
-            />
-          </template>
+          <template #default="scope"><el-input-number v-model="scope.row.unit_price" :min="0" :precision="2" style="width: 100%" /></template>
         </el-table-column>
         <el-table-column label="小计" width="120" align="right">
-          <template slot-scope="scope">
-            ¥{{ ((scope.row.quantity || 0) * (scope.row.unit_price || 0)).toFixed(2) }}
-          </template>
+          <template #default="scope">¥{{ ((scope.row.quantity || 0) * (scope.row.unit_price || 0)).toFixed(2) }}</template>
         </el-table-column>
         <el-table-column label="操作" width="80" align="center">
-          <template slot-scope="scope">
-            <el-button type="text" style="color: #F56C6C" @click="handleDeleteItem(scope.$index)">
-              删除
-            </el-button>
-          </template>
+          <template #default="scope"><el-button type="text" style="color: #F56C6C" @click="handleDeleteItem(scope.$index)">删除</el-button></template>
         </el-table-column>
       </el-table>
       <div v-if="localForm.items.length > 0" class="total-amount">
-        <span>合计金额：</span>
-        <span class="amount">¥{{ totalAmount }}</span>
+        <span>合计金额：</span><span class="amount">¥{{ totalAmount }}</span>
       </div>
     </el-form>
-    <span slot="footer" class="dialog-footer">
+    <template #footer>
       <el-button @click="dialogVisible = false">取消</el-button>
       <el-button type="primary" :loading="loading" @click="handleSubmit">确定</el-button>
-    </span>
+    </template>
   </el-dialog>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, watch } from 'vue'
+import { Plus } from '@element-plus/icons-vue'
 import { supplierAPI, materialAPI, workOrderAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
-// 表单初始值常量
-const FORM_INITIAL = {
-  supplier: null,
-  work_order: null,
-  work_order_number: '',
-  notes: '',
-  items: []
+const props = defineProps({
+  visible: { type: Boolean, default: false },
+  formData: { type: Object, default: () => ({}) },
+  isEdit: { type: Boolean, default: false }
+})
+
+const emit = defineEmits(['confirm', 'close', 'update:visible'])
+
+const formRef = ref(null)
+const loading = ref(false)
+const supplierOptions = ref([])
+const materialOptions = ref([])
+const workOrderOptions = ref([])
+
+const FORM_INITIAL = { supplier: null, work_order: null, work_order_number: '', notes: '', items: [] }
+const localForm = reactive({ ...FORM_INITIAL, items: [] })
+
+const rules = { supplier: [{ required: true, message: '请选择供应商', trigger: 'change' }] }
+
+const dialogVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })
+const totalAmount = computed(() => localForm.items.reduce((sum, item) => sum + (item.quantity || 0) * (item.unit_price || 0), 0).toFixed(2))
+
+watch(() => props.visible, (val) => {
+  if (val) {
+    fetchOptions()
+    Object.assign(localForm, {
+      ...props.formData,
+      items: (props.formData.items || []).map(item => ({ ...item }))
+    })
+  }
+})
+
+const fetchOptions = async () => {
+  try {
+    const [supplierRes, materialRes, workOrderRes] = await Promise.all([
+      supplierAPI.getList({ page_size: 1000, status: 'active' }),
+      materialAPI.getList({ page_size: 1000 }),
+      workOrderAPI.getList({ page_size: 1000, ordering: '-created_at', approval_status: 'approved' })
+    ])
+    supplierOptions.value = supplierRes?.results || []
+    materialOptions.value = materialRes?.results || []
+    workOrderOptions.value = (workOrderRes?.results || []).filter(order => !['completed', 'cancelled'].includes(order.status))
+    syncWorkOrderNumber()
+  } catch (error) { ErrorHandler.showMessage(error, '获取选项数据') }
 }
 
-export default {
-  name: 'PurchaseFormDialog',
+const handleWorkOrderChange = (value) => {
+  const selected = workOrderOptions.value.find(item => item.id === value)
+  localForm.work_order_number = selected ? selected.order_number : ''
+}
 
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    formData: {
-      type: Object,
-      default: () => ({ ...FORM_INITIAL })
-    },
-    isEdit: {
-      type: Boolean,
-      default: false
-    }
-  },
+const syncWorkOrderNumber = () => {
+  if (!localForm.work_order) return
+  const selected = workOrderOptions.value.find(item => item.id === localForm.work_order)
+  if (selected) localForm.work_order_number = selected.order_number
+}
 
-  data() {
-    return {
-      loading: false,
-      localForm: { ...FORM_INITIAL, items: [] },
-      supplierOptions: [],
-      materialOptions: [],
-      workOrderOptions: [],
-      rules: {
-        supplier: [{ required: true, message: '请选择供应商', trigger: 'change' }]
-      }
-    }
-  },
+const handleAddItem = () => { localForm.items.push({ material: null, quantity: 1, unit_price: 0 }) }
+const handleDeleteItem = (index) => { localForm.items.splice(index, 1) }
 
-  computed: {
-    dialogVisible: {
-      get() {
-        return this.visible
-      },
-      set(val) {
-        this.$emit('update:visible', val)
-      }
-    },
-    totalAmount() {
-      return this.localForm.items.reduce((sum, item) => sum + (item.quantity || 0) * (item.unit_price || 0), 0).toFixed(2)
-    }
-  },
+const handleMaterialChange = (row) => {
+  const material = materialOptions.value.find(m => m.id === row.material)
+  if (material?.unit_price) row.unit_price = material.unit_price
+}
 
-  watch: {
-    visible(val) {
-      if (val) {
-        this.fetchOptions()
-        // 复制 formData 到 localForm
-        this.localForm = {
-          ...this.formData,
-          items: (this.formData.items || []).map(item => ({ ...item }))
-        }
-      }
-    }
-  },
+const handleSubmit = async () => {
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+  if (!localForm.items?.length) { ErrorHandler.showWarning('请至少添加一条采购明细'); return }
+  if (localForm.items.find(item => !item.material)) { ErrorHandler.showWarning('请选择所有明细的物料'); return }
+  loading.value = true
+  try { emit('confirm', { ...localForm }) } finally { loading.value = false }
+}
 
-  methods: {
-    /**
-     * 加载选项数据
-     */
-    async fetchOptions() {
-      try {
-        const [supplierRes, materialRes, workOrderRes] = await Promise.all([
-          supplierAPI.getList({ page_size: 1000, status: 'active' }),
-          materialAPI.getList({ page_size: 1000 }),
-          workOrderAPI.getList({
-            page_size: 1000,
-            ordering: '-created_at',
-            approval_status: 'approved'
-          })
-        ])
-        this.supplierOptions = supplierRes.results || []
-        this.materialOptions = materialRes.results || []
-        this.workOrderOptions = (workOrderRes.results || []).filter(order =>
-          !['completed', 'cancelled'].includes(order.status)
-        )
-        this.syncWorkOrderNumber()
-      } catch (error) {
-        ErrorHandler.showMessage(error, '获取选项数据')
-      }
-    },
-
-    handleWorkOrderChange(value) {
-      const selected = this.workOrderOptions.find(item => item.id === value)
-      this.localForm.work_order_number = selected ? selected.order_number : ''
-    },
-
-    syncWorkOrderNumber() {
-      if (!this.localForm.work_order) return
-      const selected = this.workOrderOptions.find(item => item.id === this.localForm.work_order)
-      if (selected) {
-        this.localForm.work_order_number = selected.order_number
-      }
-    },
-
-    /**
-     * 添加明细行
-     */
-    handleAddItem() {
-      this.localForm.items.push({
-        material: null,
-        quantity: 1,
-        unit_price: 0
-      })
-    },
-
-    /**
-     * 删除明细行
-     */
-    handleDeleteItem(index) {
-      this.localForm.items.splice(index, 1)
-    },
-
-    /**
-     * 物料变化时自动填充单价
-     */
-    handleMaterialChange(row) {
-      const material = this.materialOptions.find(m => m.id === row.material)
-      if (material && material.unit_price) {
-        row.unit_price = material.unit_price
-      }
-    },
-
-    /**
-     * 提交表单
-     */
-    handleSubmit() {
-      this.$refs.form.validate(async (valid) => {
-        if (!valid) return
-
-        // 验证明细数据
-        if (!this.localForm.items || this.localForm.items.length === 0) {
-          ErrorHandler.showWarning('请至少添加一条采购明细')
-          return
-        }
-
-        // 验证明细完整性
-        const invalidItem = this.localForm.items.find(item => !item.material)
-        if (invalidItem) {
-          ErrorHandler.showWarning('请选择所有明细的物料')
-          return
-        }
-
-        this.loading = true
-        try {
-          this.$emit('confirm', { ...this.localForm })
-        } finally {
-          this.loading = false
-        }
-      })
-    },
-
-    /**
-     * 关闭对话框
-     */
-    handleClose() {
-      this.$refs.form && this.$refs.form.resetFields()
-      this.localForm = { ...FORM_INITIAL, items: [] }
-      this.$emit('close')
-    }
-  }
+const handleClose = () => {
+  formRef.value?.resetFields()
+  Object.assign(localForm, { ...FORM_INITIAL, items: [] })
+  emit('close')
 }
 </script>
 
 <style scoped>
-.total-amount {
-  margin-top: 16px;
-  text-align: right;
-  font-size: 14px;
-}
-
-.total-amount .amount {
-  font-size: 18px;
-  font-weight: bold;
-  color: #409EFF;
-}
+.total-amount { margin-top: 16px; text-align: right; font-size: 14px; }
+.total-amount .amount { font-size: 18px; color: #F56C6C; font-weight: bold; }
 </style>
