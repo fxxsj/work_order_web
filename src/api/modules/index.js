@@ -57,3 +57,6 @@ export { notificationAPI } from './notification'
 
 // System API (系统管理)
 export { taskAssignmentRuleAPI } from './task-assignment-rule'
+export { supervisorAPI } from './supervisor'
+export { taskAssignmentHistoryAPI } from './task-assignment-history'
+export { dispatchConfigAPI } from './dispatch-config'
