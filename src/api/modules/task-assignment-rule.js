@@ -50,4 +50,5 @@ class TaskAssignmentRuleAPI extends BaseAPI {
 }
 
 export const taskAssignmentRuleAPI = new TaskAssignmentRuleAPI()
+export const assignmentRuleAPI = taskAssignmentRuleAPI
 export default taskAssignmentRuleAPI

@@ -39,6 +39,7 @@ export { deliveryOrderAPI } from './delivery-order'
 export { qualityInspectionAPI } from './quality-inspection'
 export { stockInAPI } from './stock-in'
 export { stockOutAPI } from './stock-out'
+export { stockAPI } from './stock'
 
 // Sales API (销售管理)
 export { salesOrderAPI } from './sales-order'
@@ -60,3 +61,4 @@ export { taskAssignmentRuleAPI } from './task-assignment-rule'
 export { supervisorAPI } from './supervisor'
 export { taskAssignmentHistoryAPI } from './task-assignment-history'
 export { dispatchConfigAPI } from './dispatch-config'
+export { assignmentRuleAPI } from './task-assignment-rule'
