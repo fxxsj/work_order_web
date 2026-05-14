@@ -37,6 +37,10 @@ export class BaseAPI {
     return response
   }
 
+  _request(config) {
+    return this.request(config).then(response => this._unwrap(response))
+  }
+
   /**
    * 获取列表数据
    * @param {Object} params - 查询参数

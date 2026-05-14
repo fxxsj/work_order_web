@@ -20,7 +20,7 @@ class AuthAPI extends BaseAPI {
       url: `${this.baseUrl}login/`,
       method: 'post',
       data: credentials
-    })
+    }).then(response => this._unwrap(response))
   }
 
   /**

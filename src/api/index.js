@@ -166,13 +166,14 @@ service.interceptors.response.use(
       }
     }
 
-    if (status === 401 && originalRequest._retry) {
+    // 处理 401 但不需要刷新 token 的情况（如登录请求本身返回 401）
+    if (status === 401) {
+      // 如果是登录相关的请求，直接返回错误，不做额外处理
+      if (originalRequest?.url?.includes('/auth/login/')) {
+        return Promise.reject(error)
+      }
       userStore.clearUser()
       if (router.currentRoute.path !== '/login') {
-        ElMessage.warning({
-          message: '登录已过期，请重新登录',
-          duration: 2000,
-        })
         router.push({
           path: '/login',
           query: { redirect: router.currentRoute.fullPath }
