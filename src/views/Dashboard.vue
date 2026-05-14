@@ -70,7 +70,6 @@ import {
 import { hasRole, hasAnyRole } from '@/utils/userRole'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
-import unwrapApiResponse from '@/utils/apiResponse'
 import NotificationAlerts from './dashboard/components/NotificationAlerts.vue'
 import WorkOrderStatistics from './dashboard/components/WorkOrderStatistics.vue'
 import TaskStatistics from './dashboard/components/TaskStatistics.vue'
@@ -115,13 +114,13 @@ onMounted(() => {
 const loadData = async () => {
   loading.value = true
   try {
-    const stats = await workOrderAPI.getStatistics()
-    statistics.value = unwrapApiResponse(stats) || {}
+    const stats = await workOrderAPI.getStatistics().catch(() => null)
+    statistics.value = stats || {}
 
     const response = await workOrderAPI.getList({
       page_size: 10,
       ordering: '-created_at'
-    })
+    }).catch(() => ({ results: [] }))
     recentOrders.value = response.results || []
 
     if (isOperator.value) {
@@ -142,8 +141,7 @@ const loadData = async () => {
 
     try {
       const unreadResponse = await notificationAPI.getUnreadCount()
-      const payload = unwrapApiResponse(unreadResponse)
-      unreadNotificationCount.value = payload?.unread_count || 0
+      unreadNotificationCount.value = unreadResponse?.unread_count || 0
     } catch (error) {
       ErrorHandler.handle(error, 'Dashboard.loadUnreadNotifications')
     }

@@ -148,10 +148,22 @@ const handleLogin = async () => {
 
   try {
     const response = await authAPI.login(loginForm)
+    // 后端使用 StandardJSONRenderer，响应格式为 { success, code, message, data }
+    // 但 axios 拦截器已经 unwrap 了 response.data，所以 response 可能是 { success, data } 或直接的 data
     const payload = response?.data || response
 
-    if (response?.success && payload && payload.id) {
+    if (payload && payload.id) {
+      // 直接返回用户数据（已 unwrap 的情况）
       userStore.setUser(payload)
+      showSuccessAlert.value = true
+
+      setTimeout(() => {
+        const redirect = route.query.redirect || '/'
+        router.push(redirect)
+      }, 800)
+    } else if (response?.success && response?.data && response.data.id) {
+      // 标准包装格式 { success: true, data: { ... } }
+      userStore.setUser(response.data)
       showSuccessAlert.value = true
 
       setTimeout(() => {

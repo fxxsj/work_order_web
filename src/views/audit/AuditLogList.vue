@@ -355,8 +355,7 @@ const loadData = async () => {
 const loadStats = async () => {
   try {
     const response = await auditLogAPI.getStatistics()
-    const payload = unwrapApiResponse(response)
-    stats.value = payload?.data || payload
+    stats.value = unwrapApiResponse(response) || {}
   } catch (error) {
     ErrorHandler.handle(error, 'AuditLogList.loadStats')
   }
@@ -389,8 +388,7 @@ const openDiff = async (row) => {
   diffData.value = null
   try {
     const response = await auditLogAPI.getDiff(row.id)
-    const payload = unwrapApiResponse(response)
-    diffData.value = payload?.data || payload
+    diffData.value = unwrapApiResponse(response) || {}
   } catch (error) {
     ErrorHandler.handle(error, 'AuditLogList.openDiff')
     ElMessage.error('获取变更详情失败')
@@ -410,8 +408,7 @@ const handleExport = async () => {
 
     const payload = { start_date: startDate, end_date: endDate, filters: expFilters }
     const response = await auditLogAPI.exportLogs(payload)
-    const data = unwrapApiResponse(response)
-    const exportInfo = data?.data || data
+    const exportInfo = unwrapApiResponse(response) || {}
     ElMessage.success(`导出任务已创建: ${exportInfo?.export_id || '-'}`)
     exportDialogVisible.value = false
   } catch (error) {
@@ -441,9 +438,8 @@ const loadExportList = async () => {
     if (exportListFilters.end_date) params.end_date = exportListFilters.end_date
 
     const response = await auditLogAPI.getExportList(params)
-    const payload = unwrapApiResponse(response)
-    const listData = payload?.results || payload?.items || payload
-    exportList.value = Array.isArray(listData) ? listData : []
+    const payload = response || {}
+    exportList.value = payload?.results || payload?.items || []
     exportListTotal.value = payload?.count || payload?.pagination?.total_items || 0
   } catch (error) {
     ErrorHandler.handle(error, 'AuditLogList.loadExportList')

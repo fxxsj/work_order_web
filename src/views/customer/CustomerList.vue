@@ -243,9 +243,8 @@ const loadData = async () => {
       params.search = searchText.value
     }
     const response = await customerAPI.getList(params)
-    const result = unwrapApiResponse(response)
-    tableData.value = result?.results || []
-    total.value = result?.count || 0
+    tableData.value = response?.results || []
+    total.value = response?.count || 0
   } catch (error) {
     ElMessage.error('加载数据失败')
   } finally {
@@ -256,7 +255,7 @@ const loadData = async () => {
 const loadSalespersons = async () => {
   try {
     const response = await authAPI.getSalespersons()
-    salespersonList.value = unwrapApiResponse(response) || []
+    salespersonList.value = response || []
   } catch (error) {
     ErrorHandler.showMessage(error, '加载业务员列表失败')
   }

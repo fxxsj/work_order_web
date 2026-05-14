@@ -3,7 +3,6 @@ import { ElMessage } from 'element-plus'
 import router from '@/router'
 import { useUserStore } from '@/stores'
 import logger from '@/utils/logger'
-import unwrapApiResponse from '@/utils/apiResponse'
 
 // 获取 CSRF Token
 function getCsrfToken() {
@@ -127,7 +126,7 @@ service.interceptors.response.use(
           refresh: refreshToken
         })
 
-        const refreshPayload = unwrapApiResponse(response.data)
+        const refreshPayload = response?.data || response
         const { access, refresh: newRefresh } = refreshPayload || {}
 
         if (!access) {
