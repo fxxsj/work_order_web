@@ -21,13 +21,20 @@ export const useUserStore = defineStore('user', () => {
 
   // Actions
   function setUser(userData) {
-    currentUser.value = userData
-    isAuthenticated.value = !!userData
-    permissions.value = userData?.permissions || []
-    roles.value = userData?.role_codes || []
-    userGroups.value = userData?.groups || []
-    isSuperuser.value = userData?.is_superuser || false
-    isStaff.value = userData?.is_staff || false
+    // Map backend JWT field names (access/refresh) to frontend names (access_token/refresh_token)
+    const mappedData = userData ? {
+      ...userData,
+      access_token: userData.access_token || userData.access,
+      refresh_token: userData.refresh_token || userData.refresh,
+    } : null
+
+    currentUser.value = mappedData
+    isAuthenticated.value = !!mappedData
+    permissions.value = mappedData?.permissions || []
+    roles.value = mappedData?.role_codes || []
+    userGroups.value = mappedData?.groups || []
+    isSuperuser.value = mappedData?.is_superuser || false
+    isStaff.value = mappedData?.is_staff || false
   }
 
   function clearUser() {
