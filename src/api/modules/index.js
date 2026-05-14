@@ -39,7 +39,7 @@ export { deliveryOrderAPI } from './delivery-order'
 export { qualityInspectionAPI } from './quality-inspection'
 export { stockInAPI } from './stock-in'
 export { stockOutAPI } from './stock-out'
-export { stockAPI } from './stock'
+// stockAPI 已废弃，请使用 productStockAPI
 
 // Sales API (销售管理)
 export { salesOrderAPI } from './sales-order'

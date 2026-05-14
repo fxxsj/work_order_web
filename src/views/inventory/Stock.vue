@@ -122,7 +122,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { RefreshRight, Warning, Timer } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { stockAPI } from '@/api/modules'
+import { productStockAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import StockStats from './components/StockStats.vue'
@@ -163,7 +163,7 @@ const loadData = async () => {
   try {
     const params = { page: currentPage.value, page_size: pageSize.value }
     if (filters.status) params.status = filters.status
-    const response = await stockAPI.getList(params)
+    const response = await productStockAPI.getList(params)
     tableData.value = response?.results || []
     total.value = response?.count || 0
   } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
@@ -171,7 +171,7 @@ const loadData = async () => {
 
 const fetchStats = async () => {
   statsLoading.value = true
-  try { const response = await stockAPI.getStats(); stats.value = response || {} } catch (error) { stats.value = {} } finally { statsLoading.value = false }
+  try { const response = await productStockAPI.getSummary(); stats.value = response || {} } catch (error) { stats.value = {} } finally { statsLoading.value = false }
 }
 
 const handleView = async (row) => { currentStock.value = row; detailDialogVisible.value = true }
@@ -179,17 +179,17 @@ const handleView = async (row) => { currentStock.value = row; detailDialogVisibl
 const handleAdjust = (row) => { currentAdjustId.value = row.id; adjustForm.adjustment = 0; adjustForm.reason = ''; adjustDialogVisible.value = true }
 
 const handleSaveAdjust = async () => {
-  try { await stockAPI.adjust(currentAdjustId.value, adjustForm); ElMessage.success('调整成功'); adjustDialogVisible.value = false; loadData() } catch (error) { ErrorHandler.showMessage(error, '调整失败') }
+  try { await productStockAPI.adjust(currentAdjustId.value, adjustForm); ElMessage.success('调整成功'); adjustDialogVisible.value = false; loadData() } catch (error) { ErrorHandler.showMessage(error, '调整失败') }
 }
 
 const handleLowStock = async () => {
   lowStockDialogVisible.value = true; loadingLowStock.value = true
-  try { const response = await stockAPI.getLowStock(); lowStockList.value = response?.results || [] } catch (error) { lowStockList.value = [] } finally { loadingLowStock.value = false }
+  try { const response = await productStockAPI.getLowStock(); lowStockList.value = response?.results || [] } catch (error) { lowStockList.value = [] } finally { loadingLowStock.value = false }
 }
 
 const handleExpired = async () => {
   expiredDialogVisible.value = true; loadingExpired.value = true
-  try { const response = await stockAPI.getExpired(); expiredList.value = response?.results || [] } catch (error) { expiredList.value = [] } finally { loadingExpired.value = false }
+  try { const response = await productStockAPI.getExpired(); expiredList.value = response?.results || [] } catch (error) { expiredList.value = [] } finally { loadingExpired.value = false }
 }
 
 const getQuantityClass = (row) => row.quantity <= row.min_stock_level ? 'text-danger' : ''

@@ -123,6 +123,34 @@ class WorkOrderTaskAPI extends BaseAPI {
     })
   }
 
+  // 取消任务
+  cancel(id, data) {
+    return this.customAction(`${this.baseUrl}${id}/cancel/`, 'post', data)
+  }
+
+  // 批量更新数量
+  batchUpdateQuantity(data) {
+    return this.customAction(`${this.baseUrl}batch_update_quantity/`, 'post', data)
+  }
+
+  // 获取工序负责部门
+  getProcessDepartments(processId) {
+    return this.request({
+      url: `${this.baseUrl}process-departments/`,
+      method: 'get',
+      params: { process_id: processId }
+    })
+  }
+
+  // 获取任务汇总
+  getSummary(params) {
+    return this.request({
+      url: `${this.baseUrl}summary/`,
+      method: 'get',
+      params
+    })
+  }
+
   // 导出任务列表（旧方法，保留兼容性）
   export(params) {
     return this.request({

@@ -33,6 +33,17 @@ class StockInAPI extends BaseAPI {
       method: 'post'
     })
   }
+
+  /**
+   * 获取入库汇总
+   * @returns {Promise} 入库汇总数据
+   */
+  getSummary() {
+    return this.request({
+      url: `${this.baseUrl}summary/`,
+      method: 'get'
+    })
+  }
 }
 
 export const stockInAPI = new StockInAPI()

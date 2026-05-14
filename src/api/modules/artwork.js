@@ -34,6 +34,46 @@ class ArtworkAPI extends BaseAPI {
       method: 'post'
     })
   }
+
+  /**
+   * 获取图稿图片列表
+   * @param {number} id - 图稿ID
+   * @returns {Promise} 图片列表
+   */
+  getImages(id) {
+    return this.request({
+      url: `${this.baseUrl}${id}/images/`,
+      method: 'get'
+    })
+  }
+
+  /**
+   * 上传图稿图片
+   * @param {number} id - 图稿ID
+   * @param {FormData} formData - 包含图片文件的 FormData
+   * @returns {Promise} 上传结果
+   */
+  uploadImage(id, formData) {
+    return this.request({
+      url: `${this.baseUrl}${id}/upload_image/`,
+      method: 'post',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  }
+
+  /**
+   * 删除图稿图片
+   * @param {number} id - 图稿ID
+   * @param {number} imageId - 图片ID
+   * @returns {Promise} 删除结果
+   */
+  deleteImage(id, imageId) {
+    return this.request({
+      url: `${this.baseUrl}${id}/images/${imageId}/`,
+      method: 'delete'
+    })
+  }
 }
 
 export const artworkAPI = new ArtworkAPI()

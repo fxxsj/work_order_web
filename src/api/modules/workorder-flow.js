@@ -27,6 +27,51 @@ class WorkOrderFlowAPI extends BaseAPI {
   createFromSalesOrders(data) {
     return this.customAction(`${this.baseUrl}create_from_sales_orders/`, 'post', data)
   }
+
+  /**
+   * 提交审批
+   * @param {Object} data - { work_order_id, ... }
+   * @returns {Promise} 提交结果
+   */
+  submitApproval(data) {
+    return this.customAction(`${this.baseUrl}submit_approval/`, 'post', data)
+  }
+
+  /**
+   * 审批通过
+   * @param {Object} data - { work_order_id, ... }
+   * @returns {Promise} 审批结果
+   */
+  approve(data) {
+    return this.customAction(`${this.baseUrl}approve/`, 'post', data)
+  }
+
+  /**
+   * 拒绝施工单
+   * @param {Object} data - { work_order_id, ... }
+   * @returns {Promise} 拒绝结果
+   */
+  reject(data) {
+    return this.customAction(`${this.baseUrl}reject/`, 'post', data)
+  }
+
+  /**
+   * 检查完成状态
+   * @param {Object} data - { work_order_id }
+   * @returns {Promise} 检查结果
+   */
+  checkCompletion(data) {
+    return this.customAction(`${this.baseUrl}check_completion/`, 'post', data)
+  }
+
+  /**
+   * 标记紧急
+   * @param {Object} data - { work_order_id, reason? }
+   * @returns {Promise} 标记结果
+   */
+  markUrgent(data) {
+    return this.customAction(`${this.baseUrl}mark_urgent/`, 'post', data)
+  }
 }
 
 export const workOrderFlowAPI = new WorkOrderFlowAPI()

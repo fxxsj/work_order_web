@@ -62,6 +62,20 @@ class DeliveryOrderAPI extends BaseAPI {
       method: 'get'
     })
   }
+
+  /**
+   * 解决异常
+   * @param {number} id - 发货单ID
+   * @param {Object} data - 异常处理信息
+   * @returns {Promise} 处理结果
+   */
+  resolveException(id, data) {
+    return this.request({
+      url: `${this.baseUrl}${id}/resolve_exception/`,
+      method: 'post',
+      data
+    })
+  }
 }
 
 export const deliveryOrderAPI = new DeliveryOrderAPI()

@@ -45,6 +45,16 @@ class WorkOrderAPI extends BaseAPI {
     return this.customAction(`${this.baseUrl}statistics/`, 'get', null, params)
   }
 
+  // 获取施工单汇总
+  getSummary(params) {
+    return this.customAction(`${this.baseUrl}summary/`, 'get', null, params)
+  }
+
+  // 获取可关联的销售订单候选
+  getSalesOrderCandidates(params) {
+    return this.customAction(`${this.baseUrl}sales_order_candidates/`, 'get', null, params)
+  }
+
   // 导出施工单列表
   export(params) {
     return this.request({
@@ -53,6 +63,26 @@ class WorkOrderAPI extends BaseAPI {
       params,
       responseType: 'blob'
     })
+  }
+
+  // 提交审批
+  submitApproval(id, data) {
+    return this.customAction(`${this.baseUrl}${id}/submit_approval/`, 'post', data)
+  }
+
+  // 拒绝施工单
+  reject(id, data) {
+    return this.customAction(`${this.baseUrl}${id}/reject/`, 'post', data)
+  }
+
+  // 检查完成状态
+  checkCompletion(id) {
+    return this.customAction(`${this.baseUrl}${id}/check_completion/`, 'post')
+  }
+
+  // 标记紧急
+  markUrgent(id, data) {
+    return this.customAction(`${this.baseUrl}${id}/mark_urgent/`, 'post', data)
   }
 
   // 检查是否需要同步任务
