@@ -185,21 +185,21 @@ const formatDate = (date) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .task-kanban {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .kanban-container {
   display: flex;
-  gap: 20px;
+  gap: var(--ui-section-gap);
   overflow-x: auto;
 }
 
 .kanban-column {
-  min-width: 300px;
-  max-width: 350px;
-  flex: 1;
+  flex: 1 0 clamp(280px, 32vw, 350px);
 }
 
 .column-header {
@@ -222,6 +222,12 @@ const formatDate = (date) => {
   min-height: 200px;
   padding: 10px;
   border-radius: 0 0 8px 8px;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .kanban-column {
+    flex-basis: min(86vw, 340px);
+  }
 }
 
 .kanban-card {

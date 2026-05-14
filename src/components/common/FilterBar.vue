@@ -78,13 +78,35 @@ const handleReset = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .filter-bar {
-  margin-bottom: 20px;
+  margin-bottom: var(--ui-section-gap);
 }
 .filter-form {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  gap: var(--ui-control-gap);
+}
+
+.filter-form :deep(.el-form-item) {
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .filter-form {
+    align-items: stretch;
+  }
+
+  .filter-form :deep(.el-form-item),
+  .filter-form :deep(.el-form-item__content),
+  .filter-form :deep(.el-input),
+  .filter-form :deep(.el-select),
+  .filter-form :deep(.el-date-editor) {
+    width: 100%;
+  }
 }
 </style>

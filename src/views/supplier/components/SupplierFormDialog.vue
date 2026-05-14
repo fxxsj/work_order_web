@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--ui-dialog-width-md)" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="供应商编码" prop="code">
         <el-input v-model="form.code" placeholder="请输入供应商编码" :disabled="isEditMode" />

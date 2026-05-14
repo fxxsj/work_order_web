@@ -5,16 +5,16 @@
     <el-card>
       <div class="header-section">
         <div class="filter-group">
-          <el-input v-model="filters.inspection_number" placeholder="搜索检验单号" style="width: 160px; margin-right: 10px;" clearable @input="handleSearchDebounced" @clear="handleSearch">
+          <el-input v-model="filters.inspection_number" class="filter-search-control" placeholder="搜索检验单号" clearable @input="handleSearchDebounced" @clear="handleSearch">
             <template #append><el-button :icon="Search" @click="handleSearch" /></template>
           </el-input>
-          <el-select v-model="filters.inspection_type" placeholder="检验类型" clearable style="width: 120px; margin-right: 10px;" @change="handleSearch">
+          <el-select v-model="filters.inspection_type" class="filter-select-control" placeholder="检验类型" clearable @change="handleSearch">
             <el-option label="来料检验" value="incoming" />
             <el-option label="过程检验" value="process" />
             <el-option label="成品检验" value="final" />
             <el-option label="客诉检验" value="customer" />
           </el-select>
-          <el-select v-model="filters.result" placeholder="检验结果" clearable style="width: 120px; margin-right: 10px;" @change="handleSearch">
+          <el-select v-model="filters.result" class="filter-select-control" placeholder="检验结果" clearable @change="handleSearch">
             <el-option label="待检验" value="pending" />
             <el-option label="合格" value="passed" />
             <el-option label="不合格" value="failed" />
@@ -27,7 +27,8 @@
         </div>
       </div>
 
-      <el-table v-if="tableData.length > 0" v-loading="loading" :data="tableData" border style="width: 100%; margin-top: 20px;">
+      <div v-if="tableData.length > 0" class="table-scroll">
+      <el-table v-loading="loading" :data="tableData" border class="data-table">
         <el-table-column prop="inspection_number" label="检验单号" width="150" />
         <el-table-column prop="inspection_type_display" label="检验类型" width="100" />
         <el-table-column prop="product_name" label="产品名称" width="200" show-overflow-tooltip />
@@ -52,6 +53,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
 
@@ -140,10 +142,31 @@ const getResultType = (result) => ({ pending: 'info', passed: 'success', failed:
 onMounted(() => { loadData(); fetchStats(); fetchProducts() })
 </script>
 
-<style scoped>
-.quality-container { padding: 20px; }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.quality-container { padding: var(--ui-page-padding); }
+.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.filter-search-control { width: min(100%, 220px); }
+.filter-select-control { width: min(100%, 150px); }
+.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
+.data-table { width: 100%; }
 .text-danger { color: #F56C6C; }
 .el-card { border-radius: 8px; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filter-search-control,
+  .filter-select-control,
+  .action-group .el-button {
+    width: 100%;
+  }
+}
 </style>

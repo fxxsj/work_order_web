@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="调整任务分派" width="600px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="调整任务分派" width="var(--ui-dialog-width-md)" @close="handleClose">
     <el-form ref="formRef" :model="formData" label-width="120px">
       <el-form-item label="任务内容"><el-input :value="task?.work_content" disabled /></el-form-item>
       <el-form-item label="分派部门" prop="assigned_department">

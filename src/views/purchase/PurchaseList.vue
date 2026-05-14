@@ -2,9 +2,9 @@
   <div class="page-container">
     <div class="header-section">
       <div class="filter-group">
-        <el-input v-model="searchText" placeholder="搜索采购单号" prefix-icon="Search" clearable style="width: 200px" @keyup.enter="handleSearch" @clear="handleSearch" />
-        <el-input v-model="filters.supplier_name" placeholder="供应商名称" clearable style="width: 180px" @keyup.enter="handleSearch" @clear="handleSearch" />
-        <el-select v-model="filters.status" placeholder="状态" clearable style="width: 120px" @change="handleSearch">
+        <el-input v-model="searchText" class="purchase-filter-control" placeholder="搜索采购单号" prefix-icon="Search" clearable @keyup.enter="handleSearch" @clear="handleSearch" />
+        <el-input v-model="filters.supplier_name" class="purchase-filter-control" placeholder="供应商名称" clearable @keyup.enter="handleSearch" @clear="handleSearch" />
+        <el-select v-model="filters.status" class="purchase-filter-control" placeholder="状态" clearable @change="handleSearch">
           <el-option label="草稿" value="draft" />
           <el-option label="已提交" value="submitted" />
           <el-option label="已批准" value="approved" />
@@ -21,6 +21,7 @@
     </div>
 
     <el-card shadow="never">
+      <div class="table-scroll">
       <el-table v-if="tableData.length > 0" v-loading="loading" :data="tableData" border stripe>
         <el-table-column prop="order_number" label="采购单号" width="150" />
         <el-table-column prop="supplier_name" label="供应商" width="180" />
@@ -58,6 +59,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <el-empty v-if="!loading && tableData.length === 0" description="暂无采购单数据">
         <el-button v-if="canCreate" type="primary" @click="showCreateDialog">创建第一个采购单</el-button>
@@ -155,8 +157,26 @@ const getStatusType = (status) => ({ draft: 'info', submitted: 'primary', approv
 onMounted(() => { loadData() })
 </script>
 
-<style scoped>
-.page-container { padding: 20px; }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); margin-bottom: var(--ui-section-gap); }
+.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.purchase-filter-control { width: min(100%, 220px); }
+.table-scroll { overflow-x: auto; }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group,
+  .purchase-filter-control {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filter-group,
+  .action-group {
+    flex-direction: column;
+  }
+}
 </style>

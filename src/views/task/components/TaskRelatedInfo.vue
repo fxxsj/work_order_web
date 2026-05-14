@@ -1,11 +1,11 @@
 <template>
-  <div>
-    <template v-if="task.artwork_code"><span>{{ task.artwork_code }}</span><el-tag v-if="task.artwork_confirmed !== null" :type="task.artwork_confirmed ? 'success' : 'info'" size="small" style="margin-left: 5px;">{{ task.artwork_confirmed ? '已确认' : '未确认' }}</el-tag></template>
+  <div class="related-info">
+    <template v-if="task.artwork_code"><span>{{ task.artwork_code }}</span><el-tag v-if="task.artwork_confirmed !== null" :type="task.artwork_confirmed ? 'success' : 'info'" size="small">{{ task.artwork_confirmed ? '已确认' : '未确认' }}</el-tag></template>
     <span v-else-if="task.die_code">{{ task.die_code }}</span>
-    <div v-else-if="task.product_code"><span>{{ task.product_code }}</span><span v-if="task.product_name" style="color: #909399; font-size: 12px; margin-left: 5px;">({{ task.product_name }})</span></div>
-    <div v-else-if="task.material_code"><span>{{ task.material_code }}</span><el-tag v-if="task.material_purchase_status" :type="getMaterialStatusTagType(task.material_purchase_status)" size="small" style="margin-left: 5px;">{{ getMaterialStatusText(task.material_purchase_status) }}</el-tag></div>
-    <div v-else-if="task.foiling_plate_code"><span>{{ task.foiling_plate_code }}</span><span v-if="task.foiling_plate_name" style="color: #909399; font-size: 12px; margin-left: 5px;">({{ task.foiling_plate_name }})</span></div>
-    <div v-else-if="task.embossing_plate_code"><span>{{ task.embossing_plate_code }}</span><span v-if="task.embossing_plate_name" style="color: #909399; font-size: 12px; margin-left: 5px;">({{ task.embossing_plate_name }})</span></div>
+    <div v-else-if="task.product_code" class="related-info"><span>{{ task.product_code }}</span><span v-if="task.product_name" class="related-subtext">({{ task.product_name }})</span></div>
+    <div v-else-if="task.material_code" class="related-info"><span>{{ task.material_code }}</span><el-tag v-if="task.material_purchase_status" :type="getMaterialStatusTagType(task.material_purchase_status)" size="small">{{ getMaterialStatusText(task.material_purchase_status) }}</el-tag></div>
+    <div v-else-if="task.foiling_plate_code" class="related-info"><span>{{ task.foiling_plate_code }}</span><span v-if="task.foiling_plate_name" class="related-subtext">({{ task.foiling_plate_name }})</span></div>
+    <div v-else-if="task.embossing_plate_code" class="related-info"><span>{{ task.embossing_plate_code }}</span><span v-if="task.embossing_plate_name" class="related-subtext">({{ task.embossing_plate_name }})</span></div>
     <span v-else>-</span>
   </div>
 </template>
@@ -15,3 +15,17 @@ defineProps({ task: { type: Object, required: true } })
 const getMaterialStatusTagType = (s) => ({ pending: 'info', ordered: 'primary', received: 'success', cut: 'warning', completed: 'success' })[s] || 'info';
 const getMaterialStatusText = (s) => ({ pending: '待采购', ordered: '已下单', received: '已回料', cut: '已开料', completed: '已完成' })[s] || s
 </script>
+
+<style scoped>
+.related-info {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.related-subtext {
+  color: #909399;
+  font-size: 12px;
+}
+</style>

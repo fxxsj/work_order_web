@@ -38,12 +38,12 @@
           }"
         >
           <!-- ID -->
-          <div class="task-cell" style="width: 80px; padding: 0 8px;">
+          <div class="task-cell task-cell-id">
             #{{ item.id }}
           </div>
 
           <!-- 施工单号 -->
-          <div class="task-cell" style="width: 150px; padding: 0 8px;">
+          <div class="task-cell task-cell-order">
             <el-link
               v-if="item.work_order_process_info?.work_order?.id"
               type="primary"
@@ -55,36 +55,36 @@
           </div>
 
           <!-- 工序 -->
-          <div class="task-cell" style="width: 120px; padding: 0 8px;">
+          <div class="task-cell task-cell-process">
             {{ item.work_order_process_info?.process?.name || '-' }}
           </div>
 
           <!-- 任务内容 -->
-          <div class="task-cell" style="flex: 1; min-width: 200px; padding: 0 8px;">
+          <div class="task-cell task-cell-content">
             {{ item.work_content }}
           </div>
 
           <!-- 分派部门 -->
-          <div class="task-cell" style="width: 120px; padding: 0 8px;">
+          <div class="task-cell task-cell-department">
             {{ item.assigned_department_name || '-' }}
           </div>
 
           <!-- 状态 -->
-          <div class="task-cell" style="width: 100px; padding: 0 8px;">
+          <div class="task-cell task-cell-status">
             <el-tag :type="getStatusType(item.status)" size="small">
               {{ item.status_display }}
             </el-tag>
           </div>
 
           <!-- 优先级 -->
-          <div class="task-cell" style="width: 80px; padding: 0 8px;">
+          <div class="task-cell task-cell-priority">
             <el-tag :type="getPriorityType(item.priority)" size="small">
               {{ item.priority_display }}
             </el-tag>
           </div>
 
           <!-- 操作 -->
-          <div class="task-cell" style="width: 200px; padding: 0 8px;">
+          <div class="task-cell task-cell-actions">
             <el-button
               v-if="item.status === 'pending'"
               type="text"
@@ -199,14 +199,19 @@ const getPriorityType = (priority) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .virtual-task-list {
   width: 100%;
+  overflow-x: auto;
 }
 
 .task-item {
   display: flex;
   align-items: center;
+  width: max-content;
+  min-width: 100%;
   padding: 12px 0;
   border-bottom: 1px solid #ebeef5;
   transition: background-color 0.2s;
@@ -229,8 +234,24 @@ const getPriorityType = (priority) => {
 }
 
 .task-cell {
+  padding: 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.task-cell-id,
+.task-cell-priority { flex: 0 0 8ch; }
+.task-cell-order { flex: 0 0 16ch; }
+.task-cell-process,
+.task-cell-department { flex: 0 0 12ch; }
+.task-cell-status { flex: 0 0 10ch; }
+
+.task-cell-content {
+  flex: 1 0 24ch;
+}
+
+.task-cell-actions {
+  flex: 0 0 20ch;
 }
 </style>

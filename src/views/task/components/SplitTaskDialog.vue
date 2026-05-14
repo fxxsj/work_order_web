@@ -1,14 +1,15 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="拆分任务" width="800px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="拆分任务" width="var(--ui-dialog-width-lg)" @close="handleClose">
     <el-form ref="formRef" :model="formData" label-width="120px">
       <el-form-item label="父任务"><el-input :value="task?.work_content" disabled /></el-form-item>
       <el-form-item label="生产数量"><el-input-number :value="task?.production_quantity" disabled style="width: 100%;" /></el-form-item>
       <el-form-item label="子任务列表" prop="splits" required>
-        <div style="margin-bottom: 10px;">
+        <div class="split-toolbar">
           <el-button type="primary" size="small" :icon="Plus" @click="addSplitItem">添加子任务</el-button>
-          <span style="color: #909399; font-size: 12px; margin-left: 10px;">至少需要2个子任务，子任务数量总和不能超过父任务数量</span>
+          <span class="split-hint">至少需要2个子任务，子任务数量总和不能超过父任务数量</span>
         </div>
-        <el-table :data="formData.splits" border style="width: 100%;">
+        <div class="table-scroll">
+        <el-table :data="formData.splits" border class="split-table">
           <el-table-column label="序号" width="60" align="center"><template #default="scope">{{ scope.$index + 1 }}</template></el-table-column>
           <el-table-column label="生产数量" width="150">
             <template #default="scope"><el-input-number v-model="scope.row.production_quantity" :min="1" style="width: 100%;" /></template>
@@ -34,6 +35,7 @@
             <template #default="scope"><el-button type="danger" size="small" :icon="Delete" :disabled="formData.splits.length <= 2" @click="removeSplitItem(scope.$index)" /></template>
           </el-table-column>
         </el-table>
+        </div>
         <div style="margin-top: 10px; color: #909399; font-size: 12px;">
           子任务数量总和：{{ getTotalSplitQuantity() }} / {{ task?.production_quantity || 0 }}
           <span v-if="getTotalSplitQuantity() > (task?.production_quantity || 0)" style="color: #F56C6C;">（超出父任务数量）</span>
@@ -94,3 +96,26 @@ const handleConfirm = () => {
 const handleClose = () => { emit('update:visible', false); resetForm() }
 const resetForm = () => { formData.splits = []; nextTick(() => { formRef.value?.clearValidate() }) }
 </script>
+
+<style scoped>
+.split-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ui-control-gap);
+  margin-bottom: var(--ui-control-gap);
+}
+
+.split-hint {
+  color: #909399;
+  font-size: 12px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.split-table {
+  width: 100%;
+}
+</style>

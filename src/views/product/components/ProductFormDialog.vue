@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="700px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--ui-dialog-width-lg)" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="产品编码" prop="code">
         <el-input v-model="form.code" placeholder="请输入产品编码" :disabled="isEditMode" />
@@ -35,27 +35,29 @@
       <el-divider content-position="left">默认物料配置</el-divider>
       <el-form-item label="物料列表">
         <el-button type="primary" size="small" :icon="Plus" @click="addMaterialItem">添加物料</el-button>
-        <el-table :data="materialItems" border style="width: 100%; margin-top: 15px;">
-          <el-table-column label="物料名称" width="200">
-            <template #default="scope">
-              <el-select v-model="scope.row.material" placeholder="请选择物料" filterable style="width: 100%;">
-                <el-option v-for="m in materials" :key="m.id" :label="`${m.name} (${m.code})`" :value="m.id" />
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="尺寸" width="150">
-            <template #default="scope"><el-input v-model="scope.row.material_size" placeholder="如：A4、210x297mm" size="small" /></template>
-          </el-table-column>
-          <el-table-column label="用量" width="150">
-            <template #default="scope"><el-input v-model="scope.row.material_usage" placeholder="如：1000张" size="small" /></template>
-          </el-table-column>
-          <el-table-column label="需要开料" width="80" align="center">
-            <template #default="scope"><el-switch v-model="scope.row.need_cutting" size="small" /></template>
-          </el-table-column>
-          <el-table-column label="操作" width="80" align="center">
-            <template #default="scope"><el-button type="danger" size="small" :icon="Delete" @click="removeMaterialItem(scope.$index)" /></template>
-          </el-table-column>
-        </el-table>
+        <div class="table-scroll">
+          <el-table :data="materialItems" border class="dialog-table">
+            <el-table-column label="物料名称" width="200">
+              <template #default="scope">
+                <el-select v-model="scope.row.material" placeholder="请选择物料" filterable style="width: 100%;">
+                  <el-option v-for="m in materials" :key="m.id" :label="`${m.name} (${m.code})`" :value="m.id" />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="尺寸" width="150">
+              <template #default="scope"><el-input v-model="scope.row.material_size" placeholder="如：A4、210x297mm" size="small" /></template>
+            </el-table-column>
+            <el-table-column label="用量" width="150">
+              <template #default="scope"><el-input v-model="scope.row.material_usage" placeholder="如：1000张" size="small" /></template>
+            </el-table-column>
+            <el-table-column label="需要开料" width="80" align="center">
+              <template #default="scope"><el-switch v-model="scope.row.need_cutting" size="small" /></template>
+            </el-table-column>
+            <el-table-column label="操作" width="80" align="center">
+              <template #default="scope"><el-button type="danger" size="small" :icon="Delete" @click="removeMaterialItem(scope.$index)" /></template>
+            </el-table-column>
+          </el-table>
+        </div>
       </el-form-item>
 
       <el-divider content-position="left">默认工序配置</el-divider>
@@ -167,4 +169,13 @@ const handleClose = () => { resetForm(); emit('update:visible', false) }
 
 <style scoped>
 .el-divider { margin: 20px 0; }
+
+.table-scroll {
+  margin-top: var(--ui-control-gap);
+  overflow-x: auto;
+}
+
+.dialog-table {
+  width: 100%;
+}
 </style>

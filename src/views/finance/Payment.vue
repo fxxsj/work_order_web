@@ -10,7 +10,7 @@
             placeholder="选择客户"
             clearable
             filterable
-            style="width: 160px; margin-right: 10px;"
+            class="finance-filter-control"
             @change="handleSearch"
           >
             <el-option v-for="customer in customerList" :key="customer.id" :label="customer.name" :value="customer.id" />
@@ -19,7 +19,7 @@
             v-model="filters.payment_method"
             placeholder="付款方式"
             clearable
-            style="width: 120px; margin-right: 10px;"
+            class="finance-filter-control"
             @change="handleSearch"
           >
             <el-option label="现金" value="cash" />
@@ -34,7 +34,7 @@
             start-placeholder="开始日期"
             end-placeholder="结束日期"
             clearable
-            style="width: 260px;"
+            class="finance-date-control"
             @change="handleSearch"
           />
         </div>
@@ -44,7 +44,8 @@
         </div>
       </div>
 
-      <el-table v-if="tableData.length > 0" v-loading="loading" :data="tableData" border style="width: 100%; margin-top: 20px;">
+      <div class="table-scroll">
+      <el-table v-if="tableData.length > 0" v-loading="loading" :data="tableData" border class="finance-table">
         <el-table-column prop="payment_number" label="收款单号" width="150" />
         <el-table-column prop="customer_name" label="客户名称" width="150" />
         <el-table-column prop="payment_date" label="收款日期" width="120" />
@@ -70,6 +71,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
 
@@ -79,7 +81,7 @@
       </el-empty>
     </el-card>
 
-    <el-dialog v-model="detailDialogVisible" title="收款详情" width="700px" :close-on-click-modal="false">
+    <el-dialog v-model="detailDialogVisible" title="收款详情" width="var(--ui-dialog-width-md)" :close-on-click-modal="false">
       <el-descriptions v-if="currentPayment" :column="2" border>
         <el-descriptions-item label="收款单号">{{ currentPayment.payment_number }}</el-descriptions-item>
         <el-descriptions-item label="客户名称">{{ currentPayment.customer_name }}</el-descriptions-item>
@@ -99,7 +101,7 @@
       <template #footer><el-button @click="detailDialogVisible = false">关闭</el-button></template>
     </el-dialog>
 
-    <el-dialog v-model="formDialogVisible" :title="isEdit ? '编辑收款' : '新增收款'" width="600px" :close-on-click-modal="false">
+    <el-dialog v-model="formDialogVisible" :title="isEdit ? '编辑收款' : '新增收款'" width="var(--ui-dialog-width-md)" :close-on-click-modal="false">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="客户" prop="customer">
           <el-select v-model="form.customer" placeholder="请选择客户" filterable style="width: 100%;">
@@ -136,7 +138,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { paymentAPI, customerAPI } from '@/api/modules'
+import { paymentAPI } from '@/api/modules'
+import { customerAPI } from '@/api/modules/customer'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import PaymentStats from './components/PaymentStats.vue'
@@ -259,11 +262,33 @@ const getRemainingClass = (row) => {
 onMounted(() => { loadData(); fetchStats(); fetchCustomers() })
 </script>
 
-<style scoped>
-.payment-container { padding: 20px; }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.payment-container { padding: var(--ui-page-padding); }
+.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.finance-filter-control { width: min(100%, 180px); }
+.finance-date-control { width: min(100%, 280px); }
+.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
+.finance-table { width: 100%; }
 .text-warning { color: #E6A23C; }
 .text-success { color: #67C23A; }
 .el-card { border-radius: 8px; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group,
+  .finance-filter-control,
+  .finance-date-control {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filter-group,
+  .action-group {
+    flex-direction: column;
+  }
+}
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" :close-on-click-modal="false" @close="handleClose">
+  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--ui-dialog-width-sm)" :close-on-click-modal="false" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="产品名称"><el-input :value="stock?.product_name" disabled /></el-form-item>
       <el-form-item label="批次号"><el-input :value="stock?.batch_no" disabled /></el-form-item>

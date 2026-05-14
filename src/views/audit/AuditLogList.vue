@@ -2,7 +2,7 @@
   <div class="audit-log-list">
     <el-card>
       <el-row v-if="stats" :gutter="20" class="stats-section">
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :md="6">
           <el-card class="stat-card">
             <div class="stat-content">
               <div class="stat-icon" style="background-color: #409EFF;">
@@ -15,7 +15,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :md="6">
           <el-card class="stat-card">
             <div class="stat-content">
               <div class="stat-icon" style="background-color: #67C23A;">
@@ -28,7 +28,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :md="6">
           <el-card class="stat-card">
             <div class="stat-content">
               <div class="stat-icon" style="background-color: #E6A23C;">
@@ -41,7 +41,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :md="6">
           <el-card class="stat-card">
             <div class="stat-content">
               <div class="stat-icon" style="background-color: #F56C6C;">
@@ -58,20 +58,20 @@
 
       <div class="header-section">
         <div class="filter-group">
-          <el-select v-model="filters.action_type" placeholder="操作类型" clearable style="width: 140px;" @change="handleSearch">
+          <el-select v-model="filters.action_type" class="audit-filter-control" placeholder="操作类型" clearable @change="handleSearch">
             <el-option v-for="item in actionTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
-          <el-select v-model="filters.model" placeholder="对象类型" clearable style="width: 160px;" @change="handleSearch">
+          <el-select v-model="filters.model" class="audit-filter-control" placeholder="对象类型" clearable @change="handleSearch">
             <el-option v-for="item in modelOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
-          <el-input v-model="filters.user" placeholder="用户ID" clearable style="width: 120px;" @clear="handleSearch" @keyup.enter="handleSearch" />
-          <el-input v-model="filters.object_id" placeholder="对象ID" clearable style="width: 140px;" @clear="handleSearch" @keyup.enter="handleSearch" />
-          <el-input v-model="filters.ip_address" placeholder="IP地址" clearable style="width: 150px;" @clear="handleSearch" @keyup.enter="handleSearch" />
-          <el-date-picker v-model="filters.start_date" type="date" placeholder="开始日期" format="yyyy-MM-dd" value-format="yyyy-MM-dd" style="width: 150px;" @change="handleSearch" />
-          <el-date-picker v-model="filters.end_date" type="date" placeholder="结束日期" format="yyyy-MM-dd" value-format="yyyy-MM-dd" style="width: 150px;" @change="handleSearch" />
+          <el-input v-model="filters.user" class="audit-filter-control" placeholder="用户ID" clearable @clear="handleSearch" @keyup.enter="handleSearch" />
+          <el-input v-model="filters.object_id" class="audit-filter-control" placeholder="对象ID" clearable @clear="handleSearch" @keyup.enter="handleSearch" />
+          <el-input v-model="filters.ip_address" class="audit-filter-control" placeholder="IP地址" clearable @clear="handleSearch" @keyup.enter="handleSearch" />
+          <el-date-picker v-model="filters.start_date" class="audit-filter-control" type="date" placeholder="开始日期" format="yyyy-MM-dd" value-format="yyyy-MM-dd" @change="handleSearch" />
+          <el-date-picker v-model="filters.end_date" class="audit-filter-control" type="date" placeholder="结束日期" format="yyyy-MM-dd" value-format="yyyy-MM-dd" @change="handleSearch" />
         </div>
         <div class="action-group">
-          <el-input v-model="searchText" placeholder="搜索对象/用户名/IP" clearable style="width: 240px;" @input="handleSearchDebounced" @clear="handleSearch">
+          <el-input v-model="searchText" class="audit-search-control" placeholder="搜索对象/用户名/IP" clearable @input="handleSearchDebounced" @clear="handleSearch">
             <template #append>
               <el-button :icon="Search" @click="handleSearch" />
             </template>
@@ -82,7 +82,8 @@
         </div>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" style="width: 100%; margin-top: 20px;">
+      <div class="table-scroll">
+      <el-table v-loading="loading" :data="tableData" class="audit-table">
         <el-table-column prop="created_at" label="时间" width="180">
           <template #default="scope">{{ formatDateTime(scope.row.created_at) }}</template>
         </el-table-column>
@@ -100,7 +101,9 @@
         </el-table-column>
         <el-table-column prop="changed_fields" label="变更字段" min-width="180">
           <template #default="scope">
-            <el-tag v-for="field in scope.row.changed_fields || []" :key="field" size="mini" style="margin: 2px 4px 2px 0;">{{ field }}</el-tag>
+            <span class="changed-fields">
+              <el-tag v-for="field in scope.row.changed_fields || []" :key="field" size="mini">{{ field }}</el-tag>
+            </span>
             <span v-if="!scope.row.changed_fields || scope.row.changed_fields.length === 0">-</span>
           </template>
         </el-table-column>
@@ -110,11 +113,12 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
     </el-card>
 
-    <el-dialog v-model="diffVisible" title="变更详情" width="720px">
+    <el-dialog v-model="diffVisible" title="变更详情" width="var(--ui-dialog-width-md)">
       <el-skeleton v-if="diffLoading" :rows="8" animated />
       <div v-else>
         <el-descriptions :column="2" border size="small">
@@ -133,7 +137,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="exportDialogVisible" title="导出审计日志" width="520px">
+    <el-dialog v-model="exportDialogVisible" title="导出审计日志" width="var(--ui-dialog-width-sm)">
       <el-form label-width="90px">
         <el-form-item label="日期范围">
           <el-date-picker v-model="exportRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" format="yyyy-MM-dd" value-format="yyyy-MM-dd" style="width: 100%;" />
@@ -158,19 +162,20 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="exportListVisible" title="导出记录" width="860px">
+    <el-dialog v-model="exportListVisible" title="导出记录" width="var(--ui-dialog-width-lg)">
       <div class="export-filter">
-        <el-select v-model="exportListFilters.status" placeholder="状态" clearable style="width: 160px;" @change="loadExportList">
+        <el-select v-model="exportListFilters.status" class="audit-filter-control" placeholder="状态" clearable @change="loadExportList">
           <el-option label="待处理" value="pending" />
           <el-option label="处理中" value="processing" />
           <el-option label="已完成" value="completed" />
           <el-option label="失败" value="failed" />
         </el-select>
-        <el-input v-model="exportListFilters.user_id" placeholder="用户ID" clearable style="width: 140px;" @clear="loadExportList" @keyup.enter="loadExportList" />
-        <el-date-picker v-model="exportListFilters.start_date" type="date" placeholder="开始日期" format="yyyy-MM-dd" value-format="yyyy-MM-dd" style="width: 150px;" @change="loadExportList" />
-        <el-date-picker v-model="exportListFilters.end_date" type="date" placeholder="结束日期" format="yyyy-MM-dd" value-format="yyyy-MM-dd" style="width: 150px;" @change="loadExportList" />
+        <el-input v-model="exportListFilters.user_id" class="audit-filter-control" placeholder="用户ID" clearable @clear="loadExportList" @keyup.enter="loadExportList" />
+        <el-date-picker v-model="exportListFilters.start_date" class="audit-filter-control" type="date" placeholder="开始日期" format="yyyy-MM-dd" value-format="yyyy-MM-dd" @change="loadExportList" />
+        <el-date-picker v-model="exportListFilters.end_date" class="audit-filter-control" type="date" placeholder="结束日期" format="yyyy-MM-dd" value-format="yyyy-MM-dd" @change="loadExportList" />
       </div>
-      <el-table v-loading="exportListLoading" :data="exportList" style="width: 100%;">
+      <div class="table-scroll">
+      <el-table v-loading="exportListLoading" :data="exportList" class="audit-table">
         <el-table-column prop="created_at" label="创建时间" width="180">
           <template #default="scope">{{ formatDateTime(scope.row.created_at) }}</template>
         </el-table-column>
@@ -187,6 +192,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
       <el-pagination v-if="exportListTotal > 0" v-model:current-page="exportListPage" v-model:page-size="exportListPageSize" :total="exportListTotal" layout="total, sizes, prev, pager, next" @size-change="handleExportPageSizeChange" @current-change="handleExportPageChange" />
       <template #footer>
         <el-button @click="exportListVisible = false">关闭</el-button>
@@ -520,11 +526,13 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .header-section {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--ui-control-gap);
   align-items: center;
   justify-content: space-between;
 }
@@ -533,8 +541,31 @@ onMounted(() => {
 .action-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--ui-control-gap);
   align-items: center;
+}
+
+.audit-filter-control {
+  width: min(100%, 170px);
+}
+
+.audit-search-control {
+  width: min(100%, 280px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.audit-table {
+  width: 100%;
+}
+
+.changed-fields {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .diff-section {
@@ -559,7 +590,8 @@ onMounted(() => {
 }
 
 .stats-section {
-  margin-bottom: 20px;
+  row-gap: var(--ui-section-gap);
+  margin-bottom: var(--ui-section-gap);
 }
 
 .stat-card {
@@ -596,8 +628,26 @@ onMounted(() => {
 .export-filter {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--ui-control-gap);
   align-items: center;
   margin-bottom: 12px;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group,
+  .export-filter,
+  .audit-filter-control,
+  .audit-search-control {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filter-group,
+  .action-group,
+  .export-filter {
+    flex-direction: column;
+  }
 }
 </style>

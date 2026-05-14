@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="更新物料采购状态" width="500px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="更新物料采购状态" width="var(--ui-dialog-width-sm)" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
       <el-form-item label="物料名称"><el-input :value="material?.material_name" disabled /></el-form-item>
       <el-form-item label="当前状态"><el-tag :type="statusType" size="small">{{ material?.purchase_status_display }}</el-tag></el-form-item>

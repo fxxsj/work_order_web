@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" title="质检表单" width="600px" @close="visible = false">
+  <el-dialog v-model="visible" title="质检表单" width="var(--ui-dialog-width-md)" @close="visible = false">
     <el-form :model="form" label-width="100px">
       <el-form-item label="产品"><el-input :value="data?.product_name" disabled /></el-form-item>
       <el-form-item label="检验结果"><el-select v-model="form.status" style="width: 100%;"><el-option label="待检验" value="pending" /><el-option label="合格" value="passed" /><el-option label="不合格" value="failed" /></el-select></el-form-item>

@@ -5,7 +5,7 @@
     <el-card>
       <div class="header-section">
         <div class="filter-group">
-          <el-select v-model="filters.status" placeholder="库存状态" clearable style="width: 120px; margin-right: 10px;" @change="handleSearch">
+          <el-select v-model="filters.status" class="stock-filter-control" placeholder="库存状态" clearable @change="handleSearch">
             <el-option label="在库" value="in_stock" />
             <el-option label="已预留" value="reserved" />
             <el-option label="质检中" value="quality_check" />
@@ -19,7 +19,8 @@
         </div>
       </div>
 
-      <el-table v-if="tableData.length > 0" v-loading="loading" :data="tableData" border style="width: 100%; margin-top: 20px;">
+      <div class="table-scroll">
+      <el-table v-if="tableData.length > 0" v-loading="loading" :data="tableData" border class="stock-table">
         <el-table-column prop="product_name" label="产品名称" width="200" />
         <el-table-column prop="batch_no" label="批次号" width="150" />
         <el-table-column prop="quantity" label="库存数量" width="100" align="right">
@@ -49,6 +50,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
 
@@ -57,7 +59,7 @@
       </el-empty>
     </el-card>
 
-    <el-dialog v-model="detailDialogVisible" title="库存详情" width="800px" :close-on-click-modal="false">
+    <el-dialog v-model="detailDialogVisible" title="库存详情" width="var(--ui-dialog-width-lg)" :close-on-click-modal="false">
       <el-descriptions v-if="currentStock" :column="2" border>
         <el-descriptions-item label="产品名称">{{ currentStock.product_name }}</el-descriptions-item>
         <el-descriptions-item label="批次号">{{ currentStock.batch_no }}</el-descriptions-item>
@@ -77,9 +79,10 @@
       <template #footer><el-button @click="detailDialogVisible = false">关闭</el-button></template>
     </el-dialog>
 
-    <el-dialog v-model="lowStockDialogVisible" title="库存预警" width="900px">
+    <el-dialog v-model="lowStockDialogVisible" title="库存预警" width="var(--ui-dialog-width-xl)">
       <el-empty v-if="!loadingLowStock && lowStockList.length === 0" description="暂无低库存预警" />
-      <el-table v-else v-loading="loadingLowStock" :data="lowStockList" border max-height="400">
+      <div v-else class="table-scroll">
+      <el-table v-loading="loadingLowStock" :data="lowStockList" border max-height="400">
         <el-table-column prop="product_name" label="产品名称" width="200" />
         <el-table-column prop="batch_no" label="批次号" width="150" />
         <el-table-column prop="quantity" label="当前库存" width="100" align="right" />
@@ -89,11 +92,13 @@
         </el-table-column>
         <el-table-column prop="location" label="库位" width="120" />
       </el-table>
+      </div>
     </el-dialog>
 
-    <el-dialog v-model="expiredDialogVisible" title="过期库存" width="900px">
+    <el-dialog v-model="expiredDialogVisible" title="过期库存" width="var(--ui-dialog-width-xl)">
       <el-empty v-if="!loadingExpired && expiredList.length === 0" description="暂无过期库存" />
-      <el-table v-else v-loading="loadingExpired" :data="expiredList" border max-height="400">
+      <div v-else class="table-scroll">
+      <el-table v-loading="loadingExpired" :data="expiredList" border max-height="400">
         <el-table-column prop="product_name" label="产品名称" width="200" />
         <el-table-column prop="batch_no" label="批次号" width="150" />
         <el-table-column prop="quantity" label="库存数量" width="100" align="right" />
@@ -103,9 +108,10 @@
         </el-table-column>
         <el-table-column prop="location" label="库位" width="120" />
       </el-table>
+      </div>
     </el-dialog>
 
-    <el-dialog v-model="adjustDialogVisible" title="库存调整" width="500px">
+    <el-dialog v-model="adjustDialogVisible" title="库存调整" width="var(--ui-dialog-width-sm)">
       <el-form ref="formRef" :model="adjustForm" label-width="100px">
         <el-form-item label="调整数量"><el-input-number v-model="adjustForm.adjustment" :step="1" style="width: 100%;" /></el-form-item>
         <el-form-item label="调整原因"><el-input v-model="adjustForm.reason" type="textarea" :rows="3" /></el-form-item>
@@ -200,11 +206,31 @@ const getStatusType = (status) => ({ in_stock: '', reserved: 'warning', quality_
 onMounted(() => { loadData(); fetchStats() })
 </script>
 
-<style scoped>
-.stock-container { padding: 20px; }
-.header-section { display: flex; justify-content: space-between; align-items: center; }
-.filter-group, .action-group { display: flex; align-items: center; gap: 10px; }
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.stock-container { padding: var(--ui-page-padding); }
+.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.stock-filter-control { width: min(100%, 160px); }
+.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
+.stock-table { width: 100%; }
 .text-danger { color: #F56C6C; font-weight: bold; }
 .text-warning { color: #E6A23C; }
 .el-card { border-radius: 8px; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group,
+  .stock-filter-control {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filter-group,
+  .action-group {
+    flex-direction: column;
+  }
+}
 </style>

@@ -3,9 +3,9 @@
     <el-card>
       <div class="header-section">
         <el-input
+          class="management-search-control"
           v-model="searchText"
           placeholder="搜索产品组编码、名称"
-          style="width: 300px;"
           clearable
           @input="handleSearchDebounced"
           @clear="handleSearch"
@@ -35,13 +35,16 @@
         </el-button>
       </el-empty>
 
-      <el-table
+      <div
         v-else
+        class="table-scroll"
+      >
+        <el-table
         v-loading="loading"
         :data="tableData"
         border
-        style="width: 100%; margin-top: 20px;"
-      >
+        class="data-table"
+        >
         <el-table-column prop="code" label="编码" width="150" />
         <el-table-column prop="name" label="名称" />
         <el-table-column prop="description" label="描述" show-overflow-tooltip />
@@ -76,7 +79,8 @@
             </el-button>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
+      </div>
 
       <el-pagination
         v-if="total > 0"
@@ -92,7 +96,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="800px"
+      width="var(--ui-dialog-width-lg)"
       @close="handleDialogClose"
     >
       <el-form
@@ -132,11 +136,11 @@
           >
             添加子产品
           </el-button>
-          <div style="margin-top: 15px;">
+          <div class="table-scroll">
             <el-table
               :data="form.items"
               border
-              style="width: 100%"
+              class="data-table"
             >
               <el-table-column label="产品" min-width="200">
                 <template #default="scope">
@@ -443,14 +447,43 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .product-group-list {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
+}
+
+.management-search-control {
+  width: min(100%, 320px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-search-control,
+  .header-section .el-button {
+    width: 100%;
+  }
 }
 </style>

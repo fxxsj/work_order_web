@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisibleSync" :title="dialogTitle" width="700px" :close-on-click-modal="false" @close="handleClose">
+  <el-dialog v-model="dialogVisibleSync" :title="dialogTitle" width="var(--ui-dialog-width-lg)" :close-on-click-modal="false" @close="handleClose">
     <el-form ref="formRef" v-loading="loading" label-width="120px" :model="form" :rules="rules">
       <el-form-item label="刀模编码" prop="code">
         <el-input v-model="form.code" placeholder="留空则系统自动生成（格式：DIE + yyyymm + 序号）" :disabled="isEdit && initialData?.confirmed" />
@@ -17,8 +17,8 @@
         <div style="font-size: 12px; color: #909399; margin-top: 5px;">拼版刀模：多产品同时切割 | 专用刀模：单产品专用 | 通用刀模：多产品可共用</div>
       </el-form-item>
       <el-row :gutter="20">
-        <el-col :span="12"><el-form-item label="尺寸" prop="size"><el-input v-model="form.size" placeholder="如：420x594mm" :disabled="isEdit && initialData?.confirmed" /></el-form-item></el-col>
-        <el-col :span="12"><el-form-item label="材质" prop="material"><el-input v-model="form.material" placeholder="如：木板、胶板" :disabled="isEdit && initialData?.confirmed" /></el-form-item></el-col>
+        <el-col :xs="24" :md="12"><el-form-item label="尺寸" prop="size"><el-input v-model="form.size" placeholder="如：420x594mm" :disabled="isEdit && initialData?.confirmed" /></el-form-item></el-col>
+        <el-col :xs="24" :md="12"><el-form-item label="材质" prop="material"><el-input v-model="form.material" placeholder="如：木板、胶板" :disabled="isEdit && initialData?.confirmed" /></el-form-item></el-col>
       </el-row>
       <el-form-item label="厚度" prop="thickness"><el-input v-model="form.thickness" placeholder="如：3mm、5mm" :disabled="isEdit && initialData?.confirmed" /></el-form-item>
 
@@ -26,21 +26,23 @@
       <el-form-item label="产品列表">
         <el-button type="primary" size="small" :icon="Plus" :disabled="!canAddMoreProducts" @click="addProductItem">添加产品</el-button>
         <div style="font-size: 12px; color: #909399; margin-top: 5px;">{{ productListHint }}</div>
-        <el-table :data="productItems" border style="width: 100%; margin-top: 15px;">
-          <el-table-column label="产品名称" min-width="250">
-            <template #default="scope">
-              <el-select v-model="scope.row.product" placeholder="请选择产品" filterable style="width: 100%;">
-                <el-option v-for="p in productList" :key="p.id" :label="`${p.name} (${p.code})`" :value="p.id" />
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="拼版个数" width="120">
-            <template #default="scope"><el-input-number v-model="scope.row.quantity" :min="1" style="width: 100%;" size="small" /></template>
-          </el-table-column>
-          <el-table-column label="操作" width="80" align="center">
-            <template #default="scope"><el-button type="danger" size="small" :icon="Delete" @click="removeProductItem(scope.$index)" /></template>
-          </el-table-column>
-        </el-table>
+        <div class="table-scroll">
+          <el-table :data="productItems" border class="dialog-table">
+            <el-table-column label="产品名称" min-width="250">
+              <template #default="scope">
+                <el-select v-model="scope.row.product" placeholder="请选择产品" filterable style="width: 100%;">
+                  <el-option v-for="p in productList" :key="p.id" :label="`${p.name} (${p.code})`" :value="p.id" />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="拼版个数" width="120">
+              <template #default="scope"><el-input-number v-model="scope.row.quantity" :min="1" style="width: 100%;" size="small" /></template>
+            </el-table-column>
+            <el-table-column label="操作" width="80" align="center">
+              <template #default="scope"><el-button type="danger" size="small" :icon="Delete" @click="removeProductItem(scope.$index)" /></template>
+            </el-table-column>
+          </el-table>
+        </div>
       </el-form-item>
       <el-form-item label="备注" prop="notes"><el-input v-model="form.notes" type="textarea" :rows="3" placeholder="请输入备注信息" /></el-form-item>
     </el-form>
@@ -157,3 +159,14 @@ const handleSubmit = async () => {
 const handleCancel = () => { emit('update:visible', false) }
 const handleClose = () => { resetForm(); emit('close') }
 </script>
+
+<style scoped>
+.table-scroll {
+  margin-top: var(--ui-control-gap);
+  overflow-x: auto;
+}
+
+.dialog-table {
+  width: 100%;
+}
+</style>

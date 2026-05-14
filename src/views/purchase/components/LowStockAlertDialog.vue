@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="库存不足预警" width="800px">
+  <el-dialog v-model="dialogVisible" title="库存不足预警" width="var(--ui-dialog-width-lg)">
     <el-alert v-if="materials.length > 0" type="warning" :closable="false" show-icon style="margin-bottom: 16px"><template #title>发现 {{ materials.length }} 种物料库存不足，建议及时采购补货</template></el-alert>
     <el-table v-if="materials.length > 0" v-loading="loading" :data="materials" border>
       <el-table-column prop="code" label="物料编码" width="120" />

@@ -27,21 +27,22 @@
 
       <el-card class="mb-20">
         <template #header><span class="title">金额信息</span></template>
-        <el-row :gutter="20">
-          <el-col :span="6"><div class="amount-item"><div class="label">小计</div><div class="value">¥{{ formatAmount(detailData.subtotal) }}</div></div></el-col>
-          <el-col :span="6"><div class="amount-item"><div class="label">税额 ({{ detailData.tax_rate }}%)</div><div class="value">¥{{ formatAmount(detailData.tax_amount) }}</div></div></el-col>
-          <el-col :span="6"><div class="amount-item"><div class="label">折扣</div><div class="value">-¥{{ formatAmount(detailData.discount_amount) }}</div></div></el-col>
-          <el-col :span="6"><div class="amount-item"><div class="label total">合计</div><div class="value total">¥{{ formatAmount(detailData.total_amount) }}</div></div></el-col>
+        <el-row :gutter="20" class="amount-row">
+          <el-col :xs="24" :sm="12" :lg="6"><div class="amount-item"><div class="label">小计</div><div class="value">¥{{ formatAmount(detailData.subtotal) }}</div></div></el-col>
+          <el-col :xs="24" :sm="12" :lg="6"><div class="amount-item"><div class="label">税额 ({{ detailData.tax_rate }}%)</div><div class="value">¥{{ formatAmount(detailData.tax_amount) }}</div></div></el-col>
+          <el-col :xs="24" :sm="12" :lg="6"><div class="amount-item"><div class="label">折扣</div><div class="value">-¥{{ formatAmount(detailData.discount_amount) }}</div></div></el-col>
+          <el-col :xs="24" :sm="12" :lg="6"><div class="amount-item"><div class="label total">合计</div><div class="value total">¥{{ formatAmount(detailData.total_amount) }}</div></div></el-col>
         </el-row>
-        <el-row :gutter="20" style="margin-top: 20px;">
-          <el-col :span="6"><div class="amount-item"><div class="label">已付款金额</div><div class="value text-success">¥{{ formatAmount(detailData.paid_amount) }}</div></div></el-col>
-          <el-col :span="6"><div class="amount-item"><div class="label">未付款金额</div><div class="value" :class="detailData.unpaid_amount > 0 ? 'text-danger' : ''">¥{{ formatAmount(detailData.unpaid_amount) }}</div></div></el-col>
+        <el-row :gutter="20" class="amount-row amount-row-secondary">
+          <el-col :xs="24" :sm="12" :lg="6"><div class="amount-item"><div class="label">已付款金额</div><div class="value text-success">¥{{ formatAmount(detailData.paid_amount) }}</div></div></el-col>
+          <el-col :xs="24" :sm="12" :lg="6"><div class="amount-item"><div class="label">未付款金额</div><div class="value" :class="detailData.unpaid_amount > 0 ? 'text-danger' : ''">¥{{ formatAmount(detailData.unpaid_amount) }}</div></div></el-col>
         </el-row>
       </el-card>
 
       <el-card class="mb-20">
         <template #header><span class="title">订单明细</span></template>
-        <el-table :data="detailData.items || []" border>
+        <div class="table-scroll">
+        <el-table :data="detailData.items || []" border class="detail-table">
           <el-table-column prop="product_name" label="产品名称" min-width="200" />
           <el-table-column prop="specification" label="规格" width="150" />
           <el-table-column prop="quantity" label="数量" width="100" align="right" />
@@ -54,6 +55,7 @@
           </el-table-column>
           <el-table-column prop="notes" label="备注" min-width="150" />
         </el-table>
+        </div>
       </el-card>
 
       <el-card v-if="detailData.notes" class="mb-20">
@@ -132,12 +134,16 @@ const getPaymentStatusType = (status) => ({ unpaid: 'danger', partial: 'warning'
 onMounted(() => { loadData() })
 </script>
 
-<style scoped>
-.sales-order-detail { padding: 20px; }
-.mb-20 { margin-bottom: 20px; }
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.sales-order-detail { padding: var(--ui-page-padding); }
+.mb-20 { margin-bottom: var(--ui-section-gap); }
+.card-header { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
 .title { font-weight: bold; }
-.actions { display: flex; gap: 10px; }
+.actions { display: flex; gap: var(--ui-control-gap); flex-wrap: wrap; }
+.amount-row { row-gap: var(--ui-control-gap); }
+.amount-row-secondary { margin-top: var(--ui-section-gap); }
 .amount-item { text-align: center; padding: 10px; }
 .amount-item .label { color: #909399; font-size: 14px; margin-bottom: 8px; }
 .amount-item .value { font-size: 20px; font-weight: 600; color: #303133; }
@@ -146,5 +152,20 @@ onMounted(() => { loadData() })
 .amount-item .value.text-danger { color: #F56C6C; }
 .notes-content { white-space: pre-wrap; color: #606266; }
 .history-notes { color: #909399; font-size: 12px; margin-top: 5px; }
-.action-bar { display: flex; gap: 10px; justify-content: center; padding: 20px; background: #fff; border-radius: 4px; }
+.table-scroll { overflow-x: auto; }
+.detail-table { width: 100%; }
+.action-bar { display: flex; gap: var(--ui-control-gap); justify-content: center; flex-wrap: wrap; padding: var(--ui-section-gap); background: #fff; border-radius: 4px; }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .card-header,
+  .actions,
+  .action-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .action-bar .el-button {
+    width: 100%;
+  }
+}
 </style>

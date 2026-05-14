@@ -1,9 +1,9 @@
 <template>
   <div class="task-board-view">
     <el-row :gutter="20">
-      <el-col :span="8"><task-column status="pending" title="待开始" :tasks="tasksByStatus.pending" :editable="editable" :loading="loading" @task-click="handleTaskClick" @task-update="handleTaskUpdate" @task-assign="handleTaskAssign" @task-complete="handleTaskComplete" /></el-col>
-      <el-col :span="8"><task-column status="in_progress" title="进行中" :tasks="tasksByStatus.in_progress" :editable="editable" :loading="loading" @task-click="handleTaskClick" @task-update="handleTaskUpdate" @task-assign="handleTaskAssign" @task-complete="handleTaskComplete" /></el-col>
-      <el-col :span="8"><task-column status="completed" title="已完成" :tasks="tasksByStatus.completed" :editable="editable" :loading="loading" @task-click="handleTaskClick" @task-update="handleTaskUpdate" @task-assign="handleTaskAssign" @task-complete="handleTaskComplete" /></el-col>
+      <el-col :xs="24" :md="8"><task-column status="pending" title="待开始" :tasks="tasksByStatus.pending" :editable="editable" :loading="loading" @task-click="handleTaskClick" @task-update="handleTaskUpdate" @task-assign="handleTaskAssign" @task-complete="handleTaskComplete" /></el-col>
+      <el-col :xs="24" :md="8"><task-column status="in_progress" title="进行中" :tasks="tasksByStatus.in_progress" :editable="editable" :loading="loading" @task-click="handleTaskClick" @task-update="handleTaskUpdate" @task-assign="handleTaskAssign" @task-complete="handleTaskComplete" /></el-col>
+      <el-col :xs="24" :md="8"><task-column status="completed" title="已完成" :tasks="tasksByStatus.completed" :editable="editable" :loading="loading" @task-click="handleTaskClick" @task-update="handleTaskUpdate" @task-assign="handleTaskAssign" @task-complete="handleTaskComplete" /></el-col>
     </el-row>
   </div>
 </template>
@@ -20,5 +20,6 @@ const handleTaskComplete = (t) => emit('task-complete', t)
 </script>
 
 <style scoped>
-.task-board-view { margin-top: 20px; }
+.task-board-view { margin-top: var(--ui-section-gap); }
+.task-board-view :deep(.el-row) { row-gap: var(--ui-section-gap); }
 </style>

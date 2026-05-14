@@ -4,7 +4,10 @@
       <el-col
         v-for="(item, index) in items"
         :key="`stat-card-${index}`"
-        :span="span"
+        :xs="24"
+        :sm="12"
+        :md="span"
+        :lg="span"
       >
         <el-card :class="['stat-card', item.type]">
           <div class="stat-item">
@@ -54,10 +57,10 @@ const formatValue = (value, format) => {
 
 <style scoped>
 .stats-cards {
-  margin-bottom: 20px;
+  margin-bottom: var(--ui-section-gap);
 }
 .stat-card {
-  margin-bottom: 20px;
+  margin-bottom: var(--ui-section-gap);
 }
 .stat-item {
   text-align: center;

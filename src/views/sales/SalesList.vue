@@ -3,10 +3,10 @@
     <el-card>
       <div class="header-section">
         <div class="filter-group">
-          <el-input v-model="filters.search" placeholder="搜索订单号/客户名称" style="width: 220px;" clearable @keyup.enter="handleSearch" @clear="handleSearch">
+          <el-input v-model="filters.search" class="filter-search-control" placeholder="搜索订单号/客户名称" clearable @keyup.enter="handleSearch" @clear="handleSearch">
             <template #append><el-button :icon="Search" @click="handleSearch" /></template>
           </el-input>
-          <el-select v-model="filters.status" placeholder="订单状态" clearable style="width: 120px;" @change="handleSearch">
+          <el-select v-model="filters.status" class="filter-select-control" placeholder="订单状态" clearable @change="handleSearch">
             <el-option label="草稿" value="draft" />
             <el-option label="已提交" value="submitted" />
             <el-option label="已审核" value="approved" />
@@ -15,7 +15,7 @@
             <el-option label="已完成" value="completed" />
             <el-option label="已取消" value="cancelled" />
           </el-select>
-          <el-select v-model="filters.payment_status" placeholder="付款状态" clearable style="width: 120px;" @change="handleSearch">
+          <el-select v-model="filters.payment_status" class="filter-select-control" placeholder="付款状态" clearable @change="handleSearch">
             <el-option label="未付款" value="unpaid" />
             <el-option label="部分付款" value="partial" />
             <el-option label="已付款" value="paid" />
@@ -28,7 +28,8 @@
         </div>
       </div>
 
-      <el-table v-if="tableData.length > 0" ref="salesTable" v-loading="loading" :data="tableData" style="width: 100%; margin-top: 20px;" @selection-change="handleSelectionChange" @sort-change="handleSortChange">
+      <div v-if="tableData.length > 0" class="table-scroll">
+      <el-table ref="salesTable" v-loading="loading" :data="tableData" class="data-table" @selection-change="handleSelectionChange" @sort-change="handleSortChange">
         <el-table-column type="selection" width="55" />
         <el-table-column prop="order_number" label="订单号" width="150" fixed="left">
           <template #default="scope"><el-link type="primary" @click="handleView(scope.row)">{{ scope.row.order_number }}</el-link></template>
@@ -68,6 +69,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
       <el-empty v-if="!loading && tableData.length === 0" description="暂无销售订单数据" />
@@ -167,11 +169,32 @@ const getPaymentStatusText = (status) => ({ unpaid: '未付款', partial: '部�
 onMounted(() => { loadData() })
 </script>
 
-<style scoped>
-.sales-order-list { padding: 20px; }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.sales-order-list { padding: var(--ui-page-padding); }
+.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.filter-search-control { width: min(100%, 260px); }
+.filter-select-control { width: min(100%, 140px); }
+.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
+.data-table { width: 100%; }
 .text-danger { color: #f56c6c; font-weight: bold; }
 .amount-text { font-weight: 500; }
 .action-buttons { display: flex; gap: 4px; justify-content: center; }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filter-search-control,
+  .filter-select-control,
+  .action-group .el-button {
+    width: 100%;
+  }
+}
 </style>

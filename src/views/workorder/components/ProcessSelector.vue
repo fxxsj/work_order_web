@@ -1,7 +1,7 @@
 <template>
   <el-form-item label="工序" prop="processes">
     <el-select :model-value="modelValue" placeholder="请选择工序" multiple filterable :loading="loading" :disabled="disabled" style="width: 100%;" :clearable="clearable" @update:model-value="v => emit('update:modelValue', v)">
-      <el-option v-for="p in processList" :key="p.id" :label="p.name" :value="p.id"><div style="display: flex; justify-content: space-between; align-items: center;"><span>{{ p.name }}</span><el-tag v-if="p.code" size="small" type="info" style="margin-left: 10px;">{{ p.code }}</el-tag></div></el-option>
+      <el-option v-for="p in processList" :key="p.id" :label="p.name" :value="p.id"><div class="process-option"><span>{{ p.name }}</span><el-tag v-if="p.code" size="small" type="info">{{ p.code }}</el-tag></div></el-option>
     </el-select>
     <div v-if="showHint" style="color: #909399; font-size: 12px; margin-top: 5px;">已选择 {{ selectedCount }} 个工序</div>
   </el-form-item>
@@ -32,3 +32,12 @@ const loadProcesses = async () => {
 
 loadProcesses()
 </script>
+
+<style scoped>
+.process-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-control-gap);
+}
+</style>

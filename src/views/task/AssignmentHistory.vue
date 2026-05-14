@@ -1,26 +1,26 @@
 <template>
   <div class="assignment-history">
     <el-row v-if="summary" :gutter="20" class="stats-section">
-      <el-col :span="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><el-icon><Document /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.total || 0 }}</div><div class="stat-label">总记录数</div></div></div></el-card></el-col>
-      <el-col :span="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #67C23A;"><el-icon><Tickets /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.unique_tasks || 0 }}</div><div class="stat-label">涉及任务数</div></div></div></el-card></el-col>
-      <el-col :span="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #E6A23C;"><el-icon><OfficeBuilding /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.unique_departments || 0 }}</div><div class="stat-label">涉及部门数</div></div></div></el-card></el-col>
-      <el-col :span="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #909399;"><el-icon><User /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.unique_operators || 0 }}</div><div class="stat-label">涉及操作员数</div></div></div></el-card></el-col>
+      <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><el-icon><Document /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.total || 0 }}</div><div class="stat-label">总记录数</div></div></div></el-card></el-col>
+      <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #67C23A;"><el-icon><Tickets /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.unique_tasks || 0 }}</div><div class="stat-label">涉及任务数</div></div></div></el-card></el-col>
+      <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #E6A23C;"><el-icon><OfficeBuilding /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.unique_departments || 0 }}</div><div class="stat-label">涉及部门数</div></div></div></el-card></el-col>
+      <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #909399;"><el-icon><User /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.unique_operators || 0 }}</div><div class="stat-label">涉及操作员数</div></div></div></el-card></el-col>
     </el-row>
 
-    <el-card style="margin-top: 20px;">
+    <el-card class="history-card">
       <div class="header-section">
         <div class="filter-group">
-          <el-date-picker v-model="filters.date_range" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 260px;" @change="handleSearch" />
-          <el-select v-model="filters.action_type" placeholder="操作类型" clearable style="width: 120px;" @change="handleSearch">
+          <el-date-picker v-model="filters.date_range" class="history-date-control" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" @change="handleSearch" />
+          <el-select v-model="filters.action_type" class="history-filter-control" placeholder="操作类型" clearable @change="handleSearch">
             <el-option label="分派" value="assign" />
             <el-option label="取消分派" value="unassign" />
             <el-option label="转交" value="transfer" />
             <el-option label="完成" value="complete" />
           </el-select>
-          <el-select v-model="filters.department" placeholder="部门" clearable filterable style="width: 150px;" @change="handleSearch">
+          <el-select v-model="filters.department" class="history-filter-control" placeholder="部门" clearable filterable @change="handleSearch">
             <el-option v-for="dept in departmentList" :key="dept.id" :label="dept.name" :value="dept.id" />
           </el-select>
-          <el-input v-model="filters.task_id" placeholder="任务ID" clearable style="width: 100px;" @change="handleSearch" />
+          <el-input v-model="filters.task_id" class="history-filter-control" placeholder="任务ID" clearable @change="handleSearch" />
         </div>
         <div class="action-group">
           <el-button :icon="RefreshRight" @click="resetFilters">重置</el-button>
@@ -28,7 +28,8 @@
         </div>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" border style="margin-top: 20px;">
+      <div class="table-scroll">
+      <el-table v-loading="loading" :data="tableData" border class="history-table">
         <el-table-column prop="created_at" label="时间" width="160">
           <template #default="scope">{{ formatDateTime(scope.row.created_at) }}</template>
         </el-table-column>
@@ -59,8 +60,9 @@
         <el-table-column prop="operator_name" label="操作人" width="100" />
         <el-table-column prop="reason" label="原因" min-width="150" show-overflow-tooltip />
       </el-table>
+      </div>
 
-      <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" style="margin-top: 20px;" />
+      <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" class="pagination-row" />
 
       <el-empty v-if="!loading && tableData.length === 0" description="暂无分派历史" />
     </el-card>
@@ -146,14 +148,43 @@ const handleExport = async () => {
 onMounted(() => { loadData(); loadSummary(); loadDepartments() })
 </script>
 
-<style scoped>
-.assignment-history { padding: 20px; }
-.stats-section { margin-bottom: 0; }
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.assignment-history { padding: var(--ui-page-padding); }
+.stats-section { row-gap: var(--ui-section-gap); margin-bottom: 0; }
+.history-card { margin-top: var(--ui-section-gap); }
 .stat-card { border-radius: 10px; }
 .stat-content { display: flex; align-items: center; gap: 12px; }
 .stat-icon { width: 48px; height: 48px; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; }
 .stat-value { font-size: 24px; font-weight: bold; }
 .stat-label { font-size: 12px; color: #909399; }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.history-date-control { width: min(100%, 280px); }
+.history-filter-control { width: min(100%, 160px); }
+.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
+.history-table { width: 100%; }
+.pagination-row { margin-top: var(--ui-section-gap); }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group,
+  .history-date-control,
+  .history-filter-control {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filter-group,
+  .action-group {
+    flex-direction: column;
+  }
+
+  .pagination-row {
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+}
 </style>

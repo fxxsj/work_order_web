@@ -1,9 +1,9 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="完成任务" width="600px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="完成任务" width="var(--ui-dialog-width-md)" @close="handleClose">
     <el-form ref="formRef" :model="form" label-width="120px">
       <el-form-item label="状态"><el-tag type="success">已完成</el-tag><div style="color: #909399; font-size: 12px; margin-top: 4px;">强制完成任务，状态将标记为已完成</div></el-form-item>
       <el-form-item v-if="isPlateMakingTask" label="完成数量"><el-input-number v-model="form.quantity_completed" :min="1" :max="1" :step="1" disabled style="width: 100%;" /><div style="color: #909399; font-size: 12px; margin-top: 4px;">制版任务完成数量固定为1</div></el-form-item>
-      <el-form-item v-else label="当前完成数量"><el-input-number :value="task?.quantity_completed || 0" disabled style="width: 100%;" /><div v-if="task?.production_quantity" style="color: #909399; font-size: 12px; margin-top: 4px;">计划数量：{{ task.production_quantity }}<span v-if="(task.quantity_completed || 0) < task.production_quantity" style="color: #E6A23C; margin-left: 10px;">（将强制标记为已完成）</span></div></el-form-item>
+      <el-form-item v-else label="当前完成数量"><el-input-number :value="task?.quantity_completed || 0" disabled style="width: 100%;" /><div v-if="task?.production_quantity" class="form-hint">计划数量：{{ task.production_quantity }}<span v-if="(task.quantity_completed || 0) < task.production_quantity" class="warning-text">（将强制标记为已完成）</span></div></el-form-item>
       <el-form-item label="完成理由"><el-input v-model="form.completion_reason" type="textarea" :rows="3" placeholder="请输入完成理由（可选）" /></el-form-item>
       <el-form-item v-if="isDesignArtworkTask" label="选择图稿"><el-select v-model="form.artwork_ids" multiple filterable placeholder="请选择图稿" style="width: 100%;" @focus="$emit('load-artworks')"><el-option v-for="a in artworkList" :key="a.id" :label="`${a.code || a.base_code || ''} - ${a.name || ''}`" :value="a.id" /></el-select><div style="color: #909399; font-size: 12px; margin-top: 5px;">选中的图稿将自动关联到施工单</div></el-form-item>
       <el-form-item v-if="isDesignDieTask" label="选择刀模"><el-select v-model="form.die_ids" multiple filterable placeholder="请选择刀模" style="width: 100%;" @focus="$emit('load-dies')"><el-option v-for="d in dieList" :key="d.id" :label="`${d.code} - ${d.name}`" :value="d.id" /></el-select><div style="color: #909399; font-size: 12px; margin-top: 5px;">选中的刀模将自动关联到施工单</div></el-form-item>
@@ -47,3 +47,18 @@ watch(() => props.task, (t) => {
 const handleSubmit = () => emit('submit', { ...form })
 const handleClose = () => { Object.assign(form, { quantity_completed: 0, completion_reason: '', artwork_ids: [], die_ids: [], notes: '' }) }
 </script>
+
+<style scoped>
+.form-hint {
+  color: #909399;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-control-gap);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.warning-text {
+  color: #E6A23C;
+}
+</style>

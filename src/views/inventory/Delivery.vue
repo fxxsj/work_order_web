@@ -5,10 +5,10 @@
     <el-card>
       <div class="header-section">
         <div class="filter-group">
-          <el-select v-model="filters.customer" placeholder="选择客户" clearable filterable style="width: 160px; margin-right: 10px;" @change="handleSearch">
+          <el-select v-model="filters.customer" class="filter-select-control" placeholder="选择客户" clearable filterable @change="handleSearch">
             <el-option v-for="customer in customerList" :key="customer.id" :label="customer.name" :value="customer.id" />
           </el-select>
-          <el-select v-model="filters.status" placeholder="发货状态" clearable style="width: 120px; margin-right: 10px;" @change="handleSearch">
+          <el-select v-model="filters.status" class="filter-select-control" placeholder="发货状态" clearable @change="handleSearch">
             <el-option label="待发货" value="pending" />
             <el-option label="已发货" value="shipped" />
             <el-option label="运输中" value="in_transit" />
@@ -16,7 +16,7 @@
             <el-option label="拒收" value="rejected" />
             <el-option label="已退货" value="returned" />
           </el-select>
-          <el-input v-model="filters.tracking_number" placeholder="搜索物流单号" style="width: 200px;" clearable @input="handleSearchDebounced" @clear="handleSearch">
+          <el-input v-model="filters.tracking_number" class="filter-search-control" placeholder="搜索物流单号" clearable @input="handleSearchDebounced" @clear="handleSearch">
             <template #append><el-button :icon="Search" @click="handleSearch" /></template>
           </el-input>
         </div>
@@ -26,7 +26,8 @@
         </div>
       </div>
 
-      <el-table v-if="tableData.length > 0" v-loading="loading" :data="tableData" border style="width: 100%; margin-top: 20px;">
+      <div v-if="tableData.length > 0" class="table-scroll">
+      <el-table v-loading="loading" :data="tableData" border class="data-table">
         <el-table-column prop="order_number" label="发货单号" width="150" />
         <el-table-column prop="customer_name" label="客户名称" width="150" />
         <el-table-column prop="sales_order_number" label="销售订单" width="150" />
@@ -54,6 +55,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
 
@@ -73,7 +75,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { deliveryOrderAPI, salesOrderAPI, customerAPI, productAPI } from '@/api/modules'
+import { deliveryOrderAPI, salesOrderAPI, productAPI } from '@/api/modules'
+import { customerAPI } from '@/api/modules/customer'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import DeliveryStats from './components/DeliveryStats.vue'
@@ -161,9 +164,30 @@ const getTrackingUrl = (row) => row.tracking_url || (row.logistics_company === '
 onMounted(() => { loadData(); fetchStats(); fetchCustomers(); fetchSalesOrders(); fetchProducts() })
 </script>
 
-<style scoped>
-.delivery-container { padding: 20px; }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.delivery-container { padding: var(--ui-page-padding); }
+.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
+.filter-search-control { width: min(100%, 240px); }
+.filter-select-control { width: min(100%, 180px); }
+.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
+.data-table { width: 100%; }
 .el-card { border-radius: 8px; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filter-search-control,
+  .filter-select-control,
+  .action-group .el-button {
+    width: 100%;
+  }
+}
 </style>

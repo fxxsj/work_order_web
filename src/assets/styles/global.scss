@@ -1,0 +1,310 @@
+@use './tokens/breakpoints' as bp;
+
+/* 全局样式 */
+:root {
+  --ui-font-scale: 1.1;
+  --ui-font-size-xs: 12.1px;
+  --ui-font-size-sm: 13.2px;
+  --ui-font-size-base: 15.4px;
+  --ui-font-size-md: 17.6px;
+  --ui-font-size-lg: 19.8px;
+  --ui-page-padding: #{bp.$space-page-desktop};
+  --ui-section-gap: 20px;
+  --ui-control-gap: 10px;
+  --ui-radius-card: 8px;
+  --ui-layout-header-height: #{bp.$layout-header-height};
+  --ui-layout-sidebar-width: #{bp.$layout-sidebar-width};
+  --ui-touch-target-min: #{bp.$touch-target-min};
+  --ui-dialog-mobile-chrome-height: 180px;
+  --ui-dialog-width-sm: 500px;
+  --ui-dialog-width-md: 720px;
+  --ui-dialog-width-lg: 860px;
+  --ui-dialog-width-xl: 900px;
+}
+
+@media (min-width: bp.$breakpoint-tablet-min) and (max-width: bp.$breakpoint-tablet-max) {
+  :root {
+    --ui-page-padding: #{bp.$space-page-tablet};
+    --ui-section-gap: 16px;
+  }
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  :root {
+    --ui-page-padding: #{bp.$space-page-phone};
+    --ui-section-gap: 12px;
+    --ui-control-gap: 8px;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  font-size: var(--ui-font-size-base);
+  line-height: 1.5;
+}
+
+body {
+  color: #303133;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+.el-button,
+.el-input__inner,
+.el-textarea__inner,
+.el-form-item__label,
+.el-select-dropdown__item,
+.el-dropdown-menu__item,
+.el-menu-item,
+.el-submenu__title,
+.el-radio__label,
+.el-checkbox__label,
+.el-descriptions-item__label,
+.el-descriptions-item__content,
+.el-pagination,
+.el-table,
+.el-tag,
+.el-tabs__item,
+.el-step__title,
+.el-step__description,
+.el-alert__title,
+.el-alert__description {
+  font-size: var(--ui-font-size-base);
+}
+
+.el-dialog__title,
+.el-card__header,
+.el-page-header__title {
+  font-size: var(--ui-font-size-md);
+}
+
+.el-form-item__error,
+.el-table .cell,
+.el-tag--mini,
+.el-button--mini,
+.el-button--small,
+.el-input--mini .el-input__inner,
+.el-input--small .el-input__inner,
+.el-textarea--mini .el-textarea__inner,
+.el-textarea--small .el-textarea__inner,
+.el-checkbox__label,
+.el-radio__label {
+  font-size: var(--ui-font-size-sm);
+}
+
+.el-table th,
+.el-table td {
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+.el-button,
+.el-input__wrapper,
+.el-select__wrapper {
+  min-height: 32px;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .el-button,
+  .el-input__wrapper,
+  .el-select__wrapper {
+    min-height: var(--ui-touch-target-min);
+  }
+
+  .el-form--inline .el-form-item {
+    display: flex;
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .el-form--inline .el-form-item__content,
+  .el-form--inline .el-input,
+  .el-form--inline .el-select,
+  .el-form--inline .el-date-editor {
+    width: 100%;
+  }
+
+  .el-form:not(.el-form--inline) .el-form-item {
+    display: block;
+  }
+
+  .el-form:not(.el-form--inline) .el-form-item__label {
+    width: auto !important;
+    min-height: 0;
+    margin-bottom: 6px;
+    line-height: 1.4;
+    text-align: left;
+  }
+
+  .el-form:not(.el-form--inline) .el-form-item__content {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  .el-dialog {
+    width: calc(100vw - var(--ui-page-padding) * 2) !important;
+    max-width: none;
+    margin: var(--ui-page-padding) auto !important;
+  }
+
+  .el-dialog__body {
+    max-height: calc(100vh - var(--ui-dialog-mobile-chrome-height));
+    overflow: auto;
+  }
+
+  .el-pagination {
+    justify-content: center;
+    white-space: normal;
+  }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* 状态徽章样式 */
+.status-badge {
+  padding: 3px 8px;
+  border-radius: 3px;
+  color: white;
+  font-size: var(--ui-font-size-xs);
+  display: inline-block;
+}
+
+.status-pending {
+  background-color: #909399;
+}
+
+.status-in_progress {
+  background-color: #409EFF;
+}
+
+.status-paused,
+.status-skipped {
+  background-color: #E6A23C;
+}
+
+.status-completed {
+  background-color: #67C23A;
+}
+
+.status-cancelled {
+  background-color: #F56C6C;
+}
+
+/* 优先级徽章样式 */
+.priority-low {
+  background-color: #909399;
+}
+
+.priority-normal {
+  background-color: #409EFF;
+}
+
+.priority-high {
+  background-color: #E6A23C;
+}
+
+.priority-urgent {
+  background-color: #F56C6C;
+}
+
+/* 审核状态徽章样式 */
+.approval-pending {
+  background-color: #909399;
+}
+
+.approval-approved {
+  background-color: #67C23A;
+}
+
+.approval-rejected {
+  background-color: #F56C6C;
+}
+
+/* 通用页面结构 */
+.card-container,
+.page-container,
+.work-order-list,
+.customer-list,
+.supplier-list,
+.department-list,
+.die-list,
+.product-group-list,
+.payment-container,
+.cost-container,
+.statement-container,
+.sales-order-detail {
+  padding: var(--ui-page-padding);
+}
+
+.form-container {
+  max-width: 800px;
+}
+
+.button-group,
+.filter-group,
+.action-group,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-control-gap);
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .button-group,
+  .filter-group,
+  .action-group,
+  .actions {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .button-group > *,
+  .filter-group > *,
+  .action-group > *,
+  .actions > * {
+    flex: 1 1 100%;
+  }
+
+  .filter-section .el-row,
+  .responsive-form-row {
+    row-gap: var(--ui-control-gap);
+  }
+
+  .filter-section .el-col,
+  .responsive-form-row .el-col {
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+}

@@ -87,7 +87,7 @@ const getDetailLabel = (key) => {
 
 <style scoped>
 .timeline-view {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .timeline-card {
@@ -126,7 +126,7 @@ const getDetailLabel = (key) => {
 .detail-label {
   color: #909399;
   margin-right: 8px;
-  min-width: 60px;
+  min-width: 6ch;
 }
 
 .detail-value {

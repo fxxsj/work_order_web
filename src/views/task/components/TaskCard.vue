@@ -1,7 +1,7 @@
 <template>
   <div class="task-card" :class="{ 'task-card-overdue': isOverdue }" @click="emit('click', task)">
     <div class="task-header">
-      <div class="task-header-left"><span class="task-order-number">{{ orderNumber }}</span><el-tag v-if="priority" :type="priorityTagType" size="small" style="margin-left: 5px;">{{ priorityDisplay }}</el-tag></div>
+      <div class="task-header-left"><span class="task-order-number">{{ orderNumber }}</span><el-tag v-if="priority" :type="priorityTagType" size="small">{{ priorityDisplay }}</el-tag></div>
       <el-tag :type="taskTypeTagType" size="small">{{ taskTypeDisplay }}</el-tag>
     </div>
     <div class="task-content">
@@ -51,7 +51,7 @@ const canComplete = computed(() => props.editable && props.task.status !== 'comp
 .task-card:hover { box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); border-color: #409EFF; }
 .task-card-overdue { border-left: 3px solid #F56C6C; }
 .task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.task-header-left { display: flex; align-items: center; flex: 1; }
+.task-header-left { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; flex: 1; }
 .task-order-number { font-size: 12px; color: #606266; font-weight: bold; }
 .task-content { margin-bottom: 12px; }
 .task-title { font-size: 14px; color: #303133; margin-bottom: 10px; font-weight: 500; line-height: 1.5; }

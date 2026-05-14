@@ -1,6 +1,6 @@
 <template>
   <div class="work-order-print">
-    <div style="text-align: right; margin-bottom: 20px;">
+    <div class="print-actions no-print">
       <el-button type="primary" :icon="Printer" @click="handlePrint">打印</el-button>
       <el-button :icon="Download" @click="handleExportPDF">导出PDF</el-button>
     </div>
@@ -28,11 +28,31 @@ const handlePrint = () => window.print()
 const handleExportPDF = () => console.log('Export PDF')
 </script>
 
-<style scoped>
-.print-area { background: #fff; padding: 20px; }
-.print-header { text-align: center; margin-bottom: 20px; }
-.print-section { margin: 20px 0; }
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.print-actions { display: flex; justify-content: flex-end; gap: var(--ui-control-gap); margin-bottom: var(--ui-section-gap); }
+.print-area { background: #fff; padding: var(--ui-page-padding); }
+.print-header { text-align: center; margin-bottom: var(--ui-section-gap); }
+.print-section { margin: var(--ui-section-gap) 0; }
 .print-table { width: 100%; border-collapse: collapse; }
 .print-table th, .print-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .print-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .print-actions .el-button {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .print-area {
+    overflow-x: auto;
+  }
+}
+
 @media print { .no-print { display: none; } }
 </style>

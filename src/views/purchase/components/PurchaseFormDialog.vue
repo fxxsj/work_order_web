@@ -1,15 +1,15 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑采购单' : '新增采购单'" width="900px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑采购单' : '新增采购单'" width="var(--ui-dialog-width-xl)" @close="handleClose">
     <el-form ref="formRef" :model="localForm" :rules="rules" label-width="100px">
-      <el-row :gutter="20">
-        <el-col :span="12">
+      <el-row :gutter="20" class="responsive-form-row">
+        <el-col :xs="24" :md="12">
           <el-form-item label="供应商" prop="supplier">
             <el-select v-model="localForm.supplier" placeholder="请选择供应商" filterable style="width: 100%">
               <el-option v-for="item in supplierOptions" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col :span="12">
+        <el-col :xs="24" :md="12">
           <el-form-item label="关联施工单">
             <el-select v-model="localForm.work_order" placeholder="请选择施工单" clearable filterable style="width: 100%" @change="handleWorkOrderChange">
               <el-option v-for="item in workOrderOptions" :key="item.id" :label="item.order_number" :value="item.id" />
@@ -21,6 +21,7 @@
 
       <el-divider>采购明细</el-divider>
       <el-button size="small" type="primary" :icon="Plus" @click="handleAddItem">添加明细</el-button>
+      <div class="purchase-items-table">
       <el-table :data="localForm.items" border style="margin-top: 10px">
         <el-table-column label="物料" width="250">
           <template #default="scope">
@@ -42,6 +43,7 @@
           <template #default="scope"><el-button type="text" style="color: #F56C6C" @click="handleDeleteItem(scope.$index)">删除</el-button></template>
         </el-table-column>
       </el-table>
+      </div>
       <div v-if="localForm.items.length > 0" class="total-amount">
         <span>合计金额：</span><span class="amount">¥{{ totalAmount }}</span>
       </div>
@@ -143,4 +145,5 @@ const handleClose = () => {
 <style scoped>
 .total-amount { margin-top: 16px; text-align: right; font-size: 14px; }
 .total-amount .amount { font-size: 18px; color: #F56C6C; font-weight: bold; }
+.purchase-items-table { overflow-x: auto; }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="采购收货" width="900px" :close-on-click-modal="false" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="采购收货" width="var(--ui-dialog-width-xl)" :close-on-click-modal="false" @close="handleClose">
     <div v-loading="loading">
       <el-descriptions :column="3" border size="small" class="mb-4">
         <el-descriptions-item label="采购单号">{{ purchaseOrder?.order_number }}</el-descriptions-item>
@@ -7,9 +7,9 @@
         <el-descriptions-item label="状态"><el-tag :type="getStatusType(purchaseOrder?.status)">{{ purchaseOrder?.status_display }}</el-tag></el-descriptions-item>
       </el-descriptions>
       <el-form :model="form" label-width="100px" class="mb-4">
-        <el-row :gutter="20">
-          <el-col :span="8"><el-form-item label="收货日期"><el-date-picker v-model="form.received_date" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="送货单号"><el-input v-model="form.delivery_note_number" placeholder="输入送货单号" /></el-form-item></el-col>
+        <el-row :gutter="20" class="responsive-form-row">
+          <el-col :xs="24" :md="8"><el-form-item label="收货日期"><el-date-picker v-model="form.received_date" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
+          <el-col :xs="24" :md="8"><el-form-item label="送货单号"><el-input v-model="form.delivery_note_number" placeholder="输入送货单号" /></el-form-item></el-col>
         </el-row>
       </el-form>
     </div>

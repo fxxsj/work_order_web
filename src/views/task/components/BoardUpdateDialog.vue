@@ -1,9 +1,9 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="更新任务" width="600px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="更新任务" width="var(--ui-dialog-width-md)" @close="handleClose">
     <el-form ref="formRef" :model="form" label-width="120px" :rules="rules">
       <el-form-item label="任务内容"><el-input :value="task?.work_content" disabled /></el-form-item>
       <el-form-item label="生产数量"><el-input :value="task?.production_quantity" disabled /></el-form-item>
-      <el-form-item label="完成数量" prop="quantity_completed"><el-input-number v-model="form.quantity_completed" :min="0" :max="task?.production_quantity || 999999" style="width: 200px" /></el-form-item>
+      <el-form-item label="完成数量" prop="quantity_completed"><el-input-number v-model="form.quantity_completed" :min="0" :max="task?.production_quantity || 999999" class="number-control" /></el-form-item>
       <el-form-item label="更新说明"><el-input v-model="form.notes" type="textarea" :rows="3" placeholder="请输入更新说明（可选）" /></el-form-item>
     </el-form>
     <template #footer>
@@ -38,3 +38,9 @@ const resetForm = () => { Object.assign(form, FORM_INITIAL); formRef.value?.rese
 const handleConfirm = () => { formRef.value?.validate((valid) => { if (valid) emit('confirm', { ...form }) }) }
 const handleClose = () => { resetForm(); emit('update:visible', false) }
 </script>
+
+<style scoped>
+.number-control {
+  width: min(100%, 220px);
+}
+</style>

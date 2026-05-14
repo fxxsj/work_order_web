@@ -9,7 +9,7 @@
               <el-option v-for="dept in departmentList" :key="dept.id" :label="dept.name" :value="dept.id" />
             </el-select>
             <el-tag v-else-if="departmentList.length === 1" type="info">{{ departmentList[0].name }}</el-tag>
-            <el-button-group style="margin-left: 10px;">
+            <el-button-group>
               <el-button :type="viewMode === 'dashboard' ? 'primary' : ''" :icon="DataAnalysis" @click="viewMode = 'dashboard'">统计视图</el-button>
               <el-button :type="viewMode === 'dragdrop' ? 'primary' : ''" :icon="Rank" @click="viewMode = 'dragdrop'">拖拽分派</el-button>
             </el-button-group>
@@ -27,16 +27,17 @@
 
       <div v-else-if="viewMode === 'dashboard' && workloadData">
         <el-row :gutter="20">
-          <el-col :span="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><el-icon><User /></el-icon></div><div class="stat-info"><div class="stat-value">{{ workloadData.total_operators || 0 }}</div><div class="stat-label">操作员数</div></div></div></el-card></el-col>
-          <el-col :span="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #67C23A;"><el-icon><CircleCheck /></el-icon></div><div class="stat-info"><div class="stat-value">{{ workloadData.total_tasks || 0 }}</div><div class="stat-label">总任务数</div></div></div></el-card></el-col>
-          <el-col :span="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #E6A23C;"><el-icon><Clock /></el-icon></div><div class="stat-info"><div class="stat-value">{{ workloadData.in_progress_count || 0 }}</div><div class="stat-label">进行中</div></div></div></el-card></el-col>
-          <el-col :span="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #F56C6C;"><el-icon><Warning /></el-icon></div><div class="stat-info"><div class="stat-value">{{ workloadData.overdue_count || 0 }}</div><div class="stat-label">逾期任务</div></div></div></el-card></el-col>
+          <el-col :xs="24" :sm="12" :lg="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><el-icon><User /></el-icon></div><div class="stat-info"><div class="stat-value">{{ workloadData.total_operators || 0 }}</div><div class="stat-label">操作员数</div></div></div></el-card></el-col>
+          <el-col :xs="24" :sm="12" :lg="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #67C23A;"><el-icon><CircleCheck /></el-icon></div><div class="stat-info"><div class="stat-value">{{ workloadData.total_tasks || 0 }}</div><div class="stat-label">总任务数</div></div></div></el-card></el-col>
+          <el-col :xs="24" :sm="12" :lg="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #E6A23C;"><el-icon><Clock /></el-icon></div><div class="stat-info"><div class="stat-value">{{ workloadData.in_progress_count || 0 }}</div><div class="stat-label">进行中</div></div></div></el-card></el-col>
+          <el-col :xs="24" :sm="12" :lg="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #F56C6C;"><el-icon><Warning /></el-icon></div><div class="stat-info"><div class="stat-value">{{ workloadData.overdue_count || 0 }}</div><div class="stat-label">逾期任务</div></div></div></el-card></el-col>
         </el-row>
 
         <el-divider />
 
         <h4>操作员工作负载</h4>
-        <el-table :data="operatorWorkloads" border style="margin-top: 15px;">
+        <div class="table-scroll">
+        <el-table :data="operatorWorkloads" border class="dashboard-table">
           <el-table-column prop="operator_name" label="操作员" width="150" />
           <el-table-column label="进行中" width="100" align="center"><template #default="scope">{{ scope.row.in_progress_count || 0 }}</template></el-table-column>
           <el-table-column label="已完成" width="100" align="center"><template #default="scope">{{ scope.row.completed_count || 0 }}</template></el-table-column>
@@ -46,17 +47,20 @@
           <el-table-column label="平均完成时间" width="150" align="center"><template #default="scope">{{ scope.row.avg_completion_time ? scope.row.avg_completion_time.toFixed(1) + 'h' : '-' }}</template></el-table-column>
           <el-table-column prop="efficiency_rate" label="效率" width="150" align="center"><template #default="scope">{{ scope.row.efficiency_rate ? (scope.row.efficiency_rate * 100).toFixed(0) + '%' : '-' }}</template></el-table-column>
         </el-table>
+        </div>
 
         <el-divider />
 
         <h4>工序统计</h4>
-        <el-table :data="processStats" border style="margin-top: 15px;">
+        <div class="table-scroll">
+        <el-table :data="processStats" border class="dashboard-table">
           <el-table-column prop="process_name" label="工序" width="150" />
           <el-table-column label="总任务" width="100" align="center"><template #default="scope">{{ scope.row.total_count || 0 }}</template></el-table-column>
           <el-table-column label="进行中" width="100" align="center"><template #default="scope">{{ scope.row.in_progress_count || 0 }}</template></el-table-column>
           <el-table-column label="已完成" width="100" align="center"><template #default="scope">{{ scope.row.completed_count || 0 }}</template></el-table-column>
           <el-table-column label="平均耗时" width="150" align="center"><template #default="scope">{{ scope.row.avg_duration ? scope.row.avg_duration.toFixed(1) + 'h' : '-' }}</template></el-table-column>
         </el-table>
+        </div>
       </div>
     </el-card>
   </div>
@@ -115,15 +119,37 @@ const getLoadColor = (load) => load < 50 ? '#67C23A' : load < 80 ? '#E6A23C' : '
 onMounted(() => { loadDepartments(); if (isSupervisor.value) loadWorkloadData() })
 </script>
 
-<style scoped>
-.supervisor-dashboard { padding: 20px; }
-.header-section { display: flex; justify-content: space-between; align-items: center; }
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.supervisor-dashboard { padding: var(--ui-page-padding); }
+.header-section { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
 .header-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: bold; }
-.header-actions { display: flex; align-items: center; gap: 10px; }
+.header-actions { display: flex; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
 .stat-card { border-radius: 10px; }
 .stat-content { display: flex; align-items: center; gap: 12px; }
 .stat-icon { width: 48px; height: 48px; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; }
 .stat-value { font-size: 24px; font-weight: bold; }
 .stat-label { font-size: 12px; color: #909399; }
-h4 { margin: 20px 0 10px; color: #303133; }
+.table-scroll { margin-top: var(--ui-control-gap); overflow-x: auto; }
+.dashboard-table { width: 100%; }
+h4 { margin: var(--ui-section-gap) 0 var(--ui-control-gap); color: #303133; }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .header-actions :deep(.el-select),
+  .header-actions :deep(.el-button-group),
+  .header-actions > .el-button {
+    width: 100%;
+  }
+
+  .header-actions :deep(.el-button-group .el-button) {
+    flex: 1;
+  }
+}
 </style>

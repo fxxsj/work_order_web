@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="`批量分派 ${taskCount} 个任务`" width="500px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" :title="`批量分派 ${taskCount} 个任务`" width="var(--ui-dialog-width-sm)" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="分派部门" prop="assigned_department">
         <el-select v-model="form.assigned_department" placeholder="请选择部门" filterable clearable :loading="loadingDepartments" @change="handleDepartmentChange">

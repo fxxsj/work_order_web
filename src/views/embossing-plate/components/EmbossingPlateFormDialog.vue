@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="700px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--ui-dialog-width-lg)" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
       <el-form-item label="压凸版编码" prop="code">
         <el-input v-model="form.code" placeholder="留空则系统自动生成（格式：EP + yyyymm + 序号）" :disabled="isConfirmed" />
@@ -9,29 +9,31 @@
         <el-input v-model="form.name" placeholder="请输入压凸版名称" :disabled="isConfirmed" />
       </el-form-item>
       <el-row :gutter="20">
-        <el-col :span="12"><el-form-item label="尺寸"><el-input v-model="form.size" placeholder="如：420x594mm" :disabled="isConfirmed" /></el-form-item></el-col>
-        <el-col :span="12"><el-form-item label="材质"><el-input v-model="form.material" placeholder="如：铜版、锌版" :disabled="isConfirmed" /></el-form-item></el-col>
+        <el-col :xs="24" :md="12"><el-form-item label="尺寸"><el-input v-model="form.size" placeholder="如：420x594mm" :disabled="isConfirmed" /></el-form-item></el-col>
+        <el-col :xs="24" :md="12"><el-form-item label="材质"><el-input v-model="form.material" placeholder="如：铜版、锌版" :disabled="isConfirmed" /></el-form-item></el-col>
       </el-row>
       <el-form-item label="厚度"><el-input v-model="form.thickness" placeholder="如：3mm、5mm" :disabled="isConfirmed" /></el-form-item>
 
       <el-divider content-position="left">包含产品及数量</el-divider>
       <el-form-item label="产品列表">
         <el-button type="primary" size="small" :icon="Plus" @click="addProductItem">添加产品</el-button>
-        <el-table :data="productItems" border style="width: 100%; margin-top: 15px;">
-          <el-table-column label="产品名称" width="250">
-            <template #default="scope">
-              <el-select v-model="scope.row.product" placeholder="请选择产品" filterable style="width: 100%;">
-                <el-option v-for="p in productList" :key="p.id" :label="`${p.name} (${p.code})`" :value="p.id" />
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="数量" width="150">
-            <template #default="scope"><el-input-number v-model="scope.row.quantity" :min="1" style="width: 100%;" size="small" /></template>
-          </el-table-column>
-          <el-table-column label="操作" width="100" align="center">
-            <template #default="scope"><el-button type="danger" size="small" :icon="Delete" @click="removeProductItem(scope.$index)" /></template>
-          </el-table-column>
-        </el-table>
+        <div class="table-scroll">
+          <el-table :data="productItems" border class="dialog-table">
+            <el-table-column label="产品名称" width="250">
+              <template #default="scope">
+                <el-select v-model="scope.row.product" placeholder="请选择产品" filterable style="width: 100%;">
+                  <el-option v-for="p in productList" :key="p.id" :label="`${p.name} (${p.code})`" :value="p.id" />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="数量" width="150">
+              <template #default="scope"><el-input-number v-model="scope.row.quantity" :min="1" style="width: 100%;" size="small" /></template>
+            </el-table-column>
+            <el-table-column label="操作" width="100" align="center">
+              <template #default="scope"><el-button type="danger" size="small" :icon="Delete" @click="removeProductItem(scope.$index)" /></template>
+            </el-table-column>
+          </el-table>
+        </div>
       </el-form-item>
       <el-form-item label="备注"><el-input v-model="form.notes" type="textarea" :rows="3" placeholder="请输入备注信息" /></el-form-item>
     </el-form>
@@ -103,3 +105,14 @@ const handleClose = () => { resetForm(); emit('update:visible', false) }
 const addProductItem = () => { productItems.value.push({ product: null, quantity: 1, sort_order: productItems.value.length }) }
 const removeProductItem = (index) => { productItems.value.splice(index, 1) }
 </script>
+
+<style scoped>
+.table-scroll {
+  margin-top: var(--ui-control-gap);
+  overflow-x: auto;
+}
+
+.dialog-table {
+  width: 100%;
+}
+</style>

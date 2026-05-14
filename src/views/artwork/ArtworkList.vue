@@ -4,9 +4,9 @@
       <div class="header-section">
         <div class="filter-group">
           <el-input
+            class="management-search-control"
             v-model="searchText"
             placeholder="搜索图稿编码、名称、拼版尺寸"
-            style="width: 300px;"
             clearable
             @input="handleSearchDebounced"
             @clear="handleSearch"
@@ -31,137 +31,139 @@
         </div>
       </div>
 
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        style="width: 100%; margin-top: 20px;"
-      >
-        <el-table-column label="图稿编码" width="180">
-          <template #default="scope">
-            {{ scope.row.code || (scope.row.base_code + (scope.row.version > 1 ? '-v' + scope.row.version : '')) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="name" label="图稿名称" width="200" />
-        <el-table-column prop="color_display" label="色数" width="200" align="center">
-          <template #default="scope">
-            <el-tag v-if="scope.row.color_display && scope.row.color_display !== '-'">
-              {{ scope.row.color_display }}
-            </el-tag>
-            <span v-else style="color: #909399;">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="imposition_size" label="拼版尺寸" width="180" />
-        <el-table-column label="确认状态" width="120" align="center">
-          <template #default="scope">
-            <el-tag
-              :type="scope.row.confirmed ? 'success' : 'info'"
-              size="small"
-            >
-              {{ scope.row.confirmed ? '已确认' : '未确认' }}
-            </el-tag>
-            <div v-if="scope.row.confirmed && scope.row.confirmed_by_name" style="font-size: 12px; color: #909399; margin-top: 5px;">
-              {{ scope.row.confirmed_by_name }}
-            </div>
-            <div v-if="scope.row.confirmed && scope.row.confirmed_at" style="font-size: 12px; color: #909399;">
-              {{ formatDate(scope.row.confirmed_at) }}
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="关联刀模" min-width="200">
-          <template #default="scope">
-            <el-tag
-              v-for="(code, index) in scope.row.die_codes"
-              :key="index"
-              style="margin-right: 5px; margin-bottom: 5px;"
-            >
-              {{ code }}<span v-if="scope.row.die_names && scope.row.die_names[index]"> - {{ scope.row.die_names[index] }}</span>
-            </el-tag>
-            <span v-if="!scope.row.die_codes || scope.row.die_codes.length === 0" style="color: #909399;">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="关联烫金版" min-width="200">
-          <template #default="scope">
-            <el-tag
-              v-for="(code, index) in scope.row.foiling_plate_codes"
-              :key="index"
-              type="success"
-              style="margin-right: 5px; margin-bottom: 5px;"
-            >
-              {{ code }}<span v-if="scope.row.foiling_plate_names && scope.row.foiling_plate_names[index]"> - {{ scope.row.foiling_plate_names[index] }}</span>
-            </el-tag>
-            <span v-if="!scope.row.foiling_plate_codes || scope.row.foiling_plate_codes.length === 0" style="color: #909399;">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="关联压凸版" min-width="200">
-          <template #default="scope">
-            <el-tag
-              v-for="(code, index) in scope.row.embossing_plate_codes"
-              :key="index"
-              type="warning"
-              style="margin-right: 5px; margin-bottom: 5px;"
-            >
-              {{ code }}<span v-if="scope.row.embossing_plate_names && scope.row.embossing_plate_names[index]"> - {{ scope.row.embossing_plate_names[index] }}</span>
-            </el-tag>
-            <span v-if="!scope.row.embossing_plate_codes || scope.row.embossing_plate_codes.length === 0" style="color: #909399;">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="包含产品" min-width="200">
-          <template #default="scope">
-            <el-tag
-              v-for="product in scope.row.products"
-              :key="product.id"
-              style="margin-right: 5px; margin-bottom: 5px;"
-            >
-              {{ product.product_name }} ({{ product.imposition_quantity }}拼)
-            </el-tag>
-            <span v-if="!scope.row.products || scope.row.products.length === 0" style="color: #909399;">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="created_at" label="创建时间" width="180">
-          <template #default="scope">
-            {{ formatDate(scope.row.created_at) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="scope">
-            <el-button
-              v-if="canEdit"
-              type="text"
-              size="small"
-              @click="showDialog(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="canEdit"
-              type="text"
-              size="small"
-              @click="createNewVersion(scope.row)"
-            >
-              创建新版本
-            </el-button>
-            <el-button
-              v-if="!scope.row.confirmed && canConfirm"
-              type="text"
-              size="small"
-              style="color: #67C23A;"
-              @click="handleConfirm(scope.row)"
-            >
-              确认
-            </el-button>
-            <el-button
-              v-if="canDelete"
-              type="text"
-              size="small"
-              style="color: #F56C6C;"
-              @click="handleDelete(scope.row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="table-scroll">
+        <el-table
+          v-loading="loading"
+          :data="tableData"
+          class="data-table"
+        >
+          <el-table-column label="图稿编码" width="180">
+            <template #default="scope">
+              {{ scope.row.code || (scope.row.base_code + (scope.row.version > 1 ? '-v' + scope.row.version : '')) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="name" label="图稿名称" width="200" />
+          <el-table-column prop="color_display" label="色数" width="200" align="center">
+            <template #default="scope">
+              <el-tag v-if="scope.row.color_display && scope.row.color_display !== '-'">
+                {{ scope.row.color_display }}
+              </el-tag>
+              <span v-else style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="imposition_size" label="拼版尺寸" width="180" />
+          <el-table-column label="确认状态" width="120" align="center">
+            <template #default="scope">
+              <el-tag
+                :type="scope.row.confirmed ? 'success' : 'info'"
+                size="small"
+              >
+                {{ scope.row.confirmed ? '已确认' : '未确认' }}
+              </el-tag>
+              <div v-if="scope.row.confirmed && scope.row.confirmed_by_name" style="font-size: 12px; color: #909399; margin-top: 5px;">
+                {{ scope.row.confirmed_by_name }}
+              </div>
+              <div v-if="scope.row.confirmed && scope.row.confirmed_at" style="font-size: 12px; color: #909399;">
+                {{ formatDate(scope.row.confirmed_at) }}
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="关联刀模" min-width="200">
+            <template #default="scope">
+              <el-tag
+                v-for="(code, index) in scope.row.die_codes"
+                :key="index"
+                style="margin-right: 5px; margin-bottom: 5px;"
+              >
+                {{ code }}<span v-if="scope.row.die_names && scope.row.die_names[index]"> - {{ scope.row.die_names[index] }}</span>
+              </el-tag>
+              <span v-if="!scope.row.die_codes || scope.row.die_codes.length === 0" style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="关联烫金版" min-width="200">
+            <template #default="scope">
+              <el-tag
+                v-for="(code, index) in scope.row.foiling_plate_codes"
+                :key="index"
+                type="success"
+                style="margin-right: 5px; margin-bottom: 5px;"
+              >
+                {{ code }}<span v-if="scope.row.foiling_plate_names && scope.row.foiling_plate_names[index]"> - {{ scope.row.foiling_plate_names[index] }}</span>
+              </el-tag>
+              <span v-if="!scope.row.foiling_plate_codes || scope.row.foiling_plate_codes.length === 0" style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="关联压凸版" min-width="200">
+            <template #default="scope">
+              <el-tag
+                v-for="(code, index) in scope.row.embossing_plate_codes"
+                :key="index"
+                type="warning"
+                style="margin-right: 5px; margin-bottom: 5px;"
+              >
+                {{ code }}<span v-if="scope.row.embossing_plate_names && scope.row.embossing_plate_names[index]"> - {{ scope.row.embossing_plate_names[index] }}</span>
+              </el-tag>
+              <span v-if="!scope.row.embossing_plate_codes || scope.row.embossing_plate_codes.length === 0" style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="包含产品" min-width="200">
+            <template #default="scope">
+              <el-tag
+                v-for="product in scope.row.products"
+                :key="product.id"
+                style="margin-right: 5px; margin-bottom: 5px;"
+              >
+                {{ product.product_name }} ({{ product.imposition_quantity }}拼)
+              </el-tag>
+              <span v-if="!scope.row.products || scope.row.products.length === 0" style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="created_at" label="创建时间" width="180">
+            <template #default="scope">
+              {{ formatDate(scope.row.created_at) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="180" fixed="right">
+            <template #default="scope">
+              <el-button
+                v-if="canEdit"
+                type="text"
+                size="small"
+                @click="showDialog(scope.row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="canEdit"
+                type="text"
+                size="small"
+                @click="createNewVersion(scope.row)"
+              >
+                创建新版本
+              </el-button>
+              <el-button
+                v-if="!scope.row.confirmed && canConfirm"
+                type="text"
+                size="small"
+                style="color: #67C23A;"
+                @click="handleConfirm(scope.row)"
+              >
+                确认
+              </el-button>
+              <el-button
+                v-if="canDelete"
+                type="text"
+                size="small"
+                style="color: #F56C6C;"
+                @click="handleDelete(scope.row)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <el-pagination
         v-if="total > 0"
@@ -405,9 +407,11 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .artwork-list {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .header-section {
@@ -415,13 +419,41 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--ui-control-gap);
 }
 
 .filter-group,
 .action-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
+}
+
+.management-search-control {
+  width: min(100%, 360px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-search-control,
+  .action-group .el-button {
+    width: 100%;
+  }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="任务同步确认" width="600px" :before-close="handleClose">
+  <el-dialog v-model="dialogVisible" title="任务同步确认" width="var(--ui-dialog-width-md)" :before-close="handleClose">
     <div v-loading="loading">
       <el-alert v-if="preview && preview.tasks_to_remove > 0" title="警告" :description="`将删除 ${preview.tasks_to_remove} 个草稿任务，此操作不可恢复`" type="warning" :closable="false" show-icon style="margin-bottom: 15px;" />
       <div v-if="preview" class="sync-preview">

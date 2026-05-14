@@ -3,7 +3,7 @@
     <el-card>
       <div class="header-section">
         <div class="left-section">
-          <el-input v-model="searchText" placeholder="搜索工序、部门" style="width: 300px;" clearable @clear="handleSearch">
+          <el-input v-model="searchText" class="assignment-search-control" placeholder="搜索工序、部门" clearable @clear="handleSearch">
             <template #append><el-button :icon="Search" @click="handleSearch" /></template>
           </el-input>
           <el-button v-if="canCreate" type="primary" :icon="Plus" @click="showDialog">新建分派规则</el-button>
@@ -14,20 +14,21 @@
         </div>
       </div>
 
-      <el-row :gutter="20" style="margin-top: 20px;">
-        <el-col :span="8">
+      <el-row :gutter="20" class="assignment-content-row">
+        <el-col :xs="24" :lg="8">
           <process-list :processes="processList" :selected-process="selectedProcess" :loading="processListLoading" @select="handleProcessSelect" />
         </el-col>
-        <el-col :span="16">
+        <el-col :xs="24" :lg="16">
           <department-priority-panel :process="selectedProcess" :departments="departmentRules" :all-departments="departmentList" :loading="departmentRulesLoading" :can-edit="canEdit" :can-delete="canDelete" @update-priority="handlePriorityUpdate" @toggle-active="handleToggleActive" @add-department="handleAddDepartment" @edit-department="handleEditDepartment" @remove-department="handleRemoveDepartment" />
         </el-col>
       </el-row>
 
-      <el-alert v-if="!globalDispatchEnabled" title="自动分派已禁用" type="warning" description="当前自动分派功能已禁用，仅显示预览信息。" :closable="false" show-icon style="margin-top: 20px;" />
+      <el-alert v-if="!globalDispatchEnabled" title="自动分派已禁用" type="warning" description="当前自动分派功能已禁用，仅显示预览信息。" :closable="false" show-icon class="dispatch-alert" />
 
       <div class="preview-section">
         <h4>分派预览</h4>
-        <el-table v-loading="previewLoading" :data="previewData" border style="margin-top: 15px;">
+        <div class="table-scroll">
+        <el-table v-loading="previewLoading" :data="previewData" border class="preview-table">
           <el-table-column prop="process_name" label="工序" width="150" />
           <el-table-column prop="target_department_name" label="分派部门" width="150" />
           <el-table-column prop="target_operator_name" label="分派操作员" width="150">
@@ -45,10 +46,11 @@
           </el-table-column>
           <el-table-column prop="active_rules_count" label="激活规则" width="100" align="center" />
         </el-table>
+        </div>
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--ui-dialog-width-sm)">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="工序" prop="process">
           <el-select v-model="form.process" placeholder="请选择工序" filterable style="width: 100%;">
@@ -182,13 +184,34 @@ const getLoadColor = (load) => load < 50 ? '#67C23A' : load < 80 ? '#E6A23C' : '
 onMounted(() => { loadProcesses(); loadDepartments(); loadDispatchConfig(); loadPreview() })
 </script>
 
-<style scoped>
-.assignment-rule-list { padding: 20px; }
-.header-section { display: flex; justify-content: space-between; align-items: center; }
-.left-section, .right-section { display: flex; align-items: center; gap: 10px; }
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.assignment-rule-list { padding: var(--ui-page-padding); }
+.header-section { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
+.left-section, .right-section { display: flex; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
+.assignment-search-control { width: min(100%, 320px); }
+.assignment-content-row { margin-top: var(--ui-section-gap); row-gap: var(--ui-section-gap); }
+.dispatch-alert { margin-top: var(--ui-section-gap); }
 .global-toggle-label { color: #606266; }
-.preview-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
-.preview-section h4 { margin-bottom: 10px; color: #303133; }
+.preview-section { margin-top: var(--ui-section-gap); padding-top: var(--ui-section-gap); border-top: 1px solid #eee; }
+.preview-section h4 { margin-bottom: var(--ui-control-gap); color: #303133; }
+.table-scroll { margin-top: var(--ui-control-gap); overflow-x: auto; }
+.preview-table { width: 100%; }
 .text-success { color: #67C23A; }
 .text-danger { color: #F56C6C; }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .left-section,
+  .right-section {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .assignment-search-control,
+  .left-section .el-button {
+    width: 100%;
+  }
+}
 </style>

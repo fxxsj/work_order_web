@@ -3,9 +3,9 @@
     <el-card>
       <div class="header-section">
         <el-input
+          class="management-search-control"
           v-model="searchText"
           placeholder="搜索部门名称、编码"
-          style="width: 300px;"
           clearable
           @clear="handleSearch"
           @keyup.enter="handleSearch"
@@ -39,94 +39,98 @@
         </el-button>
       </el-empty>
 
-      <el-table
+      <div
         v-else
+        class="table-scroll"
+      >
+        <el-table
         v-loading="loading"
         :data="tableData"
-        style="width: 100%; margin-top: 20px;"
+        class="data-table"
         :row-class-name="getRowClassName"
-      >
-        <el-table-column prop="code" label="部门编码" width="150" />
-        <el-table-column prop="name" label="部门名称" width="180">
-          <template #default="scope">
-            <span v-if="scope.row.parent" style="color: #4087FA;">{{ scope.row.name }}</span>
-            <span v-else>{{ scope.row.name }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="parent_name" label="上级部门" width="120">
-          <template #default="scope">
-            <span v-if="scope.row.parent_name" style="color: #409EFF;">{{ scope.row.parent_name }}</span>
-            <span v-else style="color: #909399;">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="子部门" width="100" align="center">
-          <template #default="scope">
-            <el-tag v-if="scope.row.children_count > 0" type="info" size="small">
-              {{ scope.row.children_count }}个
-            </el-tag>
-            <span v-else style="color: #909399;">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="工序" min-width="200">
-          <template #default="scope">
-            <template v-if="!scope.row.process_names || scope.row.process_names.length === 0">
-              <span style="color: #909399;">-</span>
+        >
+          <el-table-column prop="code" label="部门编码" width="150" />
+          <el-table-column prop="name" label="部门名称" width="180">
+            <template #default="scope">
+              <span v-if="scope.row.parent" style="color: #4087FA;">{{ scope.row.name }}</span>
+              <span v-else>{{ scope.row.name }}</span>
             </template>
-            <template v-else>
-              <el-tag
-                v-for="processName in getDisplayedProcesses(scope.row)"
-                :key="processName"
-                size="small"
-                style="margin-right: 5px; margin-bottom: 5px;"
-              >
-                {{ processName }}
+          </el-table-column>
+          <el-table-column prop="parent_name" label="上级部门" width="120">
+            <template #default="scope">
+              <span v-if="scope.row.parent_name" style="color: #409EFF;">{{ scope.row.parent_name }}</span>
+              <span v-else style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="子部门" width="100" align="center">
+            <template #default="scope">
+              <el-tag v-if="scope.row.children_count > 0" type="info" size="small">
+                {{ scope.row.children_count }}个
               </el-tag>
-              <el-tag
-                v-if="shouldShowMoreButton(scope.row)"
-                size="small"
-                style="margin-right: 5px; margin-bottom: 5px; cursor: pointer;"
-                @click="toggleProcessExpansion(scope.row)"
-              >
-                {{ getMoreButtonText(scope.row) }}
+              <span v-else style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="工序" min-width="200">
+            <template #default="scope">
+              <template v-if="!scope.row.process_names || scope.row.process_names.length === 0">
+                <span style="color: #909399;">-</span>
+              </template>
+              <template v-else>
+                <el-tag
+                  v-for="processName in getDisplayedProcesses(scope.row)"
+                  :key="processName"
+                  size="small"
+                  style="margin-right: 5px; margin-bottom: 5px;"
+                >
+                  {{ processName }}
+                </el-tag>
+                <el-tag
+                  v-if="shouldShowMoreButton(scope.row)"
+                  size="small"
+                  style="margin-right: 5px; margin-bottom: 5px; cursor: pointer;"
+                  @click="toggleProcessExpansion(scope.row)"
+                >
+                  {{ getMoreButtonText(scope.row) }}
+                </el-tag>
+              </template>
+            </template>
+          </el-table-column>
+          <el-table-column prop="sort_order" label="排序" width="100" align="center" />
+          <el-table-column label="状态" width="100">
+            <template #default="scope">
+              <el-tag :type="scope.row.is_active ? 'success' : 'info'">
+                {{ scope.row.is_active ? '启用' : '禁用' }}
               </el-tag>
             </template>
-          </template>
-        </el-table-column>
-        <el-table-column prop="sort_order" label="排序" width="100" align="center" />
-        <el-table-column label="状态" width="100">
-          <template #default="scope">
-            <el-tag :type="scope.row.is_active ? 'success' : 'info'">
-              {{ scope.row.is_active ? '启用' : '禁用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="180">
-          <template #default="scope">
-            {{ formatDate(scope.row.created_at) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="scope">
-            <el-button
-              v-if="canEdit"
-              type="text"
-              size="small"
-              @click="handleEdit(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="canDelete"
-              type="text"
-              size="small"
-              style="color: #F56C6C;"
-              @click="handleDelete(scope.row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          </el-table-column>
+          <el-table-column prop="created_at" label="创建时间" width="180">
+            <template #default="scope">
+              {{ formatDate(scope.row.created_at) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="150" fixed="right">
+            <template #default="scope">
+              <el-button
+                v-if="canEdit"
+                type="text"
+                size="small"
+                @click="handleEdit(scope.row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="canDelete"
+                type="text"
+                size="small"
+                style="color: #F56C6C;"
+                @click="handleDelete(scope.row)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <el-pagination
         v-if="total > 0"
@@ -142,7 +146,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="500px"
+      width="var(--ui-dialog-width-sm)"
       :before-close="handleDialogClose"
     >
       <el-form
@@ -496,15 +500,32 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .department-list {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
+}
+
+.management-search-control {
+  width: min(100%, 320px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
 }
 
 :deep(.child-department-row) {
@@ -513,5 +534,17 @@ onMounted(() => {
 
 :deep(.child-department-row:hover) {
   background-color: #ecf5ff;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-search-control,
+  .header-section .el-button {
+    width: 100%;
+  }
 }
 </style>

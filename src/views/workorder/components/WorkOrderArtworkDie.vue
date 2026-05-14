@@ -1,5 +1,5 @@
 <template>
-  <el-descriptions title="图稿和刀模" :column="1" border style="margin-top: 20px;">
+  <el-descriptions title="图稿和刀模" :column="1" border class="detail-section">
     <el-descriptions-item label="图稿（CTP版）">
       <span v-if="artworkCodes?.length">
         <span v-for="(code, i) in artworkCodes" :key="i">{{ code }}<span v-if="artworkNames?.[i]"> - {{ artworkNames[i] }}</span><span v-if="i < artworkCodes.length - 1">、</span></span>
@@ -29,3 +29,7 @@ const props = defineProps({
 
 const getPrintingTypeDisplay = (t) => ({ none: '', single: '单面印刷', double: '双面印刷', multi: '多色印刷' })[t] || t
 </script>
+
+<style scoped>
+.detail-section { margin-top: var(--ui-section-gap); }
+</style>

@@ -47,9 +47,18 @@ const handleClear = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .search-bar {
   display: inline-block;
-  width: 300px;
+  width: min(100%, 320px);
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .search-bar {
+    display: block;
+    width: 100%;
+  }
 }
 </style>

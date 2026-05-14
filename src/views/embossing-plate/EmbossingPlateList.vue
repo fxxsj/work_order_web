@@ -3,9 +3,9 @@
     <el-card>
       <div class="header-section">
         <el-input
+          class="management-search-control"
           v-model="searchText"
           placeholder="搜索压凸版编码、名称、尺寸、材质"
-          style="width: 300px;"
           clearable
           @input="handleSearchDebounced"
           @clear="handleSearch"
@@ -24,12 +24,15 @@
         </el-button>
       </div>
 
-      <el-table
+      <div
         v-if="tableData.length > 0"
+        class="table-scroll"
+      >
+        <el-table
         v-loading="loading"
         :data="tableData"
-        style="width: 100%; margin-top: 20px;"
-      >
+        class="data-table"
+        >
         <el-table-column prop="code" label="压凸版编码" width="150" />
         <el-table-column prop="name" label="压凸版名称" width="200" />
         <el-table-column prop="size" label="尺寸" width="150" />
@@ -89,7 +92,8 @@
             </el-button>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
+      </div>
 
       <el-pagination
         v-if="total > 0"
@@ -310,14 +314,43 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .embossing-plate-list {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
+}
+
+.management-search-control {
+  width: min(100%, 360px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-search-control,
+  .header-section .el-button {
+    width: 100%;
+  }
 }
 </style>

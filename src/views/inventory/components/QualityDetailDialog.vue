@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" title="质检详情" width="800px" @close="visible = false">
+  <el-dialog v-model="visible" title="质检详情" width="var(--ui-dialog-width-lg)" @close="visible = false">
     <el-descriptions v-if="data" :column="2" border>
       <el-descriptions-item label="产品名称">{{ data.product_name }}</el-descriptions-item>
       <el-descriptions-item label="检验结果"><el-tag :type="getStatusType(data.status)">{{ data.status_display }}</el-tag></el-descriptions-item>

@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="质检确认" width="800px" :close-on-click-modal="false" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="质检确认" width="var(--ui-dialog-width-lg)" :close-on-click-modal="false" @close="handleClose">
     <div v-loading="loading">
       <el-table :data="records" border stripe size="small">
         <el-table-column prop="material_name" label="物料名称" min-width="150" />

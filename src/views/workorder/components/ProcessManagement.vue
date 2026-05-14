@@ -3,16 +3,16 @@
     <template #header><div class="card-header"><span>工序信息</span><el-button v-if="editable" type="primary" size="small" :icon="Plus" @click="emit('add-process')">添加工序</el-button></div></template>
     <div v-for="process in processes" :key="process.id" class="process-item" :style="{ borderLeftColor: getProcessColor(process.status) }">
       <el-card>
-        <template #header><div class="process-header"><div><span>{{ process.sequence }}. {{ process.process_name }}</span><el-tag :type="getProcessStatusType(process.status)" size="small" style="margin-left: 10px;">{{ process.status_display }}</el-tag></div><span>进度: {{ calculateProcessProgress(process) }}%</span></div></template>
-        <el-row :gutter="20">
-          <el-col :span="6"><div class="process-info-item"><label>负责部门:</label><span>{{ getProcessDepartment(process) }}</span></div></el-col>
-          <el-col :span="6"><div class="process-info-item"><label>负责人:</label><span>{{ process.assigned_operator_name || '-' }}</span></div></el-col>
-          <el-col :span="6"><div class="process-info-item"><label>开始时间:</label><span>{{ formatDate(process.started_at) }}</span></div></el-col>
-          <el-col :span="6"><div class="process-info-item"><label>完成时间:</label><span>{{ formatDate(process.completed_at) }}</span></div></el-col>
+        <template #header><div class="process-header"><div class="process-title"><span>{{ process.sequence }}. {{ process.process_name }}</span><el-tag :type="getProcessStatusType(process.status)" size="small">{{ process.status_display }}</el-tag></div><span>进度: {{ calculateProcessProgress(process) }}%</span></div></template>
+        <el-row :gutter="20" class="process-info-row">
+          <el-col :xs="24" :sm="12" :md="6"><div class="process-info-item"><label>负责部门:</label><span>{{ getProcessDepartment(process) }}</span></div></el-col>
+          <el-col :xs="24" :sm="12" :md="6"><div class="process-info-item"><label>负责人:</label><span>{{ process.assigned_operator_name || '-' }}</span></div></el-col>
+          <el-col :xs="24" :sm="12" :md="6"><div class="process-info-item"><label>开始时间:</label><span>{{ formatDate(process.started_at) }}</span></div></el-col>
+          <el-col :xs="24" :sm="12" :md="6"><div class="process-info-item"><label>完成时间:</label><span>{{ formatDate(process.completed_at) }}</span></div></el-col>
         </el-row>
-        <div v-if="process.tasks?.length" style="margin-top: 10px;">
+        <div v-if="process.tasks?.length" class="process-tasks">
           <div style="font-size: 12px; color: #909399; margin-bottom: 5px;">任务 ({{ process.tasks.length }}):</div>
-          <el-tag v-for="task in process.tasks" :key="task.id" :type="getTaskStatusType(task.status)" size="small" style="margin-right: 5px;">{{ task.work_content }}</el-tag>
+          <div class="task-tags"><el-tag v-for="task in process.tasks" :key="task.id" :type="getTaskStatusType(task.status)" size="small">{{ task.work_content }}</el-tag></div>
         </div>
       </el-card>
     </div>
@@ -36,7 +36,11 @@ const calculateProcessProgress = (p) => p.tasks?.length ? Math.round((p.tasks.fi
 <style scoped>
 .card-header { display: flex; justify-content: space-between; align-items: center; }
 .process-item { margin-bottom: 10px; border-left: 4px solid; padding-left: 10px; }
-.process-header { display: flex; justify-content: space-between; align-items: center; }
+.process-header { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
+.process-title { display: flex; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
+.process-info-row { row-gap: var(--ui-control-gap); }
 .process-info-item { font-size: 14px; }
 .process-info-item label { color: #909399; margin-right: 5px; }
+.process-tasks { margin-top: var(--ui-control-gap); }
+.task-tags { display: flex; flex-wrap: wrap; gap: 5px; }
 </style>

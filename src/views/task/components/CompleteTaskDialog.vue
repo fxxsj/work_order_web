@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="完成任务" width="600px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="完成任务" width="var(--ui-dialog-width-md)" @close="handleClose">
     <el-form ref="formRef" :model="formData" label-width="120px">
       <el-form-item label="状态">
         <el-tag type="success">已完成</el-tag>
@@ -11,9 +11,9 @@
       </el-form-item>
       <el-form-item v-if="task?.task_type !== 'plate_making'" label="当前完成数量">
         <el-input-number :value="task?.quantity_completed || 0" disabled style="width: 100%;" />
-        <div v-if="task?.production_quantity" style="color: #909399; font-size: 12px; margin-top: 4px;">
+        <div v-if="task?.production_quantity" class="form-hint">
           计划数量：{{ task.production_quantity }}
-          <span v-if="(task.quantity_completed || 0) < task.production_quantity" style="color: #E6A23C; margin-left: 10px;">（当前完成数量小于计划数量，将强制标记为已完成）</span>
+          <span v-if="(task.quantity_completed || 0) < task.production_quantity" class="warning-text">（当前完成数量小于计划数量，将强制标记为已完成）</span>
         </div>
       </el-form-item>
       <el-form-item label="完成理由"><el-input v-model="formData.completion_reason" type="textarea" :rows="3" placeholder="请输入完成理由（可选）" /></el-form-item>
@@ -106,3 +106,18 @@ const handleConfirm = () => {
 const handleClose = () => { emit('update:visible', false); resetForm() }
 const resetForm = () => { Object.assign(formData, { quantity_completed: 0, quantity_defective: 0, artwork_ids: [], die_ids: [], notes: '', completion_reason: '' }) }
 </script>
+
+<style scoped>
+.form-hint {
+  color: #909399;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-control-gap);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.warning-text {
+  color: #E6A23C;
+}
+</style>

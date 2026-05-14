@@ -1,13 +1,12 @@
 import { createApp } from 'vue'
 import { pinia } from './stores'
 import router from './router'
-import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 import App from './App.vue'
-import './assets/styles/global.css'
+import './assets/styles/global.scss'
 
 // 全局过滤器（Vue 3 使用全局函数替代）
 import { formatDate, formatDateTime } from '@/utils/filter'
@@ -21,9 +20,6 @@ app.use(pinia)
 
 // 注册 Vue Router
 app.use(router)
-
-// 注册 Element Plus
-app.use(ElementPlus)
 
 // 全局注册 Element Plus Icons
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

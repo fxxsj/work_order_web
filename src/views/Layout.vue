@@ -1,6 +1,7 @@
 <template>
-  <el-container class="layout-container">
-    <el-aside width="200px" class="sidebar">
+  <el-container class="layout-container" :class="{ 'is-sidebar-open': mobileSidebarOpen }">
+    <div class="mobile-sidebar-mask" @click="mobileSidebarOpen = false"></div>
+    <el-aside width="var(--ui-layout-sidebar-width)" class="sidebar">
       <div class="logo">
         <h2>施工单系统</h2>
       </div>
@@ -176,9 +177,16 @@
       </el-menu>
     </el-aside>
 
-    <el-container>
+    <el-container class="content-shell">
       <el-header class="header">
         <div class="header-left">
+          <el-button
+            class="mobile-menu-button"
+            :icon="Menu"
+            text
+            aria-label="打开导航"
+            @click="mobileSidebarOpen = true"
+          />
           <el-breadcrumb separator="/">
             <el-breadcrumb-item :to="{ path: '/' }">
               首页
@@ -222,7 +230,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import {
@@ -241,6 +249,11 @@ import NotificationCenter from '@/components/NotificationCenter.vue'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const mobileSidebarOpen = ref(false)
+
+watch(() => route.fullPath, () => {
+  mobileSidebarOpen.value = false
+})
 
 const activeMenu = computed(() => {
   const path = route.path
@@ -322,19 +335,28 @@ const handleCommand = (command) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .layout-container {
   height: 100vh;
+  position: relative;
+}
+
+.content-shell {
+  min-width: 0;
 }
 
 .sidebar {
   background-color: #304156;
   overflow-x: hidden;
   overflow-y: auto;
+  transition: transform 0.2s ease;
+  z-index: 30;
 }
 
 .logo {
-  height: 60px;
+  height: var(--ui-layout-header-height);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -357,25 +379,32 @@ const handleCommand = (command) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  height: var(--ui-layout-header-height);
+  padding: 0 var(--ui-page-padding);
 }
 
 .header-left {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-control-gap);
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--ui-control-gap);
+  min-width: 0;
 }
 
 .user-info {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 10px;
+  gap: 6px;
+  min-height: var(--ui-touch-target-min);
+  padding: 0 var(--ui-control-gap);
 }
 
 .user-info:hover {
@@ -385,5 +414,69 @@ const handleCommand = (command) => {
 .main-content {
   background-color: #f0f2f5;
   overflow-y: auto;
+  padding: 0;
+}
+
+.mobile-menu-button,
+.mobile-sidebar-mask {
+  display: none;
+}
+
+@media (max-width: bp.$breakpoint-tablet-max) {
+  .layout-container {
+    display: block;
+  }
+
+  .content-shell {
+    height: 100vh;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--ui-layout-sidebar-width) !important;
+    transform: translateX(-100%);
+  }
+
+  .is-sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .mobile-sidebar-mask {
+    position: fixed;
+    inset: 0;
+    display: block;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.2s ease;
+    z-index: 20;
+  }
+
+  .is-sidebar-open .mobile-sidebar-mask {
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  .mobile-menu-button {
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-right {
+    gap: 4px;
+  }
+
+  .header-left :deep(.el-breadcrumb) {
+    display: none;
+  }
+
+  .user-info span {
+    max-width: var(--ui-mobile-user-name-width, 7em);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>

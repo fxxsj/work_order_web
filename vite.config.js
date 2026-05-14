@@ -57,9 +57,18 @@ export default defineConfig({
     cssTarget: 'chrome80',
     productionSourceMap: false,
     rollupOptions: {
+      onwarn(warning, warn) {
+        if (
+          warning.code === 'INVALID_ANNOTATION' &&
+          typeof warning.id === 'string' &&
+          warning.id.includes('@vueuse/core')
+        ) {
+          return
+        }
+        warn(warning)
+      },
       output: {
         manualChunks: {
-          'element-plus': ['element-plus'],
           'vue-vendor': ['vue', 'vue-router', 'pinia'],
         },
       },

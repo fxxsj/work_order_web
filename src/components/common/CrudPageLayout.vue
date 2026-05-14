@@ -90,32 +90,61 @@ const handleSizeChange = (size) => emit('size-change', size)
 const handleCurrentChange = (page) => emit('current-change', page)
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .crud-page-layout {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 .crud-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  gap: var(--ui-control-gap);
+  margin-bottom: var(--ui-section-gap);
 }
 .crud-title {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--ui-font-size-lg);
   font-weight: 500;
 }
 .crud-filter-section {
-  margin-bottom: 20px;
+  margin-bottom: var(--ui-section-gap);
 }
 .crud-toolbar {
-  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-control-gap);
+  margin-bottom: var(--ui-section-gap);
 }
 .crud-content {
-  margin-bottom: 20px;
+  min-width: 0;
+  margin-bottom: var(--ui-section-gap);
+  overflow-x: auto;
 }
 .crud-pagination {
   display: flex;
   justify-content: flex-end;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .crud-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .crud-header-actions,
+  .crud-toolbar {
+    width: 100%;
+  }
+
+  .crud-header-actions :deep(.el-button),
+  .crud-toolbar :deep(.el-button) {
+    flex: 1 1 auto;
+  }
+
+  .crud-pagination {
+    justify-content: center;
+  }
 }
 </style>

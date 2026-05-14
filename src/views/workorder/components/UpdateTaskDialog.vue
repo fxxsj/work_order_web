@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="更新任务" width="600px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="更新任务" width="var(--ui-dialog-width-md)" @close="handleClose">
     <el-form ref="formRef" :model="form" label-width="120px">
       <el-form-item label="任务内容"><el-input :value="task?.work_content" disabled /></el-form-item>
       <el-form-item label="生产数量"><el-input-number :value="task?.production_quantity || 0" disabled style="width: 100%;" /></el-form-item>

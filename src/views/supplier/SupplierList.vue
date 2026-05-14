@@ -4,9 +4,9 @@
       <div class="header-section">
         <div class="filter-group">
           <el-input
+            class="management-search-control"
             v-model="searchText"
             placeholder="搜索供应商名称/编码"
-            style="width: 250px;"
             clearable
             @keyup.enter="handleSearch"
             @clear="handleSearch"
@@ -16,10 +16,10 @@
             </template>
           </el-input>
           <el-select
+            class="status-filter-control"
             v-model="filters.status"
             placeholder="状态"
             clearable
-            style="width: 120px; margin-left: 10px;"
             @change="handleSearch"
           >
             <el-option label="启用" value="active" />
@@ -38,50 +38,54 @@
         </div>
       </div>
 
-      <el-table
+      <div
         v-if="tableData.length > 0"
+        class="table-scroll"
+      >
+        <el-table
         v-loading="loading"
         :data="tableData"
         border
         stripe
-        style="width: 100%; margin-top: 20px;"
-      >
-        <el-table-column prop="code" label="供应商编码" width="150" />
-        <el-table-column prop="name" label="供应商名称" width="200" />
-        <el-table-column prop="contact_person" label="联系人" width="120" />
-        <el-table-column prop="phone" label="联系电话" width="150" />
-        <el-table-column prop="email" label="邮箱" width="200" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="scope">
-            <el-tag :type="scope.row.status === 'active' ? 'success' : 'info'">
-              {{ scope.row.status_display }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="material_count" label="供应物料数" width="120" />
-        <el-table-column prop="notes" label="备注" min-width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="scope">
-            <el-button
-              v-if="canEdit"
-              type="text"
-              size="small"
-              @click="showEditDialog(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="canDelete"
-              type="text"
-              size="small"
-              class="danger-text"
-              @click="handleDelete(scope.row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          class="data-table"
+        >
+          <el-table-column prop="code" label="供应商编码" width="150" />
+          <el-table-column prop="name" label="供应商名称" width="200" />
+          <el-table-column prop="contact_person" label="联系人" width="120" />
+          <el-table-column prop="phone" label="联系电话" width="150" />
+          <el-table-column prop="email" label="邮箱" width="200" />
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="scope">
+              <el-tag :type="scope.row.status === 'active' ? 'success' : 'info'">
+                {{ scope.row.status_display }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="material_count" label="供应物料数" width="120" />
+          <el-table-column prop="notes" label="备注" min-width="200" show-overflow-tooltip />
+          <el-table-column label="操作" width="150" fixed="right">
+            <template #default="scope">
+              <el-button
+                v-if="canEdit"
+                type="text"
+                size="small"
+                @click="showEditDialog(scope.row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="canDelete"
+                type="text"
+                size="small"
+                class="danger-text"
+                @click="handleDelete(scope.row)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <el-pagination
         v-if="total > 0"
@@ -233,20 +237,26 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .supplier-list {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
   align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
 }
 
 .action-group {
@@ -256,5 +266,37 @@ onMounted(() => {
 
 .danger-text {
   color: #F56C6C;
+}
+
+.management-search-control {
+  width: min(100%, 320px);
+}
+
+.status-filter-control {
+  width: min(100%, 140px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-search-control,
+  .status-filter-control,
+  .action-group .el-button {
+    width: 100%;
+  }
 }
 </style>

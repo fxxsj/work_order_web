@@ -1,10 +1,10 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="完成工序" width="600px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="完成工序" width="var(--ui-dialog-width-md)" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
       <el-form-item label="工序名称"><el-input :value="process?.process_name" disabled /></el-form-item>
       <el-form-item label="任务完成情况">
         <div v-if="process?.tasks">
-          <div style="margin-bottom: 10px;"><span>总任务数：{{ process.tasks.length }}</span><span style="margin-left: 20px;">已完成：{{ completedCount }}</span><span v-if="incompleteCount > 0" style="margin-left: 20px; color: #E6A23C;">未完成：{{ incompleteCount }}</span></div>
+          <div class="task-summary"><span>总任务数：{{ process.tasks.length }}</span><span>已完成：{{ completedCount }}</span><span v-if="incompleteCount > 0" class="warning-text">未完成：{{ incompleteCount }}</span></div>
           <el-alert v-if="incompleteCount > 0" type="warning" :closable="false" style="margin-bottom: 10px;"><template #title><p>该工序还有 {{ incompleteCount }} 个任务未完成。建议先完成任务，如需强制完成请勾选下方选项。</p></template></el-alert>
         </div>
       </el-form-item>
@@ -36,3 +36,17 @@ const incompleteCount = computed(() => props.process?.tasks?.filter(t => t.statu
 const handleSubmit = () => { formRef.value?.validate((valid) => { if (valid) emit('submit', { processId: props.process?.id, data: { ...form } }) }) }
 const handleClose = () => { Object.assign(form, { quantity_completed: 0, quantity_defective: 0, force_complete: false }) }
 </script>
+
+<style scoped>
+.task-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ui-control-gap);
+  margin-bottom: var(--ui-control-gap);
+}
+
+.warning-text {
+  color: #E6A23C;
+}
+</style>

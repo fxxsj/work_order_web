@@ -3,27 +3,27 @@
     <el-card>
       <div class="filter-section">
         <el-row :gutter="20">
-          <el-col :span="5">
+          <el-col :xs="24" :sm="12" :md="7" :lg="5">
             <el-input v-model="filters.search" placeholder="搜索任务内容、施工单号" clearable @input="handleSearchDebounced" @clear="handleSearchDebounced">
               <template #append><el-button :icon="Search" @click="handleSearch" /></template>
             </el-input>
           </el-col>
-          <el-col :span="3">
+          <el-col :xs="24" :sm="12" :md="5" :lg="3">
             <el-select v-model="filters.status" placeholder="任务状态" clearable style="width: 100%;" @change="handleSearchDebounced">
               <el-option v-for="status in taskStatusOptions" :key="status.value" :label="status.label" :value="status.value" />
             </el-select>
           </el-col>
-          <el-col :span="3">
+          <el-col :xs="24" :sm="12" :md="5" :lg="3">
             <el-select v-model="filters.assigned_department" placeholder="分派部门" clearable filterable style="width: 100%;" @change="handleSearchDebounced">
               <el-option v-for="dept in departmentList" :key="dept.id" :label="dept.name" :value="dept.id" />
             </el-select>
           </el-col>
-          <el-col :span="3">
+          <el-col :xs="24" :sm="12" :md="5" :lg="3">
             <el-select v-model="filters.priority" placeholder="优先级" clearable style="width: 100%;" @change="handleSearchDebounced">
               <el-option v-for="p in priorityOptions" :key="p.value" :label="p.label" :value="p.value"><span :style="{ color: p.color }">{{ p.label }}</span></el-option>
             </el-select>
           </el-col>
-          <el-col :span="7" style="text-align: right;">
+          <el-col :xs="24" :sm="24" :md="24" :lg="7" class="filter-actions">
             <el-button :icon="RefreshRight" @click="resetFilters">重置</el-button>
             <el-button v-if="canExport" type="success" :icon="Download" :loading="exporting" @click="handleExport">导出</el-button>
             <el-button type="primary" :icon="Refresh" @click="loadData">刷新</el-button>
@@ -31,19 +31,20 @@
         </el-row>
       </div>
 
-      <div style="margin-top: 20px; margin-bottom: 10px; text-align: right;">
+      <div class="view-mode-bar">
         <el-radio-group v-model="viewMode" size="small">
           <el-radio-button label="table">列表视图</el-radio-button>
           <el-radio-button label="kanban">看板视图</el-radio-button>
         </el-radio-group>
       </div>
 
-      <SkeletonLoader v-if="loading && tableData.length === 0" type="table" :rows="5" style="margin-top: 20px;" />
+      <SkeletonLoader v-if="loading && tableData.length === 0" class="task-skeleton" type="table" :rows="5" />
 
       <TaskKanban v-if="viewMode === 'kanban'" :tasks="tableData" @task-click="handleTaskClickFromKanban" />
 
       <template v-if="viewMode === 'table'">
-        <el-table v-if="!shouldUseVirtualScroll" ref="taskTable" v-loading="loading && tableData.length > 0" :data="tableData" border style="width: 100%; margin-top: 20px;" :row-key="getRowKey" @sort-change="handleSortChange" @selection-change="handleSelectionChange">
+        <div v-if="!shouldUseVirtualScroll" class="table-scroll">
+        <el-table ref="taskTable" v-loading="loading && tableData.length > 0" :data="tableData" border class="task-table" :row-key="getRowKey" @sort-change="handleSortChange" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="55" :selectable="checkRowSelectable" />
           <el-table-column type="expand" width="50">
             <template #default="scope"><TaskLogs :task="scope.row" /></template>
@@ -72,8 +73,10 @@
             </template>
           </el-table-column>
         </el-table>
+        </div>
 
-        <VirtualTable v-if="shouldUseVirtualScroll" ref="virtualTaskTable" v-loading="loading && tableData.length > 0" :data="tableData" :item-height="60" style="width: 100%; margin-top: 20px;" :row-key="getRowKey" @sort-change="handleSortChange">
+        <div v-if="shouldUseVirtualScroll" class="table-scroll">
+        <VirtualTable ref="virtualTaskTable" v-loading="loading && tableData.length > 0" :data="tableData" :item-height="60" class="task-table" :row-key="getRowKey" @sort-change="handleSortChange">
           <el-table-column type="selection" width="55" :selectable="checkRowSelectable" />
           <el-table-column type="expand" width="50"><template #default="scope"><TaskLogs :task="scope.row" /></template></el-table-column>
           <el-table-column prop="id" label="ID" width="80" sortable="custom" />
@@ -83,6 +86,7 @@
           <el-table-column label="状态" width="100"><template #default="scope"><el-tag :type="taskService.getStatusType(scope.row.status)" size="small">{{ scope.row.status_display }}</el-tag></template></el-table-column>
           <el-table-column label="操作" width="200" fixed="right"><template #default="scope"><TaskActions :task="scope.row" @complete="handleCompleteTask" @update="showUpdateDialog" @assign="showAssignDialog" /></template></el-table-column>
         </VirtualTable>
+        </div>
 
         <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
       </template>
@@ -252,7 +256,42 @@ const handleExport = async () => {
 onMounted(() => { loadData(); loadDepartments() })
 </script>
 
-<style scoped>
-.task-list { padding: 20px; }
-.filter-section { margin-bottom: 20px; }
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.filter-section {
+  margin-bottom: var(--ui-section-gap);
+}
+
+.task-skeleton,
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.task-table {
+  width: 100%;
+}
+
+.filter-actions,
+.view-mode-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ui-control-gap);
+}
+
+.view-mode-bar {
+  margin: var(--ui-section-gap) 0 var(--ui-control-gap);
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .filter-actions,
+  .view-mode-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
 </style>

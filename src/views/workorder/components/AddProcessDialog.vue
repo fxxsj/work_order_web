@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="添加工序" width="500px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="添加工序" width="var(--ui-dialog-width-sm)" @close="handleClose">
     <el-form ref="formRef" :model="form" label-width="80px">
       <el-form-item label="工序">
         <el-select v-model="form.process_id" placeholder="请选择工序" style="width: 100%;">

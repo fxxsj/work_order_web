@@ -14,7 +14,7 @@
         <el-form-item label="生产数量"><el-input-number v-model="form.production_quantity" :min="1" style="width: 100%;" /></el-form-item>
         <el-form-item label="备注"><el-input v-model="form.notes" type="textarea" :rows="3" /></el-form-item>
       </el-form>
-      <div style="text-align: right; margin-top: 20px;">
+      <div class="form-actions">
         <el-button @click="handleCancel">取消</el-button>
         <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
         <el-button type="success" :loading="submitting" @click="handleSubmit">提交</el-button>
@@ -27,7 +27,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { workOrderAPI, customerAPI } from '@/api/modules'
+import { workOrderAPI } from '@/api/modules'
+import { customerAPI } from '@/api/modules/customer'
 import ErrorHandler from '@/utils/errorHandler'
 import CustomerSelector from './components/CustomerSelector.vue'
 
@@ -64,8 +65,23 @@ const handleSubmit = async () => {
 const handleCancel = () => router.back()
 </script>
 
-<style scoped>
-.workorder-form { padding: 20px; }
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.workorder-form { padding: var(--ui-page-padding); }
 .form-header h2 { margin: 0 0 10px; }
 .form-header p { color: #909399; margin: 0; }
+.form-actions { display: flex; justify-content: flex-end; gap: var(--ui-control-gap); margin-top: var(--ui-section-gap); }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .form-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .form-actions .el-button {
+    width: 100%;
+    margin-left: 0;
+  }
+}
 </style>

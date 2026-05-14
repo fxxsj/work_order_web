@@ -75,9 +75,11 @@ const getStatusType = (s) => ({ draft: 'info', pending: 'warning', in_progress: 
 const getStatusLabel = (s) => ({ draft: '草稿', pending: '待开始', in_progress: '进行中', completed: '已完成', cancelled: '已取消' })[s] || s;
 </script>
 
-<style scoped>
-.task-drag-drop { display: flex; gap: 20px; overflow-x: auto; padding: 20px 0; min-height: 500px; }
-.column { min-width: 300px; max-width: 350px; background: #f5f7fa; border-radius: 8px; display: flex; flex-direction: column; height: calc(100vh - 250px); min-height: 400px; border: 2px solid transparent; transition: all 0.3s; }
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.task-drag-drop { display: flex; gap: var(--ui-section-gap); overflow-x: auto; padding: var(--ui-section-gap) 0; min-height: 500px; }
+.column { flex: 0 0 clamp(280px, 32vw, 350px); background: #f5f7fa; border-radius: 8px; display: flex; flex-direction: column; height: min(680px, calc(100vh - 250px)); min-height: 400px; border: 2px solid transparent; transition: all 0.3s; }
 .column.drag-over { border-color: #409eff; background: #ecf5ff; border-style: dashed; }
 .column-header { padding: 15px 20px; background: #fff; border-bottom: 2px solid #e4e7ed; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; }
 .column-title { font-weight: bold; font-size: 16px; color: #303133; }
@@ -93,4 +95,16 @@ const getStatusLabel = (s) => ({ draft: '草稿', pending: '待开始', in_progr
 .info-item { display: flex; align-items: center; font-size: 12px; color: #606266; margin-bottom: 6px; gap: 6px; }
 .card-footer { border-top: 1px solid #f0f0f0; padding-top: 8px; }
 .unassigned-column { background: #fef0f0; }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .task-drag-drop {
+    gap: var(--ui-control-gap);
+    min-height: 0;
+  }
+
+  .column {
+    flex-basis: min(86vw, 340px);
+    height: min(620px, calc(100vh - 180px));
+  }
+}
 </style>

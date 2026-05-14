@@ -3,9 +3,9 @@
     <el-card>
       <div class="header-section">
         <el-input
+          class="management-search-control"
           v-model="searchText"
           placeholder="搜索物料名称、编码"
-          style="width: 300px;"
           clearable
           @input="handleSearchDebounced"
           @clear="handleSearch"
@@ -24,44 +24,46 @@
         </el-button>
       </div>
 
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        style="width: 100%; margin-top: 20px;"
-      >
-        <el-table-column prop="code" label="物料编码" width="120" />
-        <el-table-column prop="name" label="物料名称" width="200" />
-        <el-table-column prop="specification" label="规格" min-width="150" />
-        <el-table-column prop="unit" label="单位" width="80" align="center" />
-        <el-table-column prop="unit_price" label="单价" width="120" align="right">
-          <template #default="scope">
-            ¥{{ scope.row.unit_price }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="stock_quantity" label="库存数量" width="120" align="right" />
-        <el-table-column prop="notes" label="备注" min-width="150" />
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="scope">
-            <el-button
-              v-if="canEdit"
-              type="text"
-              size="small"
-              @click="handleEdit(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="canDelete"
-              type="text"
-              size="small"
-              style="color: #F56C6C;"
-              @click="handleDelete(scope.row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="table-scroll">
+        <el-table
+          v-loading="loading"
+          :data="tableData"
+          class="data-table"
+        >
+          <el-table-column prop="code" label="物料编码" width="120" />
+          <el-table-column prop="name" label="物料名称" width="200" />
+          <el-table-column prop="specification" label="规格" min-width="150" />
+          <el-table-column prop="unit" label="单位" width="80" align="center" />
+          <el-table-column prop="unit_price" label="单价" width="120" align="right">
+            <template #default="scope">
+              ¥{{ scope.row.unit_price }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="stock_quantity" label="库存数量" width="120" align="right" />
+          <el-table-column prop="notes" label="备注" min-width="150" />
+          <el-table-column label="操作" width="150" fixed="right">
+            <template #default="scope">
+              <el-button
+                v-if="canEdit"
+                type="text"
+                size="small"
+                @click="handleEdit(scope.row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="canDelete"
+                type="text"
+                size="small"
+                style="color: #F56C6C;"
+                @click="handleDelete(scope.row)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <el-empty
         v-if="!loading && tableData.length === 0"
@@ -87,7 +89,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="formTitle"
-      width="650px"
+      width="var(--ui-dialog-width-md)"
     >
       <el-form
         ref="formRef"
@@ -365,14 +367,43 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .material-list {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
+}
+
+.management-search-control {
+  width: min(100%, 320px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-search-control,
+  .header-section .el-button {
+    width: 100%;
+  }
 }
 </style>

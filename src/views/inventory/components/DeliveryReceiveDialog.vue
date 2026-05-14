@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="签收确认" width="600px" :close-on-click-modal="false" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="签收确认" width="var(--ui-dialog-width-md)" :close-on-click-modal="false" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="签收状态" prop="received"><el-radio-group v-model="form.received"><el-radio label="received">正常签收</el-radio><el-radio label="rejected">拒收</el-radio></el-radio-group></el-form-item>
       <el-form-item v-if="form.received === 'rejected'" label="拒收原因" prop="received_notes"><el-input v-model="form.received_notes" type="textarea" :rows="3" placeholder="请输入拒收原因" maxlength="500" show-word-limit /></el-form-item>

@@ -2,9 +2,9 @@
   <el-form-item label="产品列表" required>
     <div v-for="(item, index) in items" :key="index" class="product-item">
       <el-row :gutter="10" type="flex" align="middle">
-        <el-col :span="10"><ProductSelector :model-value="item.product" :disabled="disabled" @update:model-value="v => handleProductChange(index, v)" /></el-col>
-        <el-col :span="4"><el-input-number :model-value="item.quantity" :min="1" :disabled="disabled" @update:model-value="v => handleQuantityChange(index, v)" style="width: 100%;"><template #suffix>{{ item.unit || '件' }}</template></el-input-number></el-col>
-        <el-col :span="2" v-if="items.length > 1"><el-button type="danger" size="small" :disabled="disabled" @click="handleRemove(index)">删除</el-button></el-col>
+        <el-col :xs="24" :sm="12" :md="10"><ProductSelector :model-value="item.product" :disabled="disabled" @update:model-value="v => handleProductChange(index, v)" /></el-col>
+        <el-col :xs="24" :sm="8" :md="4"><el-input-number :model-value="item.quantity" :min="1" :disabled="disabled" @update:model-value="v => handleQuantityChange(index, v)" style="width: 100%;"><template #suffix>{{ item.unit || '件' }}</template></el-input-number></el-col>
+        <el-col v-if="items.length > 1" :xs="24" :sm="4" :md="2"><el-button type="danger" size="small" :disabled="disabled" @click="handleRemove(index)">删除</el-button></el-col>
       </el-row>
     </div>
     <el-button v-if="!disabled" type="primary" size="small" :icon="Plus" @click="emit('add')">添加产品</el-button>
@@ -25,4 +25,5 @@ const handleRemove = (index) => emit('remove', index)
 
 <style scoped>
 .product-item { margin-bottom: 10px; }
+.product-item :deep(.el-row) { row-gap: var(--ui-control-gap); }
 </style>

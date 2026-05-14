@@ -3,9 +3,9 @@
     <el-card>
       <div class="header-section">
         <el-input
+          class="management-search-control"
           v-model="searchText"
           placeholder="搜索产品名称、编码"
-          style="width: 300px;"
           clearable
           @input="handleSearchDebounced"
           @clear="handleSearch"
@@ -24,69 +24,73 @@
         </el-button>
       </div>
 
-      <el-table
+      <div
         v-if="tableData.length > 0"
+        class="table-scroll"
+      >
+        <el-table
         v-loading="loading"
         :data="tableData"
-        style="width: 100%; margin-top: 20px;"
-      >
-        <el-table-column prop="code" label="产品编码" width="120" />
-        <el-table-column prop="name" label="产品名称" width="200" />
-        <el-table-column label="产品类型" width="120">
-          <template #default="scope">
-            <el-tag
-              :type="scope.row.product_type === 'single' ? '' : (scope.row.product_type === 'group_main' ? 'warning' : 'info')"
-              size="small"
-            >
-              {{ scope.row.product_type_display || getProductTypeLabel(scope.row.product_type) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="所属产品组" width="150" show-overflow-tooltip>
-          <template #default="scope">
-            <span v-if="scope.row.product_group_name">{{ scope.row.product_group_name }}</span>
-            <span v-else style="color: #909399;">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="specification" label="规格" min-width="150" />
-        <el-table-column prop="unit" label="单位" width="80" align="center" />
-        <el-table-column prop="unit_price" label="单价" width="120" align="right">
-          <template #default="scope">
-            ¥{{ scope.row.unit_price }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="stock_quantity" label="库存数量" width="100" align="right" />
-        <el-table-column prop="min_stock_quantity" label="最小库存" width="100" align="right" />
-        <el-table-column label="状态" width="100">
-          <template #default="scope">
-            <el-tag :type="scope.row.is_active ? 'success' : 'info'">
-              {{ scope.row.is_active ? '启用' : '禁用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip />
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="scope">
-            <el-button
-              v-if="canEdit"
-              type="text"
-              size="small"
-              @click="handleEdit(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="canDelete"
-              type="text"
-              size="small"
-              style="color: #F56C6C;"
-              @click="handleDelete(scope.row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          class="data-table"
+        >
+          <el-table-column prop="code" label="产品编码" width="120" />
+          <el-table-column prop="name" label="产品名称" width="200" />
+          <el-table-column label="产品类型" width="120">
+            <template #default="scope">
+              <el-tag
+                :type="scope.row.product_type === 'single' ? '' : (scope.row.product_type === 'group_main' ? 'warning' : 'info')"
+                size="small"
+              >
+                {{ scope.row.product_type_display || getProductTypeLabel(scope.row.product_type) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="所属产品组" width="150" show-overflow-tooltip>
+            <template #default="scope">
+              <span v-if="scope.row.product_group_name">{{ scope.row.product_group_name }}</span>
+              <span v-else style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="specification" label="规格" min-width="150" />
+          <el-table-column prop="unit" label="单位" width="80" align="center" />
+          <el-table-column prop="unit_price" label="单价" width="120" align="right">
+            <template #default="scope">
+              ¥{{ scope.row.unit_price }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="stock_quantity" label="库存数量" width="100" align="right" />
+          <el-table-column prop="min_stock_quantity" label="最小库存" width="100" align="right" />
+          <el-table-column label="状态" width="100">
+            <template #default="scope">
+              <el-tag :type="scope.row.is_active ? 'success' : 'info'">
+                {{ scope.row.is_active ? '启用' : '禁用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip />
+          <el-table-column label="操作" width="150" fixed="right">
+            <template #default="scope">
+              <el-button
+                v-if="canEdit"
+                type="text"
+                size="small"
+                @click="handleEdit(scope.row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="canDelete"
+                type="text"
+                size="small"
+                style="color: #F56C6C;"
+                @click="handleDelete(scope.row)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <el-pagination
         v-if="total > 0"
@@ -351,14 +355,43 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .product-list {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
+}
+
+.management-search-control {
+  width: min(100%, 320px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-search-control,
+  .header-section .el-button {
+    width: 100%;
+  }
 }
 </style>

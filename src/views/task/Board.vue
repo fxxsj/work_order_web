@@ -1,19 +1,19 @@
 <template>
   <div class="task-board">
-    <task-stats :tasks="tableData" style="margin-bottom: 20px;" />
+    <task-stats :tasks="tableData" class="task-board-stats" />
 
     <el-card>
       <div class="header-section">
         <div class="filter-group">
-          <el-select v-model="selectedDepartment" placeholder="选择部门" clearable filterable style="width: 160px; margin-right: 10px;" @change="handleDepartmentChange">
+          <el-select v-model="selectedDepartment" class="board-filter-control" placeholder="选择部门" clearable filterable @change="handleDepartmentChange">
             <el-option v-for="dept in departmentList" :key="dept.id" :label="dept.name" :value="dept.id" />
           </el-select>
-          <el-select v-model="selectedStatus" placeholder="任务状态" clearable style="width: 120px; margin-right: 10px;" @change="handleStatusChange">
+          <el-select v-model="selectedStatus" class="board-filter-control" placeholder="任务状态" clearable @change="handleStatusChange">
             <el-option label="待开始" value="pending" />
             <el-option label="进行中" value="in_progress" />
             <el-option label="已完成" value="completed" />
           </el-select>
-          <el-input v-model="searchText" placeholder="搜索任务内容、施工单号" style="width: 280px;" clearable @input="handleSearchDebounced" @clear="handleSearch">
+          <el-input v-model="searchText" class="board-search-control" placeholder="搜索任务内容、施工单号" clearable @input="handleSearchDebounced" @clear="handleSearch">
             <template #append><el-button :icon="Search" @click="handleSearch" /></template>
           </el-input>
         </div>
@@ -137,8 +137,54 @@ const handleConfirmComplete = async (data) => {
 onMounted(() => { loadDepartments(); loadData() })
 </script>
 
-<style scoped>
-.task-board { padding: 20px; }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.task-board {
+  padding: var(--ui-page-padding);
+}
+
+.task-board-stats {
+  margin-bottom: var(--ui-section-gap);
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ui-control-gap);
+}
+
+.filter-group,
+.action-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ui-control-gap);
+}
+
+.board-filter-control {
+  width: min(100%, 180px);
+}
+
+.board-search-control {
+  width: min(100%, 320px);
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .filter-group,
+  .action-group,
+  .board-filter-control,
+  .board-search-control {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filter-group,
+  .action-group {
+    flex-direction: column;
+  }
+}
 </style>

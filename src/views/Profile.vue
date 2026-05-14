@@ -33,17 +33,18 @@
             </el-form-item>
 
             <el-form-item label="用户角色">
-              <el-tag
-                v-for="role in currentUser.groups"
-                :key="role"
-                type="success"
-                style="margin-right: 10px;"
-              >
-                {{ role }}
-              </el-tag>
-              <el-tag v-if="currentUser.is_superuser" type="danger">
-                超级管理员
-              </el-tag>
+              <div class="role-tags">
+                <el-tag
+                  v-for="role in currentUser.groups"
+                  :key="role"
+                  type="success"
+                >
+                  {{ role }}
+                </el-tag>
+                <el-tag v-if="currentUser.is_superuser" type="danger">
+                  超级管理员
+                </el-tag>
+              </div>
             </el-form-item>
 
             <el-form-item>
@@ -100,9 +101,9 @@
               title="密码安全提示"
               type="info"
               :closable="false"
-              style="margin-bottom: 20px;"
+              class="password-alert"
             >
-              <ul style="margin: 5px 0; padding-left: 20px;">
+              <ul class="password-rules">
                 <li>密码长度至少为6位</li>
                 <li>建议使用字母、数字和特殊字符的组合</li>
                 <li>不要使用过于简单的密码</li>
@@ -255,10 +256,12 @@ const handleChangePassword = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .profile-container {
-  padding: 20px;
-  max-width: 800px;
+  padding: var(--ui-page-padding);
+  max-width: min(100%, 800px);
   margin: 0 auto;
 }
 
@@ -280,11 +283,33 @@ const handleChangePassword = async () => {
 
 .profile-form,
 .password-form {
-  max-width: 600px;
-  padding: 20px;
+  max-width: min(100%, 600px);
+  padding: var(--ui-page-padding);
 }
 
 .el-form-item {
   margin-bottom: 22px;
+}
+
+.role-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-control-gap);
+}
+
+.password-alert {
+  margin-bottom: var(--ui-section-gap);
+}
+
+.password-rules {
+  margin: 5px 0;
+  padding-left: var(--ui-section-gap);
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .profile-form,
+  .password-form {
+    padding-inline: 0;
+  }
 }
 </style>

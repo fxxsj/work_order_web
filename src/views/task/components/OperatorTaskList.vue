@@ -67,6 +67,6 @@ const canComplete = (task) => isMyTask(task) && ['pending', 'in_progress'].inclu
 .task-content { font-size: 14px; font-weight: 500; color: #303133; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .task-meta { display: flex; justify-content: space-between; font-size: 12px; color: #909399; margin-bottom: 8px; }
 .task-progress { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.progress-text { font-size: 12px; color: #606266; min-width: 60px; text-align: right; }
+.progress-text { font-size: 12px; color: #606266; min-width: 5ch; text-align: right; }
 .task-actions { margin-top: 12px; text-align: right; }
 </style>

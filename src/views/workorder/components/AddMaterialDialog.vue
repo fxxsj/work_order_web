@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="添加物料" width="500px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="添加物料" width="var(--ui-dialog-width-sm)" @close="handleClose">
     <el-form ref="formRef" :model="form" label-width="80px">
       <el-form-item label="物料">
         <el-select v-model="form.material_id" placeholder="请选择物料" style="width: 100%;" filterable>

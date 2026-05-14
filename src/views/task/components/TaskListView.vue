@@ -1,6 +1,7 @@
 <template>
   <div class="task-list-view">
-    <el-table v-loading="loading" :data="tasks" border style="width: 100%" @row-click="handleRowClick">
+    <div class="table-scroll">
+    <el-table v-loading="loading" :data="tasks" border class="task-table" @row-click="handleRowClick">
       <el-table-column prop="id" label="任务ID" width="80" align="center" />
       <el-table-column label="施工单号" width="150"><template #default="scope">{{ scope.row.work_order_process_info?.work_order?.order_number || '-' }}</template></el-table-column>
       <el-table-column prop="work_content" label="任务内容" min-width="200" show-overflow-tooltip />
@@ -17,7 +18,8 @@
         </template>
       </el-table-column>
     </el-table>
-    <div style="margin-top: 20px; text-align: right;"><el-pagination :current-page="currentPage" :page-size="pageSize" :page-sizes="[10, 20, 50, 100]" :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="v => emit('page-size-change', v)" @current-change="v => emit('page-change', v)" /></div>
+    </div>
+    <div class="pagination-row"><el-pagination :current-page="currentPage" :page-size="pageSize" :page-sizes="[10, 20, 50, 100]" :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="v => emit('page-size-change', v)" @current-change="v => emit('page-change', v)" /></div>
   </div>
 </template>
 
@@ -48,7 +50,10 @@ const handleCurrentChange = (page) => emit('page-change', page)
 </script>
 
 <style scoped>
-.task-list-view { margin-top: 20px; }
+.task-list-view { margin-top: var(--ui-section-gap); }
+.table-scroll { overflow-x: auto; }
+.task-table { width: 100%; }
+.pagination-row { margin-top: var(--ui-section-gap); text-align: right; }
 .text-overdue { color: #F56C6C; font-weight: bold; }
 .el-table { cursor: pointer; }
 .el-table :deep(.el-table__row:hover) { background-color: #F5F7FA; }

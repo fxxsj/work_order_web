@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="批量调整工序分派" width="600px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" title="批量调整工序分派" width="var(--ui-dialog-width-md)" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="140px">
       <el-form-item label="工序名称"><el-input :value="process?.process_name" disabled /></el-form-item>
       <el-form-item label="任务数量"><el-input :value="process?.tasks?.length || 0" disabled /><div style="color: #909399; font-size: 12px; margin-top: 4px;">将调整该工序下所有任务的分派</div></el-form-item>

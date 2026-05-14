@@ -1,7 +1,8 @@
 <template>
   <el-card>
-    <template #header><div class="card-header"><span>通知中心</span><div><el-button v-if="unreadCount > 0" type="primary" size="small" :loading="markingAll" @click="markAllRead">标记全部已读</el-button><el-button size="small" :icon="Refresh" style="margin-left: 10px;" @click="loadData">刷新</el-button></div></div></template>
-    <el-table v-loading="loading" :data="notificationList" style="width: 100%; margin-top: 20px;" :row-class-name="getRowClassName">
+    <template #header><div class="card-header"><span>通知中心</span><div class="header-actions"><el-button v-if="unreadCount > 0" type="primary" size="small" :loading="markingAll" @click="markAllRead">标记全部已读</el-button><el-button size="small" :icon="Refresh" @click="loadData">刷新</el-button></div></div></template>
+    <div class="table-scroll">
+    <el-table v-loading="loading" :data="notificationList" class="notification-table" :row-class-name="getRowClassName">
       <el-table-column label="状态" width="80" align="center"><template #default="scope"><el-badge v-if="!scope.row.is_read" is-dot class="unread-badge" /><span v-else style="color: #909399;">已读</span></template></el-table-column>
       <el-table-column prop="notification_type_display" label="类型" width="120" />
       <el-table-column prop="title" label="标题" min-width="200" />
@@ -9,6 +10,7 @@
       <el-table-column label="时间" width="160"><template #default="scope">{{ formatDate(scope.row.created_at) }}</template></el-table-column>
       <el-table-column label="操作" width="150"><template #default="scope"><el-button type="text" size="small" @click="handleClick(scope.row)">查看</el-button><el-button v-if="!scope.row.is_read" type="text" size="small" @click="markRead(scope.row)">标记已读</el-button></template></el-table-column>
     </el-table>
+    </div>
   </el-card>
 </template>
 
@@ -33,7 +35,24 @@ const handleClick = (row) => emit('click', row)
 const loadData = () => emit('refresh')
 </script>
 
-<style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.card-header { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
+.header-actions { display: flex; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
+.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
+.notification-table { width: 100%; }
 :deep(.unread-row) { background-color: #f0f9ff; }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .card-header,
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .header-actions .el-button {
+    width: 100%;
+  }
+}
 </style>

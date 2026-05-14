@@ -3,35 +3,35 @@
     <el-card>
       <template #header><span class="form-title">{{ isEdit ? '编辑销售订单' : '新建销售订单' }}</span></template>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="20" class="responsive-form-row">
+          <el-col :xs="24" :md="12">
             <el-form-item label="客户" prop="customer">
               <el-select v-model="form.customer" placeholder="请选择客户" filterable style="width: 100%" @change="handleCustomerChange">
                 <el-option v-for="item in customerOptions" :key="item.id" :label="item.name" :value="item.id" />
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="订单日期" prop="order_date">
               <el-date-picker v-model="form.order_date" type="date" placeholder="请选择订单日期" value-format="yyyy-MM-dd" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="20" class="responsive-form-row">
+          <el-col :xs="24" :md="12">
             <el-form-item label="交货日期" prop="delivery_date">
               <el-date-picker v-model="form.delivery_date" type="date" placeholder="请选择交货日期" value-format="yyyy-MM-dd" style="width: 100%" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="联系人" prop="contact_person"><el-input v-model="form.contact_person" placeholder="请输入联系人" /></el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="20" class="responsive-form-row">
+          <el-col :xs="24" :md="12">
             <el-form-item label="联系电话" prop="contact_phone"><el-input v-model="form.contact_phone" placeholder="请输入联系电话" /></el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="送货地址" prop="shipping_address"><el-input v-model="form.shipping_address" type="textarea" :rows="1" placeholder="请输入送货地址" /></el-form-item>
           </el-col>
         </el-row>
@@ -39,7 +39,8 @@
         <el-divider>订单明细</el-divider>
         <div class="items-section">
           <el-button size="small" type="primary" :icon="Plus" @click="handleAddItem">添加产品</el-button>
-          <el-table :data="form.items" border style="margin-top: 15px;">
+          <div class="table-scroll">
+          <el-table :data="form.items" border class="items-table">
             <el-table-column label="产品" min-width="200">
               <template #default="scope">
                 <el-select v-model="scope.row.product" placeholder="请选择产品" filterable style="width: 100%" @change="(val) => handleProductChange(val, scope.$index)">
@@ -59,17 +60,18 @@
             <el-table-column label="备注" min-width="120"><template #default="scope"><el-input v-model="scope.row.notes" size="small" /></template></el-table-column>
             <el-table-column label="操作" width="80"><template #default="scope"><el-button type="danger" size="small" :icon="Delete" :disabled="form.items.length <= 1" @click="handleRemoveItem(scope.$index)" /></template></el-table-column>
           </el-table>
+          </div>
         </div>
 
         <el-divider>其他信息</el-divider>
-        <el-row :gutter="20">
-          <el-col :span="8">
+        <el-row :gutter="20" class="responsive-form-row">
+          <el-col :xs="24" :sm="12" :md="8">
             <el-form-item label="税率"><el-input-number v-model="form.tax_rate" :min="0" :max="100" style="width: 100%" /></el-form-item>
           </el-col>
-          <el-col :span="8">
+          <el-col :xs="24" :sm="12" :md="8">
             <el-form-item label="折扣金额"><el-input-number v-model="form.discount_amount" :min="0" :precision="2" style="width: 100%" /></el-form-item>
           </el-col>
-          <el-col :span="8">
+          <el-col :xs="24" :sm="24" :md="8">
             <el-form-item label="合计金额"><div class="total-amount">¥{{ totalAmount.toLocaleString() }}</div></el-form-item>
           </el-col>
         </el-row>
@@ -89,7 +91,8 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { salesOrderAPI, customerAPI, productAPI } from '@/api/modules'
+import { salesOrderAPI, productAPI } from '@/api/modules'
+import { customerAPI } from '@/api/modules/customer'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -153,10 +156,18 @@ const handleSubmit = async () => {
 onMounted(() => { loadCustomers(); loadProducts(); loadData() })
 </script>
 
-<style scoped>
-.sales-order-form { padding: 20px; }
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.sales-order-form { padding: var(--ui-page-padding); }
 .form-title { font-weight: bold; font-size: 16px; }
-.items-section { margin-bottom: 20px; }
+.items-section { margin-bottom: var(--ui-section-gap); }
+.table-scroll { margin-top: var(--ui-control-gap); overflow-x: auto; }
+.items-table { width: 100%; }
 .total-amount { font-size: 20px; font-weight: bold; color: #409EFF; line-height: 40px; }
-.form-actions { display: flex; justify-content: center; gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+.form-actions { display: flex; justify-content: center; gap: var(--ui-control-gap); margin-top: 30px; padding-top: var(--ui-section-gap); border-top: 1px solid #eee; }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .form-actions { flex-direction: column; }
+}
 </style>

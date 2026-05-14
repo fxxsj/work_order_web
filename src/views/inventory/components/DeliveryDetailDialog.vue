@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="localVisible" title="发货单详情" width="900px" :close-on-click-modal="false" @close="handleClose">
+  <el-dialog v-model="localVisible" title="发货单详情" width="var(--ui-dialog-width-xl)" :close-on-click-modal="false" @close="handleClose">
     <el-descriptions v-if="data" :column="2" border>
       <el-descriptions-item label="发货单号">{{ data.order_number }}</el-descriptions-item>
       <el-descriptions-item label="客户名称">{{ data.customer_name }}</el-descriptions-item>

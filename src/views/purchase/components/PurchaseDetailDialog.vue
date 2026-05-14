@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="采购单详情" width="900px">
+  <el-dialog v-model="dialogVisible" title="采购单详情" width="var(--ui-dialog-width-xl)">
     <el-descriptions :column="2" border>
       <el-descriptions-item label="采购单号">{{ detailData?.order_number }}</el-descriptions-item>
       <el-descriptions-item label="供应商">{{ detailData?.supplier_name }}</el-descriptions-item>

@@ -3,9 +3,9 @@
     <el-card>
       <div class="header-section">
         <el-input
+          class="management-search-control"
           v-model="searchText"
           placeholder="搜索刀模编码、名称、尺寸、材质"
-          style="width: 300px;"
           clearable
           @input="handleSearchDebounced"
           @clear="handleSearch"
@@ -48,79 +48,83 @@
         </el-button>
       </el-empty>
 
-      <el-table
+      <div
         v-else
+        class="table-scroll"
+      >
+        <el-table
         v-loading="loading"
         :data="tableData"
-        style="width: 100%; margin-top: 20px;"
-      >
-        <el-table-column prop="code" label="刀模编码" width="150" />
-        <el-table-column prop="name" label="刀模名称" width="200" />
-        <el-table-column label="刀模类型" width="120">
-          <template #default="scope">
-            <el-tag
-              :type="getDieTypeTagType(scope.row.die_type)"
-              size="small"
-            >
-              {{ scope.row.die_type_display || getDieTypeLabel(scope.row.die_type) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="size" label="尺寸" width="150" />
-        <el-table-column prop="material" label="材质" width="100" />
-        <el-table-column prop="thickness" label="厚度" width="100" />
-        <el-table-column label="确认状态" width="120">
-          <template #default="scope">
-            <el-tag v-if="scope.row.confirmed" type="success" size="small">
-              已确认
-            </el-tag>
-            <el-tag v-else type="info" size="small">
-              待确认
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="包含产品" min-width="250">
-          <template #default="scope">
-            <el-tag
-              v-for="product in scope.row.products"
-              :key="product.id"
-              :type="product.relation_type === 'imposition' ? 'warning' : ''"
-              style="margin-right: 5px; margin-bottom: 5px;"
-            >
-              {{ product.product_name }} ({{ product.quantity }}拼)
-              <span v-if="product.relation_type === 'imposition'" style="font-size: 10px;">拼</span>
-            </el-tag>
-            <span v-if="!scope.row.products || scope.row.products.length === 0" style="color: #909399;">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="created_at" label="创建时间" width="180">
-          <template #default="scope">
-            {{ formatDate(scope.row.created_at) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="scope">
-            <el-button
-              v-if="canEdit"
-              type="text"
-              size="small"
-              @click="handleEdit(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="canDelete"
-              type="text"
-              size="small"
-              style="color: #F56C6C;"
-              @click="handleDelete(scope.row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+        class="data-table"
+        >
+          <el-table-column prop="code" label="刀模编码" width="150" />
+          <el-table-column prop="name" label="刀模名称" width="200" />
+          <el-table-column label="刀模类型" width="120">
+            <template #default="scope">
+              <el-tag
+                :type="getDieTypeTagType(scope.row.die_type)"
+                size="small"
+              >
+                {{ scope.row.die_type_display || getDieTypeLabel(scope.row.die_type) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="size" label="尺寸" width="150" />
+          <el-table-column prop="material" label="材质" width="100" />
+          <el-table-column prop="thickness" label="厚度" width="100" />
+          <el-table-column label="确认状态" width="120">
+            <template #default="scope">
+              <el-tag v-if="scope.row.confirmed" type="success" size="small">
+                已确认
+              </el-tag>
+              <el-tag v-else type="info" size="small">
+                待确认
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="包含产品" min-width="250">
+            <template #default="scope">
+              <el-tag
+                v-for="product in scope.row.products"
+                :key="product.id"
+                :type="product.relation_type === 'imposition' ? 'warning' : ''"
+                style="margin-right: 5px; margin-bottom: 5px;"
+              >
+                {{ product.product_name }} ({{ product.quantity }}拼)
+                <span v-if="product.relation_type === 'imposition'" style="font-size: 10px;">拼</span>
+              </el-tag>
+              <span v-if="!scope.row.products || scope.row.products.length === 0" style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="created_at" label="创建时间" width="180">
+            <template #default="scope">
+              {{ formatDate(scope.row.created_at) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="150" fixed="right">
+            <template #default="scope">
+              <el-button
+                v-if="canEdit"
+                type="text"
+                size="small"
+                @click="handleEdit(scope.row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="canDelete"
+                type="text"
+                size="small"
+                style="color: #F56C6C;"
+                @click="handleDelete(scope.row)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <el-pagination
         v-if="total > 0"
@@ -324,19 +328,49 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .die-list {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
 }
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--ui-control-gap);
+}
+
+.management-search-control {
+  width: min(100%, 360px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-search-control,
+  .header-actions .el-button {
+    width: 100%;
+  }
 }
 </style>

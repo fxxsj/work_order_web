@@ -26,7 +26,9 @@ const handleTaskAssign = (t) => emit('task-assign', t)
 const handleTaskComplete = (t) => emit('task-complete', t)
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .task-column { height: 100%; display: flex; flex-direction: column; background-color: #F5F7FA; border-radius: 8px; overflow: hidden; }
 .column-header { padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
 .column-header.pending { background: linear-gradient(135deg, #909399 0%, #606266 100%); }
@@ -34,10 +36,16 @@ const handleTaskComplete = (t) => emit('task-complete', t)
 .column-header.completed { background: linear-gradient(135deg, #67C23A 0%, #85ce61 100%); }
 .column-title { font-size: 16px; }
 .column-badge { background-color: rgba(255,255,255,0.3); color: white; font-weight: bold; }
-.column-content { flex: 1; padding: 15px; overflow-y: auto; max-height: calc(100vh - 350px); }
+.column-content { flex: 1; padding: 15px; overflow-y: auto; max-height: min(640px, calc(100vh - 350px)); }
 .column-content::-webkit-scrollbar { width: 6px; }
 .column-content::-webkit-scrollbar-thumb { background-color: #DCDFE6; border-radius: 3px; }
 .empty-column { text-align: center; padding: 40px 20px; color: #909399; }
 .empty-column .empty-icon { font-size: 48px; margin-bottom: 10px; }
 .empty-column p { font-size: 14px; margin: 0; }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .column-content {
+    max-height: min(560px, calc(100vh - 220px));
+  }
+}
 </style>

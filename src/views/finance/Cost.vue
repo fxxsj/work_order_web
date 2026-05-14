@@ -10,7 +10,8 @@
         </div>
       </div>
 
-      <el-table v-if="tableData.length > 0" v-loading="loading" :data="tableData" border style="width: 100%; margin-top: 20px;">
+      <div v-if="tableData.length > 0" class="table-scroll">
+      <el-table v-loading="loading" :data="tableData" border class="data-table">
         <el-table-column prop="work_order_number" label="施工单号" width="150" />
         <el-table-column prop="product_name" label="产品名称" width="200" show-overflow-tooltip />
         <el-table-column prop="material_cost" label="材料成本" width="100" align="right">
@@ -45,13 +46,14 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
 
       <el-empty v-if="!loading && tableData.length === 0" description="暂无成本数据" :image-size="200" style="margin-top: 50px;" />
     </el-card>
 
-    <el-dialog v-model="detailDialogVisible" title="成本详情" width="900px" :close-on-click-modal="false">
+    <el-dialog v-model="detailDialogVisible" title="成本详情" width="var(--ui-dialog-width-xl)" :close-on-click-modal="false">
       <div v-if="currentCost">
         <el-descriptions :column="2" border>
           <el-descriptions-item label="施工单号">{{ currentCost.work_order_number }}</el-descriptions-item>
@@ -61,7 +63,8 @@
         </el-descriptions>
         <div class="cost-breakdown">
           <h4>成本构成</h4>
-          <el-table :data="getCostBreakdown(currentCost)" border style="width: 100%; margin-top: 10px;">
+          <div class="table-scroll table-scroll-compact">
+          <el-table :data="getCostBreakdown(currentCost)" border class="data-table">
             <el-table-column prop="item" label="成本项目" width="150" />
             <el-table-column prop="amount" label="金额" width="150" align="right">
               <template #default="scope">¥{{ scope.row.amount ? scope.row.amount.toLocaleString() : '-' }}</template>
@@ -71,19 +74,20 @@
             </el-table-column>
             <el-table-column prop="description" label="说明" />
           </el-table>
+          </div>
         </div>
         <div v-if="currentCost.standard_cost" class="cost-comparison">
           <h4>成本对比</h4>
-          <el-row :gutter="20" style="margin-top: 10px;">
-            <el-col :span="12"><el-card><div class="comparison-item"><div class="comparison-label">标准成本</div><div class="comparison-value">¥{{ currentCost.standard_cost ? currentCost.standard_cost.toLocaleString() : '-' }}</div></div></el-card></el-col>
-            <el-col :span="12"><el-card><div class="comparison-item"><div class="comparison-label">实际成本</div><div class="comparison-value">¥{{ currentCost.actual_cost ? currentCost.actual_cost.toLocaleString() : '-' }}</div></div></el-card></el-col>
+          <el-row :gutter="20" class="comparison-row">
+            <el-col :xs="24" :md="12"><el-card><div class="comparison-item"><div class="comparison-label">标准成本</div><div class="comparison-value">¥{{ currentCost.standard_cost ? currentCost.standard_cost.toLocaleString() : '-' }}</div></div></el-card></el-col>
+            <el-col :xs="24" :md="12"><el-card><div class="comparison-item"><div class="comparison-label">实际成本</div><div class="comparison-value">¥{{ currentCost.actual_cost ? currentCost.actual_cost.toLocaleString() : '-' }}</div></div></el-card></el-col>
           </el-row>
         </div>
       </div>
       <template #footer><el-button @click="detailDialogVisible = false">关闭</el-button></template>
     </el-dialog>
 
-    <el-dialog v-model="adjustDialogVisible" title="成本调整" width="600px" :close-on-click-modal="false">
+    <el-dialog v-model="adjustDialogVisible" title="成本调整" width="var(--ui-dialog-width-md)" :close-on-click-modal="false">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="材料成本" prop="material_cost"><el-input-number v-model="form.material_cost" :min="0" :precision="2" style="width: 100%;" /></el-form-item>
         <el-form-item label="人工成本" prop="labor_cost"><el-input-number v-model="form.labor_cost" :min="0" :precision="2" style="width: 100%;" /></el-form-item>
@@ -197,16 +201,34 @@ const getCostBreakdown = (cost) => {
 onMounted(() => { loadData(); fetchStats() })
 </script>
 
-<style scoped>
-.cost-container { padding: 20px; }
-.header-section { display: flex; justify-content: space-between; align-items: center; }
-.action-group { display: flex; align-items: center; gap: 10px; }
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
+.cost-container { padding: var(--ui-page-padding); }
+.header-section { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
+.action-group { display: flex; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
+.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
+.table-scroll-compact { margin-top: var(--ui-control-gap); }
+.data-table { width: 100%; }
 .text-danger { color: #F56C6C; }
 .text-success { color: #67C23A; }
-.cost-breakdown, .cost-comparison { margin-top: 20px; }
-.cost-breakdown h4, .cost-comparison h4 { margin-bottom: 10px; }
+.cost-breakdown, .cost-comparison { margin-top: var(--ui-section-gap); }
+.cost-breakdown h4, .cost-comparison h4 { margin-bottom: var(--ui-control-gap); }
+.comparison-row { margin-top: var(--ui-control-gap); }
 .comparison-item { text-align: center; }
 .comparison-label { font-size: 14px; color: #909399; margin-bottom: 8px; }
 .comparison-value { font-size: 24px; font-weight: bold; color: #303133; }
 .el-card { border-radius: 8px; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); }
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .action-group {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .action-group .el-button {
+    width: 100%;
+  }
+}
 </style>

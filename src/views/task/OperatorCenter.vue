@@ -1,14 +1,14 @@
 <template>
   <div class="operator-center">
     <el-row :gutter="20" class="summary-row">
-      <el-col :span="6"><el-card class="summary-card"><div class="stat-value">{{ summary.my_total || 0 }}</div><div class="stat-label">我的任务</div></el-card></el-col>
-      <el-col :span="6"><el-card class="summary-card pending"><div class="stat-value">{{ summary.my_pending || 0 }}</div><div class="stat-label">待开始</div></el-card></el-col>
-      <el-col :span="6"><el-card class="summary-card progress"><div class="stat-value">{{ summary.my_in_progress || 0 }}</div><div class="stat-label">进行中</div></el-card></el-col>
-      <el-col :span="6"><el-card class="summary-card claimable"><div class="stat-value">{{ summary.claimable_count || 0 }}</div><div class="stat-label">可认领</div></el-card></el-col>
+      <el-col :xs="24" :sm="12" :md="6"><el-card class="summary-card"><div class="stat-value">{{ summary.my_total || 0 }}</div><div class="stat-label">我的任务</div></el-card></el-col>
+      <el-col :xs="24" :sm="12" :md="6"><el-card class="summary-card pending"><div class="stat-value">{{ summary.my_pending || 0 }}</div><div class="stat-label">待开始</div></el-card></el-col>
+      <el-col :xs="24" :sm="12" :md="6"><el-card class="summary-card progress"><div class="stat-value">{{ summary.my_in_progress || 0 }}</div><div class="stat-label">进行中</div></el-card></el-col>
+      <el-col :xs="24" :sm="12" :md="6"><el-card class="summary-card claimable"><div class="stat-value">{{ summary.claimable_count || 0 }}</div><div class="stat-label">可认领</div></el-card></el-col>
     </el-row>
 
     <el-row :gutter="20" class="task-pools">
-      <el-col :span="12">
+      <el-col :xs="24" :lg="12">
         <el-card>
           <template #header>
             <div class="card-header"><span>我的任务</span><el-tag :type="getPoolType('my')">{{ summary.my_total || 0 }}</el-tag></div>
@@ -20,7 +20,7 @@
           </el-tabs>
         </el-card>
       </el-col>
-      <el-col :span="12">
+      <el-col :xs="24" :lg="12">
         <el-card>
           <template #header>
             <div class="card-header"><span>可认领任务</span><el-tag type="warning">{{ summary.claimable_count || 0 }}</el-tag></div>
@@ -96,14 +96,14 @@ onMounted(() => { loadData() })
 </script>
 
 <style scoped>
-.operator-center { padding: 20px; }
-.summary-row { margin-bottom: 20px; }
+.operator-center { padding: var(--ui-page-padding); }
+.summary-row { row-gap: var(--ui-section-gap); margin-bottom: var(--ui-section-gap); }
 .summary-card { text-align: center; padding: 20px 0; }
 .summary-card .stat-value { font-size: 32px; font-weight: bold; color: #303133; }
 .summary-card .stat-label { font-size: 14px; color: #909399; margin-top: 8px; }
 .summary-card.pending .stat-value { color: #E6A23C; }
 .summary-card.progress .stat-value { color: #409EFF; }
 .summary-card.claimable .stat-value { color: #67C23A; }
-.task-pools { margin-top: 20px; }
+.task-pools { row-gap: var(--ui-section-gap); margin-top: var(--ui-section-gap); }
 .card-header { display: flex; justify-content: space-between; align-items: center; }
 </style>

@@ -3,7 +3,7 @@
     <el-card>
       <div class="filter-section">
         <el-row :gutter="20">
-          <el-col :span="5">
+          <el-col :xs="24" :sm="12" :md="7" :lg="5">
             <el-input
               v-model="filters.search"
               placeholder="搜索施工单号、产品名称、客户"
@@ -16,7 +16,7 @@
               </template>
             </el-input>
           </el-col>
-          <el-col :span="3">
+          <el-col :xs="24" :sm="12" :md="5" :lg="3">
             <el-select
               v-model="filters.status"
               placeholder="状态"
@@ -32,7 +32,7 @@
               />
             </el-select>
           </el-col>
-          <el-col :span="3">
+          <el-col :xs="24" :sm="12" :md="5" :lg="3">
             <el-select
               v-model="filters.priority"
               placeholder="优先级"
@@ -50,7 +50,7 @@
               </el-option>
             </el-select>
           </el-col>
-          <el-col v-if="isSalesperson" :span="3">
+          <el-col v-if="isSalesperson" :xs="24" :sm="12" :md="5" :lg="3">
             <el-select
               v-model="filters.approval_status"
               placeholder="审核状态"
@@ -68,7 +68,7 @@
               </el-option>
             </el-select>
           </el-col>
-          <el-col :span="isSalesperson ? 10 : 10" style="text-align: right;">
+          <el-col :xs="24" :sm="24" :md="isSalesperson ? 24 : 7" :lg="10" class="filter-actions">
             <el-button
               :icon="RefreshRight"
               circle
@@ -80,7 +80,6 @@
               type="success"
               :icon="Download"
               :loading="exporting"
-              style="margin-left: 10px;"
               @click="handleExport"
             >
               导出Excel
@@ -88,7 +87,6 @@
             <el-button
               type="primary"
               :icon="Plus"
-              style="margin-left: 10px;"
               @click="handleCreate"
             >
               新建施工单
@@ -103,64 +101,65 @@
         :rows="5"
         :columns="11"
         :column-widths="['18%', '20%', '12%', '12%', '20%', '12%', '12%', '10%', '10%', '10%', '30%']"
-        style="margin-top: 20px;"
+        class="workorder-skeleton"
       />
 
-      <el-table
-        v-else
-        v-loading="loading && tableData.length > 0"
-        :data="tableData"
-        style="width: 100%; margin-top: 20px;"
-        @row-click="handleRowClick"
-      >
-        <el-table-column prop="order_number" label="施工单号" width="150" fixed />
-        <el-table-column prop="customer_name" label="客户" width="150" />
-        <el-table-column prop="salesperson_name" label="业务员" width="100">
-          <template #default="scope">{{ scope.row.salesperson_name || '-' }}</template>
-        </el-table-column>
-        <el-table-column prop="product_name" label="产品名称" min-width="200" />
-        <el-table-column prop="quantity" label="生产数量" width="120" align="right">
-          <template #default="scope">
-            {{ (scope.row.production_quantity || 0) + (scope.row.defective_quantity || 0) }} 车
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="100">
-          <template #default="scope">
-            <span :class="'status-badge status-' + scope.row.status">{{ scope.row.status_display }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="优先级" width="100">
-          <template #default="scope">
-            <span :class="'status-badge priority-' + scope.row.priority">{{ scope.row.priority_display }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="进度" width="150">
-          <template #default="scope">
-            <el-progress
-              :percentage="scope.row.progress_percentage"
-              :color="scope.row.progress_percentage === 100 ? '#67C23A' : '#409EFF'"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column prop="order_date" label="下单日期" width="120">
-          <template #default="scope">{{ formatDate(scope.row.order_date) }}</template>
-        </el-table-column>
-        <el-table-column prop="delivery_date" label="交货日期" width="120">
-          <template #default="scope">
-            <span :style="getDeliveryDateStyle(scope.row.delivery_date, scope.row.status)">
-              {{ formatDate(scope.row.delivery_date) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="manager_name" label="制表人" width="100" />
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="scope">
-            <el-button type="text" size="small" @click.stop="handleView(scope.row)">查看</el-button>
-            <el-button v-if="canEdit" type="text" size="small" @click.stop="handleEdit(scope.row)">编辑</el-button>
-            <el-button v-if="canDelete" type="text" size="small" style="color: #F56C6C;" @click.stop="handleDelete(scope.row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div v-else class="table-scroll">
+        <el-table
+          v-loading="loading && tableData.length > 0"
+          :data="tableData"
+          class="workorder-table"
+          @row-click="handleRowClick"
+        >
+          <el-table-column prop="order_number" label="施工单号" width="150" fixed />
+          <el-table-column prop="customer_name" label="客户" width="150" />
+          <el-table-column prop="salesperson_name" label="业务员" width="100">
+            <template #default="scope">{{ scope.row.salesperson_name || '-' }}</template>
+          </el-table-column>
+          <el-table-column prop="product_name" label="产品名称" min-width="200" />
+          <el-table-column prop="quantity" label="生产数量" width="120" align="right">
+            <template #default="scope">
+              {{ (scope.row.production_quantity || 0) + (scope.row.defective_quantity || 0) }} 车
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="100">
+            <template #default="scope">
+              <span :class="'status-badge status-' + scope.row.status">{{ scope.row.status_display }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="优先级" width="100">
+            <template #default="scope">
+              <span :class="'status-badge priority-' + scope.row.priority">{{ scope.row.priority_display }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="进度" width="150">
+            <template #default="scope">
+              <el-progress
+                :percentage="scope.row.progress_percentage"
+                :color="scope.row.progress_percentage === 100 ? '#67C23A' : '#409EFF'"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column prop="order_date" label="下单日期" width="120">
+            <template #default="scope">{{ formatDate(scope.row.order_date) }}</template>
+          </el-table-column>
+          <el-table-column prop="delivery_date" label="交货日期" width="120">
+            <template #default="scope">
+              <span :style="getDeliveryDateStyle(scope.row.delivery_date, scope.row.status)">
+                {{ formatDate(scope.row.delivery_date) }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="manager_name" label="制表人" width="100" />
+          <el-table-column label="操作" width="180" fixed="right">
+            <template #default="scope">
+              <el-button type="text" size="small" @click.stop="handleView(scope.row)">查看</el-button>
+              <el-button v-if="canEdit" type="text" size="small" @click.stop="handleEdit(scope.row)">编辑</el-button>
+              <el-button v-if="canDelete" type="text" size="small" style="color: #F56C6C;" @click.stop="handleDelete(scope.row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <el-pagination
         v-if="total > 0"
@@ -392,16 +391,40 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.workorder-list {
-  padding: 20px;
-}
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
 
 .filter-section {
-  margin-bottom: 20px;
+  margin-bottom: var(--ui-section-gap);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ui-control-gap);
+}
+
+.workorder-skeleton,
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.workorder-table {
+  width: 100%;
 }
 
 .el-table {
   cursor: pointer;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .filter-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>

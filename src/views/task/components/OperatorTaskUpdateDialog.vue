@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" @close="handleClose">
+  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--ui-dialog-width-sm)" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="任务内容"><div class="task-info">{{ task?.work_content }}</div></el-form-item>
       <el-form-item label="当前进度">

@@ -3,9 +3,9 @@
     <el-card>
       <div class="header-section">
         <el-input
+          class="management-search-control"
           v-model="searchText"
           placeholder="搜索客户名称、联系人、电话"
-          style="width: 300px;"
           clearable
           @input="handleSearchDebounced"
           @clear="handleSearch"
@@ -34,49 +34,53 @@
         </el-button>
       </el-empty>
 
-      <el-table
+      <div
         v-else
+        class="table-scroll"
+      >
+        <el-table
         v-loading="loading"
         :data="tableData"
-        style="width: 100%; margin-top: 20px;"
-      >
-        <el-table-column prop="name" label="客户名称" width="200" />
-        <el-table-column prop="contact_person" label="联系人" width="120" />
-        <el-table-column prop="phone" label="联系电话" width="150" />
-        <el-table-column prop="email" label="邮箱" width="200" />
-        <el-table-column prop="salesperson_name" label="业务员" width="120">
-          <template #default="scope">
-            {{ scope.row.salesperson_name || '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="address" label="地址" min-width="200" />
-        <el-table-column prop="created_at" label="创建时间" width="180">
-          <template #default="scope">
-            {{ formatDateTime(scope.row.created_at) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="scope">
-            <el-button
-              v-if="canEdit"
-              type="text"
-              size="small"
-              @click="handleEdit(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="canDelete"
-              type="text"
-              size="small"
-              style="color: #F56C6C;"
-              @click="handleDelete(scope.row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          class="data-table"
+        >
+          <el-table-column prop="name" label="客户名称" width="200" />
+          <el-table-column prop="contact_person" label="联系人" width="120" />
+          <el-table-column prop="phone" label="联系电话" width="150" />
+          <el-table-column prop="email" label="邮箱" width="200" />
+          <el-table-column prop="salesperson_name" label="业务员" width="120">
+            <template #default="scope">
+              {{ scope.row.salesperson_name || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="address" label="地址" min-width="200" />
+          <el-table-column prop="created_at" label="创建时间" width="180">
+            <template #default="scope">
+              {{ formatDateTime(scope.row.created_at) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="150" fixed="right">
+            <template #default="scope">
+              <el-button
+                v-if="canEdit"
+                type="text"
+                size="small"
+                @click="handleEdit(scope.row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="canDelete"
+                type="text"
+                size="small"
+                style="color: #F56C6C;"
+                @click="handleDelete(scope.row)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <el-pagination
         v-if="total > 0"
@@ -92,7 +96,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="formTitle"
-      width="600px"
+      width="var(--ui-dialog-width-md)"
       @close="resetForm"
     >
       <el-form
@@ -162,7 +166,8 @@
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { customerAPI, authAPI } from '@/api/modules'
+import { authAPI } from '@/api/modules'
+import { customerAPI } from '@/api/modules/customer'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import unwrapApiResponse from '@/utils/apiResponse'
@@ -331,14 +336,43 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .customer-list {
-  padding: 20px;
+  padding: var(--ui-page-padding);
 }
 
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
+}
+
+.management-search-control {
+  width: min(100%, 320px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-search-control,
+  .header-section .el-button {
+    width: 100%;
+  }
 }
 </style>
