@@ -20,7 +20,7 @@
       :item-size="itemSize"
       key-field="id"
       :buffer="buffer"
-      v-slot="{ item, index }"
+      #default="{ item, index }"
     >
       <div
         class="virtual-list-item"
