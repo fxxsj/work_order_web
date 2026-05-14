@@ -1,7 +1,7 @@
 <template>
   <div class="component-error">
     <el-icon class="error-icon">
-      <i class="el-icon-warning-outline"></i>
+      <Warning />
     </el-icon>
     <p class="error-text">
       {{ text }}
@@ -17,26 +17,26 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ComponentError',
-  props: {
-    text: {
-      type: String,
-      default: '组件加载失败'
-    },
-    showRetry: {
-      type: Boolean,
-      default: true
-    }
+<script setup>
+import { Warning } from '@element-plus/icons-vue'
+
+const props = defineProps({
+  text: {
+    type: String,
+    default: '组件加载失败'
   },
-  methods: {
-    handleRetry() {
-      this.$emit('retry')
-      // 重新加载页面
-      location.reload()
-    }
+  showRetry: {
+    type: Boolean,
+    default: true
   }
+})
+
+const emit = defineEmits(['retry'])
+
+const handleRetry = () => {
+  emit('retry')
+  // 重新加载页面
+  location.reload()
 }
 </script>
 
@@ -57,7 +57,7 @@ export default {
 }
 
 .error-text {
-  margin: 0 0 16px 0;
+  margin: 0 0 16px;
   font-size: 14px;
   color: #606266;
 }

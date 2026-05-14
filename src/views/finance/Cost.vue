@@ -6,7 +6,7 @@
       <div class="header-section">
         <div class="action-group">
           <el-button :loading="loading" :icon="RefreshRight" @click="loadData">刷新</el-button>
-          <el-button icon="el-icon-data-analysis" type="primary" @click="handleStats">成本统计</el-button>
+          <el-button :icon="DataAnalysis" type="primary" @click="handleStats">成本统计</el-button>
         </div>
       </div>
 
@@ -102,6 +102,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { RefreshRight, DataAnalysis } from '@element-plus/icons-vue'
 import { productionCostAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'

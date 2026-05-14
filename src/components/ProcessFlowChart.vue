@@ -29,14 +29,12 @@
           @click="handleProcessClick(process)"
         >
           <div class="node-icon">
-            <i
-              :class="{
-                'el-icon-time': process.status === 'pending',
-                'el-icon-loading': process.status === 'in_progress',
-                'el-icon-circle-check': process.status === 'completed',
-                'el-icon-remove': process.status === 'skipped'
-              }"
-            ></i>
+            <el-icon>
+              <Clock v-if="process.status === 'pending'" />
+              <Loading v-else-if="process.status === 'in_progress'" />
+              <CircleCheck v-else-if="process.status === 'completed'" />
+              <CircleClose v-else />
+            </el-icon>
           </div>
           <div class="node-content">
             <div class="node-name">
@@ -45,103 +43,69 @@
             <div class="node-status">
               <el-tag
                 :type="getStatusTagType(process.status)"
-                size="mini"
+                size="small"
               >
                 {{ getStatusDisplay(process.status) }}
               </el-tag>
             </div>
-            <div v-if="process.tasks && process.tasks.length > 0" class="node-info">
-              <span class="task-count">
-                任务: {{ getCompletedTaskCount(process.tasks) }}/{{ process.tasks.length }}
-              </span>
-            </div>
-            <div v-if="process.status === 'in_progress'" class="node-progress">
-              <el-progress
-                :percentage="getProcessProgress(process)"
-                :stroke-width="4"
-                :show-text="false"
-              />
+            <div v-if="process.department_name" class="node-department">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span>{{ process.department_name }}</span>
             </div>
           </div>
-        </div>
-
-        <!-- 并行标识 -->
-        <div
-          v-if="isParallelProcess(process) && index < sortedProcesses.length - 1"
-          class="parallel-indicator"
-        >
-          <span>可并行</span>
+          <div class="node-arrow" v-if="index < sortedProcesses.length - 1">
+            <el-icon><ArrowRight /></el-icon>
+          </div>
         </div>
       </div>
     </div>
-    <el-empty v-else description="暂无工序信息" />
+    <el-empty v-else description="暂无工序数据" />
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ProcessFlowChart',
-  props: {
-    processes: {
-      type: Array,
-      default: () => []
-    }
-  },
-  computed: {
-    sortedProcesses() {
-      if (!this.processes || this.processes.length === 0) {
-        return []
-      }
-      // 按 sequence 排序
-      return [...this.processes].sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
-    }
-  },
-  methods: {
-    isProcessCompleted(process) {
-      return process.status === 'completed'
-    },
-    isProcessActive(process) {
-      return process.status === 'in_progress'
-    },
-    isParallelProcess(process) {
-      // 检查工序是否可并行（基于 process.is_parallel 或 process.code）
-      return process.is_parallel || false
-    },
-    getStatusTagType(status) {
-      const typeMap = {
-        pending: 'info',
-        in_progress: 'warning',
-        completed: 'success',
-        skipped: 'info'
-      }
-      return typeMap[status] || 'info'
-    },
-    getStatusDisplay(status) {
-      const displayMap = {
-        pending: '待开始',
-        in_progress: '进行中',
-        completed: '已完成',
-        skipped: '已跳过'
-      }
-      return displayMap[status] || status
-    },
-    getCompletedTaskCount(tasks) {
-      if (!tasks || tasks.length === 0) {
-        return 0
-      }
-      return tasks.filter(task => task.status === 'completed').length
-    },
-    getProcessProgress(process) {
-      if (!process.tasks || process.tasks.length === 0) {
-        return 0
-      }
-      const completedCount = this.getCompletedTaskCount(process.tasks)
-      return Math.round((completedCount / process.tasks.length) * 100)
-    },
-    handleProcessClick(process) {
-      this.$emit('process-click', process)
-    }
+<script setup>
+import { computed } from 'vue'
+import { Clock, Loading, CircleCheck, CircleClose, OfficeBuilding, ArrowRight } from '@element-plus/icons-vue'
+
+const props = defineProps({
+  processes: {
+    type: Array,
+    default: () => []
   }
+})
+
+const emit = defineEmits(['process-click'])
+
+const sortedProcesses = computed(() => {
+  return [...props.processes].sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
+})
+
+const isProcessCompleted = (process) => process.status === 'completed'
+const isProcessActive = (process) => process.status === 'in_progress'
+const isParallelProcess = (process) => process.is_parallel || false
+
+const handleProcessClick = (process) => {
+  emit('process-click', process)
+}
+
+const getStatusTagType = (status) => {
+  const typeMap = {
+    pending: 'info',
+    in_progress: 'warning',
+    completed: 'success',
+    skipped: 'danger'
+  }
+  return typeMap[status] || 'info'
+}
+
+const getStatusDisplay = (status) => {
+  const displayMap = {
+    pending: '待开始',
+    in_progress: '进行中',
+    completed: '已完成',
+    skipped: '已跳过'
+  }
+  return displayMap[status] || status
 }
 </script>
 
@@ -152,26 +116,20 @@ export default {
 
 .flow-container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
+  flex-wrap: wrap;
+  gap: 0;
 }
 
 .flow-item {
-  position: relative;
-  width: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  margin-bottom: 20px;
 }
 
 .flow-connector {
-  width: 2px;
-  height: 30px;
-  background-color: #e4e7ed;
-  margin: 0 auto;
-  transition: all 0.3s;
+  width: 40px;
+  height: 2px;
+  background-color: #dcdfe6;
+  margin: 0 10px;
 }
 
 .flow-connector.connector-completed {
@@ -179,156 +137,92 @@ export default {
 }
 
 .flow-connector.connector-active {
-  background: linear-gradient(to bottom, #67c23a 0%, #409eff 100%);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
+  background-color: #e6a23c;
 }
 
 .process-node {
   display: flex;
   align-items: center;
   padding: 15px 20px;
-  background: #fff;
-  border: 2px solid #e4e7ed;
+  border: 2px solid #dcdfe6;
   border-radius: 8px;
-  min-width: 200px;
-  max-width: 300px;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
 }
 
 .process-node:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.process-node.node-pending {
-  border-color: #c0c4cc;
-  background: #f5f7fa;
-}
-
-.process-node.node-in-progress {
-  border-color: #409eff;
-  background: #ecf5ff;
-  animation: glow 2s infinite;
-}
-
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 2px 4px rgba(64, 158, 255, 0.2);
-  }
-  50% {
-    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
-  }
-}
-
-.process-node.node-completed {
-  border-color: #67c23a;
-  background: #f0f9ff;
-}
-
-.process-node.node-skipped {
+.node-pending {
   border-color: #909399;
-  background: #f5f7fa;
-  opacity: 0.6;
 }
 
-.process-node.node-parallel {
+.node-in-progress {
+  border-color: #e6a23c;
+  background-color: #fdf6ec;
+}
+
+.node-completed {
+  border-color: #67c23a;
+  background-color: #f0f9eb;
+}
+
+.node-skipped {
+  border-color: #f56c6c;
+  background-color: #fef0f0;
+}
+
+.node-parallel {
   border-style: dashed;
 }
 
 .node-icon {
   font-size: 24px;
-  margin-right: 12px;
-  color: #909399;
+  margin-right: 15px;
 }
 
 .node-pending .node-icon {
-  color: #c0c4cc;
+  color: #909399;
 }
 
 .node-in-progress .node-icon {
-  color: #409eff;
-  animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  color: #e6a23c;
 }
 
 .node-completed .node-icon {
   color: #67c23a;
 }
 
+.node-skipped .node-icon {
+  color: #f56c6c;
+}
+
 .node-content {
   flex: 1;
-  min-width: 0;
 }
 
 .node-name {
-  font-weight: bold;
+  font-weight: 500;
   font-size: 14px;
-  margin-bottom: 6px;
-  color: #303133;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  margin-bottom: 5px;
 }
 
 .node-status {
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
-.node-info {
+.node-department {
   font-size: 12px;
   color: #909399;
-  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.node-progress {
-  margin-top: 8px;
-}
-
-.parallel-indicator {
-  position: absolute;
-  right: -80px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 12px;
-  color: #909399;
-  background: #f5f7fa;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px dashed #dcdfe6;
-}
-
-@media (max-width: 768px) {
-  .process-node {
-    min-width: 150px;
-    max-width: 200px;
-    padding: 12px 15px;
-  }
-
-  .parallel-indicator {
-    position: static;
-    transform: none;
-    margin-top: 8px;
-    display: inline-block;
-  }
+.node-arrow {
+  margin-left: 15px;
+  color: #c0c4cc;
 }
 </style>
-

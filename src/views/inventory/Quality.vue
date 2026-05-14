@@ -61,9 +61,9 @@
       </el-empty>
     </el-card>
 
-    <QualityDetailDialog :visible.sync="detailDialogVisible" :data="currentQuality" />
-    <QualityInspectDialog :visible.sync="inspectDialogVisible" :quality="currentQuality" :loading="inspecting" @confirm="handleConfirmInspect" />
-    <QualityFormDialog :visible.sync="formDialogVisible" :is-edit="false" :submitting="submitting" :form="form" :product-list="productList" @submit="handleSubmit" />
+    <QualityDetailDialog v-model:visible="detailDialogVisible" :data="currentQuality" />
+    <QualityInspectDialog v-model:visible="inspectDialogVisible" :quality="currentQuality" :loading="inspecting" @confirm="handleConfirmInspect" />
+    <QualityFormDialog v-model:visible="formDialogVisible" :is-edit="false" :submitting="submitting" :form="form" :product-list="productList" @submit="handleSubmit" />
   </div>
 </template>
 

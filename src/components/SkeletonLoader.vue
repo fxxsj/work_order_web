@@ -37,36 +37,23 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'SkeletonLoader',
-  props: {
-    type: {
-      type: String,
-      default: 'list',
-      validator: value => ['table', 'card', 'list'].includes(value)
-    },
-    rows: {
-      type: Number,
-      default: 5
-    },
-    columns: {
-      type: Number,
-      default: 5
-    },
-    columnWidths: {
-      type: Array,
-      default: () => []
-    }
+<script setup>
+const props = defineProps({
+  type: {
+    type: String,
+    default: 'list',
+    validator: value => ['table', 'card', 'list'].includes(value)
   },
-  methods: {
-    getColumnWidth(index) {
-      if (this.columnWidths && this.columnWidths[index - 1]) {
-        return this.columnWidths[index - 1]
-      }
-      return '100%'
-    }
+  rows: { type: Number, default: 5 },
+  columns: { type: Number, default: 4 },
+  columnWidths: { type: Array, default: () => [] }
+})
+
+const getColumnWidth = (index) => {
+  if (props.columnWidths && props.columnWidths[index - 1]) {
+    return props.columnWidths[index - 1]
   }
+  return `${100 / props.columns}%`
 }
 </script>
 
@@ -74,93 +61,44 @@ export default {
 .skeleton-loader {
   padding: 20px;
 }
-
-.skeleton-table {
-  width: 100%;
-}
-
-.skeleton-row {
-  display: flex;
-  margin-bottom: 12px;
-  gap: 12px;
-}
-
-.skeleton-cell {
-  height: 20px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s ease-in-out infinite;
-  border-radius: 4px;
-  flex: 1;
-}
-
-.skeleton-card {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.skeleton-card-item {
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  padding: 20px;
-}
-
-.skeleton-card-header {
-  height: 24px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s ease-in-out infinite;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  width: 60%;
-}
-
-.skeleton-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.skeleton-list {
-  width: 100%;
-}
-
+.skeleton-row,
+.skeleton-card-item,
 .skeleton-list-item {
   display: flex;
-  align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid #e4e7ed;
+  margin-bottom: 16px;
+  animation: skeleton-loading 1.5s infinite;
 }
-
+.skeleton-cell,
+.skeleton-card-header,
+.skeleton-line,
+.skeleton-avatar {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+}
+.skeleton-cell {
+  height: 20px;
+  margin-right: 16px;
+}
+.skeleton-card-header {
+  height: 120px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+.skeleton-line {
+  height: 16px;
+  margin-bottom: 8px;
+}
 .skeleton-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s ease-in-out infinite;
   margin-right: 16px;
-  flex-shrink: 0;
 }
-
 .skeleton-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
-
-.skeleton-line {
-  height: 16px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s ease-in-out infinite;
-  border-radius: 4px;
-}
-
-@keyframes loading {
+@keyframes skeleton-loading {
   0% {
     background-position: 200% 0;
   }
@@ -169,4 +107,3 @@ export default {
   }
 }
 </style>
-

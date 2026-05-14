@@ -38,7 +38,7 @@
         <el-table-column label="交货日期" width="120">
           <template #default="scope">
             <span :class="{ 'text-danger': isOverdue(scope.row) }">{{ scope.row.delivery_date }}</span>
-            <el-tooltip v-if="isOverdue(scope.row)" content="已逾期" placement="top"><i class="el-icon-warning" style="color: #f56c6c;"></i></el-tooltip>
+            <el-tooltip v-if="isOverdue(scope.row)" content="已逾期" placement="top"><el-icon style="color: #f56c6c;"><Warning /></el-icon></el-tooltip>
           </template>
         </el-table-column>
         <el-table-column prop="total_amount" label="订单金额" width="120" align="right">
@@ -78,7 +78,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Search, RefreshRight, Edit, View, Operation, Upload, Check, Close } from '@element-plus/icons-vue'
+import { Plus, Search, RefreshRight, Edit, View, Operation, Upload, Check, Close, Warning } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'

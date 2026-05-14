@@ -1,7 +1,7 @@
 <template>
   <div class="component-loading">
     <el-icon class="is-loading">
-      <i class="el-icon-loading"></i>
+      <Loading />
     </el-icon>
     <p class="loading-text">
       {{ text }}
@@ -9,16 +9,15 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ComponentLoading',
-  props: {
-    text: {
-      type: String,
-      default: '加载中...'
-    }
+<script setup>
+import { Loading } from '@element-plus/icons-vue'
+
+const props = defineProps({
+  text: {
+    type: String,
+    default: '加载中...'
   }
-}
+})
 </script>
 
 <style scoped>

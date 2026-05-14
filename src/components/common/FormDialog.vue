@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     :title="title"
     :width="width"
     :close-on-click-modal="false"
@@ -28,96 +28,63 @@
   </el-dialog>
 </template>
 
-<script>
-export default {
-  name: 'FormDialog',
-  props: {
-    // 对话框标题
-    title: {
-      type: String,
-      required: true
-    },
-    // 对话框宽度
-    width: {
-      type: String,
-      default: '600px'
-    },
-    // 表单数据
-    formData: {
-      type: Object,
-      default: () => ({})
-    },
-    // 验证规则
-    rules: {
-      type: Object,
-      default: () => ({})
-    },
-    // 提交按钮文本
-    submitText: {
-      type: String,
-      default: '确定'
-    },
-    // 标签宽度
-    labelWidth: {
-      type: String,
-      default: '100px'
-    },
-    // 标签位置
-    labelPosition: {
-      type: String,
-      default: 'right'
-    },
-    // 加载状态
-    loading: {
-      type: Boolean,
-      default: false
-    }
-  },
-  data() {
-    return {
-      dialogVisible: false
-    }
-  },
-  methods: {
-    // 打开对话框
-    open() {
-      this.dialogVisible = true
-      this.$nextTick(() => {
-        this.$emit('open')
-      })
-    },
-    // 关闭对话框
-    close() {
-      this.dialogVisible = false
-      this.$emit('close')
-    },
-    // 处理关闭
-    handleClose() {
-      this.dialogVisible = false
-      this.$emit('cancel')
-    },
-    // 提交表单
-    handleSubmit() {
-      this.$emit('submit')
-    },
-    // 验证表单
-    validate(callback) {
-      this.$refs.formRef.validate((valid) => {
-        if (callback) {
-          callback(valid)
-        }
-      })
-    },
-    // 清除验证
-    clearValidate() {
-      this.$refs.formRef?.clearValidate()
-    },
-    // 重置表单
-    resetFields() {
-      this.$refs.formRef?.resetFields()
-    }
-  }
+<script setup>
+import { ref, defineExpose } from 'vue'
+
+const props = defineProps({
+  title: { type: String, required: true },
+  width: { type: String, default: '600px' },
+  formData: { type: Object, default: () => ({}) },
+  rules: { type: Object, default: () => ({}) },
+  submitText: { type: String, default: '确定' },
+  labelWidth: { type: String, default: '100px' },
+  labelPosition: { type: String, default: 'right' },
+  loading: { type: Boolean, default: false }
+})
+
+const emit = defineEmits(['open', 'close', 'cancel', 'submit'])
+
+const dialogVisible = ref(false)
+const formRef = ref(null)
+
+const open = () => {
+  dialogVisible.value = true
+  emit('open')
 }
+
+const close = () => {
+  dialogVisible.value = false
+  emit('close')
+}
+
+const handleClose = () => {
+  dialogVisible.value = false
+  emit('cancel')
+}
+
+const handleSubmit = () => {
+  emit('submit')
+}
+
+const validate = async () => {
+  return formRef.value?.validate()
+}
+
+const clearValidate = () => {
+  formRef.value?.clearValidate()
+}
+
+const resetFields = () => {
+  formRef.value?.resetFields()
+}
+
+defineExpose({
+  open,
+  close,
+  validate,
+  clearValidate,
+  resetFields
+})
 </script>
 
 <style scoped>

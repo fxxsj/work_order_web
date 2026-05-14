@@ -13,166 +13,166 @@
         router
       >
         <el-menu-item index="/dashboard">
-          <i class="el-icon-s-home"></i>
+          <el-icon><HomeFilled /></el-icon>
           <span>工作台</span>
         </el-menu-item>
         <el-menu-item index="/workorders">
-          <i class="el-icon-document"></i>
+          <el-icon><Document /></el-icon>
           <span>施工单</span>
         </el-menu-item>
 
-        <el-submenu index="/tasks">
+        <el-sub-menu index="/tasks">
           <template #title>
-            <i class="el-icon-s-order"></i>
+            <el-icon><List /></el-icon>
             <span>任务管理</span>
           </template>
           <el-menu-item index="/tasks">
-            <i class="el-icon-tickets"></i>
+            <el-icon><Tickets /></el-icon>
             <span>任务列表</span>
           </el-menu-item>
           <el-menu-item index="/tasks/board">
-            <i class="el-icon-s-grid"></i>
+            <el-icon><Grid /></el-icon>
             <span>部门任务看板</span>
           </el-menu-item>
           <el-menu-item index="/tasks/stats">
-            <i class="el-icon-s-data"></i>
+            <el-icon><DataAnalysis /></el-icon>
             <span>协作统计</span>
           </el-menu-item>
           <el-menu-item index="/tasks/assignment-history">
-            <i class="el-icon-time"></i>
+            <el-icon><Clock /></el-icon>
             <span>分派历史</span>
           </el-menu-item>
-        </el-submenu>
+        </el-sub-menu>
 
-        <el-submenu v-if="canViewProduct || canViewMaterial || canViewProductGroup" index="/product-material">
+        <el-sub-menu v-if="canViewProduct || canViewMaterial || canViewProductGroup" index="/product-material">
           <template #title>
-            <i class="el-icon-shopping-bag-2"></i>
+            <el-icon><ShoppingBag /></el-icon>
             <span>产品物料</span>
           </template>
           <el-menu-item v-if="canViewProduct" index="/products">
-            <i class="el-icon-shopping-bag-1"></i>
+            <el-icon><Goods /></el-icon>
             <span>产品管理</span>
           </el-menu-item>
           <el-menu-item v-if="canViewMaterial" index="/materials">
-            <i class="el-icon-goods"></i>
+            <el-icon><Box /></el-icon>
             <span>物料管理</span>
           </el-menu-item>
           <el-menu-item v-if="canViewProductGroup" index="/product-groups">
-            <i class="el-icon-collection"></i>
+            <el-icon><Collection /></el-icon>
             <span>产品组管理</span>
           </el-menu-item>
-        </el-submenu>
+        </el-sub-menu>
 
-        <el-submenu v-if="canViewArtwork || canViewDie || canViewFoilingPlate || canViewEmbossingPlate" index="/plate-making">
+        <el-sub-menu v-if="canViewArtwork || canViewDie || canViewFoilingPlate || canViewEmbossingPlate" index="/plate-making">
           <template #title>
-            <i class="el-icon-printer"></i>
+            <el-icon><Printer /></el-icon>
             <span>制版管理</span>
           </template>
           <el-menu-item v-if="canViewArtwork" index="/artworks">
-            <i class="el-icon-picture"></i>
+            <el-icon><Picture /></el-icon>
             <span>图稿管理</span>
           </el-menu-item>
           <el-menu-item v-if="canViewDie" index="/dies">
-            <i class="el-icon-scissors"></i>
+            <el-icon><Scissor /></el-icon>
             <span>刀模管理</span>
           </el-menu-item>
           <el-menu-item v-if="canViewFoilingPlate" index="/foiling-plates">
-            <i class="el-icon-edit-outline"></i>
+            <el-icon><EditPen /></el-icon>
             <span>烫金版管理</span>
           </el-menu-item>
           <el-menu-item v-if="canViewEmbossingPlate" index="/embossing-plates">
-            <i class="el-icon-s-grid"></i>
+            <el-icon><Grid /></el-icon>
             <span>压凸版管理</span>
           </el-menu-item>
-        </el-submenu>
+        </el-sub-menu>
 
-        <el-submenu v-if="canViewPurchaseOrder || canViewSalesOrder" index="/purchase">
+        <el-sub-menu v-if="canViewPurchaseOrder || canViewSalesOrder" index="/purchase">
           <template #title>
-            <i class="el-icon-shopping-cart-2"></i>
+            <el-icon><ShoppingCart /></el-icon>
             <span>采购销售</span>
           </template>
           <el-menu-item v-if="canViewPurchaseOrder" index="/purchase-orders">
-            <i class="el-icon-document"></i>
+            <el-icon><Document /></el-icon>
             <span>采购单管理</span>
           </el-menu-item>
           <el-menu-item v-if="canViewSalesOrder" index="/sales-orders">
-            <i class="el-icon-sold-out"></i>
+            <el-icon><SoldOut /></el-icon>
             <span>销售订单</span>
           </el-menu-item>
-        </el-submenu>
+        </el-sub-menu>
 
-        <el-submenu index="/inventory">
+        <el-sub-menu index="/inventory">
           <template #title>
-            <i class="el-icon-box"></i>
+            <el-icon><Box /></el-icon>
             <span>库存管理</span>
           </template>
           <el-menu-item index="/inventory/stocks">
-            <i class="el-icon-goods"></i>
+            <el-icon><Goods /></el-icon>
             <span>成品库存</span>
           </el-menu-item>
           <el-menu-item index="/inventory/delivery">
-            <i class="el-icon-truck"></i>
+            <el-icon><Van /></el-icon>
             <span>发货管理</span>
           </el-menu-item>
           <el-menu-item index="/inventory/quality">
-            <i class="el-icon-circle-check"></i>
+            <el-icon><CircleCheck /></el-icon>
             <span>质量检验</span>
           </el-menu-item>
-        </el-submenu>
+        </el-sub-menu>
 
-        <el-submenu index="/finance">
+        <el-sub-menu index="/finance">
           <template #title>
-            <i class="el-icon-wallet"></i>
+            <el-icon><Wallet /></el-icon>
             <span>财务管理</span>
           </template>
           <el-menu-item index="/finance/invoices">
-            <i class="el-icon-s-ticket"></i>
+            <el-icon><Ticket /></el-icon>
             <span>发票管理</span>
           </el-menu-item>
           <el-menu-item index="/finance/payments">
-            <i class="el-icon-coin"></i>
+            <el-icon><Coin /></el-icon>
             <span>收款管理</span>
           </el-menu-item>
           <el-menu-item index="/finance/costs">
-            <i class="el-icon-pie-chart"></i>
+            <el-icon><PieChart /></el-icon>
             <span>成本核算</span>
           </el-menu-item>
           <el-menu-item index="/finance/statements">
-            <i class="el-icon-s-finance"></i>
+            <el-icon><Money /></el-icon>
             <span>对账管理</span>
           </el-menu-item>
-        </el-submenu>
+        </el-sub-menu>
 
-        <el-submenu v-if="canViewCustomer || canViewSupplier || canViewDepartment || canViewProcess || canViewAuditLog" index="/system">
+        <el-sub-menu v-if="canViewCustomer || canViewSupplier || canViewDepartment || canViewProcess || canViewAuditLog" index="/system">
           <template #title>
-            <i class="el-icon-setting"></i>
+            <el-icon><Setting /></el-icon>
             <span>系统设置</span>
           </template>
           <el-menu-item v-if="canViewCustomer" index="/customers">
-            <i class="el-icon-user"></i>
+            <el-icon><User /></el-icon>
             <span>客户管理</span>
           </el-menu-item>
           <el-menu-item v-if="canViewSupplier" index="/suppliers">
-            <i class="el-icon-s-custom"></i>
+            <el-icon><UserFilled /></el-icon>
             <span>供应商管理</span>
           </el-menu-item>
           <el-menu-item v-if="canViewDepartment" index="/departments">
-            <i class="el-icon-menu"></i>
+            <el-icon><Menu /></el-icon>
             <span>部门管理</span>
           </el-menu-item>
           <el-menu-item v-if="canViewProcess" index="/processes">
-            <i class="el-icon-s-tools"></i>
+            <el-icon><Tools /></el-icon>
             <span>工序管理</span>
           </el-menu-item>
           <el-menu-item index="/tasks/assignment-rules">
-            <i class="el-icon-s-operation"></i>
+            <el-icon><Operation /></el-icon>
             <span>分派规则配置</span>
           </el-menu-item>
           <el-menu-item v-if="canViewAuditLog" index="/audit-logs">
-            <i class="el-icon-document-checked"></i>
+            <el-icon><DocumentChecked /></el-icon>
             <span>审计日志</span>
           </el-menu-item>
-        </el-submenu>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
 
@@ -193,9 +193,9 @@
 
           <el-dropdown @command="handleCommand">
             <span class="user-info">
-              <i class="el-icon-user-solid"></i>
+              <el-icon><UserFilled /></el-icon>
               <span>{{ currentUsername }}</span>
-              <i class="el-icon-arrow-down el-icon--right"></i>
+              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
@@ -225,6 +225,13 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
+import {
+  HomeFilled, Document, List, Tickets, Grid, DataAnalysis, Clock,
+  ShoppingBag, Goods, Box, Collection, Printer, Picture, Scissor, EditPen,
+  ShoppingCart, SoldOut, Van, CircleCheck, Wallet, Ticket, Coin, PieChart,
+  Money, Setting, User, UserFilled, Menu, Tools, Operation, DocumentChecked,
+  ArrowDown
+} from '@element-plus/icons-vue'
 import { authAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
@@ -294,7 +301,6 @@ const handleCommand = (command) => {
       const loading = ElLoading.service({
         lock: true,
         text: '正在退出登录...',
-        spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
 

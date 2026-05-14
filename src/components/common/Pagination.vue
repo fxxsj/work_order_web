@@ -13,52 +13,20 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Pagination',
-  props: {
-    // 当前页
-    currentPage: {
-      type: Number,
-      default: 1
-    },
-    // 每页数量
-    pageSize: {
-      type: Number,
-      default: 20
-    },
-    // 总数
-    total: {
-      type: Number,
-      required: true
-    },
-    // 页码选项
-    pageSizes: {
-      type: Array,
-      default: () => [10, 20, 50, 100]
-    },
-    // 组件布局
-    layout: {
-      type: String,
-      default: 'total, sizes, prev, pager, next, jumper'
-    },
-    // 是否显示背景色
-    background: {
-      type: Boolean,
-      default: true
-    }
-  },
-  methods: {
-    // 处理页码变化
-    handleCurrentChange(page) {
-      this.$emit('current-change', page)
-    },
-    // 处理每页数量变化
-    handleSizeChange(size) {
-      this.$emit('size-change', size)
-    }
-  }
-}
+<script setup>
+const props = defineProps({
+  currentPage: { type: Number, default: 1 },
+  pageSize: { type: Number, default: 20 },
+  total: { type: Number, required: true },
+  pageSizes: { type: Array, default: () => [10, 20, 50, 100] },
+  layout: { type: String, default: 'total, sizes, prev, pager, next, jumper' },
+  background: { type: Boolean, default: true }
+})
+
+const emit = defineEmits(['current-change', 'size-change'])
+
+const handleCurrentChange = (page) => emit('current-change', page)
+const handleSizeChange = (size) => emit('size-change', size)
 </script>
 
 <style scoped>

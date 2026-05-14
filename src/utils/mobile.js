@@ -102,7 +102,7 @@ export const MobileMixin = {
     })
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.resizeCleanup) {
       this.resizeCleanup()
     }

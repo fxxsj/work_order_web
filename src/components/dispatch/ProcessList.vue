@@ -1,10 +1,12 @@
 <template>
   <div class="process-list">
     <el-card class="process-list-card" shadow="hover">
-      <div slot="header" class="card-header">
-        <span class="card-title">工序列表</span>
-        <el-badge :value="processes.length" class="badge" type="primary" />
-      </div>
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">工序列表</span>
+          <el-badge :value="processes.length" class="badge" type="primary" />
+        </div>
+      </template>
 
       <el-empty
         v-if="!loading && processes.length === 0"
@@ -28,7 +30,7 @@
               {{ process.code }}
             </div>
           </div>
-          <i v-if="isSelected(process)" class="el-icon-check selected-icon"></i>
+          <el-icon v-if="isSelected(process)" class="selected-icon"><Check /></el-icon>
         </div>
 
         <el-skeleton
@@ -42,67 +44,43 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ProcessList',
-  props: {
-    // 工序列表
-    processes: {
-      type: Array,
-      default: () => []
-    },
-    // 当前选中的工序
-    selectedProcess: {
-      type: Object,
-      default: null
-    },
-    // 加载状态
-    loading: {
-      type: Boolean,
-      default: false
-    }
-  },
-  computed: {
-    /**
-     * 显示的工序列表（支持搜索过滤）
-     */
-    displayProcesses() {
-      return this.processes
-    }
-  },
-  methods: {
-    /**
-     * 检查工序是否被选中
-     */
-    isSelected(process) {
-      if (!this.selectedProcess) return false
-      return this.selectedProcess.id === process.id
-    },
+<script setup>
+import { computed } from 'vue'
+import { Check } from '@element-plus/icons-vue'
 
-    /**
-     * 处理工序选择
-     */
-    handleSelect(process) {
-      if (this.isSelected(process)) {
-        // 如果已选中，再次点击取消选择
-        this.$emit('select', null)
-      } else {
-        this.$emit('select', process)
-      }
-    }
+const props = defineProps({
+  processes: {
+    type: Array,
+    default: () => []
+  },
+  selectedId: {
+    type: [Number, String],
+    default: null
+  },
+  loading: {
+    type: Boolean,
+    default: false
   }
+})
+
+const emit = defineEmits(['select'])
+
+const displayProcesses = computed(() => props.processes)
+
+const isSelected = (process) => process.id === props.selectedId
+
+const handleSelect = (process) => {
+  emit('select', process)
 }
 </script>
 
 <style scoped>
 .process-list {
-  height: 100%;
+  padding: 20px;
 }
 
 .process-list-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 20px;
 }
 
 .card-header {
@@ -112,38 +90,13 @@ export default {
 }
 
 .card-title {
+  font-weight: 500;
   font-size: 16px;
-  font-weight: bold;
-  color: #303133;
-}
-
-.badge {
-  flex-shrink: 0;
 }
 
 .process-items {
   max-height: 500px;
   overflow-y: auto;
-  padding-right: 4px;
-}
-
-/* 自定义滚动条 */
-.process-items::-webkit-scrollbar {
-  width: 6px;
-}
-
-.process-items::-webkit-scrollbar-track {
-  background: #f5f5f5;
-  border-radius: 3px;
-}
-
-.process-items::-webkit-scrollbar-thumb {
-  background: #dcdfe6;
-  border-radius: 3px;
-}
-
-.process-items::-webkit-scrollbar-thumb:hover {
-  background: #c0c4cc;
 }
 
 .process-item {
@@ -151,51 +104,37 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  margin-bottom: 8px;
-  background: #ffffff;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
+  border-bottom: 1px solid #ebeef5;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s;
 }
 
 .process-item:hover {
-  background: #f5f7fa;
-  border-color: #409eff;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
+  background-color: #f5f7fa;
 }
 
 .process-item.is-selected {
-  background: #ecf5ff;
-  border-color: #409eff;
-  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.15);
+  background-color: #ecf5ff;
+  border-left: 3px solid #409eff;
 }
 
 .process-main {
   flex: 1;
-  min-width: 0;
 }
 
 .process-name {
-  font-size: 14px;
   font-weight: 500;
-  color: #303133;
+  font-size: 14px;
   margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .process-code {
   font-size: 12px;
   color: #909399;
-  font-family: 'Courier New', monospace;
 }
 
 .selected-icon {
-  flex-shrink: 0;
-  font-size: 18px;
   color: #409eff;
-  margin-left: 8px;
+  font-size: 16px;
 }
 </style>

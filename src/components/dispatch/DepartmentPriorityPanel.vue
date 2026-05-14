@@ -1,20 +1,22 @@
 <template>
   <div class="department-priority-panel">
     <el-card class="panel-card" shadow="hover">
-      <div slot="header" class="card-header">
-        <div class="header-content">
-          <span class="card-title">{{ displayTitle }}</span>
-          <el-button
-            v-if="process && allDepartments.length > 0"
-            type="primary"
-            size="small"
-            icon="el-icon-plus"
-            @click="handleAddDepartment"
-          >
-            添加部门
-          </el-button>
+      <template #header>
+        <div class="card-header">
+          <div class="header-content">
+            <span class="card-title">{{ displayTitle }}</span>
+            <el-button
+              v-if="process && allDepartments.length > 0"
+              type="primary"
+              size="small"
+              :icon="Plus"
+              @click="handleAddDepartment"
+            >
+              添加部门
+            </el-button>
+          </div>
         </div>
-      </div>
+      </template>
 
       <el-empty
         v-if="!loading && !process"
@@ -30,7 +32,7 @@
         <el-button
           v-if="process"
           type="primary"
-          icon="el-icon-plus"
+          :icon="Plus"
           @click="handleAddDepartment"
         >
           配置第一个部门
@@ -48,99 +50,71 @@
           @drop="handleDrop(index)"
           @dragend="handleDragEnd"
         >
-          <!-- 优先级徽章 -->
-          <div class="priority-badge">
-            {{ index + 1 }}
-          </div>
-
-          <!-- 拖拽手柄 -->
-          <i class="el-icon-rank drag-handle"></i>
-
-          <!-- 部门信息 -->
-          <div class="dept-info">
-            <div class="dept-name">
-              {{ dept.department_name }}
+          <div class="department-header">
+            <div class="department-info">
+              <span class="department-name">{{ dept.name }}</span>
               <el-tag
-                v-if="isRecommendedDept(dept)"
-                size="mini"
-                type="success"
-                effect="dark"
-                style="margin-left: 8px;"
+                :type="dept.is_active ? 'success' : 'info'"
+                size="small"
               >
-                推荐选择
+                {{ dept.is_active ? '启用' : '禁用' }}
               </el-tag>
             </div>
-            <div class="dept-stats">
-              <span
-                :class="getLoadClass(dept.current_load || 0)"
-                class="load-text"
+            <div class="department-actions">
+              <el-button
+                type="text"
+                size="small"
+                @click="handleToggleActive(dept)"
               >
-                当前负载: {{ dept.current_load || 0 }} 个任务
-              </span>
-              <el-divider direction="vertical" />
-              <span>优先级: {{ dept.priority }}</span>
-            </div>
-            <div class="dept-strategy">
-              <el-tag size="mini" type="info">
-                {{ getStrategyDisplay(dept.operator_selection_strategy) }}
-              </el-tag>
+                {{ dept.is_active ? '禁用' : '启用' }}
+              </el-button>
+              <el-button
+                type="text"
+                size="small"
+                style="color: #f56c6c;"
+                @click="handleDelete(dept)"
+              >
+                删除
+              </el-button>
             </div>
           </div>
-
-          <!-- 操作按钮 -->
-          <div class="dept-actions">
-            <el-switch
-              :disabled="!canEdit"
-              :value="dept.is_active"
-              @change="handleToggleActive(dept)"
-            />
-            <el-button
-              v-if="canEdit"
-              type="text"
-              size="small"
-              icon="el-icon-edit"
-              @click="handleEdit(dept)"
-            />
-            <el-button
-              v-if="canDelete"
-              type="text"
-              size="small"
-              icon="el-icon-delete"
-              style="color: #F56C6C;"
-              @click="handleDelete(dept)"
-            />
+          <div class="department-body">
+            <div class="priority-setting">
+              <span class="setting-label">优先级:</span>
+              <el-input-number
+                v-model="dept.priority"
+                :min="1"
+                :max="100"
+                size="small"
+                @change="handlePriorityChange(dept)"
+              />
+            </div>
+            <div class="capacity-setting">
+              <span class="setting-label">产能:</span>
+              <el-input-number
+                v-model="dept.capacity"
+                :min="1"
+                size="small"
+                @change="handleCapacityChange(dept)"
+              />
+            </div>
           </div>
         </div>
-
-        <el-skeleton
-          v-if="loading"
-          :rows="4"
-          animated
-          style="margin-top: 16px;"
-        />
       </div>
     </el-card>
 
     <!-- 添加部门对话框 -->
     <el-dialog
-      :title="dialogTitle"
-      :visible.sync="dialogVisible"
-      width="600px"
-      @close="resetDialogForm"
+      v-model="dialogVisible"
+      title="添加部门"
+      width="500px"
     >
-      <el-form
-        ref="dialogForm"
-        :model="dialogForm"
-        :rules="dialogRules"
-        label-width="140px"
-      >
-        <el-form-item label="部门" prop="department">
+      <el-form :model="form" label-width="100px">
+        <el-form-item label="部门">
           <el-select
-            v-model="dialogForm.department"
+            v-model="form.department_id"
             placeholder="请选择部门"
-            filterable
             style="width: 100%;"
-            :disabled="isEditMode"
           >
             <el-option
               v-for="dept in availableDepartments"
@@ -150,371 +124,153 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="优先级" prop="priority">
+        <el-form-item label="优先级">
           <el-input-number
-            v-model="dialogForm.priority"
-            :min="0"
+            v-model="form.priority"
+            :min="1"
             :max="100"
             style="width: 100%;"
           />
-          <div style="color: #909399; font-size: 12px; margin-top: 4px;">
-            优先级越高越优先匹配（0-100），也可以通过拖拽调整
-          </div>
         </el-form-item>
-        <el-form-item label="操作员选择策略" prop="operator_selection_strategy">
-          <el-select
-            v-model="dialogForm.operator_selection_strategy"
-            placeholder="请选择策略"
+        <el-form-item label="产能">
+          <el-input-number
+            v-model="form.capacity"
+            :min="1"
             style="width: 100%;"
-          >
-            <el-option
-              label="任务数量最少（工作量均衡）"
-              value="least_tasks"
-            />
-            <el-option
-              label="随机选择"
-              value="random"
-            />
-            <el-option
-              label="轮询分配"
-              value="round_robin"
-            />
-            <el-option
-              label="第一个可用"
-              value="first_available"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="是否启用" prop="is_active">
-          <el-switch
-            v-model="dialogForm.is_active"
-            active-text="启用"
-            inactive-text="禁用"
-          />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="dialogForm.notes"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注（可选）"
           />
         </el-form-item>
       </el-form>
-      <div slot="footer">
-        <el-button @click="dialogVisible = false">
-          取消
-        </el-button>
-        <el-button type="primary" :loading="submitting" @click="handleDialogSubmit">
-          确定
-        </el-button>
-      </div>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleConfirmAdd">确定</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'DepartmentPriorityPanel',
-  props: {
-    // 当前选中的工序
-    process: {
-      type: Object,
-      default: null
-    },
-    // 部门规则列表
-    departments: {
-      type: Array,
-      default: () => []
-    },
-    // 所有可用部门
-    allDepartments: {
-      type: Array,
-      default: () => []
-    },
-    // 加载状态
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    // 权限
-    canEdit: {
-      type: Boolean,
-      default: true
-    },
-    canDelete: {
-      type: Boolean,
-      default: true
-    }
+<script setup>
+import { ref, computed } from 'vue'
+import { Plus } from '@element-plus/icons-vue'
+
+const props = defineProps({
+  process: {
+    type: Object,
+    default: null
   },
-  data() {
-    return {
-      // 本地部门列表（用于拖拽）
-      departmentList: [],
-      // 拖拽相关
-      draggedIndex: null,
-      dragOverIndex: null,
-      // 对话框
-      dialogVisible: false,
-      dialogTitle: '添加部门',
-      isEditMode: false,
-      currentEditId: null,
-      submitting: false,
-      dialogForm: {
-        department: null,
-        priority: 50,
-        operator_selection_strategy: 'least_tasks',
-        is_active: true,
-        notes: ''
-      },
-      dialogRules: {
-        department: [
-          { required: true, message: '请选择部门', trigger: 'change' }
-        ],
-        priority: [
-          { required: true, message: '请输入优先级', trigger: 'blur' }
-        ]
-      }
-    }
+  departmentList: {
+    type: Array,
+    default: () => []
   },
-  computed: {
-    /**
-     * 显示标题
-     */
-    displayTitle() {
-      if (!this.process) return '部门优先级配置'
-      return `${this.process.name} - 部门优先级`
-    },
-
-    /**
-     * 可用部门列表（排除已配置的部门）
-     */
-    availableDepartments() {
-      if (!this.allDepartments.length) return []
-
-      const configuredDeptIds = this.departmentList.map(d => d.department)
-      return this.allDepartments.filter(dept => !configuredDeptIds.includes(dept.id))
-    }
+  allDepartments: {
+    type: Array,
+    default: () => []
   },
-  watch: {
-    departments: {
-      immediate: true,
-      deep: true,
-      handler(val) {
-        this.departmentList = [...val]
-      }
-    }
-  },
-  methods: {
-    /**
-     * 获取策略显示文本
-     */
-    getStrategyDisplay(strategy) {
-      const strategyMap = {
-        least_tasks: '工作量均衡',
-        random: '随机',
-        round_robin: '轮询',
-        first_available: '首个可用'
-      }
-      return strategyMap[strategy] || strategy
-    },
-
-    /**
-     * 获取负载颜色类名
-     */
-    getLoadClass(load) {
-      if (load >= 16) return 'load-high'
-      if (load >= 6) return 'load-medium'
-      return 'load-low'
-    },
-
-    /**
-     * 判断是否为推荐部门
-     * 当同优先级部门中负载最低时推荐
-     */
-    isRecommendedDept(dept) {
-      if (!this.departmentList || this.departmentList.length === 0) {
-        return false
-      }
-
-      // 找到所有相同优先级的部门
-      const samePriorityDepts = this.departmentList.filter(
-        d => d.priority === dept.priority && d.is_active
-      )
-
-      // 如果只有1个相同优先级的部门，不显示推荐
-      if (samePriorityDepts.length <= 1) {
-        return false
-      }
-
-      // 找到负载最低的部门
-      const minLoad = Math.min(...samePriorityDepts.map(d => d.current_load || 0))
-
-      // 当前部门是负载最低的之一
-      return (dept.current_load || 0) === minLoad
-    },
-
-    /**
-     * 拖拽开始
-     */
-    handleDragStart(index, event) {
-      this.draggedIndex = index
-      event.dataTransfer.effectAllowed = 'move'
-      // 设置拖拽图像
-      event.dataTransfer.setData('text/html', event.target)
-    },
-
-    /**
-     * 拖拽经过
-     */
-    handleDragOver(index) {
-      this.dragOverIndex = index
-    },
-
-    /**
-     * 放下
-     */
-    handleDrop(dropIndex) {
-      if (this.draggedIndex === null || this.draggedIndex === dropIndex) {
-        return
-      }
-
-      // 重新排列数组
-      const draggedItem = this.departmentList[this.draggedIndex]
-      const newOrder = [...this.departmentList]
-      newOrder.splice(this.draggedIndex, 1)
-      newOrder.splice(dropIndex, 0, draggedItem)
-
-      // 重新计算优先级
-      const updates = newOrder.map((item, index) => ({
-        id: item.id,
-        priority: 100 - index // 越靠前优先级越高
-      }))
-
-      this.departmentList = newOrder
-      this.$emit('update-priority', updates)
-
-      this.draggedIndex = null
-      this.dragOverIndex = null
-    },
-
-    /**
-     * 拖拽结束
-     */
-    handleDragEnd() {
-      this.draggedIndex = null
-      this.dragOverIndex = null
-    },
-
-    /**
-     * 切换启用状态
-     */
-    handleToggleActive(dept) {
-      this.$emit('toggle-active', {
-        id: dept.id,
-        is_active: !dept.is_active
-      })
-    },
-
-    /**
-     * 添加部门
-     */
-    handleAddDepartment() {
-      this.isEditMode = false
-      this.currentEditId = null
-      this.dialogTitle = '添加部门到工序'
-      this.resetDialogForm()
-      this.dialogVisible = true
-    },
-
-    /**
-     * 编辑部门
-     */
-    handleEdit(dept) {
-      this.isEditMode = true
-      this.currentEditId = dept.id
-      this.dialogTitle = '编辑部门规则'
-      this.dialogForm = {
-        department: dept.department,
-        priority: dept.priority,
-        operator_selection_strategy: dept.operator_selection_strategy,
-        is_active: dept.is_active,
-        notes: dept.notes || ''
-      }
-      this.dialogVisible = true
-    },
-
-    /**
-     * 删除部门
-     */
-    async handleDelete(dept) {
-      this.$emit('remove-department', dept)
-    },
-
-    /**
-     * 提交对话框表单
-     */
-    async handleDialogSubmit() {
-      this.$refs.dialogForm.validate(async (valid) => {
-        if (!valid) {
-          return false
-        }
-
-        this.submitting = true
-        try {
-          const formData = { ...this.dialogForm }
-
-          if (this.isEditMode && this.currentEditId) {
-            // 编辑模式
-            this.$emit('edit-department', {
-              id: this.currentEditId,
-              ...formData
-            })
-          } else {
-            // 添加模式
-            this.$emit('add-department', {
-              process: this.process.id,
-              ...formData
-            })
-          }
-
-          this.dialogVisible = false
-        } finally {
-          this.submitting = false
-        }
-      })
-    },
-
-    /**
-     * 重置对话框表单
-     */
-    resetDialogForm() {
-      this.dialogForm = {
-        department: null,
-        priority: 50,
-        operator_selection_strategy: 'least_tasks',
-        is_active: true,
-        notes: ''
-      }
-      this.$nextTick(() => {
-        if (this.$refs.dialogForm) {
-          this.$refs.dialogForm.clearValidate()
-        }
-      })
-    }
+  loading: {
+    type: Boolean,
+    default: false
   }
+})
+
+const emit = defineEmits([
+  'add-department',
+  'delete-department',
+  'toggle-active',
+  'update-priority',
+  'update-capacity',
+  'reorder'
+])
+
+const dialogVisible = ref(false)
+const form = ref({
+  department_id: null,
+  priority: 50,
+  capacity: 100
+})
+const dragIndex = ref(-1)
+
+const displayTitle = computed(() => {
+  return props.process ? `${props.process.name} - 部门配置` : '部门配置'
+})
+
+const availableDepartments = computed(() => {
+  const usedIds = props.departmentList.map(d => d.id)
+  return props.allDepartments.filter(d => !usedIds.includes(d.id))
+})
+
+const handleAddDepartment = () => {
+  form.value = {
+    department_id: null,
+    priority: 50,
+    capacity: 100
+  }
+  dialogVisible.value = true
+}
+
+const handleConfirmAdd = () => {
+  emit('add-department', {
+    process_id: props.process?.id,
+    ...form.value
+  })
+  dialogVisible.value = false
+}
+
+const handleDelete = (dept) => {
+  emit('delete-department', dept.id)
+}
+
+const handleToggleActive = (dept) => {
+  emit('toggle-active', {
+    id: dept.id,
+    is_active: !dept.is_active
+  })
+}
+
+const handlePriorityChange = (dept) => {
+  emit('update-priority', {
+    id: dept.id,
+    priority: dept.priority
+  })
+}
+
+const handleCapacityChange = (dept) => {
+  emit('update-capacity', {
+    id: dept.id,
+    capacity: dept.capacity
+  })
+}
+
+const handleDragStart = (index, event) => {
+  dragIndex.value = index
+  event.dataTransfer.effectAllowed = 'move'
+}
+
+const handleDragOver = (index) => {
+  if (dragIndex.value === index) return
+}
+
+const handleDrop = (index) => {
+  if (dragIndex.value === -1 || dragIndex.value === index) return
+  
+  const newList = [...props.departmentList]
+  const item = newList.splice(dragIndex.value, 1)[0]
+  newList.splice(index, 0, item)
+  
+  emit('reorder', newList)
+  dragIndex.value = -1
+}
+
+const handleDragEnd = () => {
+  dragIndex.value = -1
 }
 </script>
 
 <style scoped>
 .department-priority-panel {
-  height: 100%;
+  padding: 20px;
 }
 
 .panel-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 20px;
 }
 
 .card-header {
@@ -531,125 +287,65 @@ export default {
 }
 
 .card-title {
+  font-weight: 500;
   font-size: 16px;
-  font-weight: bold;
-  color: #303133;
 }
 
 .department-list {
-  max-height: 500px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-/* 自定义滚动条 */
-.department-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.department-list::-webkit-scrollbar-track {
-  background: #f5f5f5;
-  border-radius: 3px;
-}
-
-.department-list::-webkit-scrollbar-thumb {
-  background: #dcdfe6;
-  border-radius: 3px;
-}
-
-.department-list::-webkit-scrollbar-thumb:hover {
-  background: #c0c4cc;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .department-card {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  margin-bottom: 12px;
-  background: white;
-  border: 1px solid #ebeef5;
+  border: 1px solid #e4e7ed;
   border-radius: 8px;
+  padding: 15px;
+  background-color: #fff;
   cursor: move;
-  transition: all 0.2s ease;
+  transition: all 0.3s;
 }
 
 .department-card:hover {
-  background: #f5f7fa;
-  border-color: #409eff;
-  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.15);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.priority-badge {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
-  color: white;
+.department-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.department-info {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 16px;
-  margin-right: 12px;
-  box-shadow: 0 2px 6px rgba(64, 158, 255, 0.3);
+  gap: 10px;
 }
 
-.drag-handle {
-  flex-shrink: 0;
-  font-size: 18px;
-  color: #909399;
-  margin-right: 12px;
-  cursor: move;
-}
-
-.department-card:hover .drag-handle {
-  color: #409eff;
-}
-
-.dept-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.dept-name {
-  font-size: 15px;
-  font-weight: 500;
-  color: #303133;
-  margin-bottom: 6px;
-}
-
-.dept-stats {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 6px;
-}
-
-.dept-stats .load-text {
+.department-name {
   font-weight: 500;
 }
 
-.dept-stats .load-low {
-  color: #67C23A;
+.department-actions {
+  display: flex;
+  gap: 10px;
 }
 
-.dept-stats .load-medium {
-  color: #E6A23C;
+.department-body {
+  display: flex;
+  gap: 20px;
 }
 
-.dept-stats .load-high {
-  color: #F56C6C;
-}
-
-.dept-strategy {
-  margin-top: 4px;
-}
-
-.dept-actions {
-  flex-shrink: 0;
+.priority-setting,
+.capacity-setting {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: 12px;
+  gap: 10px;
+}
+
+.setting-label {
+  color: #606266;
+  font-size: 14px;
 }
 </style>

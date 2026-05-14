@@ -6,7 +6,7 @@
           <el-card class="stat-card">
             <div class="stat-content">
               <div class="stat-icon" style="background-color: #409EFF;">
-                <i class="el-icon-s-order"></i>
+                <el-icon><Document /></el-icon>
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ stats.total_count || 0 }}</div>
@@ -19,7 +19,7 @@
           <el-card class="stat-card">
             <div class="stat-content">
               <div class="stat-icon" style="background-color: #67C23A;">
-                <i class="el-icon-plus"></i>
+                <el-icon><Plus /></el-icon>
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ stats.action_type_stats?.create || 0 }}</div>
@@ -32,7 +32,7 @@
           <el-card class="stat-card">
             <div class="stat-content">
               <div class="stat-icon" style="background-color: #E6A23C;">
-                <i class="el-icon-edit"></i>
+                <el-icon><Edit /></el-icon>
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ stats.action_type_stats?.update || 0 }}</div>
@@ -45,7 +45,7 @@
           <el-card class="stat-card">
             <div class="stat-content">
               <div class="stat-icon" style="background-color: #F56C6C;">
-                <i class="el-icon-delete"></i>
+                <el-icon><Delete /></el-icon>
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ stats.action_type_stats?.delete || 0 }}</div>
@@ -197,7 +197,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Search, Download, Document } from '@element-plus/icons-vue'
+import { Search, Download, Document, Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { auditLogAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'

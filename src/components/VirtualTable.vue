@@ -50,144 +50,58 @@
         :total="total"
         :page-sizes="pageSizes"
         layout="total, sizes, prev, pager, next, jumper"
-        @current-change="handlePageChange"
         @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
       />
     </div>
   </div>
 </template>
 
-<script>
-import { RecycleScroller } from 'vue-virtual-scroller'
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+<script setup>
+import { computed } from 'vue'
 
-export default {
-  name: 'VirtualTable',
+const props = defineProps({
+  data: { type: Array, default: () => [] },
+  itemSize: { type: Number, default: 50 },
+  buffer: { type: Number, default: 200 },
+  headerRowClassName: { type: String, default: '' },
+  rowClassName: { type: String, default: '' },
+  showPagination: { type: Boolean, default: true },
+  currentPage: { type: Number, default: 1 },
+  pageSize: { type: Number, default: 20 },
+  total: { type: Number, default: 0 },
+  pageSizes: { type: Array, default: () => [10, 20, 50, 100] }
+})
 
-  components: {
-    RecycleScroller
-  },
+const emit = defineEmits(['size-change', 'current-change'])
 
-  props: {
-    data: {
-      type: Array,
-      default: () => []
-    },
-    items: {
-      type: Array,
-      default: () => []
-    },
-    itemSize: {
-      type: Number,
-      default: 50
-    },
-    buffer: {
-      type: Number,
-      default: 200
-    },
-    rowClassName: {
-      type: String,
-      default: ''
-    },
-    headerRowClassName: {
-      type: String,
-      default: ''
-    },
-    showPagination: {
-      type: Boolean,
-      default: true
-    },
-    currentPage: {
-      type: Number,
-      default: 1
-    },
-    pageSize: {
-      type: Number,
-      default: 20
-    },
-    total: {
-      type: Number,
-      default: 0
-    },
-    pageSizes: {
-      type: Array,
-      default: () => [10, 20, 50, 100, 200]
-    }
-  },
+const displayData = computed(() => props.data)
 
-  computed: {
-    displayData() {
-      return this.data.length > 0 ? this.data : this.items
-    }
-  },
-
-  methods: {
-    handlePageChange(page) {
-      this.$emit('page-change', page)
-    },
-
-    handleSizeChange(size) {
-      this.$emit('size-change', size)
-    }
-  }
-}
+const handleSizeChange = (size) => emit('size-change', size)
+const handleCurrentChange = (page) => emit('current-change', page)
 </script>
 
 <style scoped>
 .virtual-table-container {
   width: 100%;
-  position: relative;
 }
-
 .virtual-table-header {
-  width: 100%;
-  overflow-x: auto;
+  margin-bottom: 0;
 }
-
 .virtual-table-body {
-  height: 600px;
+  height: 400px;
   overflow-y: auto;
-  border: 1px solid #ebeef5;
-  border-top: none;
 }
-
 .virtual-table-row {
-  display: flex;
-  align-items: center;
-  padding: 12px 8px;
-  border-bottom: 1px solid #ebeef5;
-  transition: background-color 0.25s ease;
+  margin-bottom: 0;
 }
-
-.virtual-table-row:hover {
-  background-color: #f5f7fa;
-}
-
 .virtual-table-empty {
   padding: 40px 0;
   text-align: center;
 }
-
 .virtual-table-pagination {
   margin-top: 20px;
-  text-align: right;
-}
-
-.virtual-table-body::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.virtual-table-body::-webkit-scrollbar-thumb {
-  background-color: #dcdfe6;
-  border-radius: 4px;
-}
-
-.virtual-table-body::-webkit-scrollbar-thumb:hover {
-  background-color: #c0c4cc;
-}
-
-.virtual-table-body::-webkit-scrollbar-track {
-  background-color: #f5f7fa;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

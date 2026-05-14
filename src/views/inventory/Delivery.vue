@@ -63,9 +63,9 @@
       </el-empty>
     </el-card>
 
-    <DeliveryDetailDialog :visible.sync="detailDialogVisible" :data="currentDelivery" />
-    <DeliveryReceiveDialog :visible.sync="receiveDialogVisible" :delivery="currentDelivery" :loading="receiving" @confirm="handleConfirmReceive" />
-    <DeliveryFormDialog :visible.sync="formDialogVisible" :is-edit="isEdit" :submitting="submitting" :form="form" :customer-list="customerList" :sales-order-list="salesOrderList" :product-list="productList" @submit="handleSubmit" @sales-order-change="handleSalesOrderChange" @customer-change="handleCustomerChange" />
+    <DeliveryDetailDialog v-model:visible="detailDialogVisible" :data="currentDelivery" />
+    <DeliveryReceiveDialog v-model:visible="receiveDialogVisible" :delivery="currentDelivery" :loading="receiving" @confirm="handleConfirmReceive" />
+    <DeliveryFormDialog v-model:visible="formDialogVisible" :is-edit="isEdit" :submitting="submitting" :form="form" :customer-list="customerList" :sales-order-list="salesOrderList" :product-list="productList" @submit="handleSubmit" @sales-order-change="handleSalesOrderChange" @customer-change="handleCustomerChange" />
   </div>
 </template>
 

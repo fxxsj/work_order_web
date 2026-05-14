@@ -14,8 +14,8 @@
         </div>
         <div class="action-group">
           <el-button :loading="loading" :icon="RefreshRight" @click="loadData">刷新</el-button>
-          <el-button icon="el-icon-warning" type="warning" @click="handleLowStock">库存预警</el-button>
-          <el-button icon="el-icon-time" type="danger" @click="handleExpired">过期库存</el-button>
+          <el-button :icon="Warning" type="warning" @click="handleLowStock">库存预警</el-button>
+          <el-button :icon="Timer" type="danger" @click="handleExpired">过期库存</el-button>
         </div>
       </div>
 
@@ -120,7 +120,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { RefreshRight } from '@element-plus/icons-vue'
+import { RefreshRight, Warning, Timer } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { stockAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'

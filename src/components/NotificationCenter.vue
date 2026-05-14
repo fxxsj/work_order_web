@@ -10,17 +10,17 @@
         class="notification-bell"
         :class="{ 'has-error': connectionError }"
         circle
-        icon="el-icon-bell"
+        :icon="Bell"
         @click="toggleDropdown"
       >
-        <i v-if="connectionError" class="el-icon-warning connection-error-icon"></i>
+        <el-icon v-if="connectionError" class="connection-error-icon"><Warning /></el-icon>
       </el-button>
     </el-badge>
 
     <!-- 下拉面板 -->
     <el-popover
       ref="popover"
-      v-model="dropdownVisible"
+      v-model:visible="dropdownVisible"
       placement="bottom-end"
       width="380"
       trigger="manual"
@@ -34,14 +34,14 @@
             <el-button
               v-if="hasUnread"
               type="text"
-              size="mini"
+              size="small"
               @click="markAllAsRead"
             >
               全部已读
             </el-button>
             <el-button
               type="text"
-              size="mini"
+              size="small"
               @click="goToNotificationPage"
             >
               查看全部
@@ -49,385 +49,142 @@
           </div>
         </div>
 
-        <!-- 连接状态指示器 -->
-        <div
-          v-if="connectionStatus !== 'connected'"
-          class="connection-status"
-          :class="connectionStatus"
-        >
-          <i :class="connectionStatusIcon"></i>
-          <span>{{ connectionStatusText }}</span>
-        </div>
-
         <!-- 通知列表 -->
         <div class="notification-list">
-          <template v-if="notifications.length > 0">
-            <div
-              v-for="notification in displayedNotifications"
-              :key="notification.id"
-              class="notification-item"
-              :class="{ 'is-unread': !notification.is_read, 'is-expanded': expandedId === notification.id }"
-              @click="handleNotificationClick(notification)"
-            >
-              <!-- 紧凑视图 -->
-              <div class="notification-compact">
-                <div class="notification-icon">
-                  <i :class="getNotificationIcon(notification)"></i>
-                </div>
-                <div class="notification-content">
-                  <div class="notification-title-text">
-                    {{ notification.data?.title || notification.title }}
-                  </div>
-                  <div class="notification-time">
-                    {{ formatTime(notification.created_at || notification.timestamp) }}
-                  </div>
-                </div>
-                <div v-if="!notification.is_read" class="unread-dot"></div>
-              </div>
-
-              <!-- 展开详情 -->
-              <div v-if="expandedId === notification.id" class="notification-details">
-                <p class="notification-message">
-                  {{ notification.data?.message || notification.message }}
-                </p>
-                <div v-if="notification.data" class="notification-meta">
-                  <span v-if="notification.data.workorder_number" class="meta-item">
-                    <i class="el-icon-document"></i>
-                    {{ notification.data.workorder_number }}
-                  </span>
-                  <span v-if="notification.data.process_name" class="meta-item">
-                    <i class="el-icon-s-operation"></i>
-                    {{ notification.data.process_name }}
-                  </span>
-                </div>
-                <div class="notification-actions-row">
-                  <el-button
-                    v-if="canNavigate(notification)"
-                    type="primary"
-                    size="mini"
-                    @click.stop="navigateToTask(notification)"
-                  >
-                    查看任务
-                  </el-button>
-                  <el-button
-                    type="text"
-                    size="mini"
-                    @click.stop="markAsRead(notification.id)"
-                  >
-                    标记已读
-                  </el-button>
-                  <el-button
-                    type="text"
-                    size="mini"
-                    @click.stop="deleteNotification(notification.id)"
-                  >
-                    删除
-                  </el-button>
-                </div>
-              </div>
+          <div
+            v-for="notification in notifications"
+            :key="notification.id"
+            class="notification-item"
+            :class="{ unread: !notification.is_read }"
+            @click="handleClick(notification)"
+          >
+            <div class="notification-icon">
+              <el-icon :size="20">
+                <component :is="getNotificationIcon(notification.type)" />
+              </el-icon>
             </div>
-          </template>
-          <el-empty v-else description="暂无通知" :image-size="80" />
+            <div class="notification-content">
+              <div class="notification-title-text">{{ notification.title }}</div>
+              <div class="notification-message">{{ notification.message }}</div>
+              <div class="notification-time">{{ formatTime(notification.created_at) }}</div>
+            </div>
+            <div v-if="!notification.is_read" class="notification-unread-dot"></div>
+          </div>
+          
+          <el-empty v-if="notifications.length === 0" description="暂无通知" />
         </div>
       </div>
-
-      <div slot="reference" class="notification-reference"></div>
     </el-popover>
-
-    <!-- 声音设置开关 -->
-    <el-tooltip content="通知声音" placement="bottom">
-      <el-switch
-        v-model="soundEnabled"
-        class="sound-toggle"
-        active-text=""
-        inactive-text=""
-        @change="onSoundToggle"
-      />
-    </el-tooltip>
   </div>
 </template>
 
-<script>
-import { useWebSocket } from '@/composables/useWebSocket'
-import ErrorHandler from '@/utils/errorHandler'
+<script setup>
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { Bell, Warning, InfoFilled, SuccessFilled, CircleCloseFilled } from '@element-plus/icons-vue'
 
-const ws = useWebSocket()
-
-export default {
-  name: 'NotificationCenter',
-
-  data() {
-    return {
-      popover: null,
-      dropdownVisible: false,
-      expandedId: null,
-      soundEnabled: localStorage.getItem('notification_sound_enabled') === 'true',
-      refreshInterval: null,
-      // WebSocket state from useWebSocket
-      isConnected: false,
-      isConnecting: false,
-      hasError: false,
-      connectionState: 'disconnected'
-    }
+const props = defineProps({
+  notifications: {
+    type: Array,
+    default: () => []
   },
-
-  computed: {
-    notifications() {
-      return this.$store.state.notification.notifications
-    },
-    isAuthenticated() {
-      return this.$store.getters['user/isAuthenticated']
-    },
-    hasAuthToken() {
-      return !!this.$store.getters['user/authToken']
-    },
-    unreadCount() {
-      return this.$store.state.notification.unreadCount
-    },
-    hasUnread() {
-      return this.unreadCount > 0
-    },
-    unreadCountDisplay() {
-      return this.unreadCount > 99 ? '99+' : this.unreadCount
-    },
-    loading() {
-      return this.$store.state.notification.loading
-    },
-    connectionStatus() {
-      if (this.hasError) return 'error'
-      if (this.isConnecting) return 'connecting'
-      if (this.isConnected) return 'connected'
-      return 'disconnected'
-    },
-    connectionError() {
-      return this.hasError
-    },
-    connectionStatusIcon() {
-      const iconMap = {
-        connecting: 'el-icon-loading',
-        connected: 'el-icon-circle-check',
-        disconnected: 'el-icon-warning-outline',
-        error: 'el-icon-circle-close'
-      }
-      return iconMap[this.connectionStatus] || 'el-icon-warning-outline'
-    },
-    connectionStatusText() {
-      const textMap = {
-        connecting: '正在连接...',
-        connected: '已连接',
-        disconnected: '连接断开',
-        error: '连接错误'
-      }
-      return textMap[this.connectionStatus] || '未知状态'
-    },
-    displayedNotifications() {
-      return this.notifications.slice(0, 10)
-    }
+  loading: {
+    type: Boolean,
+    default: false
   },
+  connectionError: {
+    type: Boolean,
+    default: false
+  }
+})
 
-  watch: {
-    isAuthenticated() {
-      this.syncAuthState()
-    },
-    hasAuthToken() {
-      this.syncAuthState()
-    },
-    unreadCount(newVal, oldVal) {
-      if (newVal > oldVal) {
-        // 有新通知，仅更新计数，不自动弹出（符合上下文决策）
-      }
-    }
-  },
+const emit = defineEmits(['mark-all-read', 'click'])
 
-  mounted() {
-    this.syncAuthState()
-  },
+const router = useRouter()
+const dropdownVisible = ref(false)
 
-  beforeDestroy() {
-    this.cleanupWebSocket()
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval)
-    }
-  },
+const unreadCount = computed(() => {
+  return props.notifications.filter(n => !n.is_read).length
+})
 
-  methods: {
-    ...ws.methods,
+const unreadCountDisplay = computed(() => {
+  return unreadCount.value > 99 ? '99+' : unreadCount.value
+})
 
-    syncAuthState() {
-      if (this.isAuthenticated && this.hasAuthToken) {
-        this.startNotificationServices()
-      } else {
-        this.stopNotificationServices()
-      }
-    },
+const hasUnread = computed(() => unreadCount.value > 0)
 
-    startNotificationServices() {
-      if (this.refreshInterval) {
-        clearInterval(this.refreshInterval)
-      }
-      this.setupWebSocket(this)
-      this.loadNotifications()
-      this.$store.dispatch('notification/fetchUnreadCount')
-      this.refreshInterval = setInterval(() => {
-        this.$store.dispatch('notification/fetchUnreadCount')
-      }, 60000)
-    },
+const toggleDropdown = () => {
+  dropdownVisible.value = !dropdownVisible.value
+}
 
-    stopNotificationServices() {
-      this.cleanupWebSocket()
-      if (this.refreshInterval) {
-        clearInterval(this.refreshInterval)
-        this.refreshInterval = null
-      }
-    },
+const markAllAsRead = () => {
+  emit('mark-all-read')
+}
 
-    toggleDropdown() {
-      this.dropdownVisible = !this.dropdownVisible
-      if (this.dropdownVisible && this.notifications.length === 0) {
-        this.loadNotifications()
-      }
-    },
+const goToNotificationPage = () => {
+  dropdownVisible.value = false
+  router.push('/notifications')
+}
 
-    async loadNotifications() {
-      try {
-        await this.$store.dispatch('notification/fetchNotifications', { page_size: 20 })
-      } catch (e) {
-        ErrorHandler.handle(e, 'NotificationCenter.loadNotifications')
-      }
-    },
+const handleClick = (notification) => {
+  emit('click', notification)
+  dropdownVisible.value = false
+}
 
-    handleNotificationClick(notification) {
-      if (this.expandedId === notification.id) {
-        this.expandedId = null
-      } else {
-        this.expandedId = notification.id
-        if (!notification.is_read) {
-          this.markAsRead(notification.id)
-        }
-      }
-    },
+const getNotificationIcon = (type) => {
+  const iconMap = {
+    info: InfoFilled,
+    success: SuccessFilled,
+    warning: Warning,
+    error: CircleCloseFilled
+  }
+  return iconMap[type] || InfoFilled
+}
 
-    async markAsRead(id) {
-      try {
-        await this.$store.dispatch('notification/markAsRead', id)
-      } catch (e) {
-        ErrorHandler.handle(e, 'NotificationCenter.markAsRead')
-      }
-    },
-
-    async markAllAsRead() {
-      try {
-        await this.$store.dispatch('notification/markAllAsRead')
-      } catch (e) {
-        ErrorHandler.handle(e, 'NotificationCenter.markAllAsRead')
-      }
-    },
-
-    async deleteNotification(id) {
-      try {
-        await this.$store.dispatch('notification/deleteNotification', id)
-      } catch (e) {
-        ErrorHandler.handle(e, 'NotificationCenter.deleteNotification')
-      }
-    },
-
-    canNavigate(notification) {
-      return notification.data?.task_id || notification.task_id
-    },
-
-    navigateToTask(notification) {
-      const taskId = notification.data?.task_id || notification.task_id
-      if (taskId) {
-        this.dropdownVisible = false
-        this.$router.push({ name: 'TaskDetail', params: { id: taskId } })
-      }
-    },
-
-    goToNotificationPage() {
-      this.dropdownVisible = false
-      this.$router.push({ name: 'Notifications' })
-    },
-
-    formatTime(timeStr) {
-      if (!timeStr) return ''
-      const date = new Date(timeStr)
-      const now = new Date()
-      const diff = now - date
-
-      if (diff < 60000) return '刚刚'
-      if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-      if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
-      if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`
-
-      return date.toLocaleDateString()
-    },
-
-    getNotificationIcon(notification) {
-      const type = notification.event_type || notification.notification_type
-      const iconMap = {
-        task_assigned: 'el-icon-user-solid',
-        task_completed: 'el-icon-circle-check',
-        task_started: 'el-icon-video-play',
-        workorder_created: 'el-icon-document',
-        workorder_approved: 'el-icon-success',
-        workorder_rejected: 'el-icon-error',
-        deadline_warning: 'el-icon-warning',
-        system_announcement: 'el-icon-bell'
-      }
-      return iconMap[type] || 'el-icon-bell'
-    },
-
-    onSoundToggle(value) {
-      localStorage.setItem('notification_sound_enabled', value.toString())
-    }
+const formatTime = (time) => {
+  if (!time) return ''
+  const date = new Date(time)
+  const now = new Date()
+  const diff = now - date
+  
+  if (diff < 60000) {
+    return '刚刚'
+  } else if (diff < 3600000) {
+    return `${Math.floor(diff / 60000)}分钟前`
+  } else if (diff < 86400000) {
+    return `${Math.floor(diff / 3600000)}小时前`
+  } else {
+    return `${date.getMonth() + 1}月${date.getDate()}日`
   }
 }
 </script>
 
 <style scoped>
 .notification-center {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  position: relative;
 }
 
 .notification-badge {
-  margin-right: 0;
+  cursor: pointer;
 }
 
 .notification-bell {
-  border: none;
-  background: transparent;
   font-size: 20px;
-  padding: 8px;
-}
-
-.notification-bell:hover {
-  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .notification-bell.has-error {
-  color: #F56C6C;
+  color: #f56c6c;
 }
 
 .connection-error-icon {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  font-size: 10px;
-}
-
-.sound-toggle {
-  --el-switch-off-color: #dcdfe6;
-  --el-switch-on-color: #409EFF;
-}
-
-.notification-reference {
-  display: none;
+  top: -5px;
+  right: -5px;
+  color: #f56c6c;
 }
 
 .notification-panel {
-  max-height: 500px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
@@ -435,49 +192,29 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px;
   border-bottom: 1px solid #ebeef5;
 }
 
 .notification-title {
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: bold;
+  font-size: 16px;
 }
 
 .notification-actions {
   display: flex;
-  gap: 8px;
-}
-
-.connection-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  font-size: 12px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.connection-status.connecting {
-  color: #909399;
-}
-
-.connection-status.connected {
-  color: #67c23a;
-}
-
-.connection-status.disconnected,
-.connection-status.error {
-  color: #f56c6c;
+  gap: 10px;
 }
 
 .notification-list {
-  max-height: 350px;
-  overflow-y: auto;
+  padding: 10px;
 }
 
 .notification-item {
-  border-bottom: 1px solid #f5f5f5;
+  display: flex;
+  align-items: flex-start;
+  padding: 10px;
+  border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -486,27 +223,13 @@ export default {
   background-color: #f5f7fa;
 }
 
-.notification-item.is-unread {
-  background-color: #fef0f0;
-}
-
-.notification-compact {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  gap: 12px;
+.notification-item.unread {
+  background-color: #ecf5ff;
 }
 
 .notification-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #f0f2f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  color: #606266;
+  margin-right: 10px;
+  flex-shrink: 0;
 }
 
 .notification-content {
@@ -515,53 +238,32 @@ export default {
 }
 
 .notification-title-text {
-  font-size: 14px;
-  color: #303133;
-  white-space: nowrap;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.notification-message {
+  font-size: 12px;
+  color: #606266;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .notification-time {
   font-size: 12px;
   color: #909399;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
-.unread-dot {
+.notification-unread-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background-color: #f56c6c;
-}
-
-.notification-details {
-  padding: 0 16px 12px 60px;
-}
-
-.notification-message {
-  font-size: 13px;
-  color: #606266;
-  margin: 0 0 8px 0;
-  line-height: 1.5;
-}
-
-.notification-meta {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #909399;
-}
-
-.notification-actions-row {
-  display: flex;
-  gap: 8px;
+  margin-left: 10px;
+  flex-shrink: 0;
 }
 </style>

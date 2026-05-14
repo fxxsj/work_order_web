@@ -49,23 +49,19 @@
               type="primary"
               @click.stop="goToWorkOrder(item.work_order_process_info.work_order)"
             >
-              {{ item.work_order_process_info.work_order.order_number || '-' }}
+              {{ item.work_order_process_info.work_order.order_number }}
             </el-link>
             <span v-else>-</span>
           </div>
 
           <!-- 工序 -->
           <div class="task-cell" style="width: 120px; padding: 0 8px;">
-            <el-tag size="mini" type="info">
-              {{ item.work_order_process_info?.process?.name || '-' }}
-            </el-tag>
+            {{ item.work_order_process_info?.process?.name || '-' }}
           </div>
 
           <!-- 任务内容 -->
           <div class="task-cell" style="flex: 1; min-width: 200px; padding: 0 8px;">
-            <div class="task-content">
-              {{ item.work_content || '-' }}
-            </div>
+            {{ item.work_content }}
           </div>
 
           <!-- 分派部门 -->
@@ -75,41 +71,40 @@
 
           <!-- 状态 -->
           <div class="task-cell" style="width: 100px; padding: 0 8px;">
-            <el-tag
-              :type="getStatusType(item.status)"
-              size="small"
-            >
-              {{ getStatusText(item.status) }}
+            <el-tag :type="getStatusType(item.status)" size="small">
+              {{ item.status_display }}
             </el-tag>
           </div>
 
           <!-- 优先级 -->
           <div class="task-cell" style="width: 80px; padding: 0 8px;">
-            <el-tag
-              v-if="item.priority"
-              :type="getPriorityType(item.priority)"
-              size="mini"
-            >
-              {{ getPriorityText(item.priority) }}
+            <el-tag :type="getPriorityType(item.priority)" size="small">
+              {{ item.priority_display }}
             </el-tag>
-            <span v-else>-</span>
           </div>
 
           <!-- 操作 -->
-          <div class="task-cell task-actions" style="width: 200px; padding: 0 8px;">
+          <div class="task-cell" style="width: 200px; padding: 0 8px;">
             <el-button
-              size="mini"
-              type="primary"
-              icon="el-icon-edit"
-              @click.stop="handleEdit(item)"
+              v-if="item.status === 'pending'"
+              type="text"
+              size="small"
+              @click.stop="handleAssign(item)"
             >
-              编辑
+              分派
             </el-button>
             <el-button
-              size="mini"
-              type="success"
-              icon="el-icon-check"
-              :disabled="item.status === 'completed'"
+              v-if="item.status === 'in_progress'"
+              type="text"
+              size="small"
+              @click.stop="handleUpdate(item)"
+            >
+              更新
+            </el-button>
+            <el-button
+              v-if="item.status !== 'completed'"
+              type="text"
+              size="small"
               @click.stop="handleComplete(item)"
             >
               完成
@@ -121,123 +116,86 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import VirtualList from './VirtualList.vue'
 
-export default {
-  name: 'VirtualTaskList',
+const props = defineProps({
+  tasks: { type: Array, default: () => [] },
+  listHeight: { type: Number, default: 400 },
+  hasMore: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
+  showPagination: { type: Boolean, default: true },
+  currentPage: { type: Number, default: 1 },
+  pageSize: { type: Number, default: 20 },
+  total: { type: Number, default: 0 }
+})
 
-  components: {
-    VirtualList
-  },
+const emit = defineEmits([
+  'task-click',
+  'load-more',
+  'page-change',
+  'size-change',
+  'assign',
+  'update',
+  'complete'
+])
 
-  props: {
-    tasks: {
-      type: Array,
-      default: () => []
-    },
-    hasMore: {
-      type: Boolean,
-      default: false
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    showPagination: {
-      type: Boolean,
-      default: true
-    },
-    currentPage: {
-      type: Number,
-      default: 1
-    },
-    pageSize: {
-      type: Number,
-      default: 20
-    },
-    total: {
-      type: Number,
-      default: 0
-    },
-    listHeight: {
-      type: String,
-      default: '600px'
-    }
-  },
+const router = useRouter()
 
-  methods: {
-    handleTaskClick(task, index) {
-      this.$emit('task-click', task, index)
-    },
-
-    handleLoadMore() {
-      this.$emit('load-more')
-    },
-
-    handlePageChange(page) {
-      this.$emit('page-change', page)
-    },
-
-    handleSizeChange(size) {
-      this.$emit('size-change', size)
-    },
-
-    handleEdit(task) {
-      this.$emit('task-edit', task)
-    },
-
-    handleComplete(task) {
-      this.$emit('task-complete', task)
-    },
-
-    goToWorkOrder(workOrder) {
-      this.$router.push({
-        name: 'WorkOrderDetail',
-        params: { id: workOrder.id }
-      })
-    },
-
-    getStatusText(status) {
-      const statusMap = {
-        pending: '待开始',
-        in_progress: '进行中',
-        completed: '已完成',
-        cancelled: '已取消'
-      }
-      return statusMap[status] || status
-    },
-
-    getStatusType(status) {
-      const typeMap = {
-        pending: 'info',
-        in_progress: 'warning',
-        completed: 'success',
-        cancelled: 'danger'
-      }
-      return typeMap[status] || 'info'
-    },
-
-    getPriorityText(priority) {
-      const priorityMap = {
-        low: '低',
-        normal: '中',
-        high: '高',
-        urgent: '紧急'
-      }
-      return priorityMap[priority] || priority
-    },
-
-    getPriorityType(priority) {
-      const typeMap = {
-        low: 'info',
-        normal: '',
-        high: 'warning',
-        urgent: 'danger'
-      }
-      return typeMap[priority] || ''
-    }
+const goToWorkOrder = (workOrder) => {
+  if (workOrder?.id) {
+    router.push(`/workorders/${workOrder.id}`)
   }
+}
+
+const handleTaskClick = (item) => {
+  emit('task-click', item)
+}
+
+const handleLoadMore = () => {
+  emit('load-more')
+}
+
+const handlePageChange = (page) => {
+  emit('page-change', page)
+}
+
+const handleSizeChange = (size) => {
+  emit('size-change', size)
+}
+
+const handleAssign = (item) => {
+  emit('assign', item)
+}
+
+const handleUpdate = (item) => {
+  emit('update', item)
+}
+
+const handleComplete = (item) => {
+  emit('complete', item)
+}
+
+const getStatusType = (status) => {
+  const typeMap = {
+    pending: 'info',
+    in_progress: 'warning',
+    completed: 'success',
+    cancelled: 'danger'
+  }
+  return typeMap[status] || 'info'
+}
+
+const getPriorityType = (priority) => {
+  const typeMap = {
+    low: 'info',
+    normal: 'success',
+    high: 'warning',
+    urgent: 'danger'
+  }
+  return typeMap[priority] || 'info'
 }
 </script>
 
@@ -249,49 +207,30 @@ export default {
 .task-item {
   display: flex;
   align-items: center;
-  height: 60px;
-  font-size: 14px;
-  color: #606266;
+  padding: 12px 0;
+  border-bottom: 1px solid #ebeef5;
+  transition: background-color 0.2s;
 }
 
 .task-item:hover {
   background-color: #f5f7fa;
 }
 
-.task-cell {
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.task-content {
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.task-actions {
-  gap: 8px;
-}
-
-.task-actions .el-button {
-  margin: 0;
-}
-
-/* 状态样式 */
 .task-item-pending {
-  border-left: 3px solid #909399;
+  border-left: 3px solid #e6a23c;
 }
 
 .task-item-progress {
-  border-left: 3px solid #e6a23c;
+  border-left: 3px solid #409eff;
 }
 
 .task-item-completed {
   border-left: 3px solid #67c23a;
-  opacity: 0.8;
+}
+
+.task-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

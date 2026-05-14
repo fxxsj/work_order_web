@@ -66,11 +66,11 @@
       <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
     </el-card>
 
-    <PurchaseFormDialog :visible.sync="dialogVisible" :form-data="form" :is-edit="isEditMode" @confirm="handleFormConfirm" @close="resetForm" />
-    <PurchaseDetailDialog :visible.sync="detailDialogVisible" :purchase-id="currentPurchaseId" />
-    <LowStockAlertDialog :visible.sync="lowStockDialogVisible" @create-purchase="handleCreateFromLowStock" />
-    <ReceiveDialog :visible.sync="receiveDialogVisible" :purchase-order="currentPurchaseOrder" @success="handleReceiveSuccess" />
-    <InspectionDialog :visible.sync="inspectionDialogVisible" :purchase-order-id="currentPurchaseId" @updated="loadData" />
+    <PurchaseFormDialog v-model:visible="dialogVisible" :form-data="form" :is-edit="isEditMode" @confirm="handleFormConfirm" @close="resetForm" />
+    <PurchaseDetailDialog v-model:visible="detailDialogVisible" :purchase-id="currentPurchaseId" />
+    <LowStockAlertDialog v-model:visible="lowStockDialogVisible" @create-purchase="handleCreateFromLowStock" />
+    <ReceiveDialog v-model:visible="receiveDialogVisible" :purchase-order="currentPurchaseOrder" @success="handleReceiveSuccess" />
+    <InspectionDialog v-model:visible="inspectionDialogVisible" :purchase-order-id="currentPurchaseId" @updated="loadData" />
   </div>
 </template>
 
