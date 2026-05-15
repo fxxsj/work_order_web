@@ -60,7 +60,7 @@
         <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
         <el-table-column prop="created_at" label="创建时间" width="180">
           <template #default="scope">
-            {{ formatDate(scope.row.created_at) }}
+            {{ formatDateTime(scope.row.created_at) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180" fixed="right">
@@ -136,12 +136,10 @@ import { ref, computed, onMounted } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { embossingPlateAPI, productAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
+import { formatDateTime } from '@/utils/filter'
 import EmbossingPlateFormDialog from './components/EmbossingPlateFormDialog.vue'
-
-const userStore = useUserStore()
 
 const {
   searchText,
@@ -160,28 +158,18 @@ const {
   errorContext: '加载压凸版数据失败'
 })
 
+const { canCreate, canEdit, canDelete } = useCrudPermission('embossingplate')
+
+const crud = useCRUD(embossingPlateAPI, {
+  onSuccess: () => { dialogVisible.value = false; loadData() },
+})
+
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const formLoading = ref(false)
 const currentEmbossingPlate = ref(null)
 const productList = ref([])
-
-const canCreate = computed(() => userStore.hasPermission('workorder.add_embossingplate'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_embossingplate'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_embossingplate'))
 const hasFilters = computed(() => !!searchText.value)
-
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
 
 const loadProductList = async () => {
   try {
@@ -213,9 +201,7 @@ const handleDelete = async (row) => {
   try {
     const confirmed = await ErrorHandler.confirm(`确定要删除压凸版"${row.name}"吗？此操作不可撤销。`)
     if (!confirmed) return
-    await embossingPlateAPI.delete(row.id)
-    ElMessage.success('删除成功')
-    await loadData()
+    await crud.remove(row.id, '删除成功')
   } catch (error) {
     ErrorHandler.showMessage(error, '删除失败')
   }
@@ -235,35 +221,25 @@ const handleConfirmPlate = async (row) => {
 
 const handleFormConfirm = async ({ form, productItems }) => {
   formLoading.value = true
-  try {
-    const data = { ...form }
+  const data = { ...form }
 
-    if (dialogType.value === 'create' && !data.code) {
-      delete data.code
-    }
-
-    data.products_data = productItems
-      .filter(item => item.product)
-      .map(item => ({
-        product: item.product,
-        quantity: item.quantity || 1
-      }))
-
-    if (dialogType.value === 'edit') {
-      await embossingPlateAPI.update(currentEmbossingPlate.value.id, data)
-      ElMessage.success('保存成功')
-    } else {
-      await embossingPlateAPI.create(data)
-      ElMessage.success('创建成功')
-    }
-
-    dialogVisible.value = false
-    await loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, dialogType.value === 'edit' ? '保存失败' : '创建失败')
-  } finally {
-    formLoading.value = false
+  if (dialogType.value === 'create' && !data.code) {
+    delete data.code
   }
+
+  data.products_data = productItems
+    .filter(item => item.product)
+    .map(item => ({
+      product: item.product,
+      quantity: item.quantity || 1
+    }))
+
+  if (dialogType.value === 'edit') {
+    await crud.update(currentEmbossingPlate.value.id, data, '保存成功')
+  } else {
+    await crud.create(data, '创建成功')
+  }
+  formLoading.value = false
 }
 
 const handleReset = () => {
@@ -277,42 +253,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
 .embossing-plate-list {
   padding: var(--ui-page-padding);
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  flex-wrap: wrap;
-}
-
-.management-search-control {
-  width: min(100%, 360px);
-}
-
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .management-search-control,
-  .header-section .el-button {
-    width: 100%;
-  }
 }
 </style>

@@ -156,14 +156,10 @@
 <script setup>
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { Plus, Search, Delete } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
 import { productGroupAPI, productAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import { FormDialog } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
-
-const userStore = useUserStore()
 
 const {
   searchText,
@@ -179,6 +175,12 @@ const {
   handleSizeChange
 } = useCrudList(productGroupAPI.getList, {
   errorContext: '加载产品组数据失败'
+})
+
+const { canCreate, canEdit, canDelete } = useCrudPermission('productgroup')
+
+const crud = useCRUD(productGroupAPI, {
+  onSuccess: () => { dialogVisible.value = false; loadData() },
 })
 
 const dialogVisible = ref(false)
@@ -215,10 +217,6 @@ const rules = {
     { required: true, message: '请输入名称', trigger: 'blur' }
   ]
 }
-
-const canCreate = computed(() => userStore.hasPermission('workorder.add_productgroup'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_productgroup'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_productgroup'))
 
 const loadProductList = async () => {
   try {
@@ -277,13 +275,7 @@ const handleDelete = async (row) => {
   )
   if (!confirmed) return
 
-  try {
-    await productGroupAPI.delete(row.id)
-    ElMessage.success('删除成功')
-    loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, '删除失败')
-  }
+  await crud.remove(row.id, '删除成功')
 }
 
 const addItem = () => {
@@ -320,34 +312,24 @@ const handleSubmit = async () => {
   }
 
   formLoading.value = true
-  try {
-    const data = {
-      code: form.code,
-      name: form.name,
-      description: form.description,
-      is_active: form.is_active,
-      items_write: form.items.map(item => ({
-        product: item.product,
-        item_name: item.item_name,
-        sort_order: item.sort_order
-      }))
-    }
-
-    if (form.id) {
-      await productGroupAPI.update(form.id, data)
-      ElMessage.success('更新成功')
-    } else {
-      await productGroupAPI.create(data)
-      ElMessage.success('创建成功')
-    }
-
-    dialogVisible.value = false
-    loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, form.id ? '更新失败' : '创建失败')
-  } finally {
-    formLoading.value = false
+  const data = {
+    code: form.code,
+    name: form.name,
+    description: form.description,
+    is_active: form.is_active,
+    items_write: form.items.map(item => ({
+      product: item.product,
+      item_name: item.item_name,
+      sort_order: item.sort_order
+    }))
   }
+
+  if (form.id) {
+    await crud.update(form.id, data, '更新成功')
+  } else {
+    await crud.create(data, '创建成功')
+  }
+  formLoading.value = false
 }
 
 const handleDialogClose = () => {
@@ -362,42 +344,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
 .product-group-list {
   padding: var(--ui-page-padding);
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  flex-wrap: wrap;
-}
-
-.management-search-control {
-  width: min(100%, 320px);
-}
-
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .management-search-control,
-  .header-section .el-button {
-    width: 100%;
-  }
 }
 </style>

@@ -1,52 +1,21 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--ui-dialog-width-lg)" @close="handleClose">
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
-      <el-form-item label="压凸版编码" prop="code">
-        <el-input v-model="form.code" placeholder="留空则系统自动生成（格式：EP + yyyymm + 序号）" :disabled="isConfirmed" />
-        <div style="font-size: 12px; color: #909399; margin-top: 5px;">留空则自动生成，格式：EP202412001</div>
-      </el-form-item>
-      <el-form-item label="压凸版名称" prop="name">
-        <el-input v-model="form.name" placeholder="请输入压凸版名称" :disabled="isConfirmed" />
-      </el-form-item>
-      <el-row :gutter="20">
-        <el-col :xs="24" :md="12"><el-form-item label="尺寸"><el-input v-model="form.size" placeholder="如：420x594mm" :disabled="isConfirmed" /></el-form-item></el-col>
-        <el-col :xs="24" :md="12"><el-form-item label="材质"><el-input v-model="form.material" placeholder="如：铜版、锌版" :disabled="isConfirmed" /></el-form-item></el-col>
-      </el-row>
-      <el-form-item label="厚度"><el-input v-model="form.thickness" placeholder="如：3mm、5mm" :disabled="isConfirmed" /></el-form-item>
-
-      <el-divider content-position="left">包含产品及数量</el-divider>
-      <el-form-item label="产品列表">
-        <el-button type="primary" size="small" :icon="Plus" @click="addProductItem">添加产品</el-button>
-        <div class="table-scroll">
-          <el-table :data="productItems" border class="dialog-table">
-            <el-table-column label="产品名称" width="250">
-              <template #default="scope">
-                <el-select v-model="scope.row.product" placeholder="请选择产品" filterable style="width: 100%;">
-                  <el-option v-for="p in productList" :key="p.id" :label="`${p.name} (${p.code})`" :value="p.id" />
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column label="数量" width="150">
-              <template #default="scope"><el-input-number v-model="scope.row.quantity" :min="1" style="width: 100%;" size="small" /></template>
-            </el-table-column>
-            <el-table-column label="操作" width="100" align="center">
-              <template #default="scope"><el-button type="danger" size="small" :icon="Delete" @click="removeProductItem(scope.$index)" /></template>
-            </el-table-column>
-          </el-table>
-        </div>
-      </el-form-item>
-      <el-form-item label="备注"><el-input v-model="form.notes" type="textarea" :rows="3" placeholder="请输入备注信息" /></el-form-item>
-    </el-form>
-    <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="loading" @click="handleConfirm">确定</el-button>
-    </template>
-  </el-dialog>
+  <PlateFormDialog
+    v-model="dialogVisibleSync"
+    :dialog-type="dialogType"
+    :initial-data="embossingPlate"
+    :loading="loading"
+    :product-list="productList"
+    title="压凸版"
+    code-prefix="EP"
+    :form-initial-values="FORM_INITIAL"
+    :rules="rules"
+    @submit="handleSubmit"
+  />
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { computed } from 'vue'
+import PlateFormDialog from '@/views/components/PlateFormDialog.vue'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -58,61 +27,25 @@ const props = defineProps({
 
 const emit = defineEmits(['confirm', 'update:visible'])
 
-const formRef = ref(null)
-const productItems = ref([])
-
 const FORM_INITIAL = { code: '', name: '', size: '', material: '', thickness: '', notes: '' }
-const form = reactive({ ...FORM_INITIAL })
-
 const rules = { name: [{ required: true, message: '请输入压凸版名称', trigger: 'blur' }] }
 
-const dialogVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })
-const dialogTitle = computed(() => props.dialogType === 'edit' ? '编辑压凸版' : '新建压凸版')
-const isConfirmed = computed(() => props.dialogType === 'edit' && props.embossingPlate?.confirmed)
+const dialogVisibleSync = computed({
+  get: () => props.visible,
+  set: (val) => emit('update:visible', val)
+})
 
-watch(() => props.visible, (val) => { if (val) initForm() })
-
-const initForm = () => {
-  if (props.dialogType === 'edit' && props.embossingPlate) {
-    Object.assign(form, {
-      code: props.embossingPlate.code,
-      name: props.embossingPlate.name,
-      size: props.embossingPlate.size || '',
-      material: props.embossingPlate.material || '',
-      thickness: props.embossingPlate.thickness || '',
-      notes: props.embossingPlate.notes || ''
-    })
-    productItems.value = (props.embossingPlate.products || []).map(p => ({ id: p.id, product: p.product, quantity: p.quantity, sort_order: p.sort_order || 0 }))
-  } else {
-    resetForm()
-  }
-  nextTick(() => { formRef.value?.clearValidate() })
+const handleSubmit = (data) => {
+  // PlateFormDialog emits merged data with products_data.
+  // Original EmbossingPlateFormDialog emitted { form, productItems } where productItems
+  // had { product, quantity, sort_order } objects.
+  // Reconstruct to match what EmbossingPlateList.handleFormConfirm expects.
+  const { products_data, ...formData } = data
+  const productItems = (products_data || []).map((item, i) => ({
+    product: item.product,
+    quantity: item.quantity,
+    sort_order: i
+  }))
+  emit('confirm', { form: formData, productItems })
 }
-
-const resetForm = () => {
-  Object.assign(form, FORM_INITIAL)
-  productItems.value = []
-  nextTick(() => { formRef.value?.clearValidate() })
-}
-
-const handleConfirm = () => {
-  formRef.value?.validate((valid) => {
-    if (valid) emit('confirm', { form: { ...form }, productItems: [...productItems.value] })
-  })
-}
-
-const handleClose = () => { resetForm(); emit('update:visible', false) }
-const addProductItem = () => { productItems.value.push({ product: null, quantity: 1, sort_order: productItems.value.length }) }
-const removeProductItem = (index) => { productItems.value.splice(index, 1) }
 </script>
-
-<style scoped>
-.table-scroll {
-  margin-top: var(--ui-control-gap);
-  overflow-x: auto;
-}
-
-.dialog-table {
-  width: 100%;
-}
-</style>

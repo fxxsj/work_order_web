@@ -159,13 +159,10 @@ import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { authAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import { FormDialog } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
-
-const userStore = useUserStore()
 
 const {
   searchText,
@@ -181,6 +178,12 @@ const {
   handleSizeChange
 } = useCrudList(customerAPI.getList, {
   errorContext: '加载客户数据失败'
+})
+
+const { canCreate, canEdit, canDelete } = useCrudPermission('customer')
+
+const crud = useCRUD(customerAPI, {
+  onSuccess: () => { dialogVisible.value = false; loadData() },
 })
 
 const dialogVisible = ref(false)
@@ -209,9 +212,6 @@ const rules = {
 }
 
 const formTitle = computed(() => dialogType.value === 'edit' ? '编辑客户' : '新建客户')
-const canCreate = computed(() => userStore.hasPermission('workorder.add_customer'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_customer'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_customer'))
 
 const loadSalespersons = async () => {
   try {
@@ -256,30 +256,19 @@ const handleSubmit = async () => {
   if (!valid) return false
 
   formLoading.value = true
-  try {
-    if (dialogType.value === 'edit') {
-      await customerAPI.update(currentRow.value.id, form)
-      ElMessage.success('保存成功')
-    } else {
-      await customerAPI.create(form)
-      ElMessage.success('创建成功')
-    }
-    dialogVisible.value = false
-    loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, dialogType.value === 'edit' ? '保存失败' : '创建失败')
-  } finally {
-    formLoading.value = false
+  if (dialogType.value === 'edit') {
+    await crud.update(currentRow.value.id, form, '保存成功')
+  } else {
+    await crud.create(form, '创建成功')
   }
+  formLoading.value = false
 }
 
 const handleDelete = async (row) => {
   try {
     const confirmed = await ErrorHandler.confirm(`确定要删除客户"${row.name}"吗？`)
     if (!confirmed) return
-    await customerAPI.delete(row.id)
-    ElMessage.success('删除成功')
-    loadData()
+    await crud.remove(row.id, '删除成功')
   } catch (error) {
     ErrorHandler.showMessage(error, '删除失败')
   }
@@ -292,42 +281,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
 .customer-list {
   padding: var(--ui-page-padding);
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  flex-wrap: wrap;
-}
-
-.management-search-control {
-  width: min(100%, 320px);
-}
-
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .management-search-control,
-  .header-section .el-button {
-    width: 100%;
-  }
 }
 </style>

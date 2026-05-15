@@ -99,7 +99,7 @@
           <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
           <el-table-column prop="created_at" label="创建时间" width="180">
             <template #default="scope">
-              {{ formatDate(scope.row.created_at) }}
+              {{ formatDateTime(scope.row.created_at) }}
             </template>
           </el-table-column>
           <el-table-column label="操作" width="150" fixed="right">
@@ -154,12 +154,10 @@ import { ref, computed, onMounted } from 'vue'
 import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { dieAPI, productAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
+import { formatDateTime } from '@/utils/filter'
 import DieFormDialog from './components/DieFormDialog.vue'
-
-const userStore = useUserStore()
 
 const {
   searchText,
@@ -177,27 +175,17 @@ const {
   errorContext: '加载刀模数据失败'
 })
 
+const { canCreate, canEdit, canDelete } = useCrudPermission('die')
+
+const crud = useCRUD(dieAPI, {
+  onSuccess: () => { dialogVisible.value = false; loadData() },
+})
+
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const formLoading = ref(false)
 const currentRow = ref(null)
 const productList = ref([])
-
-const canCreate = computed(() => userStore.hasPermission('workorder.add_die'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_die'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_die'))
-
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
 
 const loadProductList = async () => {
   try {
@@ -231,21 +219,12 @@ const handleEdit = async (row) => {
 
 const handleFormSubmit = async (data) => {
   formLoading.value = true
-  try {
-    if (dialogType.value === 'edit' && currentRow.value) {
-      await dieAPI.update(currentRow.value.id, data)
-      ElMessage.success('保存成功')
-    } else {
-      await dieAPI.create(data)
-      ElMessage.success('创建成功')
-    }
-    dialogVisible.value = false
-    loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, dialogType.value === 'edit' ? '保存刀模' : '创建刀模')
-  } finally {
-    formLoading.value = false
+  if (dialogType.value === 'edit' && currentRow.value) {
+    await crud.update(currentRow.value.id, data, '保存成功')
+  } else {
+    await crud.create(data, '创建成功')
   }
+  formLoading.value = false
 }
 
 const handleDialogClose = () => {
@@ -260,13 +239,7 @@ const handleDelete = async (row) => {
 
   if (!confirmed) return
 
-  try {
-    await dieAPI.delete(row.id)
-    ElMessage.success('删除成功')
-    loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, '删除刀模')
-  }
+  await crud.remove(row.id, '删除成功')
 }
 
 const getDieTypeTagType = (dieType) => {
@@ -294,48 +267,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
 .die-list {
   padding: var(--ui-page-padding);
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  flex-wrap: wrap;
-}
-
-.header-actions {
-  display: flex;
-  gap: var(--ui-control-gap);
-}
-
-.management-search-control {
-  width: min(100%, 360px);
-}
-
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section,
-  .header-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .management-search-control,
-  .header-actions .el-button {
-    width: 100%;
-  }
 }
 </style>

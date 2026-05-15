@@ -105,7 +105,7 @@
           </el-table-column>
           <el-table-column prop="created_at" label="创建时间" width="180">
             <template #default="scope">
-              {{ formatDate(scope.row.created_at) }}
+              {{ formatDateTime(scope.row.created_at) }}
             </template>
           </el-table-column>
           <el-table-column label="操作" width="150" fixed="right">
@@ -191,12 +191,10 @@ import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { departmentAPI, processAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import { FormDialog } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
-
-const userStore = useUserStore()
+import { formatDateTime } from '@/utils/filter'
 
 const {
   searchText,
@@ -211,6 +209,12 @@ const {
   handleSizeChange
 } = useCrudList(departmentAPI.getList, {
   errorContext: '加载部门数据失败'
+})
+
+const { canCreate, canEdit, canDelete } = useCrudPermission('department')
+
+const crud = useCRUD(departmentAPI, {
+  onSuccess: () => { dialogVisible.value = false; loadData(); loadAllDepartments() },
 })
 
 const dialogVisible = ref(false)
@@ -248,10 +252,6 @@ const rules = {
 
 const isEditMode = computed(() => dialogType.value === 'edit')
 
-const canCreate = computed(() => userStore.hasPermission('workorder.add_department'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_department'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_department'))
-
 const availableParents = computed(() => {
   if (isEditMode.value && currentRow.value) {
     return allDepartments.value.filter(dept => {
@@ -262,18 +262,6 @@ const availableParents = computed(() => {
   }
   return allDepartments.value.filter(dept => dept.level < 2)
 })
-
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
 
 const loadAllProcesses = async () => {
   try {
@@ -354,14 +342,8 @@ const handleDelete = async (row) => {
   )
   if (!confirmed) return
 
-  try {
-    await departmentAPI.delete(row.id)
-    ElMessage.success('删除成功')
-    loadData()
-    loadAllDepartments()
-  } catch (error) {
-    ErrorHandler.showMessage(error, '删除部门')
-  }
+  await crud.remove(row.id, '删除成功')
+  loadAllDepartments()
 }
 
 const handleSubmit = async () => {
@@ -369,22 +351,12 @@ const handleSubmit = async () => {
   if (!valid) return
 
   dialogLoading.value = true
-  try {
-    if (isEditMode.value) {
-      await departmentAPI.update(currentRow.value.id, form)
-      ElMessage.success('保存成功')
-    } else {
-      await departmentAPI.create(form)
-      ElMessage.success('创建成功')
-    }
-    dialogVisible.value = false
-    loadData()
-    loadAllDepartments()
-  } catch (error) {
-    ErrorHandler.showMessage(error, isEditMode.value ? '保存部门' : '创建部门')
-  } finally {
-    dialogLoading.value = false
+  if (isEditMode.value) {
+    await crud.update(currentRow.value.id, form, '保存成功')
+  } else {
+    await crud.create(form, '创建成功')
   }
+  dialogLoading.value = false
 }
 
 const getRowClassName = ({ row }) => {
@@ -434,31 +406,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
 .department-list {
   padding: var(--ui-page-padding);
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  flex-wrap: wrap;
-}
-
-.management-search-control {
-  width: min(100%, 320px);
-}
-
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
 }
 
 :deep(.child-department-row) {
@@ -473,17 +422,5 @@ onMounted(() => {
   color: #909399;
   font-size: 12px;
   margin-top: 5px;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .management-search-control,
-  .header-section .el-button {
-    width: 100%;
-  }
 }
 </style>

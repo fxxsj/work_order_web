@@ -74,8 +74,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { qualityInspectionAPI, productAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { StatusTag } from '@/components/common'
 import QualityStats from './components/QualityStats.vue'
@@ -83,7 +82,7 @@ import QualityDetailDialog from './components/QualityDetailDialog.vue'
 import QualityInspectDialog from './components/QualityInspectDialog.vue'
 import QualityFormDialog from './components/QualityFormDialog.vue'
 
-const userStore = useUserStore()
+const { canCreate, canEdit, canDelete } = useCrudPermission('qualityinspection')
 
 const statsLoading = ref(false)
 const submitting = ref(false)
@@ -119,11 +118,6 @@ const {
   initialFilters: { inspection_number: '', inspection_type: '', result: '' },
   buildParams: buildQualityParams
 })
-
-const hasFilters = computed(() => filters.value.inspection_number || filters.value.inspection_type || filters.value.result)
-const canCreate = computed(() => userStore.hasPermission('workorder.add_qualityinspection'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_qualityinspection'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_qualityinspection'))
 
 const handleReset = () => resetFilters()
 

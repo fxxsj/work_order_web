@@ -7,7 +7,7 @@
       <el-table-column prop="notification_type_display" label="类型" width="120" />
       <el-table-column prop="title" label="标题" min-width="200" />
       <el-table-column prop="content" label="内容" min-width="300" show-overflow-tooltip />
-      <el-table-column label="时间" width="160"><template #default="scope">{{ formatDate(scope.row.created_at) }}</template></el-table-column>
+      <el-table-column label="时间" width="160"><template #default="scope">{{ formatDateTime(scope.row.created_at) }}</template></el-table-column>
       <el-table-column label="操作" width="150"><template #default="scope"><el-button type="text" size="small" @click="handleClick(scope.row)">查看</el-button><el-button v-if="!scope.row.is_read" type="text" size="small" @click="markRead(scope.row)">标记已读</el-button></template></el-table-column>
     </el-table>
     </div>
@@ -17,6 +17,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
+import { formatDateTime } from '@/utils/filter'
 
 defineProps({
   notificationList: { type: Array, default: () => [] },
@@ -26,8 +27,6 @@ defineProps({
 })
 
 const emit = defineEmits(['mark-read', 'mark-all-read', 'click', 'refresh'])
-
-const formatDate = (d) => d ? new Date(d).toLocaleString('zh-CN') : '-'
 const getRowClassName = ({ row }) => row.is_read ? '' : 'unread-row'
 const markRead = (row) => emit('mark-read', row)
 const markAllRead = () => emit('mark-all-read')

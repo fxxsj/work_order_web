@@ -77,8 +77,7 @@ import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { deliveryOrderAPI, salesOrderAPI, productAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { StatusTag } from '@/components/common'
 import DeliveryStats from './components/DeliveryStats.vue'
@@ -86,7 +85,7 @@ import DeliveryDetailDialog from './components/DeliveryDetailDialog.vue'
 import DeliveryReceiveDialog from './components/DeliveryReceiveDialog.vue'
 import DeliveryFormDialog from './components/DeliveryFormDialog.vue'
 
-const userStore = useUserStore()
+const { canCreate, canEdit, canDelete } = useCrudPermission('deliveryorder')
 
 const statsLoading = ref(false)
 const submitting = ref(false)
@@ -125,11 +124,6 @@ const {
   initialFilters: { status: '', customer: '', tracking_number: '' },
   buildParams: buildDeliveryParams
 })
-
-const hasFilters = computed(() => filters.value.status || filters.value.customer || filters.value.tracking_number)
-const canCreate = computed(() => userStore.hasPermission('workorder.add_deliveryorder'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_deliveryorder'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_deliveryorder'))
 
 const handleReset = () => resetFilters()
 

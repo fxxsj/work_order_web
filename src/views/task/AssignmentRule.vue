@@ -85,10 +85,10 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { assignmentRuleAPI, processAPI, departmentAPI, dispatchConfigAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
+import { useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 
-const userStore = useUserStore()
+const { canCreate, canEdit, canDelete } = useCrudPermission('assignmentrule')
 
 const processList = ref([])
 const departmentList = ref([])
@@ -110,10 +110,6 @@ const currentRuleId = ref(null)
 
 const form = reactive({ process: null, department: null, priority: 1, conditions: '', is_active: true })
 const rules = { process: [{ required: true, message: '请选择工序', trigger: 'change' }], department: [{ required: true, message: '请选择部门', trigger: 'change' }], priority: [{ required: true, message: '请输入优先级', trigger: 'blur' }] }
-
-const canCreate = computed(() => userStore.hasPermission('workorder.add_assignmentrule'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_assignmentrule'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_assignmentrule'))
 
 const loadProcesses = async () => {
   processListLoading.value = true

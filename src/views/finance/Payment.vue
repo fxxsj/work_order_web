@@ -140,12 +140,11 @@ import { Plus, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { paymentAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import PaymentStats from './components/PaymentStats.vue'
 
-const userStore = useUserStore()
+const { canCreate, canEdit, canDelete } = useCrudPermission('payment')
 
 const statsLoading = ref(false)
 const submitting = ref(false)
@@ -192,11 +191,6 @@ const {
   initialFilters: { customer: '', payment_method: '', date_range: null },
   buildParams: buildPaymentParams
 })
-
-const hasFilters = computed(() => filters.value.customer || filters.value.payment_method || filters.value.date_range)
-const canCreate = computed(() => userStore.hasPermission('workorder.add_payment'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_payment'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_payment'))
 
 const handleReset = () => resetFilters()
 

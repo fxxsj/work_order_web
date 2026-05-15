@@ -1,4 +1,5 @@
 @use './tokens/breakpoints' as bp;
+@use './shared-layout';
 
 /* 全局样式 */
 :root {

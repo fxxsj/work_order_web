@@ -24,8 +24,9 @@
 </template>
 
 <script setup>
+import { formatDateTime } from '@/utils/filter'
+
 const props = defineProps({ task: { type: Object, required: true } })
-const formatDateTime = (v) => v ? new Date(v).toLocaleString('zh-CN') : '-'
 const getStatusText = (s) => ({ pending: '待开始', in_progress: '进行中', completed: '已完成', cancelled: '已取消' })[s] || s
 </script>
 

@@ -16,12 +16,11 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { StatusTag } from '@/components/common'
+import { formatDate } from '@/utils/filter'
 
 defineProps({ recentOrders: { type: Array, default: () => [] } })
 const router = useRouter()
 const goTo = (path) => router.push(path)
-
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-';
 </script>
 
 <style scoped>

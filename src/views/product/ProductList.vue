@@ -132,12 +132,9 @@ import { ref, computed, onMounted } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { productAPI, processAPI, materialAPI, productMaterialAPI, productGroupAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
-
-const userStore = useUserStore()
 
 const {
   searchText,
@@ -155,6 +152,12 @@ const {
   errorContext: '加载产品数据失败'
 })
 
+const { canCreate, canEdit, canDelete } = useCrudPermission('product')
+
+const crud = useCRUD(productAPI, {
+  onSuccess: () => { dialogVisible.value = false; loadData() },
+})
+
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const formLoading = ref(false)
@@ -162,10 +165,6 @@ const currentProduct = ref(null)
 const allProcesses = ref([])
 const materialList = ref([])
 const productGroupList = ref([])
-
-const canCreate = computed(() => userStore.hasPermission('workorder.add_product'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_product'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_product'))
 
 const loadAllProcesses = async () => {
   try {
@@ -234,10 +233,7 @@ const handleDelete = async (row) => {
       `确定要删除产品"${row.name}"吗？此操作不可撤销。`
     )
     if (!confirmed) return
-
-    await productAPI.delete(row.id)
-    ElMessage.success('删除成功')
-    await loadData()
+    await crud.remove(row.id, '删除成功')
   } catch (error) {
     ErrorHandler.showMessage(error, '删除失败')
   }
@@ -319,42 +315,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
 .product-list {
   padding: var(--ui-page-padding);
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  flex-wrap: wrap;
-}
-
-.management-search-control {
-  width: min(100%, 320px);
-}
-
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .management-search-control,
-  .header-section .el-button {
-    width: 100%;
-  }
 }
 </style>

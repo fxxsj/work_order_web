@@ -18,6 +18,7 @@
 
 <script setup>
 import { StatusTag } from '@/components/common'
+import { formatDate } from '@/utils/filter'
 
 const props = defineProps({
   workOrder: { type: Object, default: null },
@@ -28,6 +29,4 @@ const props = defineProps({
   approvalStatusText: { type: String, default: '' },
   priorityText: { type: String, default: '' }
 })
-
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-'
 </script>

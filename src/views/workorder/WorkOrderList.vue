@@ -181,7 +181,7 @@ import { Plus, Search, RefreshRight, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { workOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
@@ -217,14 +217,18 @@ const {
   errorContext: '加载施工单失败'
 })
 
+const { canEdit, canDelete } = useCrudPermission('workorder')
+
+const crud = useCRUD(workOrderAPI, {
+  onSuccess: () => loadData(),
+})
+
 const isSalesperson = computed(() => {
   const userInfo = userStore.currentUser
   return userInfo && userInfo.is_salesperson
 })
 
 const canExport = computed(() => userStore.hasPermission('workorder.view_workorder'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_workorder'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_workorder'))
 
 const handleReset = () => {
   ordering.value = '-created_at'
@@ -266,9 +270,7 @@ const handleDelete = async (row) => {
   try {
     const confirmed = await ErrorHandler.confirm(`确定要删除施工单 ${row.order_number} 吗？`)
     if (!confirmed) return
-    await workOrderAPI.delete(row.id)
-    ElMessage.success('删除成功')
-    loadData()
+    await crud.remove(row.id, '删除成功')
   } catch (error) {
     if (error !== 'cancel') ErrorHandler.showMessage(error, '删除施工单')
   }

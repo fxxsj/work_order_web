@@ -94,6 +94,7 @@ import { ElMessage } from 'element-plus'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { StatusTag } from '@/components/common'
+import { formatDate } from '@/utils/filter'
 import ErrorHandler from '@/utils/errorHandler'
 
 const router = useRouter()
@@ -133,7 +134,6 @@ const handleSubmit = async () => { try { await salesOrderAPI.submit(route.params
 const handleApprove = async () => { try { await salesOrderAPI.approve(route.params.id); ElMessage.success('审核通过'); loadData() } catch (error) { ErrorHandler.showMessage(error, '审核失败') } }
 const handleReject = async () => { try { await salesOrderAPI.reject(route.params.id); ElMessage.success('已拒绝'); loadData() } catch (error) { ErrorHandler.showMessage(error, '操作失败') } }
 
-const formatDate = (date) => date ? new Date(date).toLocaleDateString('zh-CN') : '-'
 const formatAmount = (amount) => amount ? amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '0.00'
 
 onMounted(() => { loadData() })

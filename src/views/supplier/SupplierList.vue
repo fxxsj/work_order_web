@@ -122,14 +122,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
 import { supplierAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import SupplierFormDialog from './components/SupplierFormDialog.vue'
-
-const userStore = useUserStore()
 
 const {
   searchText,
@@ -148,14 +144,16 @@ const {
   errorContext: '加载供应商数据失败'
 })
 
+const { canCreate, canEdit, canDelete } = useCrudPermission('supplier')
+
+const crud = useCRUD(supplierAPI, {
+  onSuccess: () => { dialogVisible.value = false; loadData() },
+})
+
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const dialogLoading = ref(false)
 const currentRow = ref(null)
-
-const canCreate = computed(() => userStore.hasPermission('workorder.add_supplier'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_supplier'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_supplier'))
 
 const showCreateDialog = () => {
   dialogType.value = 'create'
@@ -171,30 +169,19 @@ const showEditDialog = (row) => {
 
 const handleFormConfirm = async (formData) => {
   dialogLoading.value = true
-  try {
-    if (dialogType.value === 'create') {
-      await supplierAPI.create(formData)
-      ElMessage.success('创建成功')
-    } else {
-      await supplierAPI.update(formData.id, formData)
-      ElMessage.success('更新成功')
-    }
-    dialogVisible.value = false
-    await loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, dialogType.value === 'create' ? '创建' : '更新')
-  } finally {
-    dialogLoading.value = false
+  if (dialogType.value === 'create') {
+    await crud.create(formData, '创建成功')
+  } else {
+    await crud.update(formData.id, formData, '更新成功')
   }
+  dialogLoading.value = false
 }
 
 const handleDelete = async (row) => {
   try {
     const confirmed = await ErrorHandler.confirm(`确定要删除供应商"${row.name}"吗？`)
     if (!confirmed) return
-    await supplierAPI.delete(row.id)
-    ElMessage.success('删除成功')
-    await loadData()
+    await crud.remove(row.id, '删除成功')
   } catch (error) {
     ErrorHandler.showMessage(error, '删除')
   }
@@ -206,65 +193,15 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
 .supplier-list {
   padding: var(--ui-page-padding);
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  flex-wrap: wrap;
-}
-
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  flex-wrap: wrap;
-}
-
-.action-group {
-  display: flex;
-  align-items: center;
 }
 
 .danger-text {
   color: #F56C6C;
 }
 
-.management-search-control {
-  width: min(100%, 320px);
-}
-
 .status-filter-control {
   width: min(100%, 140px);
-}
-
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section,
-  .filter-group,
-  .action-group {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .management-search-control,
-  .status-filter-control,
-  .action-group .el-button {
-    width: 100%;
-  }
 }
 </style>

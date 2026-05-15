@@ -64,7 +64,7 @@
                 {{ scope.row.confirmed_by_name }}
               </div>
               <div v-if="scope.row.confirmed && scope.row.confirmed_at" style="font-size: 12px; color: #909399;">
-                {{ formatDate(scope.row.confirmed_at) }}
+                {{ formatDateTime(scope.row.confirmed_at) }}
               </div>
             </template>
           </el-table-column>
@@ -121,7 +121,7 @@
           <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
           <el-table-column prop="created_at" label="创建时间" width="180">
             <template #default="scope">
-              {{ formatDate(scope.row.created_at) }}
+              {{ formatDateTime(scope.row.created_at) }}
             </template>
           </el-table-column>
           <el-table-column label="操作" width="180" fixed="right">
@@ -204,12 +204,10 @@ import { ref, computed, onMounted } from 'vue'
 import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { artworkAPI, productAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
+import { formatDateTime } from '@/utils/filter'
 import ArtworkFormDialog from './components/ArtworkFormDialog.vue'
-
-const userStore = useUserStore()
 
 const {
   searchText,
@@ -227,6 +225,13 @@ const {
   errorContext: '加载图稿数据失败'
 })
 
+const { canCreate, canEdit, canDelete } = useCrudPermission('artwork')
+const canConfirm = canEdit // confirm uses change_artwork permission
+
+const crud = useCRUD(artworkAPI, {
+  onSuccess: () => { dialogVisible.value = false; loadData() },
+})
+
 const dialogVisible = ref(false)
 const formLoading = ref(false)
 const currentArtwork = ref(null)
@@ -235,23 +240,6 @@ const productList = ref([])
 const dieList = ref([])
 const foilingPlateList = ref([])
 const embossingPlateList = ref([])
-
-const canCreate = computed(() => userStore.hasPermission('workorder.add_artwork'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_artwork'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_artwork'))
-const canConfirm = computed(() => userStore.hasPermission('workorder.change_artwork'))
-
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
 
 const loadProductList = async () => {
   try {
@@ -331,30 +319,19 @@ const showDialog = async (row = null) => {
 
 const handleFormConfirm = async (formData) => {
   formLoading.value = true
-  try {
-    if (currentArtwork.value) {
-      await artworkAPI.update(currentArtwork.value.id, formData)
-      ElMessage.success('保存成功')
-    } else {
-      await artworkAPI.create(formData)
-      ElMessage.success('创建成功')
-    }
-    dialogVisible.value = false
-    loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, currentArtwork.value ? '保存失败' : '创建失败')
-  } finally {
-    formLoading.value = false
+  if (currentArtwork.value) {
+    await crud.update(currentArtwork.value.id, formData, '保存成功')
+  } else {
+    await crud.create(formData, '创建成功')
   }
+  formLoading.value = false
 }
 
 const handleDelete = async (row) => {
   try {
     const confirmed = await ErrorHandler.confirm(`确定要删除图稿"${row.name}"吗？`)
     if (!confirmed) return
-    await artworkAPI.delete(row.id)
-    ElMessage.success('删除成功')
-    loadData()
+    await crud.remove(row.id, '删除成功')
   } catch (error) {
     ErrorHandler.showMessage(error, '删除失败')
   }

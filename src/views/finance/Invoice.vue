@@ -185,13 +185,10 @@ import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { invoiceAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { StatusTag } from '@/components/common'
 import InvoiceStats from './components/InvoiceStats.vue'
-
-const userStore = useUserStore()
 
 const statsLoading = ref(false)
 const submitting = ref(false)
@@ -247,8 +244,7 @@ const {
 })
 
 const hasFilters = computed(() => filters.value.status || filters.value.customer || filters.value.invoice_number)
-const canCreate = computed(() => userStore.hasPermission('workorder.add_invoice'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_invoice'))
+const { canCreate, canEdit } = useCrudPermission('invoice')
 
 const handleReset = () => resetFilters()
 

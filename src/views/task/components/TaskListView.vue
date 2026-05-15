@@ -26,6 +26,7 @@
 <script setup>
 import { Edit, User, Check } from '@element-plus/icons-vue'
 import { StatusTag } from '@/components/common'
+import { formatDate } from '@/utils/filter'
 
 const props = defineProps({ tasks: { type: Array, default: () => [] }, editable: { type: Boolean, default: false }, loading: { type: Boolean, default: false }, total: { type: Number, default: 0 }, currentPage: { type: Number, default: 1 }, pageSize: { type: Number, default: 20 } })
 const emit = defineEmits(['row-click', 'task-update', 'task-assign', 'task-complete', 'page-size-change', 'page-change'])
@@ -34,7 +35,6 @@ const getTaskDeadline = (task) => task.deadline || task.due_date || null;
 const calculateProgress = (task) => task.production_quantity ? Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100) : 0;
 const getProgressColor = (task) => calculateProgress(task) === 100 ? 'var(--ui-color-success)' : 'var(--ui-color-primary)';
 const isOverdue = (task) => { const dl = getTaskDeadline(task); return dl && new Date(dl) < new Date() };
-const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString('zh-CN') : '-';
 
 const canUpdate = (task) => props.editable && task.status !== 'completed' && task.status !== 'cancelled';
 const canAssign = (task) => props.editable && task.status !== 'completed';

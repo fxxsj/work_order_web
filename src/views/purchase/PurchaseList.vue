@@ -81,13 +81,10 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, Search, RefreshRight, Warning } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { purchaseOrderAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
+import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { StatusTag } from '@/components/common'
 import { PurchaseFormDialog, PurchaseDetailDialog, LowStockAlertDialog, ReceiveDialog, InspectionDialog } from './components'
-
-const userStore = useUserStore()
 
 const dialogVisible = ref(false)
 const detailDialogVisible = ref(false)
@@ -116,9 +113,7 @@ const {
   initialFilters: { supplier_name: '', status: '' }
 })
 
-const canCreate = computed(() => userStore.hasPermission('workorder.add_purchaseorder'))
-const canEdit = computed(() => userStore.hasPermission('workorder.change_purchaseorder'))
-const canDelete = computed(() => userStore.hasPermission('workorder.delete_purchaseorder'))
+const { canCreate, canEdit, canDelete } = useCrudPermission('purchaseorder')
 
 const showCreateDialog = () => { if (!canCreate.value) return; isEditMode.value = false; Object.assign(form, { supplier: null, work_order_number: '', notes: '', items: [] }); dialogVisible.value = true }
 const showEditDialog = (row) => { if (!canEdit.value) return; isEditMode.value = true; currentPurchaseId.value = row.id; purchaseOrderAPI.getDetail(row.id).then(res => { Object.assign(form, { supplier: res.supplier, work_order_number: res.work_order_number, notes: res.notes, items: res.items || [] }); dialogVisible.value = true }).catch(e => ErrorHandler.showMessage(e, '加载详情')) }

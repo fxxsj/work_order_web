@@ -64,7 +64,7 @@ export function useCRUD(api, options = {}) {
   const getById = async (id) => {
     loading.value = true
     try {
-      const response = await api.get(id)
+      const response = await api.getDetail(id)
       data.value = transformResponse ? transformResponse(response) : response
       return data.value
     } catch (error) {
@@ -78,7 +78,7 @@ export function useCRUD(api, options = {}) {
   const list = async (params = {}) => {
     loading.value = true
     try {
-      const response = await api.list(params)
+      const response = await api.getList(params)
       const result = transformResponse ? transformResponse(response) : response
       data.value = result
       return result

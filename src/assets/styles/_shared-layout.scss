@@ -1,0 +1,46 @@
+@use './tokens/breakpoints' as bp;
+
+// ---------------------------------------------------------------------------
+// Shared layout utilities used across list/management views.
+// Imported via global.scss so individual views do not need to duplicate these.
+// ---------------------------------------------------------------------------
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--ui-control-gap);
+}
+
+.management-search-control {
+  width: min(100%, 360px);
+}
+
+.table-scroll {
+  margin-top: var(--ui-section-gap);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+}
+
+// Mobile responsive overrides
+@media (max-width: bp.$breakpoint-phone-max) {
+  .header-section,
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-search-control,
+  .header-actions .el-button {
+    width: 100%;
+  }
+}

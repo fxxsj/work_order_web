@@ -16,11 +16,10 @@
 <script setup>
 import { Plus } from '@element-plus/icons-vue'
 import { StatusTag } from '@/components/common'
+import { formatDate } from '@/utils/filter'
 
 const props = defineProps({ materials: { type: Array, default: () => [] }, editable: { type: Boolean, default: false } })
 const emit = defineEmits(['add-material', 'update-status'])
-
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-'
 </script>
 
 <style scoped>
