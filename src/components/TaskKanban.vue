@@ -24,12 +24,7 @@
               <div class="card-title">
                 {{ task.work_content }}
               </div>
-              <el-tag
-                :type="getTaskTypeTagType(task.task_type)"
-                size="small"
-              >
-                {{ getTaskTypeDisplay(task.task_type) }}
-              </el-tag>
+              <StatusTag :status="task.task_type" category="taskType" :label="task.task_type_display" size="small" />
             </div>
             <div class="card-body">
               <div class="card-info">
@@ -60,14 +55,14 @@
             </div>
             <div class="card-footer">
               <div class="footer-left">
-                <el-tag
+                <StatusTag
                   v-if="task.priority"
-                  :type="getPriorityType(task.priority)"
+                  :status="task.priority"
+                  category="priority"
+                  :label="task.priority_display"
                   size="small"
                   effect="plain"
-                >
-                  {{ getPriorityDisplay(task.priority) }}
-                </el-tag>
+                />
               </div>
               <div class="footer-right">
                 <span class="deadline" :class="{ 'deadline-overdue': isOverdue(task) }">
@@ -87,6 +82,7 @@
 <script setup>
 import { computed } from 'vue'
 import { Document, OfficeBuilding, User, Clock } from '@element-plus/icons-vue'
+import { StatusTag } from '@/components/common'
 
 const props = defineProps({
   tasks: {
@@ -114,34 +110,6 @@ const handleTaskClick = (task) => {
   emit('task-click', task)
 }
 
-const getTaskTypeTagType = (type) => {
-  const typeMap = {
-    plate_making: 'success',
-    cutting: 'info',
-    printing: 'primary',
-    foiling: 'warning',
-    embossing: 'warning',
-    die_cutting: 'warning',
-    packaging: 'info',
-    general: 'info'
-  }
-  return typeMap[type] || 'info'
-}
-
-const getTaskTypeDisplay = (type) => {
-  const displayMap = {
-    plate_making: '制版',
-    cutting: '裁切',
-    printing: '印刷',
-    foiling: '烫金',
-    embossing: '击凸',
-    die_cutting: '模切',
-    packaging: '包装',
-    general: '通用'
-  }
-  return displayMap[type] || type
-}
-
 const getProgressPercentage = (task) => {
   if (!task.production_quantity) return 0
   return Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100)
@@ -152,26 +120,6 @@ const getProgressStatus = (task) => {
   if (percentage >= 100) return 'success'
   if (percentage >= 80) return 'warning'
   return ''
-}
-
-const getPriorityType = (priority) => {
-  const typeMap = {
-    low: 'info',
-    normal: 'success',
-    high: 'warning',
-    urgent: 'danger'
-  }
-  return typeMap[priority] || 'info'
-}
-
-const getPriorityDisplay = (priority) => {
-  const displayMap = {
-    low: '低',
-    normal: '普通',
-    high: '高',
-    urgent: '紧急'
-  }
-  return displayMap[priority] || priority
 }
 
 const isOverdue = (task) => {
@@ -199,112 +147,115 @@ const formatDate = (date) => {
 }
 
 .kanban-column {
-  flex: 1 0 clamp(280px, 32vw, 350px);
+  flex: 1 0 clamp(var(--ui-board-column-width-min), 32vw, var(--ui-board-column-width));
 }
 
 .column-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
-  background-color: #f5f7fa;
-  border-radius: 8px 8px 0 0;
-  border-bottom: 2px solid #e4e7ed;
+  padding: var(--ui-control-gap) var(--ui-stat-content-gap);
+  background-color: var(--ui-color-fill-light);
+  border-radius: var(--ui-radius-card) var(--ui-radius-card) 0 0;
+  border-bottom: 2px solid var(--ui-color-border-strong);
 }
 
 .column-title {
   font-weight: 500;
-  font-size: 16px;
+  font-size: var(--ui-font-size-base);
 }
 
 .column-content {
-  background-color: #f5f7fa;
-  min-height: 200px;
-  padding: 10px;
-  border-radius: 0 0 8px 8px;
+  background-color: var(--ui-color-fill-light);
+  min-height: var(--ui-board-kanban-min-height);
+  padding: var(--ui-control-gap);
+  border-radius: 0 0 var(--ui-radius-card) var(--ui-radius-card);
 }
 
 @media (max-width: bp.$breakpoint-phone-max) {
   .kanban-column {
-    flex-basis: min(86vw, 340px);
+    flex-basis: min(var(--ui-board-column-mobile-ratio), var(--ui-board-column-width-mobile));
   }
 }
 
 .kanban-card {
   background-color: #fff;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 10px;
+  border-radius: var(--ui-radius-card);
+  padding: var(--ui-stat-content-gap);
+  margin-bottom: var(--ui-control-gap);
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all var(--ui-transition-base);
+  box-shadow: var(--ui-board-card-shadow);
 }
 
 .kanban-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  box-shadow: var(--ui-board-card-shadow-hover);
+  transform: translateY(var(--ui-board-card-lift));
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 10px;
+  margin-bottom: var(--ui-control-gap);
+  gap: var(--ui-control-gap);
 }
 
 .card-title {
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--ui-font-size-sm);
   flex: 1;
-  margin-right: 10px;
+  min-width: 0;
 }
 
 .card-body {
-  margin-bottom: 10px;
+  margin-bottom: var(--ui-control-gap);
 }
 
 .card-info {
-  margin-bottom: 10px;
+  margin-bottom: var(--ui-control-gap);
 }
 
 .info-item {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  color: #606266;
-  margin-bottom: 5px;
+  gap: var(--ui-inline-gap);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-regular);
+  margin-bottom: var(--ui-inline-gap);
 }
 
 .card-progress {
-  margin-top: 10px;
+  margin-top: var(--ui-control-gap);
 }
 
 .progress-info {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
-  color: #606266;
-  margin-bottom: 5px;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-regular);
+  margin-bottom: var(--ui-inline-gap);
+  gap: var(--ui-control-gap);
 }
 
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 10px;
-  border-top: 1px solid #ebeef5;
+  gap: var(--ui-control-gap);
+  padding-top: var(--ui-control-gap);
+  border-top: 1px solid var(--ui-color-border);
 }
 
 .deadline {
-  font-size: 12px;
-  color: #909399;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-secondary);
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--ui-inline-gap);
 }
 
 .deadline-overdue {
-  color: #f56c6c;
+  color: var(--ui-color-danger);
 }
 </style>

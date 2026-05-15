@@ -7,7 +7,7 @@
       <el-table-column prop="material_size" label="尺寸" width="150" />
       <el-table-column prop="material_usage" label="用量" width="150" />
       <el-table-column prop="notes" label="备注" min-width="200" show-overflow-tooltip><template #default="scope">{{ scope.row.notes || '-' }}</template></el-table-column>
-      <el-table-column label="采购状态" width="120"><template #default="scope"><el-tag :type="getStatusType(scope.row.purchase_status)" size="small">{{ scope.row.purchase_status_display }}</el-tag></template></el-table-column>
+      <el-table-column label="采购状态" width="120"><template #default="scope"><StatusTag :status="scope.row.purchase_status" :label="scope.row.purchase_status_display" category="materialPurchase" size="small" /></template></el-table-column>
       <el-table-column label="采购日期" width="120"><template #default="scope">{{ formatDate(scope.row.purchase_date) }}</template></el-table-column>
       <el-table-column label="操作" width="100"><template #default="scope"><el-button type="text" size="small" @click="emit('update-material', scope.row)">编辑</el-button></template></el-table-column>
     </el-table>
@@ -18,12 +18,12 @@
 
 <script setup>
 import { Plus } from '@element-plus/icons-vue'
+import { StatusTag } from '@/components/common'
 
 const props = defineProps({ materials: { type: Array, default: () => [] } })
 const emit = defineEmits(['add-material', 'update-material'])
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-'
-const getStatusType = (s) => ({ pending: 'info', ordered: 'primary', received: 'success', cut: 'warning', completed: 'success' })[s] || 'info';
 </script>
 
 <style scoped>

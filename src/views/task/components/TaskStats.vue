@@ -1,22 +1,20 @@
 <template>
-  <el-row :gutter="20" class="task-stats">
-    <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><el-icon><Document /></el-icon></div><div class="stat-info"><div class="stat-value">{{ stats.total || 0 }}</div><div class="stat-label">总任务数</div></div></div></el-card></el-col>
-    <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #909399;"><el-icon><Clock /></el-icon></div><div class="stat-info"><div class="stat-value">{{ stats.pending || 0 }}</div><div class="stat-label">待开始</div></div></div></el-card></el-col>
-    <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #E6A23C;"><el-icon><Loading /></el-icon></div><div class="stat-info"><div class="stat-value">{{ stats.in_progress || 0 }}</div><div class="stat-label">进行中</div></div></div></el-card></el-col>
-    <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #67C23A;"><el-icon><CircleCheck /></el-icon></div><div class="stat-info"><div class="stat-value">{{ stats.completed || 0 }}</div><div class="stat-label">已完成</div></div></div></el-card></el-col>
-  </el-row>
+  <StatsCards :items="statItems" layout="media" />
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { Document, Clock, Loading, CircleCheck } from '@element-plus/icons-vue'
-defineProps({ stats: { type: Object, default: () => ({}) } })
-</script>
+import { StatsCards } from '@/components/common'
 
-<style scoped>
-.task-stats { row-gap: var(--ui-section-gap); margin-bottom: var(--ui-section-gap); }
-.stat-card { border-radius: 10px; }
-.stat-content { display: flex; align-items: center; gap: 12px; }
-.stat-icon { width: 48px; height: 48px; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-.stat-value { font-size: 24px; font-weight: bold; }
-.stat-label { font-size: 12px; color: #909399; }
-</style>
+const props = defineProps({
+  stats: { type: Object, default: () => ({}) }
+})
+
+const statItems = computed(() => [
+  { key: 'total', label: '总任务数', value: props.stats.total, format: 'number', icon: Document, tone: 'primary' },
+  { key: 'pending', label: '待开始', value: props.stats.pending, format: 'number', icon: Clock, tone: 'info' },
+  { key: 'in-progress', label: '进行中', value: props.stats.in_progress, format: 'number', icon: Loading, tone: 'warning' },
+  { key: 'completed', label: '已完成', value: props.stats.completed, format: 'number', icon: CircleCheck, tone: 'success' }
+])
+</script>

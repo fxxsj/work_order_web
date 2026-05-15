@@ -13,3 +13,6 @@ export * from './approvalStatus'
 
 // 优先级
 export * from './priority'
+
+// 状态元数据
+export * from './statusMeta'

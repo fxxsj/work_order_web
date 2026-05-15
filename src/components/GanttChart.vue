@@ -3,17 +3,17 @@
     <div class="gantt-header">
       <div class="gantt-controls">
         <el-button-group>
-          <el-button size="small" :disabled="scale <= 0.5" @click="zoomOut">
+          <el-button size="small" :disabled="scale <= SCALE_MIN" @click="zoomOut">
             <el-icon><ZoomOut /></el-icon> 缩小
           </el-button>
           <el-button size="small" @click="resetZoom">
             <el-icon><Refresh /></el-icon> 重置
           </el-button>
-          <el-button size="small" :disabled="scale >= 2" @click="zoomIn">
+          <el-button size="small" :disabled="scale >= SCALE_MAX" @click="zoomIn">
             <el-icon><ZoomIn /></el-icon> 放大
           </el-button>
         </el-button-group>
-        <el-button-group style="margin-left: 10px;">
+        <el-button-group class="view-mode-group">
           <el-button size="small" :type="viewMode === 'day' ? 'primary' : ''" @click="viewMode = 'day'">
             日视图
           </el-button>
@@ -51,9 +51,7 @@
             {{ process.name }}
           </div>
           <div class="row-cell">
-            <el-tag :type="getStatusType(process.status)" size="small">
-              {{ process.status_display }}
-            </el-tag>
+            <StatusTag :status="process.status" category="process" :label="process.status_display" size="small" />
           </div>
           <div class="row-cell">
             {{ process.department_name || '-' }}
@@ -100,6 +98,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ZoomOut, ZoomIn, Refresh } from '@element-plus/icons-vue'
+import { StatusTag } from '@/components/common'
 
 const props = defineProps({
   processes: {
@@ -116,9 +115,15 @@ const props = defineProps({
   }
 })
 
-const scale = ref(1)
+const SCALE_MIN = 0.5
+const SCALE_MAX = 2
+const SCALE_STEP = 0.25
+const SCALE_DEFAULT = 1
+const GANTT_DAY_WIDTH = 50
+
+const scale = ref(SCALE_DEFAULT)
 const viewMode = ref('day')
-const dayWidth = ref(50)
+const dayWidth = ref(GANTT_DAY_WIDTH)
 
 const sortedProcesses = computed(() => {
   return [...props.processes].sort((a, b) => {
@@ -140,16 +145,6 @@ const timelineDates = computed(() => {
   
   return dates
 })
-
-const getStatusType = (status) => {
-  const typeMap = {
-    pending: 'info',
-    in_progress: 'warning',
-    completed: 'success',
-    cancelled: 'danger'
-  }
-  return typeMap[status] || 'info'
-}
 
 const getBarStyle = (process) => {
   const start = new Date(process.start_date)
@@ -177,32 +172,40 @@ const formatDate = (dateStr) => {
 }
 
 const zoomIn = () => {
-  scale.value = Math.min(scale.value + 0.25, 2)
+  scale.value = Math.min(scale.value + SCALE_STEP, SCALE_MAX)
 }
 
 const zoomOut = () => {
-  scale.value = Math.max(scale.value - 0.25, 0.5)
+  scale.value = Math.max(scale.value - SCALE_STEP, SCALE_MIN)
 }
 
 const resetZoom = () => {
-  scale.value = 1
+  scale.value = SCALE_DEFAULT
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .gantt-chart {
   width: 100%;
   overflow: hidden;
 }
 
 .gantt-header {
-  padding: 10px;
-  border-bottom: 1px solid #ebeef5;
+  padding: var(--ui-control-gap);
+  border-bottom: 1px solid var(--ui-color-border);
 }
 
 .gantt-controls {
   display: flex;
   align-items: center;
+  gap: var(--ui-control-gap);
+  flex-wrap: wrap;
+}
+
+.view-mode-group {
+  margin-left: 0;
 }
 
 .gantt-container {
@@ -211,40 +214,40 @@ const resetZoom = () => {
 }
 
 .gantt-sidebar {
-  width: 300px;
+  width: var(--ui-chart-sidebar-width);
   flex-shrink: 0;
-  border-right: 1px solid #ebeef5;
+  border-right: 1px solid var(--ui-color-border);
 }
 
 .sidebar-header {
   display: flex;
-  background-color: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
-  height: 40px;
+  background-color: var(--ui-color-fill-light);
+  border-bottom: 1px solid var(--ui-color-border);
+  height: var(--ui-chart-header-height);
   align-items: center;
 }
 
 .header-cell {
   flex: 1;
-  padding: 0 10px;
-  font-weight: bold;
-  font-size: 14px;
+  padding: 0 var(--ui-control-gap);
+  font-weight: 700;
+  font-size: var(--ui-font-size-sm);
 }
 
 .sidebar-row {
   display: flex;
   align-items: center;
-  height: 50px;
-  border-bottom: 1px solid #ebeef5;
+  height: var(--ui-chart-row-height);
+  border-bottom: 1px solid var(--ui-color-border);
 }
 
 .sidebar-row.row-active {
-  background-color: #ecf5ff;
+  background-color: var(--ui-color-primary-light);
 }
 
 .row-cell {
   flex: 1;
-  padding: 0 10px;
+  padding: 0 var(--ui-control-gap);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -257,9 +260,9 @@ const resetZoom = () => {
 
 .gantt-timeline {
   display: flex;
-  height: 40px;
-  background-color: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
+  height: var(--ui-chart-header-height);
+  background-color: var(--ui-color-fill-light);
+  border-bottom: 1px solid var(--ui-color-border);
 }
 
 .timeline-cell {
@@ -267,8 +270,8 @@ const resetZoom = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: 1px solid #ebeef5;
-  font-size: 12px;
+  border-right: 1px solid var(--ui-color-border);
+  font-size: var(--ui-font-size-xs);
 }
 
 .gantt-bars {
@@ -276,37 +279,37 @@ const resetZoom = () => {
 }
 
 .gantt-bar-row {
-  height: 50px;
-  border-bottom: 1px solid #ebeef5;
+  height: var(--ui-chart-row-height);
+  border-bottom: 1px solid var(--ui-color-border);
   position: relative;
 }
 
 .gantt-bar {
   position: absolute;
-  height: 30px;
-  top: 10px;
-  border-radius: 4px;
+  height: var(--ui-chart-bar-height);
+  top: var(--ui-chart-bar-offset-y);
+  border-radius: var(--ui-radius-card);
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 var(--ui-control-gap);
   color: #fff;
-  font-size: 12px;
+  font-size: var(--ui-font-size-xs);
 }
 
 .gantt-bar.bar-pending {
-  background-color: #909399;
+  background-color: var(--ui-color-text-secondary);
 }
 
 .gantt-bar.bar-in_progress {
-  background-color: #e6a23c;
+  background-color: var(--ui-color-warning);
 }
 
 .gantt-bar.bar-completed {
-  background-color: #67c23a;
+  background-color: var(--ui-color-success);
 }
 
 .gantt-bar.bar-cancelled {
-  background-color: #f56c6c;
+  background-color: var(--ui-color-danger);
 }
 
 .bar-content {
@@ -322,7 +325,17 @@ const resetZoom = () => {
 }
 
 .bar-duration {
-  margin-left: 10px;
+  margin-left: var(--ui-control-gap);
   opacity: 0.8;
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .gantt-sidebar {
+    width: min(72vw, var(--ui-chart-sidebar-width));
+  }
+
+  .gantt-controls :deep(.el-button-group) {
+    display: flex;
+  }
 }
 </style>

@@ -5,7 +5,7 @@
       <el-table-column prop="order_number" label="施工单号" width="150" />
       <el-table-column prop="customer_name" label="客户" min-width="120" />
       <el-table-column prop="product_name" label="产品名称" min-width="150" show-overflow-tooltip />
-      <el-table-column label="状态" width="100"><template #default="scope"><el-tag :type="getStatusType(scope.row.status)" size="small">{{ scope.row.status_display }}</el-tag></template></el-table-column>
+      <el-table-column label="状态" width="100"><template #default="scope"><StatusTag :status="scope.row.status" :label="scope.row.status_display" category="workOrder" size="small" /></template></el-table-column>
       <el-table-column label="进度" width="150"><template #default="scope"><el-progress :percentage="scope.row.progress_percentage || 0" :color="scope.row.progress_percentage === 100 ? '#67C23A' : '#409EFF'" /></template></el-table-column>
       <el-table-column label="交货日期" width="120"><template #default="scope">{{ formatDate(scope.row.delivery_date) }}</template></el-table-column>
       <el-table-column label="操作" width="100" fixed="right"><template #default="scope"><el-button type="text" size="small" @click="goTo(`/workorders/${scope.row.id}`)">查看</el-button></template></el-table-column>
@@ -15,12 +15,12 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { StatusTag } from '@/components/common'
 
 defineProps({ recentOrders: { type: Array, default: () => [] } })
 const router = useRouter()
 const goTo = (path) => router.push(path)
 
-const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', paused: 'warning', cancelled: 'danger' })[s] || 'info';
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-CN') : '-';
 </script>
 

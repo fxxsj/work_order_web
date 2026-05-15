@@ -29,11 +29,12 @@
 </template>
 
 <script setup>
-import { ref, defineExpose } from 'vue'
+import { computed, ref, defineExpose } from 'vue'
 
 const props = defineProps({
+  modelValue: { type: Boolean, default: false },
   title: { type: String, required: true },
-  width: { type: String, default: '600px' },
+  width: { type: String, default: 'var(--ui-dialog-width-md)' },
   formData: { type: Object, default: () => ({}) },
   rules: { type: Object, default: () => ({}) },
   submitText: { type: String, default: '确定' },
@@ -42,10 +43,18 @@ const props = defineProps({
   loading: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['open', 'close', 'cancel', 'submit'])
+const emit = defineEmits(['update:modelValue', 'open', 'close', 'cancel', 'submit'])
 
-const dialogVisible = ref(false)
+const internalVisible = ref(false)
 const formRef = ref(null)
+
+const dialogVisible = computed({
+  get: () => props.modelValue || internalVisible.value,
+  set: (value) => {
+    internalVisible.value = value
+    emit('update:modelValue', value)
+  }
+})
 
 const open = () => {
   dialogVisible.value = true
@@ -87,10 +96,24 @@ defineExpose({
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/tokens/breakpoints' as bp;
+
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: var(--ui-control-gap);
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  .dialog-footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .dialog-footer .el-button {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 </style>

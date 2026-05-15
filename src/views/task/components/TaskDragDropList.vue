@@ -4,9 +4,9 @@
       <div class="column-header"><span class="column-title">待分派任务</span><el-badge :value="unassignedTasks.length" type="warning" /></div>
       <div class="column-content">
         <div v-for="task in unassignedTasks" :key="task.id" class="task-card" :class="getPriorityClass(task)" draggable="true" @dragstart="onDragStart(task, $event)">
-          <div class="card-header"><div class="card-title">{{ task.work_content }}</div><el-tag v-if="task.work_order__priority" :type="getPriorityType(task.work_order__priority)" size="small">{{ getPriorityLabel(task.work_order__priority) }}</el-tag></div>
+          <div class="card-header"><div class="card-title">{{ task.work_content }}</div><StatusTag v-if="task.work_order__priority" :status="task.work_order__priority" category="priority" size="small" /></div>
           <div class="card-body"><div class="info-item"><el-icon><Document /></el-icon><span>{{ task.work_order__order_number || '-' }}</span></div><div class="info-item"><el-icon><Setting /></el-icon><span>{{ task.process_name || '-' }}</span></div><div class="info-item"><el-icon><Tickets /></el-icon><span>数量: {{ task.production_quantity }}</span></div></div>
-          <div class="card-footer"><el-tag size="small" :type="getStatusType(task.status)">{{ getStatusLabel(task.status) }}</el-tag></div>
+          <div class="card-footer"><StatusTag :status="task.status" category="task" size="small" /></div>
         </div>
         <el-empty v-if="unassignedTasks.length === 0" description="暂无待分派任务" :image-size="80" />
       </div>
@@ -15,9 +15,9 @@
       <div class="column-header"><span class="column-title">{{ operator.name }}</span><el-badge :value="getOperatorTaskCount(operator.id)" type="primary" /></div>
       <div class="column-content">
         <div v-for="task in operatorTasks[operator.id] || []" :key="task.id" class="task-card" :class="getPriorityClass(task)" draggable="true" @dragstart="onDragStart(task, $event)">
-          <div class="card-header"><div class="card-title">{{ task.work_content }}</div><el-tag v-if="task.work_order__priority" :type="getPriorityType(task.work_order__priority)" size="small">{{ getPriorityLabel(task.work_order__priority) }}</el-tag></div>
+          <div class="card-header"><div class="card-title">{{ task.work_content }}</div><StatusTag v-if="task.work_order__priority" :status="task.work_order__priority" category="priority" size="small" /></div>
           <div class="card-body"><div class="info-item"><el-icon><Document /></el-icon><span>{{ task.work_order__order_number || '-' }}</span></div><div class="info-item"><el-icon><Setting /></el-icon><span>{{ task.process_name || '-' }}</span></div></div>
-          <div class="card-footer"><el-tag size="small" :type="getStatusType(task.status)">{{ getStatusLabel(task.status) }}</el-tag></div>
+          <div class="card-footer"><StatusTag :status="task.status" category="task" size="small" /></div>
         </div>
         <el-empty v-if="!operatorTasks[operator.id]?.length" description="暂无任务" :image-size="60" />
       </div>
@@ -28,6 +28,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { Document, Setting, Tickets } from '@element-plus/icons-vue'
+import { StatusTag } from '@/components/common'
 
 const props = defineProps({ tasks: { type: Array, default: () => [] }, operators: { type: Array, default: () => [] } })
 const emit = defineEmits(['task-assigned', 'task-reassigned', 'task-unassigned'])
@@ -69,32 +70,28 @@ const handleDropUnassigned = () => {
 const resetDrag = () => { dragOverOperator.value = null; dragOverColumn.value = null; draggedTask.value = null; draggedFromOperator.value = null }
 
 const getPriorityClass = (task) => `priority-${task.work_order__priority || 'normal'}`
-const getPriorityType = (p) => ({ low: 'info', normal: 'info', high: 'warning', urgent: 'danger' })[p] || 'info';
-const getPriorityLabel = (p) => ({ low: '低', normal: '普通', high: '高', urgent: '紧急' })[p] || '普通';
-const getStatusType = (s) => ({ draft: 'info', pending: 'warning', in_progress: 'primary', completed: 'success', cancelled: 'danger' })[s] || 'info';
-const getStatusLabel = (s) => ({ draft: '草稿', pending: '待开始', in_progress: '进行中', completed: '已完成', cancelled: '已取消' })[s] || s;
 </script>
 
 <style lang="scss" scoped>
 @use '@/assets/styles/tokens/breakpoints' as bp;
 
-.task-drag-drop { display: flex; gap: var(--ui-section-gap); overflow-x: auto; padding: var(--ui-section-gap) 0; min-height: 500px; }
-.column { flex: 0 0 clamp(280px, 32vw, 350px); background: #f5f7fa; border-radius: 8px; display: flex; flex-direction: column; height: min(680px, calc(100vh - 250px)); min-height: 400px; border: 2px solid transparent; transition: all 0.3s; }
-.column.drag-over { border-color: #409eff; background: #ecf5ff; border-style: dashed; }
-.column-header { padding: 15px 20px; background: #fff; border-bottom: 2px solid #e4e7ed; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; }
-.column-title { font-weight: bold; font-size: 16px; color: #303133; }
-.column-content { flex: 1; padding: 15px; overflow-y: auto; }
-.task-card { background: #fff; border-radius: 6px; padding: 12px; cursor: move; transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #909399; }
-.task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-.task-card.priority-urgent { border-left-color: #f56c6c; }
-.task-card.priority-high { border-left-color: #e6a23c; }
-.task-card.priority-normal { border-left-color: #409eff; }
-.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-.card-title { font-weight: bold; font-size: 14px; color: #303133; flex: 1; }
-.card-body { margin-bottom: 10px; }
-.info-item { display: flex; align-items: center; font-size: 12px; color: #606266; margin-bottom: 6px; gap: 6px; }
-.card-footer { border-top: 1px solid #f0f0f0; padding-top: 8px; }
-.unassigned-column { background: #fef0f0; }
+.task-drag-drop { display: flex; gap: var(--ui-section-gap); overflow-x: auto; padding: var(--ui-section-gap) 0; min-height: var(--ui-board-column-min-height); }
+.column { flex: 0 0 clamp(var(--ui-board-column-width-min), 32vw, var(--ui-board-column-width)); background: var(--ui-color-fill-light); border-radius: var(--ui-radius-card); display: flex; flex-direction: column; height: min(var(--ui-board-height), calc(100vh - var(--ui-board-height-offset))); min-height: var(--ui-board-column-min-height); border: 2px solid transparent; transition: all var(--ui-transition-base); }
+.column.drag-over { border-color: var(--ui-color-primary); background: var(--ui-color-primary-light); border-style: dashed; }
+.column-header { padding: var(--ui-stat-content-gap) var(--ui-section-gap); background: #fff; border-bottom: 2px solid var(--ui-color-border-strong); border-radius: var(--ui-radius-card) var(--ui-radius-card) 0 0; display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); }
+.column-title { font-weight: 700; font-size: var(--ui-font-size-base); color: var(--ui-color-text-primary); }
+.column-content { flex: 1; padding: var(--ui-stat-content-gap); overflow-y: auto; }
+.task-card { background: #fff; border-radius: var(--ui-radius-card); padding: var(--ui-stat-content-gap); cursor: move; transition: all var(--ui-transition-base); box-shadow: var(--ui-board-card-shadow); border-left: var(--ui-board-priority-border-width) solid var(--ui-color-text-secondary); }
+.task-card:hover { transform: translateY(var(--ui-board-card-lift)); box-shadow: var(--ui-board-card-shadow-hover); }
+.task-card.priority-urgent { border-left-color: var(--ui-color-danger); }
+.task-card.priority-high { border-left-color: var(--ui-color-warning); }
+.task-card.priority-normal { border-left-color: var(--ui-color-primary); }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--ui-control-gap); gap: var(--ui-control-gap); }
+.card-title { font-weight: 700; font-size: var(--ui-font-size-sm); color: var(--ui-color-text-primary); flex: 1; min-width: 0; }
+.card-body { margin-bottom: var(--ui-control-gap); }
+.info-item { display: flex; align-items: center; font-size: var(--ui-font-size-xs); color: var(--ui-color-text-regular); margin-bottom: var(--ui-inline-gap); gap: var(--ui-inline-gap); }
+.card-footer { border-top: 1px solid var(--ui-color-border); padding-top: var(--ui-compact-padding-x); }
+.unassigned-column { background: var(--ui-color-danger-light); }
 
 @media (max-width: bp.$breakpoint-phone-max) {
   .task-drag-drop {
@@ -103,8 +100,8 @@ const getStatusLabel = (s) => ({ draft: '草稿', pending: '待开始', in_progr
   }
 
   .column {
-    flex-basis: min(86vw, 340px);
-    height: min(620px, calc(100vh - 180px));
+    flex-basis: min(var(--ui-board-column-mobile-ratio), var(--ui-board-column-width-mobile));
+    height: min(var(--ui-board-mobile-height), calc(100vh - var(--ui-board-mobile-height-offset)));
   }
 }
 </style>

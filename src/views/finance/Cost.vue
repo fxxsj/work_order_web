@@ -27,7 +27,7 @@
           <template #default="scope">¥{{ scope.row.overhead_cost ? scope.row.overhead_cost.toLocaleString() : '-' }}</template>
         </el-table-column>
         <el-table-column prop="actual_cost" label="实际成本" width="120" align="right">
-          <template #default="scope"><span style="font-weight: bold;">¥{{ scope.row.actual_cost ? scope.row.actual_cost.toLocaleString() : '-' }}</span></template>
+          <template #default="scope"><span class="text-strong">¥{{ scope.row.actual_cost ? scope.row.actual_cost.toLocaleString() : '-' }}</span></template>
         </el-table-column>
         <el-table-column prop="standard_cost" label="标准成本" width="120" align="right">
           <template #default="scope">¥{{ scope.row.standard_cost ? scope.row.standard_cost.toLocaleString() : '-' }}</template>
@@ -41,8 +41,8 @@
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="scope">
             <el-button type="text" size="small" @click="handleView(scope.row)">查看</el-button>
-            <el-button v-if="canEdit" type="text" size="small" style="color: #409EFF;" @click="handleCalculate(scope.row)">计算</el-button>
-            <el-button v-if="canEdit" type="text" size="small" style="color: #E6A23C;" @click="handleEdit(scope.row)">调整</el-button>
+            <el-button v-if="canEdit" type="text" size="small" class="text-primary" @click="handleCalculate(scope.row)">计算</el-button>
+            <el-button v-if="canEdit" type="text" size="small" class="text-warning" @click="handleEdit(scope.row)">调整</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -50,7 +50,7 @@
 
       <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
 
-      <el-empty v-if="!loading && tableData.length === 0" description="暂无成本数据" :image-size="200" style="margin-top: 50px;" />
+      <el-empty v-if="!loading && tableData.length === 0" description="暂无成本数据" :image-size="200" class="ui-empty-state" />
     </el-card>
 
     <el-dialog v-model="detailDialogVisible" title="成本详情" width="var(--ui-dialog-width-xl)" :close-on-click-modal="false">
@@ -89,10 +89,10 @@
 
     <el-dialog v-model="adjustDialogVisible" title="成本调整" width="var(--ui-dialog-width-md)" :close-on-click-modal="false">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="材料成本" prop="material_cost"><el-input-number v-model="form.material_cost" :min="0" :precision="2" style="width: 100%;" /></el-form-item>
-        <el-form-item label="人工成本" prop="labor_cost"><el-input-number v-model="form.labor_cost" :min="0" :precision="2" style="width: 100%;" /></el-form-item>
-        <el-form-item label="设备成本" prop="equipment_cost"><el-input-number v-model="form.equipment_cost" :min="0" :precision="2" style="width: 100%;" /></el-form-item>
-        <el-form-item label="制造费用" prop="overhead_cost"><el-input-number v-model="form.overhead_cost" :min="0" :precision="2" style="width: 100%;" /></el-form-item>
+        <el-form-item label="材料成本" prop="material_cost"><el-input-number v-model="form.material_cost" :min="0" :precision="2" class="ui-control-full" /></el-form-item>
+        <el-form-item label="人工成本" prop="labor_cost"><el-input-number v-model="form.labor_cost" :min="0" :precision="2" class="ui-control-full" /></el-form-item>
+        <el-form-item label="设备成本" prop="equipment_cost"><el-input-number v-model="form.equipment_cost" :min="0" :precision="2" class="ui-control-full" /></el-form-item>
+        <el-form-item label="制造费用" prop="overhead_cost"><el-input-number v-model="form.overhead_cost" :min="0" :precision="2" class="ui-control-full" /></el-form-item>
         <el-form-item label="调整原因" prop="adjust_reason"><el-input v-model="form.adjust_reason" type="textarea" :rows="3" placeholder="请输入调整原因" /></el-form-item>
       </el-form>
       <template #footer>
@@ -109,16 +109,12 @@ import { ElMessage } from 'element-plus'
 import { RefreshRight, DataAnalysis } from '@element-plus/icons-vue'
 import { productionCostAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import CostStats from './components/CostStats.vue'
 
 const userStore = useUserStore()
 
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
 const statsLoading = ref(false)
 const submitting = ref(false)
 const currentCost = ref(null)
@@ -132,20 +128,20 @@ const form = reactive({ ...FORM_INITIAL })
 
 const rules = { adjust_reason: [{ required: true, message: '请输入调整原因', trigger: 'blur' }] }
 
+const {
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handlePageChange,
+  handleSizeChange
+} = useCrudList(productionCostAPI.getList, {
+  errorContext: '加载成本数据失败'
+})
+
 const canEdit = computed(() => userStore.hasPermission('workorder.change_productioncost'))
-
-const handlePageChange = (page) => { currentPage.value = page; loadData() }
-const handleSizeChange = (size) => { pageSize.value = size; currentPage.value = 1; loadData() }
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = { page: currentPage.value, page_size: pageSize.value }
-    const response = await productionCostAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
-}
 
 const fetchStats = async () => {
   statsLoading.value = true
@@ -159,7 +155,14 @@ const handleView = async (row) => {
 }
 
 const handleCalculate = async (row) => {
-  try { await ErrorHandler.confirm('确认重新计算该订单成本？'); await productionCostAPI.calculateTotal(row.id); ElMessage.success('计算成功'); loadData(); fetchStats() } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '计算失败') }
+  try {
+    const confirmed = await ErrorHandler.confirm('确认重新计算该订单成本？')
+    if (!confirmed) return
+    await productionCostAPI.calculateTotal(row.id)
+    ElMessage.success('计算成功')
+    loadData()
+    fetchStats()
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '计算失败') }
 }
 
 const handleEdit = (row) => {
@@ -210,15 +213,13 @@ onMounted(() => { loadData(); fetchStats() })
 .table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
 .table-scroll-compact { margin-top: var(--ui-control-gap); }
 .data-table { width: 100%; }
-.text-danger { color: #F56C6C; }
-.text-success { color: #67C23A; }
 .cost-breakdown, .cost-comparison { margin-top: var(--ui-section-gap); }
 .cost-breakdown h4, .cost-comparison h4 { margin-bottom: var(--ui-control-gap); }
 .comparison-row { margin-top: var(--ui-control-gap); }
 .comparison-item { text-align: center; }
-.comparison-label { font-size: 14px; color: #909399; margin-bottom: 8px; }
-.comparison-value { font-size: 24px; font-weight: bold; color: #303133; }
-.el-card { border-radius: 8px; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); }
+.comparison-label { font-size: var(--ui-font-size-sm); color: var(--ui-color-text-secondary); margin-bottom: var(--ui-control-gap); }
+.comparison-value { font-size: var(--ui-font-size-lg); font-weight: 700; color: var(--ui-color-text-primary); }
+.el-card { border-radius: var(--ui-radius-card); box-shadow: var(--ui-shadow-card); }
 
 @media (max-width: bp.$breakpoint-phone-max) {
   .header-section,

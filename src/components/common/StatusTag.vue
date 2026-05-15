@@ -7,10 +7,13 @@
 
 <script setup>
 import { computed } from 'vue'
+import { getStatusMeta } from '@/constants/statusMeta'
 
 const props = defineProps({
-  status: { type: [String, Number], required: true },
+  status: { type: [String, Number], default: '' },
+  category: { type: String, default: '' },
   statusMap: { type: Object, default: () => ({}) },
+  label: { type: String, default: '' },
   size: { type: String, default: 'default' },
   effect: { type: String, default: 'light' },
   hit: { type: Boolean, default: false },
@@ -18,9 +21,13 @@ const props = defineProps({
   color: { type: String, default: '' }
 })
 
-const statusConfig = computed(() => props.statusMap[props.status] || {})
+const statusConfig = computed(() => {
+  if (props.statusMap[props.status]) return props.statusMap[props.status]
+  if (props.category) return getStatusMeta(props.category, props.status, { text: props.label })
+  return {}
+})
 const tagType = computed(() => statusConfig.value.type || 'info')
-const displayText = computed(() => statusConfig.value.text || props.status)
+const displayText = computed(() => props.label || statusConfig.value.text || props.status)
 const icon = computed(() => statusConfig.value.icon || '')
 </script>
 

@@ -14,7 +14,7 @@
       <el-table-column prop="id" label="ID" width="60" align="center" />
       <el-table-column prop="work_content" label="任务内容" min-width="150" />
       <el-table-column prop="task_type_display" label="类型" width="100" />
-      <el-table-column prop="status_display" label="状态" width="100"><template #default="scope"><el-tag :type="getStatusType(scope.row.status)" size="small">{{ scope.row.status_display }}</el-tag></template></el-table-column>
+      <el-table-column prop="status_display" label="状态" width="100"><template #default="scope"><StatusTag :status="scope.row.status" category="task" :label="scope.row.status_display" size="small" /></template></el-table-column>
       <el-table-column prop="production_quantity" label="数量" width="100" align="center" />
     </el-table>
     </div>
@@ -22,8 +22,9 @@
 </template>
 
 <script setup>
+import { StatusTag } from '@/components/common'
+
 const props = defineProps({ tasks: { type: Array, default: () => [] }, taskStats: { type: Object, default: () => ({}) }, loading: { type: Boolean, default: false } })
-const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', draft: 'warning' })[s] || 'info';
 </script>
 
 <style scoped>

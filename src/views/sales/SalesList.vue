@@ -46,10 +46,10 @@
           <template #default="scope"><span class="amount-text">¥{{ formatAmount(scope.row.total_amount) }}</span></template>
         </el-table-column>
         <el-table-column label="订单状态" width="100" align="center">
-          <template #default="scope"><el-tag :type="getStatusType(scope.row.status)" effect="plain">{{ getStatusText(scope.row.status) }}</el-tag></template>
+          <template #default="scope"><StatusTag :status="scope.row.status" category="salesOrder" effect="plain" /></template>
         </el-table-column>
         <el-table-column label="付款状态" width="100" align="center">
-          <template #default="scope"><el-tag :type="getPaymentStatusType(scope.row.payment_status)" effect="plain">{{ getPaymentStatusText(scope.row.payment_status) }}</el-tag></template>
+          <template #default="scope"><StatusTag :status="scope.row.payment_status" category="payment" effect="plain" /></template>
         </el-table-column>
         <el-table-column prop="items_count" label="明细数" width="80" align="center">
           <template #default="scope"><el-tag size="mini" type="info">{{ scope.row.items_count || 0 }}</el-tag></template>
@@ -78,47 +78,42 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Search, RefreshRight, Edit, View, Operation, Upload, Check, Close, Warning } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
+import { StatusTag } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
 
 const router = useRouter()
 const userStore = useUserStore()
 
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
 const salesTable = ref(null)
 const selectedRows = ref([])
 
-const filters = reactive({ search: '', status: '', payment_status: '' })
+const {
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handlePageChange,
+  handleSizeChange
+} = useCrudList(salesOrderAPI.getList, {
+  initialFilters: { search: '', status: '', payment_status: '' }
+})
+
 const canCreate = computed(() => userStore.hasPermission('workorder.add_salesorder'))
 const canBatchConvert = computed(() => selectedRows.value.length > 0)
 
-const handleSearch = () => { currentPage.value = 1; loadData() }
-const handlePageChange = (page) => { currentPage.value = page; loadData() }
-const handleSizeChange = (size) => { pageSize.value = size; currentPage.value = 1; loadData() }
 const handleSelectionChange = (rows) => { selectedRows.value = rows }
 const handleSortChange = ({ prop, order }) => { /* TODO */ }
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = { page: currentPage.value, page_size: pageSize.value }
-    if (filters.search) params.search = filters.search
-    if (filters.status) params.status = filters.status
-    if (filters.payment_status) params.payment_status = filters.payment_status
-    const response = await salesOrderAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
-}
 
 const handleAdd = () => { router.push('/sales/create') }
 const handleView = (row) => { router.push(`/sales/${row.id}`) }
@@ -129,7 +124,8 @@ const canConvert = (row) => ['approved', 'in_production'].includes(row.status) &
 
 const handleConvert = async (row) => {
   try {
-    await ErrorHandler.confirm(`确定要将订单"${row.order_number}"转换为施工单？`)
+    const confirmed = await ErrorHandler.confirm(`确定要将订单"${row.order_number}"转换为施工单？`)
+    if (!confirmed) return
     const response = await salesOrderAPI.convertToWorkOrder(row.id)
     ElMessage.success('转换成功')
     router.push(`/workorders/${response.work_order_id || response.id}`)
@@ -138,7 +134,8 @@ const handleConvert = async (row) => {
 
 const handleBatchConvert = async () => {
   try {
-    await ErrorHandler.confirm(`确定要将 ${selectedRows.value.length} 个订单转换为施工单？`)
+    const confirmed = await ErrorHandler.confirm(`确定要将 ${selectedRows.value.length} 个订单转换为施工单？`)
+    if (!confirmed) return
     const orderIds = selectedRows.value.map(r => r.id)
     const response = await salesOrderAPI.batchConvertToWorkOrder(orderIds)
     ElMessage.success(`成功转换 ${response.success_count} 个订单`)
@@ -161,10 +158,6 @@ const handleReject = async (row) => {
 
 const isOverdue = (row) => row.delivery_date && new Date(row.delivery_date) < new Date() && !['completed', 'cancelled'].includes(row.status)
 const formatAmount = (amount) => amount ? amount.toLocaleString() : '0.00'
-const getStatusType = (status) => ({ draft: 'info', submitted: 'primary', approved: 'success', rejected: 'danger', in_production: 'warning', completed: 'success', cancelled: 'info' })[status] || 'info';
-const getStatusText = (status) => ({ draft: '草稿', submitted: '已提交', approved: '已审核', rejected: '已拒绝', in_production: '生产中', completed: '已完成', cancelled: '已取消' })[status] || status;
-const getPaymentStatusType = (status) => ({ unpaid: 'danger', partial: 'warning', paid: 'success' })[status] || 'info';
-const getPaymentStatusText = (status) => ({ unpaid: '未付款', partial: '部分付款', paid: '已付款' })[status] || status;
 
 onMounted(() => { loadData() })
 </script>

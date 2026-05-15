@@ -86,100 +86,54 @@
       />
     </el-card>
 
-    <el-dialog
+    <FormDialog
+      ref="formDialogRef"
       v-model="dialogVisible"
       :title="formTitle"
       width="var(--ui-dialog-width-md)"
+      :form-data="form"
+      :rules="rules"
+      label-width="110px"
+      :loading="formLoading"
+      @submit="handleSubmit"
+      @cancel="resetForm"
     >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="110px"
-      >
-        <el-form-item label="物料编码" prop="code">
-          <el-input v-model="form.code" placeholder="请输入物料编码" :disabled="dialogType === 'edit'" />
-        </el-form-item>
-        <el-form-item label="物料名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入物料名称" />
-        </el-form-item>
-        <el-form-item label="规格">
-          <el-input v-model="form.specification" placeholder="请输入规格" />
-        </el-form-item>
-        <el-form-item label="单位" prop="unit">
-          <el-input v-model="form.unit" placeholder="如：个、张、本" />
-        </el-form-item>
-        <el-form-item label="单价" prop="unit_price">
-          <el-input-number
-            v-model="form.unit_price"
-            :min="0"
-            :max="999999999.99"
-            :precision="2"
-            :step="0.01"
-            style="width: 100%;"
-          />
-        </el-form-item>
-        <el-form-item label="库存数量" prop="stock_quantity">
-          <el-input-number
-            v-model="form.stock_quantity"
-            :min="0"
-            :precision="3"
-            style="width: 100%;"
-          />
-        </el-form-item>
-        <el-form-item label="最小库存" prop="min_stock_quantity">
-          <el-input-number
-            v-model="form.min_stock_quantity"
-            :min="0"
-            :precision="3"
-            style="width: 100%;"
-          />
-        </el-form-item>
-        <el-form-item label="采购周期（天）" prop="lead_time_days">
-          <el-input-number
-            v-model="form.lead_time_days"
-            :min="0"
-            :max="365"
-            style="width: 100%;"
-          />
-        </el-form-item>
-        <el-form-item label="需要开料">
-          <el-switch v-model="form.need_cutting" />
-        </el-form-item>
-        <el-form-item label="默认供应商">
-          <el-select
-            v-model="form.default_supplier"
-            filterable
-            clearable
-            placeholder="请选择供应商"
-            style="width: 100%;"
-          >
-            <el-option
-              v-for="supplier in supplierList"
-              :key="supplier.id"
-              :label="`${supplier.code} - ${supplier.name}`"
-              :value="supplier.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="form.notes"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">
-          取消
-        </el-button>
-        <el-button type="primary" :loading="formLoading" @click="handleSubmit">
-          确定
-        </el-button>
-      </template>
-    </el-dialog>
+      <el-form-item label="物料编码" prop="code">
+        <el-input v-model="form.code" placeholder="请输入物料编码" :disabled="dialogType === 'edit'" />
+      </el-form-item>
+      <el-form-item label="物料名称" prop="name">
+        <el-input v-model="form.name" placeholder="请输入物料名称" />
+      </el-form-item>
+      <el-form-item label="规格">
+        <el-input v-model="form.specification" placeholder="请输入规格" />
+      </el-form-item>
+      <el-form-item label="单位" prop="unit">
+        <el-input v-model="form.unit" placeholder="如：个、张、本" />
+      </el-form-item>
+      <el-form-item label="单价" prop="unit_price">
+        <el-input-number v-model="form.unit_price" :min="0" :max="999999999.99" :precision="2" :step="0.01" style="width: 100%;" />
+      </el-form-item>
+      <el-form-item label="库存数量" prop="stock_quantity">
+        <el-input-number v-model="form.stock_quantity" :min="0" :precision="3" style="width: 100%;" />
+      </el-form-item>
+      <el-form-item label="最小库存" prop="min_stock_quantity">
+        <el-input-number v-model="form.min_stock_quantity" :min="0" :precision="3" style="width: 100%;" />
+      </el-form-item>
+      <el-form-item label="采购周期（天）" prop="lead_time_days">
+        <el-input-number v-model="form.lead_time_days" :min="0" :max="365" style="width: 100%;" />
+      </el-form-item>
+      <el-form-item label="需要开料">
+        <el-switch v-model="form.need_cutting" />
+      </el-form-item>
+      <el-form-item label="默认供应商">
+        <el-select v-model="form.default_supplier" filterable clearable placeholder="请选择供应商" style="width: 100%;">
+          <el-option v-for="supplier in supplierList" :key="supplier.id" :label="`${supplier.code} - ${supplier.name}`" :value="supplier.id" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="备注">
+        <el-input v-model="form.notes" type="textarea" :rows="3" placeholder="请输入备注" />
+      </el-form-item>
+    </FormDialog>
   </div>
 </template>
 
@@ -189,23 +143,34 @@ import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { materialAPI, supplierAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
+import { FormDialog } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
 
 const userStore = useUserStore()
 
-const searchText = ref('')
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
+const {
+  searchText,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange
+} = useCrudList(materialAPI.getList, {
+  errorContext: '加载物料数据失败'
+})
 
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const formLoading = ref(false)
 const currentRow = ref(null)
 const supplierList = ref([])
-const formRef = ref(null)
+const formDialogRef = ref(null)
 
 const formInitialValues = {
   code: '',
@@ -255,51 +220,6 @@ const canCreate = computed(() => userStore.hasPermission('workorder.add_material
 const canEdit = computed(() => userStore.hasPermission('workorder.change_material'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_material'))
 
-let searchTimer = null
-
-const handleSearchDebounced = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    handleSearch()
-  }, 300)
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value
-    }
-    if (searchText.value) {
-      params.search = searchText.value
-    }
-    const response = await materialAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
-
 const loadSuppliers = async () => {
   try {
     const response = await supplierAPI.getList({ page_size: 1000, status: 'active' })
@@ -319,6 +239,19 @@ const showCreateDialog = () => {
 const handleEdit = (row) => {
   dialogType.value = 'edit'
   currentRow.value = row
+  Object.assign(form, {
+    code: row.code || '',
+    name: row.name || '',
+    specification: row.specification || '',
+    unit: row.unit || '个',
+    unit_price: Number(row.unit_price || 0),
+    stock_quantity: Number(row.stock_quantity || 0),
+    min_stock_quantity: Number(row.min_stock_quantity || 0),
+    lead_time_days: Number(row.lead_time_days ?? 7),
+    need_cutting: !!row.need_cutting,
+    default_supplier: row.default_supplier || null,
+    notes: row.notes || ''
+  })
   dialogVisible.value = true
 }
 
@@ -327,7 +260,7 @@ const resetForm = () => {
 }
 
 const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
+  const valid = await formDialogRef.value.validate().catch(() => false)
   if (!valid) return
 
   formLoading.value = true
@@ -350,14 +283,13 @@ const handleSubmit = async () => {
 
 const handleDelete = async (row) => {
   try {
-    await ErrorHandler.confirm(`确定要删除物料"${row.name}"吗？此操作不可撤销。`)
+    const confirmed = await ErrorHandler.confirm(`确定要删除物料"${row.name}"吗？此操作不可撤销。`)
+    if (!confirmed) return
     await materialAPI.delete(row.id)
     ElMessage.success('删除成功')
     loadData()
   } catch (error) {
-    if (error !== 'cancel') {
-      ErrorHandler.showMessage(error, '删除')
-    }
+    ErrorHandler.showMessage(error, '删除')
   }
 }
 

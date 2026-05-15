@@ -41,7 +41,7 @@
           </template>
         </el-table-column>
         <el-table-column label="状态" width="100">
-          <template #default="scope"><el-tag :type="getStatusType(scope.row.status)">{{ scope.row.status_display }}</el-tag></template>
+          <template #default="scope"><StatusTag :status="scope.row.status" category="stock" :label="scope.row.status_display" /></template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="scope">
@@ -70,7 +70,7 @@
         <el-descriptions-item label="库位">{{ currentStock.location || '-' }}</el-descriptions-item>
         <el-descriptions-item label="生产日期">{{ currentStock.production_date || '-' }}</el-descriptions-item>
         <el-descriptions-item label="过期日期">{{ currentStock.expiry_date || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="状态">{{ currentStock.status_display }}</el-descriptions-item>
+        <el-descriptions-item label="状态"><StatusTag :status="currentStock.status" category="stock" :label="currentStock.status_display" /></el-descriptions-item>
         <el-descriptions-item label="单位成本">¥{{ currentStock.unit_cost ? currentStock.unit_cost.toLocaleString() : '-' }}</el-descriptions-item>
         <el-descriptions-item label="总价值">¥{{ currentStock.total_value ? currentStock.total_value.toLocaleString() : '-' }}</el-descriptions-item>
         <el-descriptions-item label="创建时间" :span="2">{{ currentStock.created_at }}</el-descriptions-item>
@@ -130,16 +130,13 @@ import { RefreshRight, Warning, Timer } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { productStockAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
+import { StatusTag } from '@/components/common'
 import StockStats from './components/StockStats.vue'
 
 const userStore = useUserStore()
 
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
 const statsLoading = ref(false)
 const stats = ref({})
 const currentStock = ref(null)
@@ -155,25 +152,26 @@ const formRef = ref(null)
 const currentAdjustId = ref(null)
 const adjustForm = reactive({ adjustment: 0, reason: '' })
 
-const filters = reactive({ status: '' })
-const hasFilters = computed(() => !!filters.status)
+const {
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters
+} = useCrudList(productStockAPI.getList, {
+  initialFilters: { status: '' }
+})
+
+const hasFilters = computed(() => !!filters.value.status)
 const canEdit = computed(() => userStore.hasPermission('workorder.change_stock'))
 
-const handleSearch = () => { currentPage.value = 1; loadData() }
-const handleReset = () => { Object.assign(filters, { status: '' }); currentPage.value = 1; loadData() }
-const handlePageChange = (page) => { currentPage.value = page; loadData() }
-const handleSizeChange = (size) => { pageSize.value = size; currentPage.value = 1; loadData() }
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = { page: currentPage.value, page_size: pageSize.value }
-    if (filters.status) params.status = filters.status
-    const response = await productStockAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
-}
+const handleReset = () => resetFilters()
 
 const fetchStats = async () => {
   statsLoading.value = true
@@ -201,7 +199,6 @@ const handleExpired = async () => {
 const getQuantityClass = (row) => row.quantity <= row.min_stock_level ? 'text-danger' : ''
 const getExpiryClass = (row) => row.days_until_expiry !== null && row.days_until_expiry <= 0 ? 'text-danger' : row.days_until_expiry !== null && row.days_until_expiry <= 7 ? 'text-warning' : ''
 const getExpiryTagType = (days) => days <= 0 ? 'danger' : days <= 7 ? 'warning' : 'success'
-const getStatusType = (status) => ({ in_stock: '', reserved: 'warning', quality_check: 'info', defective: 'danger' })[status] || ''
 
 onMounted(() => { loadData(); fetchStats() })
 </script>

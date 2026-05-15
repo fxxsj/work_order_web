@@ -71,16 +71,12 @@
 
           <!-- 状态 -->
           <div class="task-cell task-cell-status">
-            <el-tag :type="getStatusType(item.status)" size="small">
-              {{ item.status_display }}
-            </el-tag>
+            <StatusTag :status="item.status" category="task" :label="item.status_display" size="small" />
           </div>
 
           <!-- 优先级 -->
           <div class="task-cell task-cell-priority">
-            <el-tag :type="getPriorityType(item.priority)" size="small">
-              {{ item.priority_display }}
-            </el-tag>
+            <StatusTag :status="item.priority" category="priority" :label="item.priority_display" size="small" />
           </div>
 
           <!-- 操作 -->
@@ -117,8 +113,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { StatusTag } from '@/components/common'
 import VirtualList from './VirtualList.vue'
 
 const props = defineProps({
@@ -178,25 +174,6 @@ const handleComplete = (item) => {
   emit('complete', item)
 }
 
-const getStatusType = (status) => {
-  const typeMap = {
-    pending: 'info',
-    in_progress: 'warning',
-    completed: 'success',
-    cancelled: 'danger'
-  }
-  return typeMap[status] || 'info'
-}
-
-const getPriorityType = (priority) => {
-  const typeMap = {
-    low: 'info',
-    normal: 'success',
-    high: 'warning',
-    urgent: 'danger'
-  }
-  return typeMap[priority] || 'info'
-}
 </script>
 
 <style scoped lang="scss">

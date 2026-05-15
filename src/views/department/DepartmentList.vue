@@ -143,86 +143,46 @@
       />
     </el-card>
 
-    <el-dialog
+    <FormDialog
+      ref="formDialogRef"
       v-model="dialogVisible"
       :title="dialogTitle"
       width="var(--ui-dialog-width-sm)"
-      :before-close="handleDialogClose"
+      :form-data="form"
+      :rules="rules"
+      label-width="120px"
+      :loading="dialogLoading"
+      @submit="handleSubmit"
+      @cancel="customResetForm"
     >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="120px"
-      >
-        <el-form-item label="部门编码" prop="code">
-          <el-input
-            v-model="form.code"
-            placeholder="请输入部门编码（英文，如：prepress）"
-            :disabled="isEditMode"
-          />
-          <div style="font-size: 12px; color: #909399; margin-top: 5px;">
-            建议使用英文小写，如：prepress、printing、surface等
-          </div>
-        </el-form-item>
-        <el-form-item label="部门名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入部门名称（中文）" />
-        </el-form-item>
-        <el-form-item label="上级部门">
-          <el-select
-            v-model="form.parent"
-            placeholder="请选择上级部门（可选）"
-            clearable
-            filterable
-            style="width: 100%;"
-            :disabled="isEditMode && form.children_count > 0"
-          >
-            <el-option
-              v-for="dept in availableParents"
-              :key="dept.id"
-              :label="dept.name"
-              :value="dept.id"
-            />
-          </el-select>
-          <div style="font-size: 12px; color: #909399; margin-top: 5px;">
-            选择上级部门可建立部门层级关系（如：生产部 > 裁切车间）
-          </div>
-        </el-form-item>
-        <el-form-item label="排序">
-          <el-input-number
-            v-model="form.sort_order"
-            :min="0"
-            style="width: 100%;"
-          />
-          <div style="font-size: 12px; color: #909399; margin-top: 5px;">
-            数字越小越靠前显示
-          </div>
-        </el-form-item>
-        <el-form-item label="工序">
-          <el-checkbox-group v-model="form.processes" style="width: 100%;">
-            <el-checkbox
-              v-for="process in allProcesses"
-              :key="process.id"
-              :label="process.id"
-              :disabled="!process.is_active"
-            >
-              {{ process.name }}
-            </el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-        <el-form-item label="是否启用">
-          <el-switch v-model="form.is_active" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">
-          取消
-        </el-button>
-        <el-button type="primary" :loading="dialogLoading" @click="handleSubmit">
-          确定
-        </el-button>
-      </template>
-    </el-dialog>
+      <el-form-item label="部门编码" prop="code">
+        <el-input v-model="form.code" placeholder="请输入部门编码（英文，如：prepress）" :disabled="isEditMode" />
+        <div class="form-hint">建议使用英文小写，如：prepress、printing、surface等</div>
+      </el-form-item>
+      <el-form-item label="部门名称" prop="name">
+        <el-input v-model="form.name" placeholder="请输入部门名称（中文）" />
+      </el-form-item>
+      <el-form-item label="上级部门">
+        <el-select v-model="form.parent" placeholder="请选择上级部门（可选）" clearable filterable style="width: 100%;" :disabled="isEditMode && form.children_count > 0">
+          <el-option v-for="dept in availableParents" :key="dept.id" :label="dept.name" :value="dept.id" />
+        </el-select>
+        <div class="form-hint">选择上级部门可建立部门层级关系（如：生产部 > 裁切车间）</div>
+      </el-form-item>
+      <el-form-item label="排序">
+        <el-input-number v-model="form.sort_order" :min="0" style="width: 100%;" />
+        <div class="form-hint">数字越小越靠前显示</div>
+      </el-form-item>
+      <el-form-item label="工序">
+        <el-checkbox-group v-model="form.processes" style="width: 100%;">
+          <el-checkbox v-for="process in allProcesses" :key="process.id" :label="process.id" :disabled="!process.is_active">
+            {{ process.name }}
+          </el-checkbox>
+        </el-checkbox-group>
+      </el-form-item>
+      <el-form-item label="是否启用">
+        <el-switch v-model="form.is_active" />
+      </el-form-item>
+    </FormDialog>
   </div>
 </template>
 
@@ -232,23 +192,33 @@ import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { departmentAPI, processAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
+import { FormDialog } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
 
 const userStore = useUserStore()
 
-const searchText = ref('')
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
+const {
+  searchText,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handlePageChange,
+  handleSizeChange
+} = useCrudList(departmentAPI.getList, {
+  errorContext: '加载部门数据失败'
+})
 
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const dialogTitle = ref('新建部门')
 const dialogLoading = ref(false)
 const currentRow = ref(null)
-const formRef = ref(null)
+const formDialogRef = ref(null)
 
 const allProcesses = ref([])
 const allDepartments = ref([])
@@ -292,42 +262,6 @@ const availableParents = computed(() => {
   }
   return allDepartments.value.filter(dept => dept.level < 2)
 })
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value
-    }
-    if (searchText.value) {
-      params.search = searchText.value
-    }
-    const response = await departmentAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
@@ -401,13 +335,16 @@ const handleEdit = (row) => {
   })
   dialogVisible.value = true
   nextTick(() => {
-    formRef.value?.clearValidate()
+    formDialogRef.value?.clearValidate()
   })
 }
 
 const customResetForm = () => {
   Object.assign(form, formInitialValues)
   currentRow.value = null
+  nextTick(() => {
+    formDialogRef.value?.clearValidate()
+  })
 }
 
 const handleDelete = async (row) => {
@@ -428,7 +365,7 @@ const handleDelete = async (row) => {
 }
 
 const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
+  const valid = await formDialogRef.value.validate().catch(() => false)
   if (!valid) return
 
   dialogLoading.value = true
@@ -489,10 +426,6 @@ const toggleProcessExpansion = (row) => {
   expandedProcesses.value[rowId] = !expandedProcesses.value[rowId]
 }
 
-const handleDialogClose = (done) => {
-  done()
-}
-
 onMounted(() => {
   loadAllProcesses()
   loadAllDepartments()
@@ -534,6 +467,12 @@ onMounted(() => {
 
 :deep(.child-department-row:hover) {
   background-color: #ecf5ff;
+}
+
+.form-hint {
+  color: #909399;
+  font-size: 12px;
+  margin-top: 5px;
 }
 
 @media (max-width: bp.$breakpoint-phone-max) {

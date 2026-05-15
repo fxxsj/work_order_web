@@ -65,7 +65,7 @@
           <el-table-column prop="quantity_completed" label="完成数量" width="100" align="right" />
           <el-table-column label="进度" width="80" align="right"><template #default="scope">{{ taskService.calculateProgress(scope.row) }}%</template></el-table-column>
           <el-table-column label="状态" width="100">
-            <template #default="scope"><el-tag :type="taskService.getStatusType(scope.row.status)" size="small">{{ scope.row.status_display }}</el-tag></template>
+            <template #default="scope"><StatusTag :status="scope.row.status" category="task" :label="scope.row.status_display" size="small" /></template>
           </el-table-column>
           <el-table-column label="操作" width="280" fixed="right">
             <template #default="scope">
@@ -83,7 +83,7 @@
           <el-table-column label="施工单号" width="150"><template #default="scope"><el-link type="primary">{{ scope.row.work_order_process_info?.work_order?.order_number || '-' }}</el-link></template></el-table-column>
           <el-table-column label="工序" width="120"><template #default="scope">{{ scope.row.work_order_process_info?.process?.name || '-' }}</template></el-table-column>
           <el-table-column prop="work_content" label="任务内容" min-width="200" />
-          <el-table-column label="状态" width="100"><template #default="scope"><el-tag :type="taskService.getStatusType(scope.row.status)" size="small">{{ scope.row.status_display }}</el-tag></template></el-table-column>
+          <el-table-column label="状态" width="100"><template #default="scope"><StatusTag :status="scope.row.status" category="task" :label="scope.row.status_display" size="small" /></template></el-table-column>
           <el-table-column label="操作" width="200" fixed="right"><template #default="scope"><TaskActions :task="scope.row" @complete="handleCompleteTask" @update="showUpdateDialog" @assign="showAssignDialog" /></template></el-table-column>
         </VirtualTable>
         </div>
@@ -107,15 +107,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search, Refresh, RefreshRight, Download } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { workOrderTaskAPI, departmentAPI, authAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import taskService from '@/services/TaskService'
 import { PriorityChoices } from '@/constants'
+import { StatusTag } from '@/components/common'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import VirtualTable from '@/components/VirtualTable.vue'
 import TaskKanban from '@/components/TaskKanban.vue'
@@ -132,11 +134,6 @@ import BatchAssignDialog from './components/BatchAssignDialog.vue'
 const router = useRouter()
 const userStore = useUserStore()
 
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
 const exporting = ref(false)
 const viewMode = ref('table')
 const shouldUseVirtualScroll = computed(() => total.value > 500)
@@ -145,7 +142,24 @@ const virtualTaskTable = ref(null)
 const selectedTasks = ref([])
 const batchOperationLoading = ref(false)
 
-const filters = reactive({ search: '', status: '', task_type: '', work_order_process: '', assigned_department: '', priority: '' })
+const {
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters
+} = useCrudList(workOrderTaskAPI.getList, {
+  initialFilters: { search: '', status: '', task_type: '', work_order_process: '', assigned_department: '', priority: '' },
+  errorContext: '加载任务失败'
+})
+
 const processList = ref([])
 const departmentList = ref([])
 const userList = ref([])
@@ -176,32 +190,9 @@ const canBatchComplete = computed(() => userStore.hasPermission('workorder.chang
 const canBatchDelete = computed(() => userStore.hasPermission('workorder.delete_workordertask'))
 const canBatchCancel = computed(() => userStore.hasPermission('workorder.change_workordertask'))
 
-let searchTimer = null
-
-const handleSearchDebounced = () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { handleSearch() }, 300) }
-const handleSearch = () => { currentPage.value = 1; loadData() }
-const resetFilters = () => { Object.assign(filters, { search: '', status: '', task_type: '', work_order_process: '', assigned_department: '', priority: '' }); currentPage.value = 1; loadData() }
-const handlePageChange = (page) => { currentPage.value = page; loadData() }
-const handleSizeChange = (size) => { pageSize.value = size; currentPage.value = 1; loadData() }
 const handleSortChange = ({ prop, order }) => { /* TODO */ }
 const handleSelectionChange = (rows) => { selectedTasks.value = rows }
 const clearSelection = () => { taskTable.value?.clearSelection() }
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = { page: currentPage.value, page_size: pageSize.value }
-    if (filters.search) params.search = filters.search
-    if (filters.status) params.status = filters.status
-    if (filters.task_type) params.task_type = filters.task_type
-    if (filters.work_order_process) params.work_order_process = filters.work_order_process
-    if (filters.assigned_department) params.assigned_department = filters.assigned_department
-    if (filters.priority) params.priority = filters.priority
-    const response = await workOrderTaskAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
-}
 
 const loadDepartments = async () => {
   loadingDepartments.value = true
@@ -231,16 +222,46 @@ const handleAssignTask = async (data) => { try { await workOrderTaskAPI.assign(c
 const handleSplitTask = async (data) => { try { await workOrderTaskAPI.split(currentTask.value.id, data); ElMessage.success('拆分成功'); splitDialogVisible.value = false; loadData() } catch (error) { ErrorHandler.showMessage(error, '拆分失败') } }
 
 const handleBatchAssign = () => { batchAssignDialogVisible.value = true }
-const handleBatchComplete = async () => { try { await ErrorHandler.confirm(`确定要完成 ${selectedTasks.value.length} 个任务？`); const ids = selectedTasks.value.map(t => t.id); await workOrderTaskAPI.batchComplete(ids); ElMessage.success('批量完成成功'); selectedTasks.value = []; loadData() } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '批量完成失败') } }
-const handleBatchDelete = async () => { try { await ErrorHandler.confirm(`确定要删除 ${selectedTasks.value.length} 个任务？`); const ids = selectedTasks.value.map(t => t.id); await workOrderTaskAPI.batchDelete(ids); ElMessage.success('批量删除成功'); selectedTasks.value = []; loadData() } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '批量删除失败') } }
-const handleBatchCancel = async () => { try { await ErrorHandler.confirm(`确定要取消 ${selectedTasks.value.length} 个任务？`); const ids = selectedTasks.value.map(t => t.id); await workOrderTaskAPI.batchCancel(ids); ElMessage.success('批量取消成功'); selectedTasks.value = []; loadData() } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '批量取消失败') } }
+const handleBatchComplete = async () => {
+  try {
+    const confirmed = await ErrorHandler.confirm(`确定要完成 ${selectedTasks.value.length} 个任务？`)
+    if (!confirmed) return
+    const ids = selectedTasks.value.map(t => t.id)
+    await workOrderTaskAPI.batchComplete(ids)
+    ElMessage.success('批量完成成功')
+    selectedTasks.value = []
+    loadData()
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '批量完成失败') }
+}
+const handleBatchDelete = async () => {
+  try {
+    const confirmed = await ErrorHandler.confirm(`确定要删除 ${selectedTasks.value.length} 个任务？`)
+    if (!confirmed) return
+    const ids = selectedTasks.value.map(t => t.id)
+    await workOrderTaskAPI.batchDelete(ids)
+    ElMessage.success('批量删除成功')
+    selectedTasks.value = []
+    loadData()
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '批量删除失败') }
+}
+const handleBatchCancel = async () => {
+  try {
+    const confirmed = await ErrorHandler.confirm(`确定要取消 ${selectedTasks.value.length} 个任务？`)
+    if (!confirmed) return
+    const ids = selectedTasks.value.map(t => t.id)
+    await workOrderTaskAPI.batchCancel(ids)
+    ElMessage.success('批量取消成功')
+    selectedTasks.value = []
+    loadData()
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '批量取消失败') }
+}
 const handleConfirmBatchAssign = async (data) => { try { const ids = selectedTasks.value.map(t => t.id); await workOrderTaskAPI.batchAssign({ task_ids: ids, ...data }); ElMessage.success('批量分派成功'); batchAssignDialogVisible.value = false; selectedTasks.value = []; loadData() } catch (error) { ErrorHandler.showMessage(error, '批量分派失败') } }
 
 const handleExport = async () => {
   try {
     exporting.value = true
     const params = {}
-    Object.entries(filters).forEach(([k, v]) => { if (v) params[k] = v })
+    Object.entries(filters.value).forEach(([k, v]) => { if (v) params[k] = v })
     const response = await workOrderTaskAPI.export(params)
     const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)

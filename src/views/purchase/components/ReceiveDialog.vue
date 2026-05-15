@@ -4,7 +4,7 @@
       <el-descriptions :column="3" border size="small" class="mb-4">
         <el-descriptions-item label="采购单号">{{ purchaseOrder?.order_number }}</el-descriptions-item>
         <el-descriptions-item label="供应商">{{ purchaseOrder?.supplier_name }}</el-descriptions-item>
-        <el-descriptions-item label="状态"><el-tag :type="getStatusType(purchaseOrder?.status)">{{ purchaseOrder?.status_display }}</el-tag></el-descriptions-item>
+        <el-descriptions-item label="状态"><StatusTag :status="purchaseOrder?.status" category="purchaseOrder" :label="purchaseOrder?.status_display" /></el-descriptions-item>
       </el-descriptions>
       <el-form :model="form" label-width="100px" class="mb-4">
         <el-row :gutter="20" class="responsive-form-row">
@@ -22,15 +22,15 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
+import { StatusTag } from '@/components/common'
 
 const props = defineProps({ visible: { type: Boolean, default: false }, purchaseOrder: { type: Object, default: null }, loading: { type: Boolean, default: false } })
 const emit = defineEmits(['submit', 'update:visible'])
 
 const form = reactive({ received_date: '', delivery_note_number: '' })
 const dialogVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })
-const getStatusType = (s) => ({ pending: 'info', submitted: 'primary', approved: 'success', received: 'warning', cancelled: 'danger' })[s] || 'info';
 const handleSubmit = () => emit('submit', form)
-const handleClose = () => { form.received_date = ''; form.delivery_note_number = '' }
+const handleClose = () => { form.received_date = ''; form.delivery_note_number = ''; emit('update:visible', false) }
 </script>
 
 <style scoped>

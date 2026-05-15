@@ -41,7 +41,7 @@
           <template #default="scope"><span :class="scope.row.defective_quantity > 0 ? 'text-danger' : ''">{{ scope.row.defective_quantity || '-' }}</span></template>
         </el-table-column>
         <el-table-column label="检验结果" width="100">
-          <template #default="scope"><el-tag :type="getResultType(scope.row.result)">{{ scope.row.result_display }}</el-tag></template>
+          <template #default="scope"><StatusTag :status="scope.row.result" category="inspection" :label="scope.row.result_display" /></template>
         </el-table-column>
         <el-table-column prop="inspector_name" label="检验员" width="100" />
         <el-table-column prop="inspection_date" label="检验日期" width="120" />
@@ -49,7 +49,7 @@
           <template #default="scope">
             <el-button type="text" size="small" @click="handleView(scope.row)">查看</el-button>
             <el-button v-if="canEdit && scope.row.result === 'pending'" type="text" size="small" @click="handleInspect(scope.row)">检验</el-button>
-            <el-button v-if="canEdit && scope.row.result === 'pending'" type="text" size="small" style="color: #F56C6C;" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button v-if="canDelete && scope.row.result === 'pending'" type="text" size="small" style="color: #F56C6C;" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -75,7 +75,9 @@ import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { qualityInspectionAPI, productAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
+import { StatusTag } from '@/components/common'
 import QualityStats from './components/QualityStats.vue'
 import QualityDetailDialog from './components/QualityDetailDialog.vue'
 import QualityInspectDialog from './components/QualityInspectDialog.vue'
@@ -83,11 +85,6 @@ import QualityFormDialog from './components/QualityFormDialog.vue'
 
 const userStore = useUserStore()
 
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
 const statsLoading = ref(false)
 const submitting = ref(false)
 const inspecting = ref(false)
@@ -98,32 +95,37 @@ const detailDialogVisible = ref(false)
 const inspectDialogVisible = ref(false)
 const formDialogVisible = ref(false)
 const form = reactive({ id: null, product: null, batch_no: '', quantity: 0, inspection_type: 'final', notes: '' })
-const filters = reactive({ inspection_number: '', inspection_type: '', result: '' })
 
-const hasFilters = computed(() => filters.inspection_number || filters.inspection_type || filters.result)
+const buildQualityParams = (params) => {
+  const { inspection_number, ...nextParams } = params
+  if (inspection_number) nextParams.search = inspection_number
+  return nextParams
+}
+
+const {
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters
+} = useCrudList(qualityInspectionAPI.getList, {
+  initialFilters: { inspection_number: '', inspection_type: '', result: '' },
+  buildParams: buildQualityParams
+})
+
+const hasFilters = computed(() => filters.value.inspection_number || filters.value.inspection_type || filters.value.result)
 const canCreate = computed(() => userStore.hasPermission('workorder.add_qualityinspection'))
 const canEdit = computed(() => userStore.hasPermission('workorder.change_qualityinspection'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_qualityinspection'))
 
-let searchTimer = null
-const handleSearchDebounced = () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { handleSearch() }, 300) }
-const handleSearch = () => { currentPage.value = 1; loadData() }
-const handleReset = () => { Object.assign(filters, { inspection_number: '', inspection_type: '', result: '' }); currentPage.value = 1; loadData() }
-const handlePageChange = (page) => { currentPage.value = page; loadData() }
-const handleSizeChange = (size) => { pageSize.value = size; currentPage.value = 1; loadData() }
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = { page: currentPage.value, page_size: pageSize.value }
-    if (filters.inspection_number) params.search = filters.inspection_number
-    if (filters.inspection_type) params.inspection_type = filters.inspection_type
-    if (filters.result) params.result = filters.result
-    const response = await qualityInspectionAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
-}
+const handleReset = () => resetFilters()
 
 const fetchStats = async () => { statsLoading.value = true; try { const response = await qualityInspectionAPI.getStats(); stats.value = response || {} } catch (error) { stats.value = {} } finally { statsLoading.value = false } }
 const fetchProducts = async () => { try { const response = await productAPI.getList({ page_size: 1000 }); productList.value = response?.results || [] } catch (error) {} }
@@ -132,12 +134,17 @@ const handleView = (row) => { currentQuality.value = row; detailDialogVisible.va
 const handleCreate = () => { if (!canCreate.value) return; Object.assign(form, { id: null, product: null, batch_no: '', quantity: 0, inspection_type: 'final', notes: '' }); formDialogVisible.value = true }
 const handleInspect = (row) => { currentQuality.value = row; inspectDialogVisible.value = true }
 const handleDelete = async (row) => {
-  try { await ErrorHandler.confirm(`确定要删除检验单"${row.inspection_number}"吗？`); await qualityInspectionAPI.delete(row.id); ElMessage.success('删除成功'); loadData() } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '删除失败') }
+  try {
+    if (!canDelete.value) return
+    const confirmed = await ErrorHandler.confirm(`确定要删除检验单"${row.inspection_number}"吗？`)
+    if (!confirmed) return
+    await qualityInspectionAPI.delete(row.id)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '删除失败') }
 }
 const handleConfirmInspect = async (data) => { inspecting.value = true; try { await qualityInspectionAPI.inspect(currentQuality.value.id, data); ElMessage.success('检验完成'); inspectDialogVisible.value = false; loadData(); fetchStats() } catch (error) { ErrorHandler.showMessage(error, '检验失败') } finally { inspecting.value = false } }
 const handleSubmit = async (data) => { submitting.value = true; try { await qualityInspectionAPI.create(data); ElMessage.success('创建成功'); formDialogVisible.value = false; loadData() } catch (error) { ErrorHandler.showMessage(error, '创建失败') } finally { submitting.value = false } }
-
-const getResultType = (result) => ({ pending: 'info', passed: 'success', failed: 'danger', conditional: 'warning' })[result] || ''
 
 onMounted(() => { loadData(); fetchStats(); fetchProducts() })
 </script>

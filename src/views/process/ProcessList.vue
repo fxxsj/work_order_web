@@ -77,58 +77,50 @@
       />
     </el-card>
 
-    <el-dialog
+    <FormDialog
+      ref="formDialogRef"
       v-model="dialogVisible"
       :title="formTitle"
       width="var(--ui-dialog-width-md)"
+      :form-data="form"
+      :rules="rules"
+      label-width="120px"
+      :loading="formLoading"
+      @submit="handleSubmit"
+      @cancel="resetForm"
     >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="120px"
-      >
-        <el-form-item label="工序编码" prop="code">
-          <el-input v-model="form.code" placeholder="请输入工序编码" :disabled="dialogType === 'edit'" />
-        </el-form-item>
-        <el-form-item label="工序名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入工序名称" />
-        </el-form-item>
-        <el-form-item label="工序描述">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入工序描述"
-          />
-        </el-form-item>
-        <el-form-item label="标准工时(小时)">
-          <el-input-number
-            v-model="form.standard_duration"
-            :min="0"
-            style="width: 100%;"
-          />
-        </el-form-item>
-        <el-form-item label="排序">
-          <el-input-number
-            v-model="form.sort_order"
-            :min="0"
-            style="width: 100%;"
-          />
-        </el-form-item>
-        <el-form-item label="是否启用">
-          <el-switch v-model="form.is_active" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">
-          取消
-        </el-button>
-        <el-button type="primary" :loading="formLoading" @click="handleSubmit">
-          确定
-        </el-button>
-      </template>
-    </el-dialog>
+      <el-form-item label="工序编码" prop="code">
+        <el-input v-model="form.code" placeholder="请输入工序编码" :disabled="dialogType === 'edit'" />
+      </el-form-item>
+      <el-form-item label="工序名称" prop="name">
+        <el-input v-model="form.name" placeholder="请输入工序名称" />
+      </el-form-item>
+      <el-form-item label="工序描述">
+        <el-input
+          v-model="form.description"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入工序描述"
+        />
+      </el-form-item>
+      <el-form-item label="标准工时(小时)">
+        <el-input-number
+          v-model="form.standard_duration"
+          :min="0"
+          style="width: 100%;"
+        />
+      </el-form-item>
+      <el-form-item label="排序">
+        <el-input-number
+          v-model="form.sort_order"
+          :min="0"
+          style="width: 100%;"
+        />
+      </el-form-item>
+      <el-form-item label="是否启用">
+        <el-switch v-model="form.is_active" />
+      </el-form-item>
+    </FormDialog>
   </div>
 </template>
 
@@ -138,22 +130,33 @@ import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { processAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
+import { FormDialog } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
 
 const userStore = useUserStore()
 
-const searchText = ref('')
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
+const {
+  searchText,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange
+} = useCrudList(processAPI.getList, {
+  errorContext: '加载工序数据失败'
+})
 
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const formLoading = ref(false)
 const currentRow = ref(null)
-const formRef = ref(null)
+const formDialogRef = ref(null)
 
 const formInitialValues = {
   code: '',
@@ -179,51 +182,6 @@ const formTitle = computed(() => dialogType.value === 'edit' ? '编辑工序' : 
 const canCreate = computed(() => userStore.hasPermission('workorder.add_process'))
 const canEdit = computed(() => userStore.hasPermission('workorder.change_process'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_process'))
-
-let searchTimer = null
-
-const handleSearchDebounced = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    handleSearch()
-  }, 300)
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value
-    }
-    if (searchText.value) {
-      params.search = searchText.value
-    }
-    const response = await processAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
 
 const showCreateDialog = () => {
   resetForm()
@@ -251,7 +209,7 @@ const resetForm = () => {
 }
 
 const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
+  const valid = await formDialogRef.value.validate().catch(() => false)
   if (!valid) return
 
   formLoading.value = true
@@ -274,14 +232,13 @@ const handleSubmit = async () => {
 
 const handleDelete = async (row) => {
   try {
-    await ErrorHandler.confirm(`确定要删除工序"${row.name}"吗？`)
+    const confirmed = await ErrorHandler.confirm(`确定要删除工序"${row.name}"吗？`)
+    if (!confirmed) return
     await processAPI.delete(row.id)
     ElMessage.success('删除成功')
     loadData()
   } catch (error) {
-    if (error !== 'cancel') {
-      ErrorHandler.showMessage(error, '删除')
-    }
+    ErrorHandler.showMessage(error, '删除')
   }
 }
 

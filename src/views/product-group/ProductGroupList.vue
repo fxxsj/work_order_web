@@ -93,115 +93,63 @@
       />
     </el-card>
 
-    <el-dialog
+    <FormDialog
+      ref="formDialogRef"
       v-model="dialogVisible"
       :title="dialogTitle"
       width="var(--ui-dialog-width-lg)"
-      @close="handleDialogClose"
+      :form-data="form"
+      :rules="rules"
+      label-width="120px"
+      :loading="formLoading"
+      @submit="handleSubmit"
+      @cancel="handleDialogClose"
     >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="120px"
-      >
-        <el-form-item label="编码" prop="code">
-          <el-input v-model="form.code" placeholder="请输入编码" />
-        </el-form-item>
-        <el-form-item label="名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入名称" />
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入描述"
-          />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-switch v-model="form.is_active" />
-        </el-form-item>
+      <el-form-item label="编码" prop="code">
+        <el-input v-model="form.code" placeholder="请输入编码" />
+      </el-form-item>
+      <el-form-item label="名称" prop="name">
+        <el-input v-model="form.name" placeholder="请输入名称" />
+      </el-form-item>
+      <el-form-item label="描述">
+        <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入描述" />
+      </el-form-item>
+      <el-form-item label="状态">
+        <el-switch v-model="form.is_active" />
+      </el-form-item>
 
-        <el-divider content-position="left">
-          子产品配置
-        </el-divider>
+      <el-divider content-position="left">子产品配置</el-divider>
 
-        <el-form-item label="子产品列表">
-          <el-button
-            type="primary"
-            size="small"
-            :icon="Plus"
-            @click="addItem"
-          >
-            添加子产品
-          </el-button>
-          <div class="table-scroll">
-            <el-table
-              :data="form.items"
-              border
-              class="data-table"
-            >
-              <el-table-column label="产品" min-width="200">
-                <template #default="scope">
-                  <el-select
-                    v-model="scope.row.product"
-                    placeholder="请选择产品"
-                    filterable
-                    style="width: 100%;"
-                  >
-                    <el-option
-                      v-for="product in productList"
-                      :key="product.id"
-                      :label="`${product.name} (${product.code})`"
-                      :value="product.id"
-                    />
-                  </el-select>
-                </template>
-              </el-table-column>
-              <el-table-column label="子产品名称" min-width="180">
-                <template #default="scope">
-                  <el-input
-                    v-model="scope.row.item_name"
-                    placeholder="如：天盒、地盒"
-                    size="small"
-                  />
-                </template>
-              </el-table-column>
-              <el-table-column label="排序" width="120" align="center">
-                <template #default="scope">
-                  <el-input-number
-                    v-model="scope.row.sort_order"
-                    :min="0"
-                    size="small"
-                    style="width: 100%;"
-                  />
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" width="100" align="center">
-                <template #default="scope">
-                  <el-button
-                    type="danger"
-                    size="small"
-                    :icon="Delete"
-                    :disabled="form.items.length <= 1"
-                    @click="removeItem(scope.$index)"
-                  />
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">
-          取消
-        </el-button>
-        <el-button type="primary" :loading="formLoading" @click="handleSubmit">
-          确定
-        </el-button>
-      </template>
-    </el-dialog>
+      <el-form-item label="子产品列表">
+        <el-button type="primary" size="small" :icon="Plus" @click="addItem">添加子产品</el-button>
+        <div class="table-scroll">
+          <el-table :data="form.items" border class="data-table">
+            <el-table-column label="产品" min-width="200">
+              <template #default="scope">
+                <el-select v-model="scope.row.product" placeholder="请选择产品" filterable style="width: 100%;">
+                  <el-option v-for="product in productList" :key="product.id" :label="`${product.name} (${product.code})`" :value="product.id" />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="子产品名称" min-width="180">
+              <template #default="scope">
+                <el-input v-model="scope.row.item_name" placeholder="如：天盒、地盒" size="small" />
+              </template>
+            </el-table-column>
+            <el-table-column label="排序" width="120" align="center">
+              <template #default="scope">
+                <el-input-number v-model="scope.row.sort_order" :min="0" size="small" style="width: 100%;" />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="100" align="center">
+              <template #default="scope">
+                <el-button type="danger" size="small" :icon="Delete" :disabled="form.items.length <= 1" @click="removeItem(scope.$index)" />
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </el-form-item>
+    </FormDialog>
   </div>
 </template>
 
@@ -211,23 +159,34 @@ import { Plus, Search, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { productGroupAPI, productAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
+import { FormDialog } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
 
 const userStore = useUserStore()
 
-const searchText = ref('')
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
+const {
+  searchText,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange
+} = useCrudList(productGroupAPI.getList, {
+  errorContext: '加载产品组数据失败'
+})
 
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const dialogTitle = ref('新增产品组')
 const formLoading = ref(false)
 const currentRow = ref(null)
-const formRef = ref(null)
+const formDialogRef = ref(null)
 
 const productList = ref([])
 
@@ -260,51 +219,6 @@ const rules = {
 const canCreate = computed(() => userStore.hasPermission('workorder.add_productgroup'))
 const canEdit = computed(() => userStore.hasPermission('workorder.change_productgroup'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_productgroup'))
-
-let searchTimer = null
-
-const handleSearchDebounced = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    handleSearch()
-  }, 300)
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value
-    }
-    if (searchText.value) {
-      params.search = searchText.value
-    }
-    const response = await productGroupAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
 
 const loadProductList = async () => {
   try {
@@ -385,7 +299,7 @@ const removeItem = (index) => {
 }
 
 const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
+  const valid = await formDialogRef.value.validate().catch(() => false)
   if (!valid) return
 
   if (!form.items || form.items.length === 0) {
@@ -437,7 +351,7 @@ const handleSubmit = async () => {
 }
 
 const handleDialogClose = () => {
-  formRef.value?.resetFields()
+  formDialogRef.value?.resetFields()
   Object.assign(form, getFormInitialValues())
 }
 

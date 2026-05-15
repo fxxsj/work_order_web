@@ -15,7 +15,7 @@
           <el-table-column prop="customer_name" label="客户" min-width="120" />
           <el-table-column label="状态" width="88">
             <template #default="scope">
-              <el-tag :type="getStatusType(scope.row.status)" size="small">{{ scope.row.status_display }}</el-tag>
+              <StatusTag :status="scope.row.status" :label="scope.row.status_display" category="workOrder" size="small" />
             </template>
           </el-table-column>
         </el-table>
@@ -29,6 +29,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { HomeFilled, Clock, Loading, Warning, Checked, Plus } from '@element-plus/icons-vue'
 import { workOrderAPI } from '@/api/modules'
+import { StatusTag } from '@/components/common'
 
 const router = useRouter()
 const loading = ref(false)
@@ -46,7 +47,6 @@ const createWorkOrder = () => router.push('/workorders/create')
 const goToOrders = (status) => router.push({ path: '/workorders', query: status ? { status } : {} })
 const goToUrgentPriority = () => router.push({ path: '/workorders', query: { priority: 'urgent' } })
 const goToApprovals = () => router.push('/workorders?approval_status=pending')
-const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success' })[s] || 'info';
 </script>
 
 <style scoped lang="scss">

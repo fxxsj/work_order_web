@@ -67,7 +67,7 @@
           <template #default="scope">
             <el-button type="text" size="small" @click="handleView(scope.row)">查看</el-button>
             <el-button v-if="canEdit" type="text" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button v-if="canDelete" type="text" size="small" style="color: #F56C6C;" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button v-if="canDelete" type="text" size="small" class="text-danger" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -75,7 +75,7 @@
 
       <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
 
-      <el-empty v-if="!loading && tableData.length === 0" description="暂无收款数据" :image-size="200" style="margin-top: 50px;">
+      <el-empty v-if="!loading && tableData.length === 0" description="暂无收款数据" :image-size="200" class="ui-empty-state">
         <el-button v-if="hasFilters" type="primary" @click="handleReset">重置筛选</el-button>
         <el-button v-else-if="canCreate" type="primary" @click="handleCreate">创建第一笔收款</el-button>
       </el-empty>
@@ -104,15 +104,15 @@
     <el-dialog v-model="formDialogVisible" :title="isEdit ? '编辑收款' : '新增收款'" width="var(--ui-dialog-width-md)" :close-on-click-modal="false">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="客户" prop="customer">
-          <el-select v-model="form.customer" placeholder="请选择客户" filterable style="width: 100%;">
+          <el-select v-model="form.customer" placeholder="请选择客户" filterable class="ui-control-full">
             <el-option v-for="customer in customerList" :key="customer.id" :label="customer.name" :value="customer.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="收款日期" prop="payment_date">
-          <el-date-picker v-model="form.payment_date" type="date" placeholder="请选择日期" value-format="yyyy-MM-dd" style="width: 100%;" />
+          <el-date-picker v-model="form.payment_date" type="date" placeholder="请选择日期" value-format="yyyy-MM-dd" class="ui-control-full" />
         </el-form-item>
         <el-form-item label="付款方式" prop="payment_method">
-          <el-select v-model="form.payment_method" placeholder="请选择付款方式" style="width: 100%;">
+          <el-select v-model="form.payment_method" placeholder="请选择付款方式" class="ui-control-full">
             <el-option label="现金" value="cash" />
             <el-option label="银行转账" value="bank_transfer" />
             <el-option label="支票" value="check" />
@@ -120,7 +120,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="收款金额" prop="amount">
-          <el-input-number v-model="form.amount" :min="0" :precision="2" style="width: 100%;" />
+          <el-input-number v-model="form.amount" :min="0" :precision="2" class="ui-control-full" />
         </el-form-item>
         <el-form-item label="银行账户"><el-input v-model="form.bank_account" placeholder="请输入银行账户" /></el-form-item>
         <el-form-item label="交易流水号"><el-input v-model="form.transaction_number" placeholder="请输入交易流水号" /></el-form-item>
@@ -141,16 +141,12 @@ import { ElMessage } from 'element-plus'
 import { paymentAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import PaymentStats from './components/PaymentStats.vue'
 
 const userStore = useUserStore()
 
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
 const statsLoading = ref(false)
 const submitting = ref(false)
 const customerList = ref([])
@@ -171,33 +167,38 @@ const rules = {
   amount: [{ required: true, message: '请输入收款金额', trigger: 'blur' }]
 }
 
-const filters = reactive({ customer: '', payment_method: '', date_range: null })
+const buildPaymentParams = (params) => {
+  const { date_range, ...nextParams } = params
+  if (date_range?.length === 2) {
+    nextParams.start_date = date_range[0]
+    nextParams.end_date = date_range[1]
+  }
+  return nextParams
+}
 
-const hasFilters = computed(() => filters.customer || filters.payment_method || filters.date_range)
+const {
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters
+} = useCrudList(paymentAPI.getList, {
+  initialFilters: { customer: '', payment_method: '', date_range: null },
+  buildParams: buildPaymentParams
+})
+
+const hasFilters = computed(() => filters.value.customer || filters.value.payment_method || filters.value.date_range)
 const canCreate = computed(() => userStore.hasPermission('workorder.add_payment'))
 const canEdit = computed(() => userStore.hasPermission('workorder.change_payment'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_payment'))
 
-const handleSearch = () => { currentPage.value = 1; loadData() }
-const handleReset = () => { Object.assign(filters, { customer: '', payment_method: '', date_range: null }); currentPage.value = 1; loadData() }
-const handlePageChange = (page) => { currentPage.value = page; loadData() }
-const handleSizeChange = (size) => { pageSize.value = size; currentPage.value = 1; loadData() }
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = { page: currentPage.value, page_size: pageSize.value }
-    if (filters.customer) params.customer = filters.customer
-    if (filters.payment_method) params.payment_method = filters.payment_method
-    if (filters.date_range && filters.date_range.length === 2) {
-      params.start_date = filters.date_range[0]
-      params.end_date = filters.date_range[1]
-    }
-    const response = await paymentAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
-}
+const handleReset = () => resetFilters()
 
 const fetchStats = async () => {
   statsLoading.value = true
@@ -231,7 +232,8 @@ const handleEdit = (row) => {
 
 const handleDelete = async (row) => {
   try {
-    await ErrorHandler.confirm(`确定要删除收款记录"${row.payment_number}"吗？`)
+    const confirmed = await ErrorHandler.confirm(`确定要删除收款记录"${row.payment_number}"吗？`)
+    if (!confirmed) return
     await paymentAPI.delete(row.id)
     ElMessage.success('删除成功')
     loadData()
@@ -268,13 +270,13 @@ onMounted(() => { loadData(); fetchStats(); fetchCustomers() })
 .payment-container { padding: var(--ui-page-padding); }
 .header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
 .filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.finance-filter-control { width: min(100%, 180px); }
-.finance-date-control { width: min(100%, 280px); }
+.finance-filter-control { width: min(100%, var(--ui-filter-control-width)); }
+.finance-date-control { width: min(100%, var(--ui-date-range-control-width)); }
 .table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
 .finance-table { width: 100%; }
-.text-warning { color: #E6A23C; }
-.text-success { color: #67C23A; }
-.el-card { border-radius: 8px; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); }
+.text-warning { color: var(--ui-color-warning); }
+.text-success { color: var(--ui-color-success); }
+.el-card { border-radius: var(--ui-radius-card); box-shadow: var(--ui-shadow-card); }
 
 @media (max-width: bp.$breakpoint-phone-max) {
   .header-section,

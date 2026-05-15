@@ -8,7 +8,7 @@
       <el-descriptions-item label="发货日期">{{ data.delivery_date || '-' }}</el-descriptions-item>
       <el-descriptions-item label="物流公司">{{ data.logistics_company || '-' }}</el-descriptions-item>
       <el-descriptions-item label="物流单号"><el-link v-if="data.tracking_number" :href="getTrackingUrl(data)" target="_blank">{{ data.tracking_number }}</el-link><span v-else>-</span></el-descriptions-item>
-      <el-descriptions-item label="状态">{{ data.status_display }}</el-descriptions-item>
+      <el-descriptions-item label="状态"><StatusTag :status="data.status" category="delivery" :label="data.status_display" /></el-descriptions-item>
       <el-descriptions-item label="送货地址" :span="2">{{ data.delivery_address }}</el-descriptions-item>
     </el-descriptions>
     <template #footer><el-button @click="handleClose">关闭</el-button></template>
@@ -17,6 +17,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { StatusTag } from '@/components/common'
 const props = defineProps({ visible: { type: Boolean, default: false }, data: { type: Object, default: null } })
 const emit = defineEmits(['update:visible'])
 const localVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })

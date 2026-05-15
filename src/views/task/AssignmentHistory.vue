@@ -34,7 +34,7 @@
           <template #default="scope">{{ formatDateTime(scope.row.created_at) }}</template>
         </el-table-column>
         <el-table-column prop="action_type_display" label="操作类型" width="100">
-          <template #default="scope"><el-tag :type="getActionTypeTag(scope.row.action_type)">{{ scope.row.action_type_display }}</el-tag></template>
+          <template #default="scope"><StatusTag :status="scope.row.action_type" category="assignmentAction" :label="scope.row.action_type_display" /></template>
         </el-table-column>
         <el-table-column prop="task_id" label="任务ID" width="80" />
         <el-table-column prop="work_order_number" label="施工单号" width="150">
@@ -70,51 +70,48 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { RefreshRight, Download, Document, Tickets, OfficeBuilding, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { taskAssignmentHistoryAPI, departmentAPI } from '@/api/modules'
+import { useCrudList } from '@/composables'
+import { StatusTag } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
 
 const router = useRouter()
 
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
 const exporting = ref(false)
 const summary = ref({})
 const departmentList = ref([])
 
-const filters = reactive({
-  date_range: null,
-  action_type: '',
-  department: '',
-  task_id: ''
-})
-
-const handleSearch = () => { currentPage.value = 1; loadData() }
-const resetFilters = () => { Object.assign(filters, { date_range: null, action_type: '', department: '', task_id: '' }); currentPage.value = 1; loadData() }
-const handlePageChange = (page) => { currentPage.value = page; loadData() }
-const handleSizeChange = (size) => { pageSize.value = size; currentPage.value = 1; loadData() }
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = { page: currentPage.value, page_size: pageSize.value }
-    if (filters.date_range?.length === 2) { params.start_date = filters.date_range[0]; params.end_date = filters.date_range[1] }
-    if (filters.action_type) params.action_type = filters.action_type
-    if (filters.department) params.department = filters.department
-    if (filters.task_id) params.task_id = filters.task_id
-
-    const response = await taskAssignmentHistoryAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
+const buildHistoryParams = (params) => {
+  const { date_range, ...nextParams } = params
+  if (date_range?.length === 2) {
+    nextParams.start_date = date_range[0]
+    nextParams.end_date = date_range[1]
+  }
+  return nextParams
 }
+
+const {
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters
+} = useCrudList(taskAssignmentHistoryAPI.getList, {
+  initialFilters: { date_range: null, action_type: '', department: '', task_id: '' },
+  buildParams: buildHistoryParams,
+  errorContext: '加载分派历史失败'
+})
 
 const loadSummary = async () => {
   try { const res = await taskAssignmentHistoryAPI.getSummary(); summary.value = res?.data || res || {} } catch (error) {}
@@ -126,13 +123,14 @@ const loadDepartments = async () => {
 
 const goToWorkOrder = (row) => { if (row.work_order_id) router.push(`/workorders/${row.work_order_id}`) }
 
-const getActionTypeTag = (type) => ({ assign: 'success', unassign: 'warning', transfer: 'primary', complete: 'info' })[type] || 'info';
-
 const handleExport = async () => {
   try {
     exporting.value = true
     const params = {}
-    if (filters.date_range?.length === 2) { params.start_date = filters.date_range[0]; params.end_date = filters.date_range[1] }
+    if (filters.value.date_range?.length === 2) {
+      params.start_date = filters.value.date_range[0]
+      params.end_date = filters.value.date_range[1]
+    }
     const response = await taskAssignmentHistoryAPI.export(params)
     const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)

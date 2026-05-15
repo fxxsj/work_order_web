@@ -1,22 +1,20 @@
 <template>
-  <el-row :gutter="20" class="cost-stats">
-    <el-col :xs="24" :sm="12" :md="8"><div class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><el-icon><List /></el-icon></div><div class="stat-info"><div class="stat-value">{{ stats.total_orders || 0 }}</div><div class="stat-label">订单数量</div></div></div></div></el-col>
-    <el-col :xs="24" :sm="12" :md="8"><div class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #67C23A;"><el-icon><Goods /></el-icon></div><div class="stat-info"><div class="stat-value">¥{{ formatAmount(stats.avg_material_cost) }}</div><div class="stat-label">平均材料成本</div></div></div></div></el-col>
-    <el-col :xs="24" :sm="12" :md="8"><div class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #E6A23C;"><el-icon><User /></el-icon></div><div class="stat-info"><div class="stat-value">¥{{ formatAmount(stats.avg_labor_cost) }}</div><div class="stat-label">平均人工成本</div></div></div></div></el-col>
-  </el-row>
+  <StatsCards :items="statItems" :loading="loading" :span="8" layout="media" />
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { List, Goods, User } from '@element-plus/icons-vue'
+import { StatsCards } from '@/components/common'
 
-defineProps({ stats: { type: Object, default: () => ({}) }, loading: { type: Boolean, default: false } })
-const formatAmount = (v) => v ? parseFloat(v).toFixed(2) : '0.00'
+const props = defineProps({
+  stats: { type: Object, default: () => ({}) },
+  loading: { type: Boolean, default: false }
+})
+
+const statItems = computed(() => [
+  { key: 'orders', label: '订单数量', value: props.stats.total_orders, format: 'number', icon: List, tone: 'primary' },
+  { key: 'material', label: '平均材料成本', value: props.stats.avg_material_cost, format: 'currency', icon: Goods, tone: 'success' },
+  { key: 'labor', label: '平均人工成本', value: props.stats.avg_labor_cost, format: 'currency', icon: User, tone: 'warning' }
+])
 </script>
-
-<style scoped>
-.cost-stats { row-gap: var(--ui-section-gap); }
-.stat-content { display: flex; align-items: center; gap: 12px; }
-.stat-icon { width: 48px; height: 48px; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-.stat-value { font-size: 24px; font-weight: bold; }
-.stat-label { font-size: 12px; color: #909399; }
-</style>

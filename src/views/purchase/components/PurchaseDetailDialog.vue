@@ -3,7 +3,7 @@
     <el-descriptions :column="2" border>
       <el-descriptions-item label="采购单号">{{ detailData?.order_number }}</el-descriptions-item>
       <el-descriptions-item label="供应商">{{ detailData?.supplier_name }}</el-descriptions-item>
-      <el-descriptions-item label="状态"><el-tag :type="getStatusType(detailData?.status)">{{ detailData?.status_display }}</el-tag></el-descriptions-item>
+      <el-descriptions-item label="状态"><StatusTag :status="detailData?.status" category="purchaseOrder" :label="detailData?.status_display" /></el-descriptions-item>
       <el-descriptions-item label="总金额">¥{{ Number(detailData?.total_amount || 0).toFixed(2) }}</el-descriptions-item>
     </el-descriptions>
     <el-divider>采购明细</el-divider>
@@ -20,8 +20,8 @@
 
 <script setup>
 import { computed } from 'vue'
+import { StatusTag } from '@/components/common'
 const props = defineProps({ visible: { type: Boolean, default: false }, detailData: { type: Object, default: null } })
 const emit = defineEmits(['update:visible'])
 const dialogVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })
-const getStatusType = (s) => ({ pending: 'info', submitted: 'primary', approved: 'success', received: 'warning' })[s] || 'info';
 </script>

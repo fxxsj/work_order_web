@@ -207,27 +207,41 @@ import { Search, Download, Document, Plus, Edit, Delete } from '@element-plus/ic
 import { ElMessage } from 'element-plus'
 import { auditLogAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import unwrapApiResponse from '@/utils/apiResponse'
 import { formatDateTime } from '@/utils/filter'
 
 const userStore = useUserStore()
 
-const searchText = ref('')
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
+const buildAuditParams = (params) => ({ ordering: '-created_at', ...params })
 
-const filters = reactive({
-  action_type: '',
-  model: '',
-  user: '',
-  object_id: '',
-  ip_address: '',
-  start_date: '',
-  end_date: ''
+const {
+  searchText,
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters
+} = useCrudList(auditLogAPI.getList, {
+  initialFilters: {
+    action_type: '',
+    model: '',
+    user: '',
+    object_id: '',
+    ip_address: '',
+    start_date: '',
+    end_date: ''
+  },
+  buildParams: buildAuditParams,
+  errorContext: '加载审计日志失败'
 })
 
 const actionTypeOptions = [
@@ -291,72 +305,6 @@ const formattedDiff = computed(() => {
     return String(diffData.value.changes)
   }
 })
-
-let searchTimer = null
-
-const handleSearchDebounced = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    handleSearch()
-  }, 300)
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const resetFilters = () => {
-  searchText.value = ''
-  Object.assign(filters, {
-    action_type: '',
-    model: '',
-    user: '',
-    object_id: '',
-    ip_address: '',
-    start_date: '',
-    end_date: ''
-  })
-  handleSearch()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value,
-      ordering: '-created_at'
-    }
-    if (searchText.value) params.search = searchText.value
-    if (filters.action_type) params.action_type = filters.action_type
-    if (filters.model) params.model = filters.model
-    if (filters.user) params.user = filters.user
-    if (filters.object_id) params.object_id = filters.object_id
-    if (filters.ip_address) params.ip_address = filters.ip_address
-    if (filters.start_date) params.start_date = filters.start_date
-    if (filters.end_date) params.end_date = filters.end_date
-
-    const response = await auditLogAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
 
 const loadStats = async () => {
   try {

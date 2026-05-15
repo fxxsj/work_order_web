@@ -158,7 +158,13 @@ const handleToggleActive = async ({ id, is_active }) => {
 const handleAddDepartment = (data) => { showDialog(data) }
 const handleEditDepartment = (data) => { showDialog(data, data.id) }
 const handleRemoveDepartment = async (id) => {
-  try { await ErrorHandler.confirm('确定要删除此规则？'); await assignmentRuleAPI.delete(id); ElMessage.success('删除成功'); if (selectedProcess.value) loadDepartmentRules(selectedProcess.value.id) } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '删除失败') }
+  try {
+    const confirmed = await ErrorHandler.confirm('确定要删除此规则？')
+    if (!confirmed) return
+    await assignmentRuleAPI.delete(id)
+    ElMessage.success('删除成功')
+    if (selectedProcess.value) loadDepartmentRules(selectedProcess.value.id)
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '删除失败') }
 }
 
 const showDialog = (data = null, ruleId = null) => {

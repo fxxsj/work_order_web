@@ -93,72 +93,63 @@
       />
     </el-card>
 
-    <el-dialog
+    <FormDialog
+      ref="formDialogRef"
       v-model="dialogVisible"
       :title="formTitle"
       width="var(--ui-dialog-width-md)"
-      @close="resetForm"
+      :form-data="form"
+      :rules="rules"
+      label-width="100px"
+      :loading="formLoading"
+      @submit="handleSubmit"
+      @cancel="resetForm"
     >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="100px"
-      >
-        <el-form-item label="客户名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入客户名称" />
-        </el-form-item>
-        <el-form-item label="联系人">
-          <el-input v-model="form.contact_person" placeholder="请输入联系人" />
-        </el-form-item>
-        <el-form-item label="联系电话">
-          <el-input v-model="form.phone" placeholder="请输入联系电话" />
-        </el-form-item>
-        <el-form-item label="邮箱">
-          <el-input v-model="form.email" placeholder="请输入邮箱" />
-        </el-form-item>
-        <el-form-item label="业务员">
-          <el-select
-            v-model="form.salesperson"
-            placeholder="请选择业务员"
-            filterable
-            clearable
-            style="width: 100%;"
-          >
-            <el-option
-              v-for="user in salespersonList"
-              :key="user.id"
-              :label="user.username"
-              :value="user.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="地址">
-          <el-input
-            v-model="form.address"
-            type="textarea"
-            :rows="2"
-            placeholder="请输入地址"
+      <el-form-item label="客户名称" prop="name">
+        <el-input v-model="form.name" placeholder="请输入客户名称" />
+      </el-form-item>
+      <el-form-item label="联系人">
+        <el-input v-model="form.contact_person" placeholder="请输入联系人" />
+      </el-form-item>
+      <el-form-item label="联系电话">
+        <el-input v-model="form.phone" placeholder="请输入联系电话" />
+      </el-form-item>
+      <el-form-item label="邮箱">
+        <el-input v-model="form.email" placeholder="请输入邮箱" />
+      </el-form-item>
+      <el-form-item label="业务员">
+        <el-select
+          v-model="form.salesperson"
+          placeholder="请选择业务员"
+          filterable
+          clearable
+          style="width: 100%;"
+        >
+          <el-option
+            v-for="user in salespersonList"
+            :key="user.id"
+            :label="user.username"
+            :value="user.id"
           />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="form.notes"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">
-          取消
-        </el-button>
-        <el-button type="primary" :loading="formLoading" @click="handleSubmit">
-          确定
-        </el-button>
-      </template>
-    </el-dialog>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="地址">
+        <el-input
+          v-model="form.address"
+          type="textarea"
+          :rows="2"
+          placeholder="请输入地址"
+        />
+      </el-form-item>
+      <el-form-item label="备注">
+        <el-input
+          v-model="form.notes"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入备注"
+        />
+      </el-form-item>
+    </FormDialog>
   </div>
 </template>
 
@@ -169,25 +160,35 @@ import { ElMessage } from 'element-plus'
 import { authAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
+import { FormDialog } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
-import unwrapApiResponse from '@/utils/apiResponse'
 import { formatDateTime } from '@/utils/filter'
 
 const userStore = useUserStore()
 
-const searchText = ref('')
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
+const {
+  searchText,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange
+} = useCrudList(customerAPI.getList, {
+  errorContext: '加载客户数据失败'
+})
 
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const currentRow = ref(null)
 const formLoading = ref(false)
 const salespersonList = ref([])
-const formRef = ref(null)
+const formDialogRef = ref(null)
 
 const formInitialValues = {
   name: '',
@@ -212,51 +213,6 @@ const canCreate = computed(() => userStore.hasPermission('workorder.add_customer
 const canEdit = computed(() => userStore.hasPermission('workorder.change_customer'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_customer'))
 
-let searchTimer = null
-
-const handleSearchDebounced = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    handleSearch()
-  }, 300)
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value
-    }
-    if (searchText.value) {
-      params.search = searchText.value
-    }
-    const response = await customerAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
-
 const loadSalespersons = async () => {
   try {
     const response = await authAPI.getSalespersons()
@@ -276,7 +232,7 @@ const showCreateDialog = () => {
 const resetForm = () => {
   Object.assign(form, formInitialValues)
   nextTick(() => {
-    formRef.value?.clearValidate()
+    formDialogRef.value?.clearValidate()
   })
 }
 
@@ -296,7 +252,7 @@ const handleEdit = (row) => {
 }
 
 const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
+  const valid = await formDialogRef.value.validate().catch(() => false)
   if (!valid) return false
 
   formLoading.value = true
@@ -319,14 +275,13 @@ const handleSubmit = async () => {
 
 const handleDelete = async (row) => {
   try {
-    await ErrorHandler.confirm(`确定要删除客户"${row.name}"吗？`)
+    const confirmed = await ErrorHandler.confirm(`确定要删除客户"${row.name}"吗？`)
+    if (!confirmed) return
     await customerAPI.delete(row.id)
     ElMessage.success('删除成功')
     loadData()
   } catch (error) {
-    if (error !== 'cancel' && error.message !== 'cancel') {
-      ErrorHandler.showMessage(error, '删除失败')
-    }
+    ErrorHandler.showMessage(error, '删除失败')
   }
 }
 

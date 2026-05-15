@@ -155,17 +155,27 @@ import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { dieAPI, productAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import DieFormDialog from './components/DieFormDialog.vue'
 
 const userStore = useUserStore()
 
-const searchText = ref('')
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
+const {
+  searchText,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange
+} = useCrudList(dieAPI.getList, {
+  errorContext: '加载刀模数据失败'
+})
 
 const dialogVisible = ref(false)
 const dialogType = ref('create')
@@ -176,51 +186,6 @@ const productList = ref([])
 const canCreate = computed(() => userStore.hasPermission('workorder.add_die'))
 const canEdit = computed(() => userStore.hasPermission('workorder.change_die'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_die'))
-
-let searchTimer = null
-
-const handleSearchDebounced = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    handleSearch()
-  }, 300)
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value
-    }
-    if (searchText.value) {
-      params.search = searchText.value
-    }
-    const response = await dieAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
 
 const formatDate = (dateString) => {
   if (!dateString) return ''

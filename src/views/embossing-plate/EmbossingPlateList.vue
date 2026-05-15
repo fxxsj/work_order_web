@@ -137,17 +137,28 @@ import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { embossingPlateAPI, productAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import EmbossingPlateFormDialog from './components/EmbossingPlateFormDialog.vue'
 
 const userStore = useUserStore()
 
-const searchText = ref('')
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
+const {
+  searchText,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters
+} = useCrudList(embossingPlateAPI.getList, {
+  errorContext: '加载压凸版数据失败'
+})
 
 const dialogVisible = ref(false)
 const dialogType = ref('create')
@@ -159,51 +170,6 @@ const canCreate = computed(() => userStore.hasPermission('workorder.add_embossin
 const canEdit = computed(() => userStore.hasPermission('workorder.change_embossingplate'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_embossingplate'))
 const hasFilters = computed(() => !!searchText.value)
-
-let searchTimer = null
-
-const handleSearchDebounced = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    handleSearch()
-  }, 300)
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value
-    }
-    if (searchText.value) {
-      params.search = searchText.value
-    }
-    const response = await embossingPlateAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
@@ -245,27 +211,25 @@ const handleEdit = async (row) => {
 
 const handleDelete = async (row) => {
   try {
-    await ErrorHandler.confirm(`确定要删除压凸版"${row.name}"吗？此操作不可撤销。`)
+    const confirmed = await ErrorHandler.confirm(`确定要删除压凸版"${row.name}"吗？此操作不可撤销。`)
+    if (!confirmed) return
     await embossingPlateAPI.delete(row.id)
     ElMessage.success('删除成功')
     await loadData()
   } catch (error) {
-    if (error !== 'cancel') {
-      ErrorHandler.showMessage(error, '删除失败')
-    }
+    ErrorHandler.showMessage(error, '删除失败')
   }
 }
 
 const handleConfirmPlate = async (row) => {
   try {
-    await ErrorHandler.confirm(`确定要确认压凸版"${row.name}"吗？确认后关键字段将不可修改。`)
+    const confirmed = await ErrorHandler.confirm(`确定要确认压凸版"${row.name}"吗？确认后关键字段将不可修改。`)
+    if (!confirmed) return
     await embossingPlateAPI.confirm(row.id)
     ElMessage.success('确认成功')
     await loadData()
   } catch (error) {
-    if (error !== 'cancel') {
-      ErrorHandler.showMessage(error, '确认失败')
-    }
+    ErrorHandler.showMessage(error, '确认失败')
   }
 }
 
@@ -303,9 +267,7 @@ const handleFormConfirm = async ({ form, productItems }) => {
 }
 
 const handleReset = () => {
-  searchText.value = ''
-  currentPage.value = 1
-  loadData()
+  resetFilters()
 }
 
 onMounted(() => {

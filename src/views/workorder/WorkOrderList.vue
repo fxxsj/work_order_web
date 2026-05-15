@@ -124,12 +124,12 @@
           </el-table-column>
           <el-table-column label="状态" width="100">
             <template #default="scope">
-              <span :class="'status-badge status-' + scope.row.status">{{ scope.row.status_display }}</span>
+              <StatusTag :status="scope.row.status" category="workOrder" :label="scope.row.status_display" />
             </template>
           </el-table-column>
           <el-table-column label="优先级" width="100">
             <template #default="scope">
-              <span :class="'status-badge priority-' + scope.row.priority">{{ scope.row.priority_display }}</span>
+              <StatusTag :status="scope.row.priority" category="priority" :label="scope.row.priority_display" />
             </template>
           </el-table-column>
           <el-table-column label="进度" width="150">
@@ -175,15 +175,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Plus, Search, RefreshRight, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { workOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
+import { StatusTag } from '@/components/common'
 import { WorkOrderStatusChoices, PriorityChoices, ApprovalStatusChoices } from '@/constants'
 import { formatDate } from '@/utils/filter'
 
@@ -191,21 +193,29 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const searchText = ref('')
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
 const exporting = ref(false)
-
-const filters = reactive({
-  search: '',
-  status: '',
-  priority: '',
-  approval_status: ''
-})
 const ordering = ref('-created_at')
+
+const buildWorkOrderParams = (params) => ({ ordering: ordering.value, ...params })
+
+const {
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters: resetCrudFilters
+} = useCrudList(workOrderAPI.getList, {
+  initialFilters: { search: '', status: '', priority: '', approval_status: '' },
+  buildParams: buildWorkOrderParams,
+  errorContext: '加载施工单失败'
+})
 
 const isSalesperson = computed(() => {
   const userInfo = userStore.currentUser
@@ -216,69 +226,14 @@ const canExport = computed(() => userStore.hasPermission('workorder.view_workord
 const canEdit = computed(() => userStore.hasPermission('workorder.change_workorder'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_workorder'))
 
-let searchTimer = null
-
-const handleSearchDebounced = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    handleSearch()
-  }, 300)
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value,
-      ordering: ordering.value
-    }
-    if (filters.search) params.search = filters.search
-    if (filters.status) params.status = filters.status
-    if (filters.priority) params.priority = filters.priority
-    if (filters.approval_status) params.approval_status = filters.approval_status
-
-    const response = await workOrderAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
-
 const handleReset = () => {
-  Object.assign(filters, {
-    search: '',
-    status: '',
-    priority: '',
-    approval_status: ''
-  })
   ordering.value = '-created_at'
-  currentPage.value = 1
   if (Object.keys(route.query).length > 0) {
     router.replace({ query: {} }).catch(err => {
       if (err.name !== 'NavigationDuplicated') logger.warn('导航错误', err)
     })
   }
-  loadData()
+  resetCrudFilters()
 }
 
 const handleCreate = () => {
@@ -307,20 +262,16 @@ const handleRowClick = (row) => {
   handleView(row)
 }
 
-const handleDelete = (row) => {
-  ElMessageBox.confirm(`确定要删除施工单 ${row.order_number} 吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    try {
-      await workOrderAPI.delete(row.id)
-      ElMessage.success('删除成功')
-      loadData()
-    } catch (error) {
-      ErrorHandler.showMessage(error, '删除施工单')
-    }
-  }).catch(() => {})
+const handleDelete = async (row) => {
+  try {
+    const confirmed = await ErrorHandler.confirm(`确定要删除施工单 ${row.order_number} 吗？`)
+    if (!confirmed) return
+    await workOrderAPI.delete(row.id)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch (error) {
+    if (error !== 'cancel') ErrorHandler.showMessage(error, '删除施工单')
+  }
 }
 
 const getDeliveryDateStyle = (date, status) => {
@@ -335,10 +286,10 @@ const handleExport = async () => {
   try {
     exporting.value = true
     const params = {}
-    if (filters.search) params.search = filters.search
-    if (filters.status) params.status = filters.status
-    if (filters.priority) params.priority = filters.priority
-    if (filters.approval_status) params.approval_status = filters.approval_status
+    if (filters.value.search) params.search = filters.value.search
+    if (filters.value.status) params.status = filters.value.status
+    if (filters.value.priority) params.priority = filters.value.priority
+    if (filters.value.approval_status) params.approval_status = filters.value.approval_status
     const now = new Date()
     const filename = `施工单列表_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.xlsx`
     params.filename = filename
@@ -368,13 +319,13 @@ const handleExport = async () => {
 
 onMounted(() => {
   if (route.query.approval_status) {
-    filters.approval_status = route.query.approval_status
+    filters.value.approval_status = route.query.approval_status
   }
   if (route.query.status) {
-    filters.status = route.query.status
+    filters.value.status = route.query.status
   }
   if (route.query.priority) {
-    filters.priority = route.query.priority
+    filters.value.priority = route.query.priority
   }
   if (route.query.ordering) {
     const allowedOrdering = new Set([

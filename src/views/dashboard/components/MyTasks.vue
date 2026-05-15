@@ -4,7 +4,7 @@
     <el-table :data="tasks" style="width: 100%">
       <el-table-column label="施工单号" width="150"><template #default="scope"><el-link v-if="scope.row.work_order_process_info?.work_order?.id" type="primary" @click="goTo(`/workorders/${scope.row.work_order_process_info.work_order.id}`)">{{ scope.row.work_order_process_info.work_order.order_number || '-' }}</el-link><span v-else>-</span></template></el-table-column>
       <el-table-column prop="work_content" label="任务内容" min-width="200" show-overflow-tooltip />
-      <el-table-column label="状态" width="100"><template #default="scope"><el-tag :type="getStatusType(scope.row.status)" size="small">{{ getStatusDisplay(scope.row.status) }}</el-tag></template></el-table-column>
+      <el-table-column label="状态" width="100"><template #default="scope"><StatusTag :status="scope.row.status" :label="scope.row.status_display" category="task" size="small" /></template></el-table-column>
       <el-table-column label="进度" width="150"><template #default="scope"><el-progress :percentage="getProgress(scope.row)" :color="getProgress(scope.row) === 100 ? '#67C23A' : '#409EFF'" /></template></el-table-column>
       <el-table-column label="操作" width="100" fixed="right"><template #default=""><el-button type="text" size="small" @click="goTo('/tasks')">详情</el-button></template></el-table-column>
     </el-table>
@@ -13,14 +13,13 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { StatusTag } from '@/components/common'
 
 defineProps({ tasks: { type: Array, default: () => [] } })
 const emit = defineEmits(['view-all'])
 const router = useRouter()
 const goTo = (path) => router.push(path)
 
-const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success' })[s] || 'info';
-const getStatusDisplay = (s) => ({ pending: '待开始', in_progress: '进行中', completed: '已完成' })[s] || s;
 const getProgress = (t) => t.production_quantity ? Math.round(((t.quantity_completed || 0) / t.production_quantity) * 100) : 0;
 </script>
 

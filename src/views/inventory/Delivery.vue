@@ -43,7 +43,7 @@
         </el-table-column>
         <el-table-column prop="delivery_date" label="发货日期" width="120" />
         <el-table-column label="状态" width="100">
-          <template #default="scope"><el-tag :type="getStatusType(scope.row.status)">{{ scope.row.status_display }}</el-tag></template>
+          <template #default="scope"><StatusTag :status="scope.row.status" category="delivery" :label="scope.row.status_display" /></template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="scope">
@@ -78,7 +78,9 @@ import { ElMessage } from 'element-plus'
 import { deliveryOrderAPI, salesOrderAPI, productAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
+import { StatusTag } from '@/components/common'
 import DeliveryStats from './components/DeliveryStats.vue'
 import DeliveryDetailDialog from './components/DeliveryDetailDialog.vue'
 import DeliveryReceiveDialog from './components/DeliveryReceiveDialog.vue'
@@ -86,11 +88,6 @@ import DeliveryFormDialog from './components/DeliveryFormDialog.vue'
 
 const userStore = useUserStore()
 
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
 const statsLoading = ref(false)
 const submitting = ref(false)
 const receiving = ref(false)
@@ -104,31 +101,37 @@ const formDialogVisible = ref(false)
 const receiveDialogVisible = ref(false)
 const isEdit = ref(false)
 const form = reactive({ id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, package_count: 1, package_weight: '', notes: '', items_data: [] })
-const filters = reactive({ status: '', customer: '', tracking_number: '' })
-const hasFilters = computed(() => filters.status || filters.customer || filters.tracking_number)
+
+const buildDeliveryParams = (params) => {
+  const { tracking_number, ...nextParams } = params
+  if (tracking_number) nextParams.search = tracking_number
+  return nextParams
+}
+
+const {
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters
+} = useCrudList(deliveryOrderAPI.getList, {
+  initialFilters: { status: '', customer: '', tracking_number: '' },
+  buildParams: buildDeliveryParams
+})
+
+const hasFilters = computed(() => filters.value.status || filters.value.customer || filters.value.tracking_number)
 const canCreate = computed(() => userStore.hasPermission('workorder.add_deliveryorder'))
 const canEdit = computed(() => userStore.hasPermission('workorder.change_deliveryorder'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_deliveryorder'))
 
-let searchTimer = null
-const handleSearchDebounced = () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { handleSearch() }, 300) }
-const handleSearch = () => { currentPage.value = 1; loadData() }
-const handleReset = () => { Object.assign(filters, { status: '', customer: '', tracking_number: '' }); currentPage.value = 1; loadData() }
-const handlePageChange = (page) => { currentPage.value = page; loadData() }
-const handleSizeChange = (size) => { pageSize.value = size; currentPage.value = 1; loadData() }
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = { page: currentPage.value, page_size: pageSize.value }
-    if (filters.status) params.status = filters.status
-    if (filters.customer) params.customer = filters.customer
-    if (filters.tracking_number) params.search = filters.tracking_number
-    const response = await deliveryOrderAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
-}
+const handleReset = () => resetFilters()
 
 const fetchStats = async () => { statsLoading.value = true; try { const response = await deliveryOrderAPI.getStats(); stats.value = response || {} } catch (error) { stats.value = {} } finally { statsLoading.value = false } }
 const fetchCustomers = async () => { try { const response = await customerAPI.getList({ page_size: 1000 }); customerList.value = response?.results || [] } catch (error) {} }
@@ -140,7 +143,14 @@ const handleCreate = () => { if (!canCreate.value) return; isEdit.value = false;
 const handleEdit = (row) => { if (!canEdit.value) return; isEdit.value = true; currentDelivery.value = row; formDialogVisible.value = true }
 
 const handleShip = async (row) => {
-  try { await ErrorHandler.confirm('确认发货？'); await deliveryOrderAPI.ship(row.id); ElMessage.success('发货成功'); loadData(); fetchStats() } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '发货失败') }
+  try {
+    const confirmed = await ErrorHandler.confirm('确认发货？')
+    if (!confirmed) return
+    await deliveryOrderAPI.ship(row.id)
+    ElMessage.success('发货成功')
+    loadData()
+    fetchStats()
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '发货失败') }
 }
 
 const handleReceive = async (row) => { currentDelivery.value = row; receiveDialogVisible.value = true }
@@ -151,14 +161,19 @@ const handleConfirmReceive = async (data) => {
 }
 
 const handleDelete = async (row) => {
-  try { await ErrorHandler.confirm(`确定要删除发货单"${row.order_number}"吗？`); await deliveryOrderAPI.delete(row.id); ElMessage.success('删除成功'); loadData() } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '删除失败') }
+  try {
+    const confirmed = await ErrorHandler.confirm(`确定要删除发货单"${row.order_number}"吗？`)
+    if (!confirmed) return
+    await deliveryOrderAPI.delete(row.id)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '删除失败') }
 }
 
 const handleSubmit = async (data) => { submitting.value = true; try { if (isEdit.value) { await deliveryOrderAPI.update(currentDelivery.value.id, data); ElMessage.success('更新成功') } else { await deliveryOrderAPI.create(data); ElMessage.success('创建成功') } formDialogVisible.value = false; loadData(); fetchStats() } catch (error) { ErrorHandler.showMessage(error, isEdit.value ? '更新失败' : '创建失败') } finally { submitting.value = false } }
 const handleSalesOrderChange = (orderId) => { /* TODO */ }
 const handleCustomerChange = (customerId) => { /* TODO */ }
 
-const getStatusType = (status) => ({ pending: 'info', shipped: 'warning', in_transit: 'primary', received: 'success', rejected: 'danger', returned: 'warning' })[status] || ''
 const getTrackingUrl = (row) => row.tracking_url || (row.logistics_company === '顺丰' ? `https://www.sf-express.com/sf-service-owf-web/shipment/query?trackingNumber=${row.tracking_number}` : null)
 
 onMounted(() => { loadData(); fetchStats(); fetchCustomers(); fetchSalesOrders(); fetchProducts() })

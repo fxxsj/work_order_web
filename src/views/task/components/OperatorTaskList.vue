@@ -3,7 +3,7 @@
     <el-scrollbar wrap-class="scrollbar-wrapper">
       <div v-for="task in tasks" :key="task.id" class="task-card" :class="`priority-${task.priority}`" @click="emit('task-click', task)">
         <div class="task-header">
-          <el-tag :type="getStatusType(task.status)" size="small">{{ task.status_display }}</el-tag>
+          <StatusTag :status="task.status" category="task" :label="task.status_display" size="small" />
           <el-tag v-if="task.priority === 'urgent'" type="danger" size="small">紧急</el-tag>
         </div>
         <div class="task-content">{{ task.work_content }}</div>
@@ -34,6 +34,7 @@
 import { computed } from 'vue'
 import { Edit, Check } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores'
+import { StatusTag } from '@/components/common'
 
 const props = defineProps({
   tasks: { type: Array, default: () => [] },
@@ -48,7 +49,6 @@ const emit = defineEmits(['task-click', 'claim', 'update', 'complete'])
 const userStore = useUserStore()
 const currentUser = computed(() => userStore.currentUser)
 
-const getStatusType = (status) => ({ pending: 'info', in_progress: 'primary', completed: 'success', cancelled: 'danger' })[status] || 'info';
 const getProgress = (task) => task.production_quantity ? Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100) : 0
 const isMyTask = (task) => task.assigned_operator === currentUser.value?.id
 const canComplete = (task) => isMyTask(task) && ['pending', 'in_progress'].includes(task.status)

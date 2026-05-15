@@ -26,7 +26,7 @@
         <el-table-column prop="order_number" label="采购单号" width="150" />
         <el-table-column prop="supplier_name" label="供应商" width="180" />
         <el-table-column label="状态" width="100">
-          <template #default="scope"><el-tag :type="getStatusType(scope.row.status)">{{ scope.row.status_display }}</el-tag></template>
+          <template #default="scope"><StatusTag :status="scope.row.status" category="purchaseOrder" :label="scope.row.status_display" /></template>
         </el-table-column>
         <el-table-column prop="items_count" label="明细数量" width="100" align="center" />
         <el-table-column prop="total_amount" label="总金额" width="120" align="right">
@@ -82,17 +82,13 @@ import { Plus, Search, RefreshRight, Warning } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { purchaseOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
+import { StatusTag } from '@/components/common'
 import { PurchaseFormDialog, PurchaseDetailDialog, LowStockAlertDialog, ReceiveDialog, InspectionDialog } from './components'
 
 const userStore = useUserStore()
 
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
-const searchText = ref('')
 const dialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const lowStockDialogVisible = ref(false)
@@ -103,28 +99,26 @@ const currentPurchaseId = ref(null)
 const currentPurchaseOrder = ref(null)
 const form = reactive({ supplier: null, work_order_number: '', notes: '', items: [] })
 
-const filters = reactive({ supplier_name: '', status: '' })
+const {
+  searchText,
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters
+} = useCrudList(purchaseOrderAPI.getList, {
+  initialFilters: { supplier_name: '', status: '' }
+})
+
 const canCreate = computed(() => userStore.hasPermission('workorder.add_purchaseorder'))
 const canEdit = computed(() => userStore.hasPermission('workorder.change_purchaseorder'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_purchaseorder'))
-
-const handleSearch = () => { currentPage.value = 1; loadData() }
-const handleReset = () => { Object.assign(filters, { supplier_name: '', status: '' }); searchText.value = ''; currentPage.value = 1; loadData() }
-const handlePageChange = (page) => { currentPage.value = page; loadData() }
-const handleSizeChange = (size) => { pageSize.value = size; currentPage.value = 1; loadData() }
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = { page: currentPage.value, page_size: pageSize.value }
-    if (searchText.value) params.search = searchText.value
-    if (filters.supplier_name) params.supplier_name = filters.supplier_name
-    if (filters.status) params.status = filters.status
-    const response = await purchaseOrderAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) { ElMessage.error('加载数据失败') } finally { loading.value = false }
-}
 
 const showCreateDialog = () => { if (!canCreate.value) return; isEditMode.value = false; Object.assign(form, { supplier: null, work_order_number: '', notes: '', items: [] }); dialogVisible.value = true }
 const showEditDialog = (row) => { if (!canEdit.value) return; isEditMode.value = true; currentPurchaseId.value = row.id; purchaseOrderAPI.getDetail(row.id).then(res => { Object.assign(form, { supplier: res.supplier, work_order_number: res.work_order_number, notes: res.notes, items: res.items || [] }); dialogVisible.value = true }).catch(e => ErrorHandler.showMessage(e, '加载详情')) }
@@ -143,7 +137,13 @@ const handleStatusAction = async (cmd, row) => {
       case 'placeOrder': await purchaseOrderAPI.placeOrder(row.id); ElMessage.success('下单成功'); break
       case 'receive': currentPurchaseOrder.value = row; receiveDialogVisible.value = true; return
       case 'inspection': currentPurchaseId.value = row.id; inspectionDialogVisible.value = true; return
-      case 'cancel': await ErrorHandler.confirm('确定要取消该采购单吗？'); await purchaseOrderAPI.cancel(row.id); ElMessage.success('取消成功'); break
+      case 'cancel': {
+        const confirmed = await ErrorHandler.confirm('确定要取消该采购单吗？')
+        if (!confirmed) return
+        await purchaseOrderAPI.cancel(row.id)
+        ElMessage.success('取消成功')
+        break
+      }
     }
     loadData()
   } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '操作失败') }
@@ -152,7 +152,6 @@ const handleStatusAction = async (cmd, row) => {
 const handleReceiveSuccess = () => { receiveDialogVisible.value = false; loadData() }
 const handleCreateFromLowStock = (data) => { lowStockDialogVisible.value = false; showCreateDialog() }
 const showLowStockDialog = () => { lowStockDialogVisible.value = true }
-const getStatusType = (status) => ({ draft: 'info', submitted: 'primary', approved: 'success', ordered: 'warning', received: 'success', cancelled: 'info' })[status] || ''
 
 onMounted(() => { loadData() })
 </script>

@@ -6,7 +6,7 @@
       <el-table :data="processes" border size="small">
         <el-table-column prop="sequence" label="序号" width="60" align="center" />
         <el-table-column prop="process_name" label="工序名称" min-width="150" />
-        <el-table-column prop="status_display" label="状态" width="100"><template #default="scope"><el-tag :type="getStatusType(scope.row.status)" size="small">{{ scope.row.status_display }}</el-tag></template></el-table-column>
+        <el-table-column prop="status_display" label="状态" width="100"><template #default="scope"><StatusTag :status="scope.row.status" category="process" :label="scope.row.status_display" size="small" /></template></el-table-column>
         <el-table-column prop="department_name" label="负责部门" width="120" />
         <el-table-column prop="assigned_operator_name" label="负责人" width="100" />
         <el-table-column label="任务数" width="80" align="center"><template #default="scope">{{ scope.row.tasks?.length || 0 }}</template></el-table-column>
@@ -20,6 +20,7 @@
 
 <script setup>
 import { Plus } from '@element-plus/icons-vue'
+import { StatusTag } from '@/components/common'
 
 const props = defineProps({
   workOrder: { type: Object, default: null },
@@ -29,7 +30,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['add-process', 'process-click', 'view-mode-change'])
-const getStatusType = (s) => ({ pending: 'info', in_progress: 'primary', completed: 'success', draft: 'warning' })[s] || 'info';
 </script>
 
 <style lang="scss" scoped>

@@ -91,16 +91,14 @@
         <el-table-column prop="issue_date" label="开票日期" width="120" />
         <el-table-column label="状态" width="100">
           <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.status)">
-              {{ scope.row.status_display }}
-            </el-tag>
+            <StatusTag :status="scope.row.status" category="invoice" :label="scope.row.status_display" />
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="scope">
             <el-button type="text" size="small" @click="handleView(scope.row)">查看</el-button>
             <el-button v-if="canEdit && scope.row.status === 'draft'" type="text" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button v-if="canEdit && scope.row.status === 'draft'" type="text" size="small" style="color: #E6A23C;" @click="handleSubmit(scope.row)">提交</el-button>
+            <el-button v-if="canEdit && scope.row.status === 'draft'" type="text" size="small" class="text-warning" @click="handleSubmit(scope.row)">提交</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -120,7 +118,7 @@
         v-if="!loading && tableData.length === 0"
         description="暂无发票数据"
         :image-size="200"
-        style="margin-top: 50px;"
+        class="ui-empty-state"
       >
         <el-button v-if="hasFilters" type="primary" @click="handleReset">重置筛选</el-button>
         <el-button v-else-if="canCreate" type="primary" @click="handleCreate">创建第一个发票</el-button>
@@ -132,7 +130,7 @@
         <el-descriptions-item label="发票号码">{{ currentInvoice.invoice_number }}</el-descriptions-item>
         <el-descriptions-item label="发票类型">{{ currentInvoice.invoice_type_display }}</el-descriptions-item>
         <el-descriptions-item label="客户名称">{{ currentInvoice.customer_name }}</el-descriptions-item>
-        <el-descriptions-item label="状态">{{ currentInvoice.status_display }}</el-descriptions-item>
+        <el-descriptions-item label="状态"><StatusTag :status="currentInvoice.status" category="invoice" :label="currentInvoice.status_display" /></el-descriptions-item>
         <el-descriptions-item label="金额(不含税)">¥{{ currentInvoice.amount ? currentInvoice.amount.toLocaleString() : '-' }}</el-descriptions-item>
         <el-descriptions-item label="税率">{{ currentInvoice.tax_rate }}%</el-descriptions-item>
         <el-descriptions-item label="税额">¥{{ currentInvoice.tax_amount ? currentInvoice.tax_amount.toLocaleString() : '-' }}</el-descriptions-item>
@@ -149,25 +147,25 @@
     <el-dialog v-model="formDialogVisible" :title="isEdit ? '编辑发票' : '新建发票'" width="var(--ui-dialog-width-md)" :close-on-click-modal="false">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="客户" prop="customer">
-          <el-select v-model="form.customer" placeholder="请选择客户" filterable style="width: 100%;">
+          <el-select v-model="form.customer" placeholder="请选择客户" filterable class="ui-control-full">
             <el-option v-for="customer in customerList" :key="customer.id" :label="customer.name" :value="customer.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="发票类型" prop="invoice_type">
-          <el-select v-model="form.invoice_type" placeholder="请选择发票类型" style="width: 100%;">
+          <el-select v-model="form.invoice_type" placeholder="请选择发票类型" class="ui-control-full">
             <el-option label="增值税专用发票" value="vat_special" />
             <el-option label="增值税普通发票" value="vat_common" />
             <el-option label="电子发票" value="electronic" />
           </el-select>
         </el-form-item>
         <el-form-item label="开票日期" prop="issue_date">
-          <el-date-picker v-model="form.issue_date" type="date" placeholder="请选择日期" style="width: 100%;" />
+          <el-date-picker v-model="form.issue_date" type="date" placeholder="请选择日期" class="ui-control-full" />
         </el-form-item>
         <el-form-item label="金额(不含税)" prop="amount">
-          <el-input-number v-model="form.amount" :min="0" :precision="2" style="width: 100%;" />
+          <el-input-number v-model="form.amount" :min="0" :precision="2" class="ui-control-full" />
         </el-form-item>
         <el-form-item label="税率" prop="tax_rate">
-          <el-input-number v-model="form.tax_rate" :min="0" :max="100" style="width: 100%;" />
+          <el-input-number v-model="form.tax_rate" :min="0" :max="100" class="ui-control-full" />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.notes" type="textarea" :rows="3" placeholder="请输入备注" />
@@ -188,16 +186,13 @@ import { ElMessage } from 'element-plus'
 import { invoiceAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
+import { StatusTag } from '@/components/common'
 import InvoiceStats from './components/InvoiceStats.vue'
 
 const userStore = useUserStore()
 
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
 const statsLoading = ref(false)
 const submitting = ref(false)
 const customerList = ref([])
@@ -227,65 +222,35 @@ const rules = {
   amount: [{ required: true, message: '请输入金额', trigger: 'blur' }]
 }
 
-const filters = reactive({
-  status: '',
-  customer: '',
-  invoice_number: ''
+const buildInvoiceParams = (params) => {
+  const { invoice_number, ...nextParams } = params
+  if (invoice_number) nextParams.search = invoice_number
+  return nextParams
+}
+
+const {
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handleSearchDebounced,
+  handlePageChange,
+  handleSizeChange,
+  resetFilters
+} = useCrudList(invoiceAPI.getList, {
+  initialFilters: { status: '', customer: '', invoice_number: '' },
+  buildParams: buildInvoiceParams
 })
 
-const hasFilters = computed(() => filters.status || filters.customer || filters.invoice_number)
+const hasFilters = computed(() => filters.value.status || filters.value.customer || filters.value.invoice_number)
 const canCreate = computed(() => userStore.hasPermission('workorder.add_invoice'))
 const canEdit = computed(() => userStore.hasPermission('workorder.change_invoice'))
 
-let searchTimer = null
-
-const handleSearchDebounced = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => { handleSearch() }, 300)
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handleReset = () => {
-  Object.assign(filters, { status: '', customer: '', invoice_number: '' })
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value
-    }
-    if (filters.status) params.status = filters.status
-    if (filters.customer) params.customer = filters.customer
-    if (filters.invoice_number) params.search = filters.invoice_number
-
-    const response = await invoiceAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
+const handleReset = () => resetFilters()
 
 const fetchStats = async () => {
   statsLoading.value = true
@@ -358,7 +323,8 @@ const handleEdit = (row) => {
 
 const handleSubmit = async (row) => {
   try {
-    await ErrorHandler.confirm('确认提交该发票？')
+    const confirmed = await ErrorHandler.confirm('确认提交该发票？')
+    if (!confirmed) return
     await invoiceAPI.submit(row.id)
     ElMessage.success('提交成功')
     loadData()
@@ -395,11 +361,6 @@ const handleSave = async () => {
   }
 }
 
-const getStatusType = (status) => {
-  const typeMap = { draft: 'info', issued: 'warning', sent: 'primary', received: 'success', cancelled: 'danger', refunded: 'danger' }
-  return typeMap[status] || ''
-}
-
 onMounted(() => {
   loadData()
   fetchStats()
@@ -431,11 +392,11 @@ onMounted(() => {
 }
 
 .finance-filter-control {
-  width: min(100%, 180px);
+  width: min(100%, var(--ui-filter-control-width));
 }
 
 .finance-search-control {
-  width: min(100%, 240px);
+  width: min(100%, var(--ui-search-control-width));
 }
 
 .table-scroll {
@@ -448,8 +409,8 @@ onMounted(() => {
 }
 
 .el-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border-radius: var(--ui-radius-card);
+  box-shadow: var(--ui-shadow-card);
 }
 
 @media (max-width: bp.$breakpoint-phone-max) {

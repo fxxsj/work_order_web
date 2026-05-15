@@ -7,15 +7,15 @@
           <div class="card-header">
             <span class="title">订单信息</span>
             <div class="actions">
-              <el-tag :type="getStatusType(detailData.status)" size="medium">{{ detailData.status_display }}</el-tag>
-              <el-tag :type="getPaymentStatusType(detailData.payment_status)" size="medium">{{ detailData.payment_status_display }}</el-tag>
+              <StatusTag :status="detailData.status" :label="detailData.status_display" category="salesOrder" size="medium" />
+              <StatusTag :status="detailData.payment_status" :label="detailData.payment_status_display" category="payment" size="medium" />
             </div>
           </div>
         </template>
         <el-descriptions :column="3" border>
           <el-descriptions-item label="订单号">{{ detailData.order_number }}</el-descriptions-item>
           <el-descriptions-item label="客户">{{ detailData.customer_name }}</el-descriptions-item>
-          <el-descriptions-item label="状态"><el-tag :type="getStatusType(detailData.status)">{{ detailData.status_display }}</el-tag></el-descriptions-item>
+          <el-descriptions-item label="状态"><StatusTag :status="detailData.status" :label="detailData.status_display" category="salesOrder" /></el-descriptions-item>
           <el-descriptions-item label="订单日期">{{ formatDate(detailData.order_date) }}</el-descriptions-item>
           <el-descriptions-item label="预计交货日期">{{ formatDate(detailData.delivery_date) }}</el-descriptions-item>
           <el-descriptions-item label="实际交货日期">{{ formatDate(detailData.actual_delivery_date) || '-' }}</el-descriptions-item>
@@ -67,7 +67,7 @@
         <template #header><span class="title">操作历史</span></template>
         <el-timeline>
           <el-timeline-item v-for="(item, index) in operationHistory" :key="index" :timestamp="item.created_at" placement="top">
-            <p><el-tag size="small" :type="getStatusType(item.new_status)">{{ item.action_display }}</el-tag> - {{ item.operator_name }}</p>
+            <p><StatusTag :status="item.new_status" :label="item.action_display" category="salesOrder" size="small" /> - {{ item.operator_name }}</p>
             <p v-if="item.notes" class="history-notes">{{ item.notes }}</p>
           </el-timeline-item>
         </el-timeline>
@@ -93,6 +93,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { StatusTag } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
 
 const router = useRouter()
@@ -119,7 +120,13 @@ const goBack = () => { router.push('/sales') }
 const handleEdit = () => { router.push(`/sales/${route.params.id}/edit`) }
 
 const handleConvert = async () => {
-  try { await ErrorHandler.confirm(`确定要将订单"${detailData.order_number}"转换为施工单？`); const response = await salesOrderAPI.convertToWorkOrder(route.params.id); ElMessage.success('转换成功'); router.push(`/workorders/${response.work_order_id || response.id}`) } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '转换失败') }
+  try {
+    const confirmed = await ErrorHandler.confirm(`确定要将订单"${detailData.order_number}"转换为施工单？`)
+    if (!confirmed) return
+    const response = await salesOrderAPI.convertToWorkOrder(route.params.id)
+    ElMessage.success('转换成功')
+    router.push(`/workorders/${response.work_order_id || response.id}`)
+  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '转换失败') }
 }
 
 const handleSubmit = async () => { try { await salesOrderAPI.submit(route.params.id); ElMessage.success('提交成功'); loadData() } catch (error) { ErrorHandler.showMessage(error, '提交失败') } }
@@ -128,8 +135,6 @@ const handleReject = async () => { try { await salesOrderAPI.reject(route.params
 
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('zh-CN') : '-'
 const formatAmount = (amount) => amount ? amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '0.00'
-const getStatusType = (status) => ({ draft: 'info', submitted: 'primary', approved: 'success', rejected: 'danger', in_production: 'warning', completed: 'success', cancelled: 'info' })[status] || 'info';
-const getPaymentStatusType = (status) => ({ unpaid: 'danger', partial: 'warning', paid: 'success' })[status] || 'info';
 
 onMounted(() => { loadData() })
 </script>

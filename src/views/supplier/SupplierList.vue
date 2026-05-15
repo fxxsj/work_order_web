@@ -120,73 +120,42 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { supplierAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import SupplierFormDialog from './components/SupplierFormDialog.vue'
 
 const userStore = useUserStore()
 
-const searchText = ref('')
-const tableData = ref([])
-const loading = ref(false)
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
+const {
+  searchText,
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handlePageChange,
+  handleSizeChange
+} = useCrudList(supplierAPI.getList, {
+  initialFilters: { status: '' },
+  errorContext: '加载供应商数据失败'
+})
 
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const dialogLoading = ref(false)
 const currentRow = ref(null)
-const filters = reactive({
-  status: ''
-})
 
 const canCreate = computed(() => userStore.hasPermission('workorder.add_supplier'))
 const canEdit = computed(() => userStore.hasPermission('workorder.change_supplier'))
 const canDelete = computed(() => userStore.hasPermission('workorder.delete_supplier'))
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadData()
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadData()
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      page_size: pageSize.value
-    }
-    if (searchText.value) {
-      params.search = searchText.value
-    }
-    if (filters.status) {
-      params.status = filters.status
-    }
-    const response = await supplierAPI.getList(params)
-    tableData.value = response?.results || []
-    total.value = response?.count || 0
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
 
 const showCreateDialog = () => {
   dialogType.value = 'create'
@@ -221,14 +190,13 @@ const handleFormConfirm = async (formData) => {
 
 const handleDelete = async (row) => {
   try {
-    await ErrorHandler.confirm(`确定要删除供应商"${row.name}"吗？`)
+    const confirmed = await ErrorHandler.confirm(`确定要删除供应商"${row.name}"吗？`)
+    if (!confirmed) return
     await supplierAPI.delete(row.id)
     ElMessage.success('删除成功')
     await loadData()
   } catch (error) {
-    if (error !== 'cancel') {
-      ErrorHandler.showMessage(error, '删除')
-    }
+    ErrorHandler.showMessage(error, '删除')
   }
 }
 
