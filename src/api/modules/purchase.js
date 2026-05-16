@@ -106,6 +106,46 @@ class PurchaseOrderAPI extends BaseAPI {
       method: 'get'
     })
   }
+
+  /**
+   * 从施工单创建采购单
+   * @param {number} workOrderId - 施工单ID
+   * @param {Array} materialIds - 物料ID列表（可选，不传则创建所有 pending 状态的物料）
+   * @param {object} options - 可选参数 { supplier_id, notes }
+   */
+  createFromWorkOrder(workOrderId, materialIds = null, options = {}) {
+    return this.request({
+      url: `${this.baseUrl}create_from_work_order/`,
+      method: 'post',
+      data: {
+        work_order_id: workOrderId,
+        material_ids: materialIds,
+        ...options
+      }
+    })
+  }
+
+  /**
+   * 获取采购汇总（按物料维度）
+   */
+  getProcurementSummary(params = {}) {
+    return this.request({
+      url: `${this.baseUrl}procurement_summary/`,
+      method: 'get',
+      params
+    })
+  }
+
+  /**
+   * 获取采购延迟预警
+   */
+  getDelayWarnings(params = {}) {
+    return this.request({
+      url: `${this.baseUrl}delay_warnings/`,
+      method: 'get',
+      params
+    })
+  }
 }
 
 /**

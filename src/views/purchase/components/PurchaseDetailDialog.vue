@@ -5,6 +5,12 @@
       <el-descriptions-item label="供应商">{{ detailData?.supplier_name }}</el-descriptions-item>
       <el-descriptions-item label="状态"><StatusTag :status="detailData?.status" category="purchaseOrder" :label="detailData?.status_display" /></el-descriptions-item>
       <el-descriptions-item label="总金额">¥{{ Number(detailData?.total_amount || 0).toFixed(2) }}</el-descriptions-item>
+      <el-descriptions-item label="关联施工单">
+        <span v-if="detailData?.work_order_number" class="work-order-link" @click="emit('view-work-order', detailData.work_order_number)">
+          {{ detailData.work_order_number }}<el-icon class="link-icon"><ArrowRight /></el-icon>
+        </span>
+        <span v-else>-</span>
+      </el-descriptions-item>
     </el-descriptions>
     <el-divider>采购明细</el-divider>
     <el-table :data="detailData?.items || []" border>
@@ -20,8 +26,15 @@
 
 <script setup>
 import { computed } from 'vue'
+import { ArrowRight } from '@element-plus/icons-vue'
 import { StatusTag } from '@/components/common'
 const props = defineProps({ visible: { type: Boolean, default: false }, detailData: { type: Object, default: null } })
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'view-work-order'])
 const dialogVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })
 </script>
+
+<style scoped>
+.work-order-link { color: var(--el-color-primary); cursor: pointer; display: inline-flex; align-items: center; gap: 2px; }
+.work-order-link:hover { text-decoration: underline; }
+.link-icon { font-size: 12px; }
+</style>

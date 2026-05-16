@@ -28,6 +28,14 @@
         <el-table-column label="状态" width="100">
           <template #default="scope"><StatusTag :status="scope.row.status" category="purchaseOrder" :label="scope.row.status_display" /></template>
         </el-table-column>
+        <el-table-column prop="work_order_number" label="关联施工单" width="150">
+          <template #default="scope">
+            <span v-if="scope.row.work_order_number" class="work-order-link" @click="navigateToWorkOrder(scope.row.work_order_number)">
+              {{ scope.row.work_order_number }}<el-icon class="link-icon"><ArrowRight /></el-icon>
+            </span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="items_count" label="明细数量" width="100" align="center" />
         <el-table-column prop="total_amount" label="总金额" width="120" align="right">
           <template #default="scope">¥{{ scope.row.total_amount ? scope.row.total_amount.toLocaleString() : '-' }}</template>
@@ -37,7 +45,6 @@
         <el-table-column prop="received_date" label="实际到货" width="120">
           <template #default="scope">{{ scope.row.received_date || '-' }}</template>
         </el-table-column>
-        <el-table-column prop="notes" label="备注" show-overflow-tooltip />
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="scope">
             <el-button type="text" @click="handleView(scope.row)">查看</el-button>
@@ -69,7 +76,7 @@
     </el-card>
 
     <PurchaseFormDialog v-model:visible="dialogVisible" :form-data="form" :is-edit="isEditMode" @confirm="handleFormConfirm" @close="resetForm" />
-    <PurchaseDetailDialog v-model:visible="detailDialogVisible" :purchase-id="currentPurchaseId" />
+    <PurchaseDetailDialog v-model:visible="detailDialogVisible" :purchase-id="currentPurchaseId" :detail-data="currentDetailData" @view-work-order="navigateToWorkOrder" />
     <LowStockAlertDialog v-model:visible="lowStockDialogVisible" @create-purchase="handleCreateFromLowStock" />
     <ReceiveDialog v-model:visible="receiveDialogVisible" :purchase-order="currentPurchaseOrder" @success="handleReceiveSuccess" />
     <InspectionDialog v-model:visible="inspectionDialogVisible" :purchase-order-id="currentPurchaseId" @updated="loadData" />
@@ -78,9 +85,9 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Plus, Search, RefreshRight, Warning } from '@element-plus/icons-vue'
+import { Plus, Search, RefreshRight, Warning, ArrowRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { purchaseOrderAPI } from '@/api/modules'
+import { purchaseOrderAPI, workOrderAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { StatusTag } from '@/components/common'
@@ -94,6 +101,7 @@ const inspectionDialogVisible = ref(false)
 const isEditMode = ref(false)
 const currentPurchaseId = ref(null)
 const currentPurchaseOrder = ref(null)
+const currentDetailData = ref(null)
 const form = reactive({ supplier: null, work_order_number: '', notes: '', items: [] })
 
 const {
@@ -117,7 +125,7 @@ const { canCreate, canEdit, canDelete } = useCrudPermission('purchaseorder')
 
 const showCreateDialog = () => { if (!canCreate.value) return; isEditMode.value = false; Object.assign(form, { supplier: null, work_order_number: '', notes: '', items: [] }); dialogVisible.value = true }
 const showEditDialog = (row) => { if (!canEdit.value) return; isEditMode.value = true; currentPurchaseId.value = row.id; purchaseOrderAPI.getDetail(row.id).then(res => { Object.assign(form, { supplier: res.supplier, work_order_number: res.work_order_number, notes: res.notes, items: res.items || [] }); dialogVisible.value = true }).catch(e => ErrorHandler.showMessage(e, '加载详情')) }
-const handleView = (row) => { currentPurchaseId.value = row.id; detailDialogVisible.value = true }
+const handleView = (row) => { currentPurchaseId.value = row.id; detailDialogVisible.value = true; purchaseOrderAPI.getDetail(row.id).then(res => { currentDetailData.value = res }).catch(() => { currentDetailData.value = null }) }
 
 const handleFormConfirm = async (data) => { try { if (isEditMode.value) { await purchaseOrderAPI.update(currentPurchaseId.value, data); ElMessage.success('更新成功') } else { await purchaseOrderAPI.create(data); ElMessage.success('创建成功') } dialogVisible.value = false; loadData() } catch (error) { ErrorHandler.showMessage(error, isEditMode.value ? '更新失败' : '创建失败') } }
 const resetForm = () => { Object.assign(form, { supplier: null, work_order_number: '', notes: '', items: [] }) }
@@ -148,6 +156,17 @@ const handleReceiveSuccess = () => { receiveDialogVisible.value = false; loadDat
 const handleCreateFromLowStock = (data) => { lowStockDialogVisible.value = false; showCreateDialog() }
 const showLowStockDialog = () => { lowStockDialogVisible.value = true }
 
+const navigateToWorkOrder = (workOrderNumber) => {
+  workOrderAPI.getList({ search: workOrderNumber, approval_status: '' }).then(res => {
+    const matched = res.find(wo => wo.order_number === workOrderNumber)
+    if (matched) {
+      router.push(`/workorders/${matched.id}`)
+    } else {
+      ElMessage.error('未找到施工单 ' + workOrderNumber)
+    }
+  }).catch(() => ElMessage.error('跳转失败'))
+}
+
 onMounted(() => { loadData() })
 </script>
 
@@ -171,6 +190,16 @@ onMounted(() => { loadData() })
   .filter-group,
   .action-group {
     flex-direction: column;
+  }
+
+  .work-order-link {
+    color: var(--el-color-primary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    &:hover { text-decoration: underline; }
+    .link-icon { font-size: 12px; }
   }
 }
 </style>
