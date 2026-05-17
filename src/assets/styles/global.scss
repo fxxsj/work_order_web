@@ -389,3 +389,84 @@ select {
     flex: 0 0 100% !important;
   }
 }
+
+/* ============================================
+   Responsive Utility Classes
+   ============================================ */
+
+// Hide/Show utilities based on breakpoint
+.hide-on-phone {
+  @media (max-width: bp.$breakpoint-phone-max) {
+    display: none !important;
+  }
+}
+
+.hide-on-tablet {
+  @media (min-width: bp.$breakpoint-tablet-min) and (max-width: bp.$breakpoint-tablet-max) {
+    display: none !important;
+  }
+}
+
+.hide-on-desktop {
+  @media (min-width: bp.$breakpoint-desktop-min) {
+    display: none !important;
+  }
+}
+
+.show-on-phone {
+  display: none !important;
+  @media (max-width: bp.$breakpoint-phone-max) {
+    display: block !important;
+  }
+}
+
+.show-on-tablet {
+  display: none !important;
+  @media (min-width: bp.$breakpoint-tablet-min) and (max-width: bp.$breakpoint-tablet-max) {
+    display: block !important;
+  }
+}
+
+.show-on-desktop {
+  display: none !important;
+  @media (min-width: bp.$breakpoint-desktop-min) {
+    display: block !important;
+  }
+}
+
+// Responsive column layouts
+@media (min-width: bp.$breakpoint-tablet-min) and (max-width: bp.$breakpoint-tablet-max) {
+  .tablet-cols-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--ui-control-gap);
+  }
+
+  .tablet-cols-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ui-control-gap);
+  }
+}
+
+// Responsive table optimizations
+@media (max-width: bp.$breakpoint-tablet-max) {
+  .el-table {
+    font-size: var(--ui-font-size-sm);
+  }
+
+  .el-table th,
+  .el-table td {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .el-table__header-wrapper {
+    display: none;
+  }
+
+  .el-table__body-wrapper {
+    border: 1px solid var(--ui-color-border);
+    border-radius: var(--ui-radius-card);
+  }
+}

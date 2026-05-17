@@ -68,13 +68,15 @@ export const useUserStore = defineStore('user', () => {
   }
 
   async function restoreSession() {
-    // 从 sessionStorage 恢复用户会话
+    // 从 sessionStorage 恢复用户会话（Pinia persist 已自动恢复，此方法作为备用）
     try {
-      const stored = sessionStorage.getItem('vuex')
+      // Pinia persist 使用 'user' 作为存储 key
+      const stored = sessionStorage.getItem('user')
       if (stored) {
         const parsed = JSON.parse(stored)
-        if (parsed.user) {
-          setUser(parsed.user)
+        // Pinia persist 将状态存储在 state 对象中
+        if (parsed?.state?.currentUser) {
+          setUser(parsed.state.currentUser)
         }
       }
     } catch (error) {

@@ -51,8 +51,8 @@ service.interceptors.request.use(
   config => {
     const userStore = useUserStore()
 
-    // 添加 JWT access token
-    const token = userStore.currentUser?.access_token || localStorage.getItem('access_token')
+    // 添加 JWT access token（仅从 Pinia store 获取，避免 localStorage XSS 风险）
+    const token = userStore.currentUser?.access_token
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
@@ -116,7 +116,8 @@ service.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const refreshToken = userStore.currentUser?.refresh_token || localStorage.getItem('refresh_token')
+        // 仅从 Pinia store 获取 refresh token
+        const refreshToken = userStore.currentUser?.refresh_token
 
         if (!refreshToken) {
           throw new Error('No refresh token available')
