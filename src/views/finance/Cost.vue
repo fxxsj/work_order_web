@@ -137,7 +137,7 @@ const {
   loadData,
   handlePageChange,
   handleSizeChange
-} = useCrudList(productionCostAPI.getList, {
+} = useCrudList(productionCostAPI, 'getList', {
   errorContext: '加载成本数据失败'
 })
 

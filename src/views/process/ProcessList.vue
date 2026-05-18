@@ -144,7 +144,7 @@ const {
   handleSearchDebounced,
   handlePageChange,
   handleSizeChange
-} = useCrudList(processAPI.getList, {
+} = useCrudList(processAPI, 'getList', {
   errorContext: '加载工序数据失败'
 })
 

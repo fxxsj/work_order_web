@@ -207,7 +207,7 @@ const {
   handleSearch,
   handlePageChange,
   handleSizeChange
-} = useCrudList(departmentAPI.getList, {
+} = useCrudList(departmentAPI, 'getList', {
   errorContext: '加载部门数据失败'
 })
 

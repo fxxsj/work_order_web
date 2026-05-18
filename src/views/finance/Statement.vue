@@ -50,7 +50,7 @@ const {
   loadData,
   handleSearch,
   handlePageChange
-} = useCrudList(statementAPI.getList, {
+} = useCrudList(statementAPI, 'getList', {
   initialFilters: { statement_type: '', status: '' },
   errorContext: '加载对账单失败'
 })

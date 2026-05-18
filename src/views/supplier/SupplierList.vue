@@ -139,7 +139,7 @@ const {
   handleSearch,
   handlePageChange,
   handleSizeChange
-} = useCrudList(supplierAPI.getList, {
+} = useCrudList(supplierAPI, 'getList', {
   initialFilters: { status: '' },
   errorContext: '加载供应商数据失败'
 })

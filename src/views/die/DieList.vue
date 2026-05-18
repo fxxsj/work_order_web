@@ -171,7 +171,7 @@ const {
   handleSearchDebounced,
   handlePageChange,
   handleSizeChange
-} = useCrudList(dieAPI.getList, {
+} = useCrudList(dieAPI, 'getList', {
   errorContext: '加载刀模数据失败'
 })
 

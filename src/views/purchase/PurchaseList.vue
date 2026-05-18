@@ -117,7 +117,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters
-} = useCrudList(purchaseOrderAPI.getList, {
+} = useCrudList(purchaseOrderAPI, 'getList', {
   initialFilters: { supplier_name: '', status: '' }
 })
 

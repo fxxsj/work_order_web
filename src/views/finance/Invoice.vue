@@ -238,7 +238,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters
-} = useCrudList(invoiceAPI.getList, {
+} = useCrudList(invoiceAPI, 'getList', {
   initialFilters: { status: '', customer: '', invoice_number: '' },
   buildParams: buildInvoiceParams
 })

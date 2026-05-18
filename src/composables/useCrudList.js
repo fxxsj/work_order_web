@@ -6,7 +6,13 @@ const defaultResolveList = (response) => ({
   total: response?.count ?? response?.total ?? response?.pagination?.total_items ?? 0
 })
 
-export function useCrudList(fetchList, options = {}) {
+/**
+ * CRUD 列表 composable
+ * @param {Object} apiInstance - API 实例（如 workOrderTaskAPI）
+ * @param {string} methodName - API 方法名（如 'getList'）
+ * @param {Object} options - 配置选项
+ */
+export function useCrudList(apiInstance, methodName, options = {}) {
   const {
     initialPage = 1,
     initialPageSize = 20,
@@ -32,6 +38,9 @@ export function useCrudList(fetchList, options = {}) {
 
   let searchTimer = null
 
+  // 获取 API 方法（带正确的 this 绑定）
+  const getFetchMethod = () => apiInstance[methodName].bind(apiInstance)
+
   const getParams = (overrideParams = {}) => {
     const baseParams = {
       [pageKey]: currentPage.value,
@@ -55,7 +64,8 @@ export function useCrudList(fetchList, options = {}) {
   const loadData = async (overrideParams = {}) => {
     loading.value = true
     try {
-      const response = await fetchList(getParams(overrideParams))
+      const fetchMethod = getFetchMethod()
+      const response = await fetchMethod(getParams(overrideParams))
       const payload = resolveList(response)
       tableData.value = payload.rows
       total.value = payload.total

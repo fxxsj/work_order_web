@@ -120,7 +120,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters
-} = useCrudList(deliveryOrderAPI.getList, {
+} = useCrudList(deliveryOrderAPI, 'getList', {
   initialFilters: { status: '', customer: '', tracking_number: '' },
   buildParams: buildDeliveryParams
 })

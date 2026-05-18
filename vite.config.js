@@ -19,7 +19,6 @@ export default defineConfig({
       dts: 'src/auto-imports.d.ts',
     }),
     Components({
-      // 扫描 src/components 目录（不含 views/components）
       dirs: [
         'src/components/common',
         'src/components/dispatch',

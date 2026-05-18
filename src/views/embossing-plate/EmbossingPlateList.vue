@@ -154,7 +154,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters
-} = useCrudList(embossingPlateAPI.getList, {
+} = useCrudList(embossingPlateAPI, 'getList', {
   errorContext: '加载压凸版数据失败'
 })
 

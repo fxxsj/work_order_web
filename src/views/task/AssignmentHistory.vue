@@ -107,7 +107,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters
-} = useCrudList(taskAssignmentHistoryAPI.getList, {
+} = useCrudList(taskAssignmentHistoryAPI, 'getList', {
   initialFilters: { date_range: null, action_type: '', department: '', task_id: '' },
   buildParams: buildHistoryParams,
   errorContext: '加载分派历史失败'

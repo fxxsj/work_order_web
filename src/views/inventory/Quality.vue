@@ -114,7 +114,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters
-} = useCrudList(qualityInspectionAPI.getList, {
+} = useCrudList(qualityInspectionAPI, 'getList', {
   initialFilters: { inspection_number: '', inspection_type: '', result: '' },
   buildParams: buildQualityParams
 })

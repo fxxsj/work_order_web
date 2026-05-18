@@ -187,7 +187,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters
-} = useCrudList(paymentAPI.getList, {
+} = useCrudList(paymentAPI, 'getList', {
   initialFilters: { customer: '', payment_method: '', date_range: null },
   buildParams: buildPaymentParams
 })

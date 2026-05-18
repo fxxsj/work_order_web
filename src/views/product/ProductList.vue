@@ -148,7 +148,7 @@ const {
   handleSearchDebounced,
   handlePageChange,
   handleSizeChange
-} = useCrudList(productAPI.getList, {
+} = useCrudList(productAPI, 'getList', {
   errorContext: '加载产品数据失败'
 })
 

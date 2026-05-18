@@ -221,7 +221,7 @@ const {
   handleSearchDebounced,
   handlePageChange,
   handleSizeChange
-} = useCrudList(artworkAPI.getList, {
+} = useCrudList(artworkAPI, 'getList', {
   errorContext: '加载图稿数据失败'
 })
 

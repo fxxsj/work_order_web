@@ -164,7 +164,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters
-} = useCrudList(productStockAPI.getList, {
+} = useCrudList(productStockAPI, 'getList', {
   initialFilters: { status: '' }
 })
 

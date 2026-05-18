@@ -176,7 +176,7 @@ const {
   handleSearchDebounced,
   handlePageChange,
   handleSizeChange
-} = useCrudList(customerAPI.getList, {
+} = useCrudList(customerAPI, 'getList', {
   errorContext: '加载客户数据失败'
 })
 

@@ -211,7 +211,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters: resetCrudFilters
-} = useCrudList(workOrderAPI.getList, {
+} = useCrudList(workOrderAPI, 'getList', {
   initialFilters: { search: '', status: '', priority: '', approval_status: '' },
   buildParams: buildWorkOrderParams,
   errorContext: '加载施工单失败'

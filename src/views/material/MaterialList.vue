@@ -157,7 +157,7 @@ const {
   handleSearchDebounced,
   handlePageChange,
   handleSizeChange
-} = useCrudList(materialAPI.getList, {
+} = useCrudList(materialAPI, 'getList', {
   errorContext: '加载物料数据失败'
 })
 

@@ -161,7 +161,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters
-} = useCrudList(foilingPlateAPI.getList, {
+} = useCrudList(foilingPlateAPI, 'getList', {
   errorContext: '加载烫金版数据失败'
 })
 

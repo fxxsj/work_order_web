@@ -105,7 +105,7 @@ const {
   handleSearch,
   handlePageChange,
   handleSizeChange
-} = useCrudList(salesOrderAPI.getList, {
+} = useCrudList(salesOrderAPI, 'getList', {
   initialFilters: { search: '', status: '', payment_status: '' }
 })
 

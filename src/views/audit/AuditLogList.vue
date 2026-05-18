@@ -230,7 +230,7 @@ const {
   handlePageChange,
   handleSizeChange,
   resetFilters
-} = useCrudList(auditLogAPI.getList, {
+} = useCrudList(auditLogAPI, 'getList', {
   initialFilters: {
     action_type: '',
     model: '',
