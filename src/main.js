@@ -6,8 +6,9 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 import App from './App.vue'
+import './assets/styles/tailwindcss.css'
 import './assets/styles/global.scss'
-import './assets/styles/element-plus-carbon.css'
+import './assets/styles/element-plus-teal.css'
 
 // 全局过滤器（Vue 3 使用全局函数替代）
 import { formatDate, formatDateTime } from '@/utils/filter'

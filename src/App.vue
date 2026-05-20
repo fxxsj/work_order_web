@@ -1,22 +1,45 @@
 <template>
-  <router-view />
+  <div id="app" :class="{ dark: isDarkMode }">
+    <router-view />
+  </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/stores'
 
 // 初始化用户状态
 const userStore = useUserStore()
 userStore.restoreSession()
+
+// Dark mode toggle - sync with AppHeader
+const isDarkMode = ref(localStorage.getItem('theme') === 'dark')
+
+const handleThemeToggle = (event) => {
+  isDarkMode.value = event.detail.dark
+}
+
+onMounted(() => {
+  // Check for saved preference or system preference
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme) {
+    isDarkMode.value = savedTheme === 'dark'
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    isDarkMode.value = true
+  }
+
+  // Listen for theme toggle events from header
+  window.addEventListener('theme-toggle', handleThemeToggle)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('theme-toggle', handleThemeToggle)
+})
 </script>
 
 <style>
 #app {
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  height: 100vh;
+  min-height: 100vh;
 }
 </style>
 

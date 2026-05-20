@@ -1,2 +1,150 @@
-@use './tokens/breakpoints' as *;
+@use './tokens/breakpoints' as bp;
 
+/* ============================================
+   Design Tokens - Teal Glass System
+   ============================================ */
+
+:root {
+  /* Typography - System Font Stack */
+  --ui-font-size-xs: 12px;
+  --ui-font-size-sm: 14px;
+  --ui-font-size-base: 16px;
+  --ui-font-size-md: 24px;
+  --ui-font-size-lg: 32px;
+  --ui-font-size-xl: 42px;
+
+  /* Spacing - 4px base unit */
+  --ui-page-padding: #{bp.$space-page-desktop};
+  --ui-section-gap: 24px;
+  --ui-control-gap: 12px;
+  --ui-inline-gap: 8px;
+  --ui-compact-padding-y: 8px;
+  --ui-compact-padding-x: 12px;
+
+  /* Border Radius - Teal Glass (12px) */
+  --ui-radius-sm: 8px;
+  --ui-radius-base: 12px;
+  --ui-radius-lg: 16px;
+  --ui-radius-xl: 24px;
+  --ui-radius-full: 9999px;
+
+  /* Shadows - Soft Glass Effect */
+  --ui-shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --ui-shadow-glass-sm: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --ui-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --ui-shadow-card-hover: 0 10px 40px rgba(0, 0, 0, 0.08);
+
+  /* Transitions */
+  --ui-transition-base: 0.2s ease-out;
+
+  /* Layout */
+  --ui-layout-header-height: #{bp.$layout-header-height};
+  --ui-layout-sidebar-width: 256px; /* 64 * 4 = 256 */
+  --ui-touch-target-min: 44px;
+
+  /* Dialog */
+  --ui-dialog-mobile-chrome-height: 180px;
+  --ui-dialog-width-sm: 400px;
+  --ui-dialog-width-md: 560px;
+  --ui-dialog-width-lg: 720px;
+  --ui-dialog-width-xl: 900px;
+
+  /* Empty state */
+  --ui-empty-state-offset: 60px;
+
+  /* Filter controls */
+  --ui-filter-control-width: 180px;
+  --ui-filter-control-width-sm: 160px;
+  --ui-search-control-width: 280px;
+  --ui-date-range-control-width: 320px;
+
+  /* Stats */
+  --ui-stat-icon-size: 48px;
+  --ui-stat-icon-font-size: 24px;
+  --ui-stat-content-gap: 16px;
+  --ui-stat-skeleton-height: 52px;
+
+  /* Board/Kanban */
+  --ui-board-column-width: 350px;
+  --ui-board-column-width-min: 280px;
+  --ui-board-column-width-mobile: 340px;
+  --ui-board-column-mobile-ratio: 86vw;
+  --ui-board-column-min-height: 400px;
+  --ui-board-kanban-min-height: 200px;
+  --ui-board-height: 680px;
+  --ui-board-mobile-height: 620px;
+  --ui-board-height-offset: 250px;
+  --ui-board-mobile-height-offset: 180px;
+  --ui-board-card-shadow: var(--ui-shadow-card);
+  --ui-board-card-shadow-hover: var(--ui-shadow-card-hover);
+  --ui-board-card-lift: -4px;
+  --ui-board-priority-border-width: 4px;
+  --ui-board-overdue-border-width: 3px;
+
+  /* Chart */
+  --ui-chart-sidebar-width: 300px;
+  --ui-chart-header-height: 40px;
+  --ui-chart-row-height: 50px;
+  --ui-chart-bar-height: 30px;
+  --ui-chart-bar-offset-y: 10px;
+  --ui-chart-day-width: 50px;
+
+  /* Process flow */
+  --ui-flow-connector-width: 40px;
+  --ui-flow-connector-height: 2px;
+  --ui-flow-node-border-width: 2px;
+
+  /* Colors - Teal Glass System */
+  --ui-color-primary: #14b8a6;
+  --ui-color-primary-hover: #0d9488;
+  --ui-color-primary-active: #0f766e;
+  --ui-color-primary-light: rgba(20, 184, 166, 0.1);
+  --ui-color-success: #10b981;
+  --ui-color-success-light: rgba(16, 185, 129, 0.1);
+  --ui-color-warning: #f59e0b;
+  --ui-color-warning-light: rgba(245, 158, 11, 0.1);
+  --ui-color-danger: #ef4444;
+  --ui-color-danger-light: rgba(239, 68, 68, 0.1);
+  --ui-color-info: #3b82f6;
+  --ui-color-info-light: rgba(59, 130, 246, 0.1);
+
+  /* Text */
+  --ui-color-text-primary: #161616;
+  --ui-color-text-regular: #525252;
+  --ui-color-text-secondary: #8c8c8c;
+
+  /* Border */
+  --ui-color-border: #e0e0e0;
+  --ui-color-border-strong: #161616;
+
+  /* Fill */
+  --ui-color-fill-light: #f4f4f4;
+}
+
+@media (min-width: bp.$breakpoint-tablet-min) and (max-width: bp.$breakpoint-tablet-max) {
+  :root {
+    --ui-page-padding: #{bp.$space-page-tablet};
+    --ui-section-gap: 20px;
+  }
+}
+
+@media (max-width: bp.$breakpoint-phone-max) {
+  :root {
+    --ui-page-padding: #{bp.$space-page-phone};
+    --ui-section-gap: 16px;
+    --ui-control-gap: 8px;
+    --ui-layout-sidebar-width: 100%;
+  }
+}
+
+/* Dark mode tokens */
+.dark {
+  --ui-color-text-primary: #f1f5f9;
+  --ui-color-text-regular: #cbd5e1;
+  --ui-color-text-secondary: #94a3b8;
+  --ui-color-border: #334155;
+  --ui-color-border-strong: #f1f5f9;
+  --ui-color-fill-light: #1e293b;
+  --ui-color-primary: #2dd4bf;
+  --ui-color-primary-hover: #5eead4;
+}

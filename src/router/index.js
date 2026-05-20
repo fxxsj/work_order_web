@@ -4,7 +4,7 @@ import { authAPI } from '@/api/modules'
 
 // 路由懒加载 - Vue Router 4 语法
 const Login = () => import('@/views/Login.vue')
-const Layout = () => import('@/views/Layout.vue')
+const AppLayout = () => import('@/components/layout/AppLayout.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 
 // 施工单管理
@@ -73,7 +73,7 @@ const routes = [
   },
   {
     path: '/',
-    component: Layout,
+    component: AppLayout,
     redirect: '/dashboard',
     meta: { requiresAuth: true },
     children: [

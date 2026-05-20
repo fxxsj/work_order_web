@@ -1,550 +1,724 @@
 ---
 version: alpha
-name: IBM
-description: "An enterprise-marketing canvas faithful to Carbon Design System: white surfaces, charcoal type, IBM Blue (#0f62fe) as the single confident accent, and a deliberately flat-square aesthetic where corners stay at 0–4px. Type runs IBM Plex Sans at light weight 300 for display sizes (a brand signature) and 400/600 for body and emphasis. Cards live as thin-bordered tiles with no shadow; sections separate via subtle gray rows. The chrome is square, the typography is light, and the only color in the system is one assertive blue — the result reads as old-world enterprise gravitas reframed for the cloud era."
+name: Teal Glass
+description: "A modern enterprise SaaS aesthetic inspired by sub2api: teal primary (#14b8a6), glass-morphism surfaces, soft shadows, and rounded-xl components. Built on Element Plus with custom theming. Dark mode ready with class strategy."
 
 colors:
-  primary: "#0f62fe"
-  on-primary: "#ffffff"
-  ink: "#161616"
-  ink-muted: "#525252"
-  ink-subtle: "#8c8c8c"
-  canvas: "#ffffff"
-  surface-1: "#f4f4f4"
-  surface-2: "#e0e0e0"
-  inverse-canvas: "#161616"
-  inverse-surface-1: "#262626"
-  inverse-ink: "#ffffff"
-  inverse-ink-muted: "#c6c6c6"
-  hairline: "#e0e0e0"
-  hairline-strong: "#161616"
-  blue-60: "#0043ce"
-  blue-80: "#002d9c"
-  blue-hover: "#0050e6"
-  semantic-success: "#24a148"
-  semantic-warning: "#f1c21b"
-  semantic-error: "#da1e28"
-  semantic-info: "#0f62fe"
+  primary:
+    50: '#f0fdfa'
+    100: '#ccfbf1'
+    200: '#99f6e4'
+    300: '#5eead4'
+    400: '#2dd4bf'
+    500: '#14b8a6'
+    600: '#0d9488'
+    700: '#0f766e'
+    800: '#115e59'
+    900: '#134e4e'
+    950: '#042f2e'
+  accent:
+    50: '#f8fafc'
+    100: '#f1f5f9'
+    200: '#e2e8f0'
+    300: '#cbd5e1'
+    400: '#94a3b8'
+    500: '#64748b'
+    600: '#475569'
+    700: '#334155'
+    800: '#1e293b'
+    900: '#0f172a'
+    950: '#020617'
+  dark:
+    50: '#f8fafc'
+    100: '#f1f5f9'
+    200: '#e2e8f0'
+    300: '#cbd5e1'
+    400: '#94a3b8'
+    500: '#64748b'
+    600: '#475569'
+    700: '#334155'
+    800: '#1e293b'
+    900: '#0f172a'
+    950: '#020617'
+  semantic:
+    success: '#10b981'
+    warning: '#f59e0b'
+    error: '#ef4444'
+    info: '#3b82f6'
 
 typography:
-  display-xl:
-    fontFamily: IBM Plex Sans
-    fontSize: 76px
-    fontWeight: 300
-    lineHeight: 1.17
-    letterSpacing: -0.5px
-  display-lg:
-    fontFamily: IBM Plex Sans
-    fontSize: 60px
-    fontWeight: 300
-    lineHeight: 1.17
-    letterSpacing: -0.4px
-  display-md:
-    fontFamily: IBM Plex Sans
-    fontSize: 42px
-    fontWeight: 300
-    lineHeight: 1.20
-    letterSpacing: 0
-  headline:
-    fontFamily: IBM Plex Sans
-    fontSize: 32px
-    fontWeight: 400
-    lineHeight: 1.25
-    letterSpacing: 0
-  card-title:
-    fontFamily: IBM Plex Sans
-    fontSize: 24px
-    fontWeight: 400
-    lineHeight: 1.33
-    letterSpacing: 0
-  subhead:
-    fontFamily: IBM Plex Sans
-    fontSize: 20px
-    fontWeight: 400
-    lineHeight: 1.40
-    letterSpacing: 0
-  body-lg:
-    fontFamily: IBM Plex Sans
-    fontSize: 18px
-    fontWeight: 400
-    lineHeight: 1.50
-    letterSpacing: 0
-  body:
-    fontFamily: IBM Plex Sans
-    fontSize: 16px
-    fontWeight: 400
-    lineHeight: 1.50
-    letterSpacing: 0.16px
-  body-sm:
-    fontFamily: IBM Plex Sans
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 1.29
-    letterSpacing: 0.16px
-  body-emphasis:
-    fontFamily: IBM Plex Sans
-    fontSize: 14px
-    fontWeight: 600
-    lineHeight: 1.29
-    letterSpacing: 0.16px
-  caption:
-    fontFamily: IBM Plex Sans
-    fontSize: 12px
-    fontWeight: 400
-    lineHeight: 1.33
-    letterSpacing: 0.32px
-  button:
-    fontFamily: IBM Plex Sans
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 1.29
-    letterSpacing: 0.16px
-  eyebrow:
-    fontFamily: IBM Plex Sans
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 1.29
-    letterSpacing: 0.16px
+  fontFamily:
+    sans: 'system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif'
+    mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+  sizes:
+    xs: '0.75rem'
+    sm: '0.875rem'
+    base: '1rem'
+    lg: '1.125rem'
+    xl: '1.25rem'
+    '2xl': '1.5rem'
+    '3xl': '1.875rem'
 
 rounded:
-  none: 0px
-  xs: 2px
-  sm: 4px
-  md: 6px
-  lg: 8px
-  pill: 9999px
-  full: 9999px
+  none: '0px'
+  sm: '0.25rem'
+  DEFAULT: '0.5rem'
+  md: '0.5rem'
+  lg: '0.75rem'
+  xl: '1rem'
+  '2xl': '1.5rem'
+  full: '9999px'
 
-spacing:
-  xxs: 4px
-  xs: 8px
-  sm: 12px
-  md: 16px
-  lg: 24px
-  xl: 32px
-  xxl: 48px
-  section: 96px
+shadows:
+  glass: '0 8px 32px rgba(0, 0, 0, 0.08)'
+  glass-sm: '0 4px 16px rgba(0, 0, 0, 0.06)'
+  card: '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)'
+  card-hover: '0 10px 40px rgba(0, 0, 0, 0.08)'
+  inner-glow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+
+animations:
+  fade-in: 'fadeIn 0.3s ease-out'
+  slide-up: 'slideUp 0.3s ease-out'
+  slide-down: 'slideDown 0.3s ease-out'
+  slide-in-right: 'slideInRight 0.3s ease-out'
+  scale-in: 'scaleIn 0.2s ease-out'
+
+keyframes:
+  fadeIn:
+    '0%': opacity: '0'
+    '100%': opacity: '1'
+  slideUp:
+    '0%': opacity: '0', transform: 'translateY(10px)'
+    '100%': opacity: '1', transform: 'translateY(0)'
+  slideDown:
+    '0%': opacity: '0', transform: 'translateY(-10px)'
+    '100%': opacity: '1', transform: 'translateY(0)'
+  slideInRight:
+    '0%': opacity: '0', transform: 'translateX(20px)'
+    '100%': opacity: '1', transform: 'translateX(0)'
+  scaleIn:
+    '0%': opacity: '0', transform: 'scale(0.95)'
+    '100%': opacity: '1', transform: 'scale(1)'
 
 components:
-  button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.button}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
-  button-primary-pressed:
-    backgroundColor: "{colors.blue-80}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.button}"
-    rounded: "{rounded.none}"
-  button-secondary:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.inverse-ink}"
-    typography: "{typography.button}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
-  button-tertiary:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.primary}"
-    typography: "{typography.button}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
-  button-ghost:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.primary}"
-    typography: "{typography.button}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
-  button-danger:
-    backgroundColor: "{colors.semantic-error}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.button}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
-  feature-card:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 24px
-  feature-card-elevated:
-    backgroundColor: "{colors.surface-1}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 24px
-  product-card:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 32px
-  hero-card:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.display-md}"
-    rounded: "{rounded.none}"
-    padding: 48px
-  cta-banner:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.headline}"
-    rounded: "{rounded.none}"
-    padding: 48px
-  text-input:
-    backgroundColor: "{colors.surface-1}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 11px 16px
-  text-input-focused:
-    backgroundColor: "{colors.surface-1}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 11px 16px
-  text-input-error:
-    backgroundColor: "{colors.surface-1}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 11px 16px
-  newsletter-input:
-    backgroundColor: "{colors.surface-1}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 11px 16px
-  product-tab:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink-muted}"
-    typography: "{typography.body-sm}"
-    rounded: "{rounded.none}"
-    padding: 16px 20px
-  product-tab-selected:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-emphasis}"
-    rounded: "{rounded.none}"
-    padding: 16px 20px
-  resource-tile:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-sm}"
-    rounded: "{rounded.none}"
-    padding: 16px
-  customer-logo-tile:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink-muted}"
-    typography: "{typography.caption}"
-    rounded: "{rounded.none}"
-    padding: 24px
-  top-nav:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-sm}"
-    rounded: "{rounded.none}"
-    height: 48px
-  utility-bar:
-    backgroundColor: "{colors.surface-1}"
-    textColor: "{colors.ink-muted}"
-    typography: "{typography.caption}"
-    rounded: "{rounded.none}"
-    height: 32px
-  footer:
-    backgroundColor: "{colors.inverse-canvas}"
-    textColor: "{colors.inverse-ink-muted}"
-    typography: "{typography.body-sm}"
-    rounded: "{rounded.none}"
-    padding: 64px 32px
+  btn:
+    base: 'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]'
+  btn-primary: 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md shadow-primary-500/25 hover:from-primary-600 hover:to-primary-700 hover:shadow-lg hover:shadow-primary-500/30'
+  btn-secondary: 'bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-dark-600 shadow-sm hover:bg-gray-50 dark:hover:bg-dark-700'
+  btn-ghost: 'bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-800'
+  btn-danger: 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md shadow-red-500/25 hover:from-red-600 hover:to-red-700'
+  btn-success: 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/25 hover:from-emerald-600 hover:to-emerald-700'
+  btn-sm: 'rounded-lg px-3 py-1.5 text-xs'
+  btn-lg: 'rounded-2xl px-6 py-3 text-base'
+  btn-icon: 'rounded-xl p-2.5'
+
+  input: 'w-full rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-dark-400 transition-all duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30'
+  input-error: 'border-red-500 focus:border-red-500 focus:ring-red-500/30'
+  input-label: 'mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'
+  input-hint: 'mt-1 text-xs text-gray-500 dark:text-dark-400'
+
+  card: 'bg-white dark:bg-dark-800/50 rounded-2xl border border-gray-100 dark:border-dark-700/50 shadow-card transition-all duration-300'
+  card-hover: 'hover:-translate-y-0.5 hover:shadow-card-hover hover:border-gray-200 dark:hover:border-dark-600'
+  card-glass: 'bg-white/70 dark:bg-dark-800/70 backdrop-blur-xl border border-white/20 dark:border-dark-700/50 shadow-glass'
+  card-header: 'border-b border-gray-100 dark:border-dark-700 px-6 py-4'
+  card-body: 'p-6'
+  card-footer: 'border-t border-gray-100 dark:border-dark-700 px-6 py-4'
+
+  stat-card: 'card p-5 flex items-start gap-4'
+  stat-icon: 'h-12 w-12 rounded-xl flex items-center justify-center text-xl'
+  stat-icon-primary: 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
+  stat-icon-success: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+  stat-value: 'text-2xl font-bold text-gray-900 dark:text-white truncate'
+  stat-label: 'text-sm text-gray-500 dark:text-dark-400'
+
+  table-container: 'overflow-x-auto rounded-xl border border-gray-200 dark:border-dark-700'
+  table: 'w-full text-sm'
+  table-th: 'px-4 py-3 text-left font-medium text-gray-600 dark:text-dark-300 bg-gray-50 dark:bg-dark-800/50 border-b border-gray-200 dark:border-dark-700'
+  table-td: 'px-4 py-3 text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-dark-800'
+  table-tr-hover: 'hover:bg-gray-50 dark:hover:bg-dark-800/30 transition-colors duration-150'
+
+  badge: 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium'
+  badge-primary: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
+  badge-success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+  badge-warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+  badge-danger: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+  badge-gray: 'bg-gray-100 text-gray-700 dark:bg-dark-700 dark:text-dark-300'
+
+  dropdown: 'absolute z-50 bg-white dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-dark-700 shadow-lg py-1 origin-top-right animate-scale-in'
+  dropdown-item: 'px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 cursor-pointer transition-colors flex items-center gap-2'
+
+  modal-overlay: 'fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4'
+  modal-content: 'w-full max-h-[95vh] sm:max-h-[90vh] bg-white dark:bg-dark-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-700 flex flex-col'
+  modal-header: 'border-b border-gray-200 dark:border-dark-700 px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between flex-shrink-0'
+  modal-title: 'text-lg font-semibold text-gray-900 dark:text-white'
+  modal-body: 'px-4 py-3 sm:px-6 sm:py-4 flex-1 overflow-y-auto'
+  modal-footer: 'border-t border-gray-200 dark:border-dark-700 px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-end gap-3 flex-shrink-0'
+
+  toast: 'fixed right-4 top-4 z-[100] min-w-[320px] max-w-md bg-white dark:bg-dark-800 rounded-xl shadow-lg border-l-4 p-4 animate-slide-in-right'
+  toast-success: 'border-l-emerald-500'
+  toast-error: 'border-l-red-500'
+  toast-warning: 'border-l-amber-500'
+  toast-info: 'border-l-primary-500'
+
+  sidebar: 'fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-dark-900 border-r border-gray-200 dark:border-dark-800 flex flex-col transition-transform duration-300'
+  sidebar-header: 'h-16 px-6 flex items-center gap-3 border-b border-gray-100 dark:border-dark-800'
+  sidebar-nav: 'flex-1 overflow-y-auto px-3 py-4'
+  sidebar-link: 'flex items-center gap-3 rounded-xl py-2.5 overflow-hidden text-sm font-medium text-gray-600 dark:text-dark-300 transition-all duration-200 hover:bg-gray-100 dark:hover:bg-dark-800 hover:text-gray-900 dark:hover:text-white'
+  sidebar-link-active: 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/30'
+  sidebar-section: 'mb-6'
+  sidebar-section-title: 'mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500'
+
+  page-header: 'mb-6'
+  page-title: 'text-2xl font-bold text-gray-900 dark:text-white'
+  page-description: 'mt-1 text-sm text-gray-500 dark:text-dark-400'
+
+  empty-state: 'flex flex-col items-center justify-center px-4 py-12 text-center'
+  empty-state-icon: 'mb-4 h-16 w-16 text-gray-300 dark:text-dark-600'
+  empty-state-title: 'mb-1 text-lg font-medium text-gray-900 dark:text-white'
+  empty-state-description: 'max-w-sm text-sm text-gray-500 dark:text-dark-400'
+
+  spinner: 'h-5 w-5 rounded-full border-2 border-current border-t-transparent animate-spin'
+  skeleton: 'animate-pulse rounded bg-gray-200 dark:bg-dark-700'
+
+  tabs: 'flex gap-1 p-1 rounded-xl bg-gray-100 dark:bg-dark-800'
+  tab: 'rounded-lg px-4 py-2 text-sm font-medium text-gray-600 dark:text-dark-400 transition-all duration-200 hover:text-gray-900 dark:hover:text-white'
+  tab-active: 'bg-white dark:bg-dark-700 text-gray-900 dark:text-white shadow-sm'
+
+  progress: 'h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-dark-700'
+  progress-bar: 'h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-300'
+
+  switch: 'relative h-6 w-11 cursor-pointer rounded-full bg-gray-300 dark:bg-dark-600 transition-colors duration-200'
+  switch-active: 'bg-primary-500'
+  switch-thumb: 'absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200'
+  switch-active-thumb: 'translate-x-5'
+
+  code: 'font-mono text-sm bg-gray-100 dark:bg-dark-800 rounded px-1.5 py-0.5 text-primary-600 dark:text-primary-400'
+  code-block: 'font-mono text-sm bg-gray-900 text-gray-100 overflow-x-auto rounded-xl p-4'
 ---
 
 ## Overview
 
-IBM's marketing system is a faithful application of **Carbon Design System** — IBM's open-source enterprise design system. The dominant surface is `{colors.canvas}` pure white with `{colors.surface-1}` light gray for elevation, charcoal `{colors.ink}` (#161616) for text, and IBM Blue `{colors.primary}` (#0f62fe) as the single brand accent.
+This design system is adapted from **sub2api** (Wei-Shaw/sub2api) for the work-order-frontend project. It replaces the original Element Plus styling with a modern **Teal Glass** aesthetic featuring:
 
-The defining choice is **flat geometry**: every CTA, every card, every input, every container uses square corners (`{rounded.none}` 0px) with thin 1px borders. There are no rounded pills, no soft shadows, no atmospheric gradients. The system is engineered, not stylized.
+- **Teal Primary** (#14b8a6) — the single brand accent
+- **Glass Morphism** — frosted glass panels with `backdrop-blur-xl`
+- **Soft Shadows** — subtle `shadow-card` and `shadow-glass` effects
+- **Dark Mode** — `class` strategy with full dark palette support
+- **Rounded-xl** — 12px border radius for cards, buttons, and inputs
 
-**IBM Plex Sans** carries the entire type hierarchy. Display sizes (76 / 60 / 42px) run at weight **300** — IBM's signature light display treatment that makes 76px feel calmer than competing brands' 700-weight display. Body type sits at weight 400 with `letter-spacing: 0.16px` (a Carbon precision detail) and line-height 1.50. The voice reads as careful, technical, and trustworthy.
-
-The system reaches for color rarely — IBM Blue marks links, primary CTAs, and the rare full-bleed CTA banner. Charcoal carries every other surface that isn't white. The result is enterprise gravitas without the enterprise stiffness: rigorous, light-weighted, and intentionally restrained.
+**Tech Stack:** Vue 3.5 + Vite 6 + Element Plus 2.9 + Pinia + TypeScript
 
 **Key Characteristics:**
-- **Carbon Design System** — IBM's marketing chrome IS Carbon. Buttons are square, inputs are square-with-bottom-rule, corners stay at 0px.
-- **Light-weight display type**: Plex Sans at weight 300 for 42–76px headlines is the brand's typographic signature.
-- **One accent color**: `{colors.primary}` IBM Blue carries every link, primary CTA, and CTA banner. There is no second brand color.
-- White canvas + light gray (`{colors.surface-1}`) + charcoal (`{colors.ink}`) cover 95% of surfaces.
-- Footer inverts to charcoal (`{colors.inverse-canvas}` #161616) — the only dark surface above the page break.
-- Card hierarchy is carried by 1px hairlines and surface change, never by drop shadow.
-- `letter-spacing: 0.16px` on body is a Carbon precision detail — the small positive tracking is part of the brand voice.
-- Page rhythm: utility bar → top nav → hero with light-weight headline → feature card grid → customer logo marquee → enterprise feature row → training section → newsletter / sign-in CTA → dark footer.
+- Sub2api's glass-morphism with Element Plus components
+- Teal/Cyan primary color system (primary-500: #14b8a6)
+- Soft rounded corners (rounded-xl / rounded-2xl)
+- CSS custom properties for theming
+- Dark mode ready via `dark:` class strategy
 
 ## Colors
 
-> Source pages: ibm.com (home), /software/ai-productivity, /consulting, /products/cloud-pak-for-aiops, /products/bare-metal-servers, community.ibm.com.
+### Primary (Teal/Cyan)
 
-### Brand & Accent
-- **IBM Blue** ({colors.primary}): The single brand accent. Links, primary CTAs, CTA banner backgrounds, focus rings.
-- **Blue 60** ({colors.blue-60}): Hovered link state.
-- **Blue 80** ({colors.blue-80}): Pressed primary button.
-- **Blue Hover** ({colors.blue-hover}): Hover state for primary buttons.
+The primary palette uses **teal** tones — a teal/cyan blend that reads as modern and professional without being generic blue.
 
-### Surface
-- **Canvas** ({colors.canvas}): Default page background.
-- **Surface 1** ({colors.surface-1}): Light gray (#f4f4f4) — input fields, alternate-row stripes, subtle section bands.
-- **Surface 2** ({colors.surface-2}): Slightly darker gray (#e0e0e0) — disabled fields, hairline-as-fill for separators.
-- **Hairline** ({colors.hairline}): 1px borders on cards, inputs, dividers.
-- **Hairline Strong** ({colors.hairline-strong}): 1px charcoal underline on focused inputs (Carbon's signature focus treatment).
-- **Inverse Canvas** ({colors.inverse-canvas}): Charcoal #161616 — footer surface.
-- **Inverse Surface 1** ({colors.inverse-surface-1}): One step lighter than inverse canvas — footer column dividers, hovered footer items.
+| Token | Hex | Use |
+|-------|-----|-----|
+| `primary-50` | #f0fdfa | Lightest tint, hover backgrounds |
+| `primary-100` | #ccfbf1 | Badge backgrounds, subtle highlights |
+| `primary-200` | #99f6e4 | Active states, selected items |
+| `primary-300` | #5eead4 | Borders on dark mode |
+| `primary-400` | #2dd4bf | Hover on dark backgrounds |
+| **`primary-500`** | #14b8a6 | **Primary brand color — buttons, links, accents** |
+| `primary-600` | #0d9488 | Primary hover state |
+| `primary-700` | #0f766e | Pressed states |
+| `primary-800` | #115e59 | Dark mode surfaces |
+| `primary-900` | #134e4e | Dark mode backgrounds |
+| `primary-950` | #042f2e | Darkest — footer, contrast areas |
 
-### Text
-- **Ink** ({colors.ink}): All headlines and emphasized body type — charcoal #161616.
-- **Ink Muted** ({colors.ink-muted}): Secondary type at #525252 — meta, sub-headlines, footer body.
-- **Ink Subtle** ({colors.ink-subtle}): Tertiary type at #8c8c8c — disabled, helper text, captions.
-- **Inverse Ink** ({colors.inverse-ink}): White on charcoal — footer headings.
-- **Inverse Ink Muted** ({colors.inverse-ink-muted}): Light gray on charcoal — footer body.
+### Accent (Slate)
 
-### Semantic
-- **Success Green** ({colors.semantic-success}): Carbon green-50 — success states.
-- **Warning Yellow** ({colors.semantic-warning}): Carbon yellow-30 — warning states.
-- **Error Red** ({colors.semantic-error}): Carbon red-60 — error states; danger button background.
-- **Info Blue** ({colors.semantic-info}): Identical to primary — informational badges.
+Neutral slate palette for text and secondary surfaces.
+
+| Token | Hex | Use |
+|-------|-----|-----|
+| `accent-50` | #f8fafc | Lightest background |
+| `accent-100` | #f1f5f9 | Subtle section backgrounds |
+| `accent-200` | #e2e8f0 | Disabled backgrounds |
+| `accent-300` | #cbd5e1 | Borders, dividers |
+| `accent-400` | #94a3b8 | Muted text |
+| `accent-500` | #64748b | Secondary text |
+| `accent-600` | #475569 | Tertiary elements |
+| `accent-700` | #334155 | Headings on light |
+| `accent-800` | #1e293b | Dark mode text |
+| `accent-900` | #0f172a | Dark mode headings |
+| `accent-950` | #020617 | Darkest surfaces |
+
+### Dark Mode Palette
+
+Separate dark palette for dark mode surfaces (different from accent):
+
+| Token | Hex | Use |
+|-------|-----|-----|
+| `dark-50` | #f8fafc | Lightest in dark context |
+| `dark-100` | #f1f5f9 | Hover on dark |
+| `dark-200` | #e2e8f0 | Disabled on dark |
+| `dark-300` | #cbd5e1 | Muted text on dark |
+| `dark-400` | #94a3b8 | Secondary text on dark |
+| `dark-500` | #64748b | Tertiary on dark |
+| `dark-600` | #475569 | Borders on dark |
+| `dark-700` | #334155 | Card backgrounds |
+| `dark-800` | #1e293b | Main dark surface |
+| `dark-900` | #0f172a | Sidebar, header |
+| `dark-950` | #020617 | Darkest — overlays |
+
+### Semantic Colors
+
+| Token | Hex | Use |
+|-------|-----|-----|
+| `semantic-success` | #10b981 | Success states, positive actions |
+| `semantic-warning` | #f59e0b | Warning states, caution actions |
+| `semantic-error` | #ef4444 | Error states, destructive actions |
+| `semantic-info` | #3b82f6 | Informational states, links |
 
 ## Typography
 
 ### Font Family
 
-- **IBM Plex Sans** — IBM's open-source proprietary typeface (free for any use). Geometric, slightly humanist, designed specifically for enterprise UI. Fallback: `Helvetica Neue, Arial, sans-serif`.
+**System font stack** for maximum performance and native feel:
+```css
+font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif;
+```
 
-The same family carries display, body, and caption — there is no display + body pairing. Hierarchy is carried by **size + weight** rather than by family change. Plex Sans is also free / open-source under the SIL Open Font License — making it the easiest custom face on this list to substitute for in implementation.
+Monospace for code blocks:
+```css
+font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+```
 
-### Hierarchy
+### Type Scale
 
-| Token | Size | Weight | Line Height | Letter Spacing | Use |
-|---|---|---|---|---|---|
-| `{typography.display-xl}` | 76px | 300 | 1.17 | -0.5px | Largest hero headline |
-| `{typography.display-lg}` | 60px | 300 | 1.17 | -0.4px | Section opener headlines |
-| `{typography.display-md}` | 42px | 300 | 1.20 | 0 | Sub-section headlines, hero card title |
-| `{typography.headline}` | 32px | 400 | 1.25 | 0 | Card collection heading, FAQ category |
-| `{typography.card-title}` | 24px | 400 | 1.33 | 0 | Feature card title |
-| `{typography.subhead}` | 20px | 400 | 1.40 | 0 | Lead body next to display headlines |
-| `{typography.body-lg}` | 18px | 400 | 1.50 | 0 | Hero subhead, lead paragraphs |
-| `{typography.body}` | 16px | 400 | 1.50 | 0.16px | Default body |
-| `{typography.body-sm}` | 14px | 400 | 1.29 | 0.16px | Card body, footer columns |
-| `{typography.body-emphasis}` | 14px | 600 | 1.29 | 0.16px | Selected tab label, emphasized body line |
-| `{typography.caption}` | 12px | 400 | 1.33 | 0.32px | Captions, meta, utility bar |
-| `{typography.button}` | 14px | 400 | 1.29 | 0.16px | All button labels |
-| `{typography.eyebrow}` | 14px | 400 | 1.29 | 0.16px | Section eyebrows (Carbon avoids strong eyebrows; uses sentence case 14px) |
+| Token | Size | Use |
+|-------|------|-----|
+| `xs` | 0.75rem / 12px | Captions, badges |
+| `sm` | 0.875rem / 14px | Body small, buttons |
+| `base` | 1rem / 16px | Default body |
+| `lg` | 1.125rem / 18px | Lead text |
+| `xl` | 1.25rem / 20px | Subheadings |
+| `2xl` | 1.5rem / 24px | Section titles |
+| `3xl` | 1.875rem / 30px | Page titles |
 
 ### Principles
 
-- **Light-weight display is the brand voice.** Plex Sans at weight 300 for 76px headlines reads as quietly authoritative — switching to 700 would make it look like every other enterprise site.
-- **Carbon's `letter-spacing: 0.16px`** on body sizes is a precision detail. Don't remove it.
-- **No mono** on marketing surfaces (Plex Mono exists but lives in product surfaces only).
-- **Eyebrow typography uses sentence case 14px** — Carbon resists the all-caps tracked eyebrow common to other enterprise brands.
-- **Line-heights tighten on display, relax on body**: 1.17 at display-xl, 1.50 at body — proportional to size.
+- **Body line-height**: 1.5 for readability
+- **Display line-height**: 1.2 for large headlines
+- **Letter-spacing**: Normal (no tracking on body)
+- **Font-weight**: 400 normal, 500 medium, 600 semibold, 700 bold
 
-### Note on Font Substitutes
+## Border Radius
 
-IBM Plex Sans is **free and open-source** (SIL OFL license) and available on Google Fonts. It is the recommended implementation. The Plex family also includes Plex Mono and Plex Serif if expanded typographic needs arise.
-
-## Layout
-
-### Spacing System
-
-- **Base unit**: 4px (Carbon's signature 4-pixel grid).
-- **Tokens (front matter)**: `{spacing.xxs}` 4px · `{spacing.xs}` 8px · `{spacing.sm}` 12px · `{spacing.md}` 16px · `{spacing.lg}` 24px · `{spacing.xl}` 32px · `{spacing.xxl}` 48px · `{spacing.section}` 96px.
-- Card interior padding: `{spacing.lg}` 24px on feature cards; `{spacing.xl}` 32px on product cards; `{spacing.xxl}` 48px on hero cards and CTA banners.
-- Button padding: 12px vertical · 16px horizontal — Carbon spec.
-- Form input padding: 11px vertical · 16px horizontal.
-
-### Grid & Container
-
-- Carbon's 16-column grid at desktop, scaling to 8 / 4 columns at tablet / mobile.
-- Max content width sits around 1584px (Carbon's max-grid breakpoint).
-- Card grids are 4-up at desktop, 2-up at tablet, 1-up at mobile.
-- The customer logo marquee uses fixed-width tiles in a flex row, scrolling horizontally on smaller viewports.
-
-### Whitespace Philosophy
-
-Carbon uses precise alignment to a 4-pixel grid as its whitespace system. Sections separate via thin gray rows (`{colors.surface-1}`) rather than via large vertical gaps. Content is dense by design — IBM's customers expect to see a lot on a page, not a lot of air.
-
-## Elevation & Depth
-
-| Level | Treatment | Use |
-|---|---|---|
-| 0 (flat) | No shadow, no border | Default for body type, hero text, footer body |
-| 1 (hairline) | 1px `{colors.hairline}` border on canvas | Feature cards, inputs, list items |
-| 2 (surface lift) | `{colors.surface-1}` background on canvas | Alternate-row banners, hovered cards |
-| 3 (focus ring) | 2px `{colors.primary}` outline + 1px `{colors.hairline-strong}` underline | Focused input, focused button |
-
-Carbon resists drop shadows on marketing — depth is carried by surface change and 1px hairlines. The exception is product / app surfaces (Carbon documents shadow tokens for elevated panels), but the marketing site barely uses them.
-
-### Decorative Depth
-
-- **Soft blue gradient backdrops** appear behind some hero illustrations — a faint blue-to-white wash that warms the canvas without competing with the headline.
-- **No atmospheric depth.** No spotlight cards, no pastel section blocks, no gradient panels.
-
-## Shapes
-
-### Border Radius Scale
+Sub2api uses **rounded-xl (12px)** as default for most components, not the sharper Element Plus defaults.
 
 | Token | Value | Use |
-|---|---|---|
-| `{rounded.none}` | 0px | Default — every button, card, input, container |
-| `{rounded.xs}` | 2px | Small badges (rare exception) |
-| `{rounded.sm}` | 4px | Avatar circles squared, dropdown menus |
-| `{rounded.md}` | 6px | (Used rarely; documented for completeness) |
-| `{rounded.lg}` | 8px | (Used rarely; documented for completeness) |
-| `{rounded.pill}` | 9999px | Status pills, badges in product UI (rare on marketing) |
+|-------|-------|-----|
+| `none` | 0px | Never used — sharp corners are deprecated |
+| `sm` | 4px | Small badges only |
+| `DEFAULT` | 8px | Inputs, small buttons |
+| `md` | 8px | Same as default |
+| `lg` | 12px | Cards, modals |
+| `xl` | 16px | Large cards, dialogs |
+| `2xl` | 24px | Hero cards, major containers |
+| `full` | 9999px | Pills, avatars |
 
-The brand commits to flat 0px corners. The other tokens exist for product / mobile surfaces but rarely surface on marketing.
+**Element Plus Override:** Apply `border-radius-lg` class or use CSS override:
+```scss
+.el-button, .el-card, .el-input__wrapper {
+  border-radius: var(--el-border-radius-round, 12px);
+}
+```
 
-### Photography & Illustration Geometry
+## Shadows
 
-- IBM uses photography (people, hardware, sports cars) and abstract illustration (geometric mesh, dotted patterns) interchangeably.
-- Image frames are flat — no rounded corners.
-- Customer logo tiles sit on `{rounded.none}` 0px tiles with thin 1px borders.
+| Token | Value | Use |
+|-------|-------|-----|
+| `glass` | `0 8px 32px rgba(0, 0, 0, 0.08)` | Glass panels, floating elements |
+| `glass-sm` | `0 4px 16px rgba(0, 0, 0, 0.06)` | Smaller glass elements |
+| `card` | `0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)` | Default card shadow |
+| `card-hover` | `0 10px 40px rgba(0, 0, 0, 0.08)` | Hovered cards |
+| `inner-glow` | `inset 0 1px 0 rgba(255, 255, 255, 0.1)` | Inset highlights |
+
+## Animations
+
+| Name | Duration | Easing | Use |
+|------|----------|--------|-----|
+| `fade-in` | 300ms | ease-out | Modal enter, initial load |
+| `slide-up` | 300ms | ease-out | Dropdown, tooltip |
+| `slide-down` | 300ms | ease-out | Dropdown reverse |
+| `slide-in-right` | 300ms | ease-out | Toast notifications |
+| `scale-in` | 200ms | ease-out | Dialogs, popovers |
+
+**Element Plus Transition Override:**
+```scss
+.el-dialog, .el-drawer {
+  animation: scale-in 0.2s ease-out;
+}
+
+.el-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+```
 
 ## Components
 
 ### Buttons
 
-**`button-primary`** — Blue solid CTA. The default primary across all pages.
-- Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.button}`, padding 12px 16px, rounded `{rounded.none}`.
-- Pressed state lives in `button-primary-pressed` (background shifts to `{colors.blue-80}`).
+**Primary Button** — Teal gradient CTA
+```vue
+<el-button type="primary" class="btn btn-primary">
+  Primary Action
+</el-button>
+```
 
-**`button-secondary`** — Charcoal solid button — Carbon's "secondary" treatment.
-- Background `{colors.ink}`, text `{colors.inverse-ink}`, type `{typography.button}`, padding 12px 16px, rounded `{rounded.none}`.
+**Secondary Button** — White with border
+```vue
+<el-button class="btn btn-secondary">
+  Secondary
+</el-button>
+```
 
-**`button-tertiary`** — White button with blue 1px border + blue text. Used for tertiary CTAs.
-- Background `{colors.canvas}`, text `{colors.primary}`, type `{typography.button}`, rounded `{rounded.none}`, padding 12px 16px. (Border in implementation: 1px `{colors.primary}`.)
+**Ghost Button** — Text only
+```vue
+<el-button class="btn btn-ghost">
+  Ghost
+</el-button>
+```
 
-**`button-ghost`** — Plain text + chevron, no background until hover.
-- Background `{colors.canvas}`, text `{colors.primary}`, type `{typography.button}`, rounded `{rounded.none}`, padding 12px 16px.
+**Danger Button** — Red gradient
+```vue
+<el-button class="btn btn-danger">
+  Delete
+</el-button>
+```
 
-**`button-danger`** — Carbon's destructive variant.
-- Background `{colors.semantic-error}`, text `{colors.on-primary}`, type `{typography.button}`, rounded `{rounded.none}`, padding 12px 16px.
+**Button Sizes:**
+- `.btn-sm` — rounded-lg, 12px vertical padding
+- `.btn` (default) — rounded-xl, 10px vertical padding
+- `.btn-lg` — rounded-2xl, 12px vertical padding
+- `.btn-icon` — square, 10px padding
 
-### Cards & Containers
+### Form Inputs
 
-**`feature-card`** — Default feature highlight tile on the home and product pages.
-- Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body}`, rounded `{rounded.none}`, padding 24px. Stroked with 1px `{colors.hairline}`.
+**Standard Input:**
+```vue
+<el-input class="input" placeholder="Enter value" />
+```
 
-**`feature-card-elevated`** — Same shape on `{colors.surface-1}` ground — used for "Recommended" cards in the latest-content carousel.
-- Background `{colors.surface-1}`, otherwise identical structure.
+**Input with Error:**
+```vue
+<el-input class="input input-error" placeholder="Invalid" />
+```
 
-**`product-card`** — Larger product showcase tile.
-- Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body}`, rounded `{rounded.none}`, padding 32px.
+**Input Group with Label:**
+```html
+<label class="input-label">Email</label>
+<el-input class="input" placeholder="your@email.com" />
+<span class="input-hint">We'll never share your email</span>
+```
 
-**`hero-card`** — Hero composition card with light-weight title, body, and CTA.
-- Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.display-md}`, rounded `{rounded.none}`, padding 48px.
+### Cards
 
-**`cta-banner`** — Full-width blue CTA panel near the bottom of the page.
-- Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.headline}`, rounded `{rounded.none}`, padding 48px.
+**Standard Card:**
+```vue
+<el-card class="card" :body-style="{ padding: '24px' }">
+  <template #header>
+    <div class="card-header">Card Title</div>
+  </template>
+  <div class="card-body">
+    Card content goes here
+  </div>
+</el-card>
+```
 
-**`resource-tile`** — Smaller article / case-study tile.
-- Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body-sm}`, rounded `{rounded.none}`, padding 16px.
+**Hoverable Card:**
+```vue
+<el-card class="card card-hover">
+  Hover me
+</el-card>
+```
 
-**`customer-logo-tile`** — Single tile in the customer marquee on the home page (Ferrari, Pfizer, etc.).
-- Background `{colors.canvas}`, text `{colors.ink-muted}`, type `{typography.caption}`, rounded `{rounded.none}`, padding 24px. 1px hairline border.
+**Glass Card:**
+```vue
+<div class="card card-glass">
+  Frosted glass effect
+</div>
+```
 
-### Inputs & Forms
+**Stat Card:**
+```vue
+<div class="stat-card">
+  <div class="stat-icon stat-icon-primary">
+    <Icon />
+  </div>
+  <div>
+    <div class="stat-value">1,234</div>
+    <div class="stat-label">Total Users</div>
+  </div>
+</div>
+```
 
-**`text-input`** + **`text-input-focused`** + **`text-input-error`** — Carbon's input chrome.
-- Background `{colors.surface-1}`, text `{colors.ink}`, type `{typography.body}`, rounded `{rounded.none}`, padding 11px 16px.
-- Focus state replaces the bottom 1px hairline with a 2px `{colors.primary}` underline (Carbon's signature focus treatment).
-- Error state adds 2px `{colors.semantic-error}` bottom underline.
+### Tables
 
-**`newsletter-input`** — The "Stay connected" newsletter capture on the home page.
-- Background `{colors.surface-1}`, text `{colors.ink}`, type `{typography.body}`, rounded `{rounded.none}`, padding 11px 16px. Adjacent submit is `button-primary`.
+**Table Container:**
+```vue
+<div class="table-container">
+  <el-table class="table" :data="data">
+    <el-table-column prop="name" label="Name" />
+    <el-table-column prop="status" label="Status">
+      <template #default="{ row }">
+        <span class="badge badge-success">{{ row.status }}</span>
+      </template>
+    </el-table-column>
+  </el-table>
+</div>
+```
 
-### Tabs
+### Badges
 
-**`product-tab`** + **`product-tab-selected`** — The horizontal tab strip on product pages and the home "Recommended" carousel.
-- Default: `{colors.canvas}` background, `{colors.ink-muted}` text, rounded `{rounded.none}`, padding 16px 20px. Bottom 1px hairline.
-- Selected: `{colors.canvas}` background, `{colors.ink}` text, `{typography.body-emphasis}` weight, bottom 2px `{colors.primary}` underline. Same padding / rounding.
+```vue
+<span class="badge badge-primary">Primary</span>
+<span class="badge badge-success">Active</span>
+<span class="badge badge-warning">Pending</span>
+<span class="badge badge-danger">Inactive</span>
+<span class="badge badge-gray">Draft</span>
+```
 
-### Navigation
+### Modals & Dialogs
 
-**`top-nav`** — Sticky white bar with the IBM logomark left, nav categories center, and search / sign-in icons right.
-- Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body-sm}`, height 48px. 1px bottom hairline.
+**Standard Dialog:**
+```vue
+<el-dialog
+  class="modal-content"
+  title="Confirm Action"
+  width="500px"
+>
+  <div class="modal-body">
+    Are you sure?
+  </div>
+  <template #footer>
+    <div class="modal-footer">
+      <el-button @click="close">Cancel</el-button>
+      <el-button type="primary" @click="confirm">Confirm</el-button>
+    </div>
+  </template>
+</el-dialog>
+```
 
-**`utility-bar`** — Slim gray ribbon above the top nav with location switch, contact, search shortcuts.
-- Background `{colors.surface-1}`, text `{colors.ink-muted}`, type `{typography.caption}`, height 32px.
+### Sidebar Navigation
 
-### Footer
+**Sidebar Structure:**
+```vue
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <AppLogo />
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <router-link class="sidebar-link" to="/">
+        <HomeIcon />
+        <span>Dashboard</span>
+      </router-link>
+      <router-link class="sidebar-link sidebar-link-active" to="/orders">
+        <OrdersIcon />
+        <span>Work Orders</span>
+      </router-link>
+    </div>
+  </nav>
+</aside>
+```
 
-**`footer`** — Charcoal footer (`{colors.inverse-canvas}`) with the IBM wordmark left and 5–6 columns of caption-sized links. The only inverted surface above the page break.
-- Background `{colors.inverse-canvas}`, text `{colors.inverse-ink-muted}`, type `{typography.body-sm}`, padding 64px 32px.
+### Toast Notifications
+
+```vue
+<el-message
+  class="toast"
+  type="success"
+  message="Operation completed"
+/>
+```
+
+Add custom CSS for left border accent:
+```scss
+.el-message {
+  &.toast-success { border-left-color: #10b981; }
+  &.toast-error { border-left-color: #ef4444; }
+  &.toast-warning { border-left-color: #f59e0b; }
+}
+```
+
+## Layout Patterns
+
+### AppLayout
+
+Standard admin layout with sidebar + header + main content:
+
+```
+┌─────────────────────────────────────────────┐
+│ AppSidebar │ AppHeader                      │
+│  (w-64)    │                          ┌────┤
+│            │                          │Main│
+│            │                          │    │
+│            │                          └────┤
+└─────────────────────────────────────────────┘
+```
+
+### TablePageLayout
+
+Standard list page with filters + table + pagination:
+
+```
+┌─────────────────────────────────────────────┐
+│ PageHeader (title + description)            │
+├─────────────────────────────────────────────┤
+│ FilterBar (search + filters + actions)       │
+├─────────────────────────────────────────────┤
+│ TableContainer                              │
+│   ┌─────────────────────────────────────┐   │
+│   │ DataTable                            │   │
+│   │                                     │   │
+│   │                                     │   │
+│   └─────────────────────────────────────┘   │
+├─────────────────────────────────────────────┤
+│ Pagination                                  │
+└─────────────────────────────────────────────┘
+```
+
+## Element Plus Overrides
+
+To achieve sub2api's aesthetic with Element Plus, add these CSS overrides:
+
+```scss
+// Global Element Plus overrides
+:root {
+  --el-color-primary: #14b8a6;
+  --el-color-primary-light-3: #5eead4;
+  --el-color-primary-light-5: #99f6e4;
+  --el-color-primary-light-7: #ccfbf1;
+  --el-color-primary-light-8: #f0fdfa;
+  --el-color-primary-light-9: #f0fdfa;
+  --el-color-primary-dark-2: #0d9488;
+
+  --el-border-radius-base: 12px;
+  --el-border-radius-small: 8px;
+  --el-border-radius-round: 9999px;
+
+  --el-shadow-light: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --el-shadow-lighter: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+// Button overrides
+.el-button {
+  border-radius: 12px;
+
+  &--primary {
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    border-color: transparent;
+  }
+}
+
+// Card overrides
+.el-card {
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+// Input overrides
+.el-input__wrapper {
+  border-radius: 12px;
+}
+
+// Dialog overrides
+.el-dialog {
+  border-radius: 16px;
+}
+
+// Dark mode
+.dark {
+  --el-color-primary: #2dd4bf;
+  --el-bg-color: #0f172a;
+  --el-bg-color-overlay: #1e293b;
+  --el-border-color: #334155;
+}
+```
+
+## Dark Mode
+
+Enable dark mode by adding `class="dark"` to root element:
+
+```vue
+<div :class="{ dark: isDarkMode }">
+  <!-- app content -->
+</div>
+```
+
+Dark mode palette is automatically applied via `dark:` prefixed selectors.
 
 ## Do's and Don'ts
 
 ### Do
 
-- Use `{rounded.none}` 0px on every CTA, card, input, and container. The flat-square aesthetic is the brand.
-- Pair Plex Sans weight 300 for display sizes (42px+) with weight 400 for body. Resist the urge to bold the headline.
-- Reserve `{colors.primary}` IBM Blue for primary CTAs, links, focused-input underlines, and CTA banner. Do not use it as a card background or eyebrow color.
-- Apply `letter-spacing: 0.16px` to body sizes. It's a Carbon precision detail and part of the typographic voice.
-- Use surface change (`canvas` → `surface-1`) and 1px hairlines for card hierarchy. Skip drop shadows.
-- Stick to sentence case for eyebrows and section labels — Carbon resists all-caps tracking.
-- Invert to `{colors.inverse-canvas}` only at the footer; the rest of the page stays light.
+- Use `primary-500` (#14b8a6) for primary CTAs, links, and accents
+- Apply `rounded-xl` (12px) to cards, buttons, inputs
+- Use `glass` shadow for floating panels and modals
+- Apply `card-hover` for interactive cards
+- Use `backdrop-blur-xl` on overlay surfaces
+- Use semantic colors for badges (success/warning/error/info)
+- Follow the `stat-card` pattern for dashboard metrics
 
 ### Don't
 
-- Don't round corners on buttons, cards, or inputs. Even 4px rounded corners break the Carbon look.
-- Don't bold display headlines. Plex Sans at weight 300 is the brand voice; weight 700 makes it look generic.
-- Don't add atmospheric depth (gradient backdrops, drop shadows, atmospheric overlays) outside the documented soft-blue hero gradient.
-- Don't introduce a second brand color. IBM Blue is the only chromatic accent; status semantics use the documented green / yellow / red.
-- Don't replace IBM Plex Sans with Inter or Helvetica without preserving the `letter-spacing: 0.16px` and weight-300 display treatment.
-- Don't use pill-shaped buttons. Carbon uses square corners; pills read as a different brand.
-- Don't write all-caps tracked eyebrows. Carbon's eyebrows are sentence case at 14px.
+- Don't use `rounded-none` — sharp corners are deprecated
+- Don't use `primary-300` or brighter for text — too light
+- Don't add `border-radius-small` (4px) to cards — use 12px instead
+- Don't use Element Plus default shadows — use custom glass/card shadows
+- Don't use hardcoded color values — use design tokens
+- Don't mix border styles — all cards use `border-gray-100` or `border-dark-700`
 
-## Responsive Behavior
+## Responsive Breakpoints
 
-### Breakpoints
+| Name | Width | Behavior |
+|------|-------|----------|
+| `sm` | 640px | Mobile landscape |
+| `md` | 768px | Tablet portrait |
+| `lg` | 1024px | Tablet landscape / small desktop |
+| `xl` | 1280px | Default desktop |
+| `2xl` | 1536px | Large desktop |
 
-| Name | Width | Key Changes |
-|---|---|---|
-| Max | 1584px | Carbon max grid; gutters expand |
-| Desktop-XL | 1312px | Default desktop layout |
-| Desktop | 1056px | Card grid 4-up maintained |
-| Tablet | 672px | Card grid 4-up → 2-up; nav becomes hamburger |
-| Mobile | 320px | Single-column; display-xl scales 76px → ~32px |
+**Sidebar collapses to hamburger menu below `lg` breakpoint.**
 
-### Touch Targets
+## File Structure
 
-- Carbon spec: 48px minimum tap target. Buttons and inputs hold 48px on touch viewports.
-- Top-nav links grow from 36px to 48px tap height on touch.
-- Tab strip rows hold 48px tap height.
+```
+src/
+├── assets/
+│   └── styles/
+│       ├── variables.scss      # Design tokens
+│       └── overrides.scss     # Element Plus overrides
+├── components/
+│   ├── layout/
+│   │   ├── AppLayout.vue
+│   │   ├── AppHeader.vue
+│   │   ├── AppSidebar.vue
+│   │   └── TablePageLayout.vue
+│   └── common/
+│       ├── StatCard.vue
+│       ├── EmptyState.vue
+│       └── ...
+```
 
-### Collapsing Strategy
+## Implementation Notes
 
-- **Top nav**: links collapse to a hamburger overlay below 672px. Logomark and search icon stay on the bar.
-- **Utility bar**: hides below 672px to reclaim vertical space.
-- **Card grid**: 4-up → 2-up at 1056px → 1-up below 672px.
-- **Display type**: `{typography.display-xl}` 76px scales toward 42px on mobile while preserving the weight-300 treatment.
-- **Footer**: 6-column link grid → 3-column at tablet → 1-column at mobile.
-
-### Image Behavior
-
-- Customer logos in the marquee maintain aspect ratio and may collapse to 2-row scroll below 672px.
-- Hero illustrations scale proportionally; below 672px they may stack above the headline rather than sit beside it.
-
-## Iteration Guide
-
-1. Focus on ONE component at a time and reference it by its `components:` token name.
-2. Default body to `{typography.body}` at weight 400 with `letter-spacing: 0.16px`. Don't remove the tracking.
-3. When introducing a new section, decide whether it sits on `{colors.canvas}` (default) or on `{colors.surface-1}` (alternate band). The two-surface rhythm is the rhythm.
-4. Run `npx @google/design.md lint DESIGN.md` after edits.
-5. Add new variants as separate component entries (`button-primary-pressed`, `text-input-error`, `text-input-focused`).
-6. Treat IBM Blue as scarce: links, primary CTA, CTA banner, focus underline. Anything beyond that is drift.
-7. Resist rounded corners. If a designer pushes for 4px rounding, the brand is shifting away from Carbon.
-
-## Known Gaps
-
-- IBM's product surfaces (cloud-pak, watson, datacap) have richer Carbon component usage (data tables, graph cells, breadcrumbs, contextual menus) that aren't present on the marketing pages inspected — those components live in Carbon's documentation rather than in the marketing extraction.
-- Form-field error and validation styling is documented in Carbon docs; the inspected pages didn't render error states.
-- Dark mode is documented in Carbon as Gray-100 theme but isn't exposed on these marketing pages — only the footer inverts. The full dark theme is a separate Carbon palette not extracted here.
-- The community.ibm.com sub-domain uses a different chrome (community-platform white-label) that approximates Carbon but isn't strict — the documented system applies to ibm.com proper.
+1. **Element Plus Theme**: Configure via `element-plus/theme-chalk` and CSS variables
+2. **TailwindCSS**: Not used — custom SCSS with design tokens instead (sub2api uses Tailwind but we adapt to Element Plus)
+3. **Dark Mode**: Via `.dark` class on root element, controlled by Pinia store
+4. **Icons**: @element-plus/icons-vue + custom SVG icons
+5. **Animations**: CSS keyframes defined in `variables.scss`
