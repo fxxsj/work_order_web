@@ -1,99 +1,108 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--ui-dialog-width-lg)" @close="handleClose">
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-      <el-form-item label="产品编码" prop="code">
-        <el-input v-model="form.code" placeholder="请输入产品编码" :disabled="isEditMode" />
-      </el-form-item>
-      <el-form-item label="产品名称" prop="name">
-        <el-input v-model="form.name" placeholder="请输入产品名称" />
-      </el-form-item>
-      <el-form-item label="产品类型" prop="product_type">
-        <el-select v-model="form.product_type" placeholder="请选择产品类型" style="width: 100%;" @change="handleProductTypeChange">
-          <el-option label="单品" value="single">
-            <span>单品</span><span style="color: #909399; font-size: 12px; margin-left: 8px;">独立产品，可单独销售</span>
-          </el-option>
-          <el-option label="套装主产品" value="group_main">
-            <span>套装主产品</span><span style="color: #909399; font-size: 12px; margin-left: 8px;">用于销售下单</span>
-          </el-option>
-          <el-option label="套装子产品" value="group_item">
-            <span>套装子产品</span><span style="color: #909399; font-size: 12px; margin-left: 8px;">用于生产制造</span>
-          </el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item v-if="form.product_type !== 'single'" label="所属产品组" :prop="form.product_type !== 'single' ? 'product_group' : ''" :rules="form.product_type !== 'single' ? [{ required: true, message: '请选择产品组', trigger: 'change' }] : []">
-        <el-select v-model="form.product_group" placeholder="请选择产品组" filterable style="width: 100%;">
-          <el-option v-for="group in productGroups" :key="group.id" :label="`${group.code} - ${group.name}`" :value="group.id" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="规格" prop="specification"><el-input v-model="form.specification" placeholder="请输入产品规格" /></el-form-item>
-      <el-form-item label="单位" prop="unit"><el-input v-model="form.unit" placeholder="如：件，张、本" /></el-form-item>
-      <el-form-item label="单价" prop="unit_price"><el-input-number v-model="form.unit_price" :min="0" :precision="2" style="width: 100%;" /></el-form-item>
-      <el-form-item label="库存数量"><el-input-number v-model="form.stock_quantity" :min="0" style="width: 100%;" /></el-form-item>
-      <el-form-item label="最小库存"><el-input-number v-model="form.min_stock_quantity" :min="0" style="width: 100%;" /></el-form-item>
-      <el-form-item label="产品描述"><el-input v-model="form.description" type="textarea" :rows="2" placeholder="请输入产品描述" /></el-form-item>
+  <BaseDialog :show="isOpen" :title="dialogTitle" width="wide" @close="handleClose">
+    <div class="space-y-4">
+      <Input v-model="form.code" label="产品编码" placeholder="请输入产品编码" :disabled="isEditMode" />
+      <Input v-model="form.name" label="产品名称" placeholder="请输入产品名称" />
+      <div>
+        <label class="input-label mb-1.5 block">产品类型</label>
+        <Select v-model="form.product_type" :options="productTypeOptions" placeholder="请选择产品类型" class="w-full" @change="handleProductTypeChange" />
+      </div>
+      <div v-if="form.product_type !== 'single'">
+        <label class="input-label mb-1.5 block">所属产品组</label>
+        <Select v-model="form.product_group" :options="productGroupOptions" placeholder="请选择产品组" filterable class="w-full" />
+      </div>
+      <Input v-model="form.specification" label="规格" placeholder="请输入产品规格" />
+      <Input v-model="form.unit" label="单位" placeholder="如：件，张、本" />
+      <div><label class="input-label mb-1.5 block">单价</label><InputNumber v-model="form.unit_price" :min="0" :precision="2" class="w-full" /></div>
+      <div><label class="input-label mb-1.5 block">库存数量</label><InputNumber v-model="form.stock_quantity" :min="0" class="w-full" /></div>
+      <div><label class="input-label mb-1.5 block">最小库存</label><InputNumber v-model="form.min_stock_quantity" :min="0" class="w-full" /></div>
+      <TextArea v-model="form.description" label="产品描述" :rows="2" placeholder="请输入产品描述" />
 
-      <el-divider content-position="left">默认物料配置</el-divider>
-      <el-form-item label="物料列表">
-        <el-button type="primary" size="small" :icon="Plus" @click="addMaterialItem">添加物料</el-button>
-        <div class="table-scroll">
-          <el-table :data="materialItems" border class="dialog-table">
-            <el-table-column label="物料名称" width="200">
-              <template #default="scope">
-                <el-select v-model="scope.row.material" placeholder="请选择物料" filterable style="width: 100%;">
-                  <el-option v-for="m in materials" :key="m.id" :label="`${m.name} (${m.code})`" :value="m.id" />
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column label="尺寸" width="150">
-              <template #default="scope"><el-input v-model="scope.row.material_size" placeholder="如：A4、210x297mm" size="small" /></template>
-            </el-table-column>
-            <el-table-column label="用量" width="150">
-              <template #default="scope"><el-input v-model="scope.row.material_usage" placeholder="如：1000张" size="small" /></template>
-            </el-table-column>
-            <el-table-column label="需要开料" width="80" align="center">
-              <template #default="scope"><el-switch v-model="scope.row.need_cutting" size="small" /></template>
-            </el-table-column>
-            <el-table-column label="操作" width="80" align="center">
-              <template #default="scope"><el-button type="danger" size="small" :icon="Delete" @click="removeMaterialItem(scope.$index)" /></template>
-            </el-table-column>
-          </el-table>
+      <div class="flex items-center my-4"><span class="pr-3 text-sm text-gray-500 dark:text-gray-400">默认物料配置</span><hr class="flex-1 border-t border-gray-200 dark:border-dark-700" /></div>
+      <div class="flex items-start gap-3">
+        <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">物料列表</label>
+        <div class="flex-1">
+          <button class="btn btn-primary btn-sm mb-3" @click="addMaterialItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加物料</button>
+          <div class="table-scroll overflow-x-auto">
+            <table class="dialog-table w-full">
+              <thead>
+                <tr>
+                  <th class="text-left">物料名称</th>
+                  <th class="text-left w-36">尺寸</th>
+                  <th class="text-left w-36">用量</th>
+                  <th class="text-center w-20">需要开料</th>
+                  <th class="text-center w-20">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in materialItems" :key="index">
+                  <td class="py-1">
+                    <Select v-model="item.material" :options="materialOptions" placeholder="请选择物料" filterable class="w-full" />
+                  </td>
+                  <td class="py-1">
+                    <Input v-model="item.material_size" placeholder="如：A4、210x297mm" />
+                  </td>
+                  <td class="py-1">
+                    <Input v-model="item.material_usage" placeholder="如：1000张" />
+                  </td>
+                  <td class="py-1 text-center">
+                    <Toggle v-model="item.need_cutting" />
+                  </td>
+                  <td class="py-1 text-center">
+                    <button class="btn btn-danger btn-sm" @click="removeMaterialItem(index)"><Icon name="trash" class="h-3 w-3" /></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </el-form-item>
+      </div>
 
-      <el-divider content-position="left">默认工序配置</el-divider>
-      <el-form-item label="默认工序">
-        <el-checkbox-group v-model="form.default_processes" style="width: 100%;">
-          <el-checkbox v-for="p in processes" :key="p.id" :label="p.id" :disabled="!p.is_active">{{ p.name }}</el-checkbox>
-        </el-checkbox-group>
-      </el-form-item>
-
-      <el-form-item label="是否启用"><el-switch v-model="form.is_active" /></el-form-item>
-    </el-form>
+      <div class="flex items-center my-4"><span class="pr-3 text-sm text-gray-500 dark:text-gray-400">默认工序配置</span><hr class="flex-1 border-t border-gray-200 dark:border-dark-700" /></div>
+      <div class="flex items-start gap-3">
+        <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">默认工序</label>
+        <CheckboxGroup v-model="form.default_processes" :options="processOptions" class="flex-1" />
+      </div>
+      <div class="flex items-start gap-3">
+        <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">是否启用</label>
+        <Toggle v-model="form.is_active" />
+      </div>
+    </div>
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="loading" @click="handleSubmit">确定</el-button>
+      <button class="btn" @click="handleClose">取消</button>
+      <button class="btn btn-primary" :disabled="loading" @click="handleSubmit">确定</button>
     </template>
-  </el-dialog>
+  </BaseDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { Icon, Input, InputNumber, Select, TextArea, Toggle, CheckboxGroup } from '@/components/common'
+import { ElMessage } from '@/utils/message'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   dialogType: { type: String, default: 'create' },
   product: { type: Object, default: null },
   loading: { type: Boolean, default: false },
-  materials: { type: Array, default: () => [] },
-  processes: { type: Array, default: () => [] },
-  productGroups: { type: Array, default: () => [] }
+  materials: { type: Array as any, default: () => [] },
+  processes: { type: Array as any, default: () => [] },
+  productGroups: { type: Array as any, default: () => [] }
 })
 
 const emit = defineEmits(['confirm', 'update:visible'])
 
-const formRef = ref(null)
-const materialItems = ref([])
+const materialItems = ref<any[]>([])
+const isOpen = ref(false)
+
+// Sync with parent visibility prop and init form when opening
+watch(() => props.visible, (val) => {
+  isOpen.value = val
+  if (val) {
+    if (props.dialogType === 'edit' && props.product) initFormFromProduct()
+    else resetForm()
+  }
+}, { immediate: true })
 
 const FORM_INITIAL = {
   code: '', name: '', product_type: 'single', product_group: null, specification: '', unit: '件',
@@ -102,31 +111,17 @@ const FORM_INITIAL = {
 
 const form = reactive({ ...FORM_INITIAL })
 
-const rules = {
-  code: [{ required: true, message: '请输入产品编码', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入产品名称', trigger: 'blur' }],
-  specification: [{ required: true, message: '请输入产品规格', trigger: 'blur' }],
-  unit: [{ required: true, message: '请输入单位', trigger: 'blur' }],
-  unit_price: [{ required: true, message: '请输入单价', trigger: 'blur' }]
-}
-
-const dialogVisible = computed({
-  get: () => props.visible,
-  set: (val) => emit('update:visible', val)
-})
+const productTypeOptions = [
+  { value: 'single', label: '单品' },
+  { value: 'group_main', label: '套装主产品' },
+  { value: 'group_item', label: '套装子产品' }
+]
 
 const dialogTitle = computed(() => props.dialogType === 'edit' ? '编辑产品' : '新建产品')
 const isEditMode = computed(() => props.dialogType === 'edit')
-
-watch(() => props.visible, (val) => {
-  if (val) {
-    if (props.dialogType === 'edit' && props.product) {
-      initFormFromProduct()
-    } else {
-      resetForm()
-    }
-  }
-})
+const processOptions = computed(() => props.processes.map((p: any) => ({ value: p.id, label: p.name, disabled: !p.is_active })))
+const productGroupOptions = computed(() => props.productGroups.map((g: any) => ({ value: g.id, label: `${g.code} - ${g.name}` })))
+const materialOptions = computed(() => props.materials.map((m: any) => ({ value: m.id, label: `${m.name} (${m.code})` })))
 
 const initFormFromProduct = () => {
   if (!props.product) return
@@ -144,38 +139,26 @@ const initFormFromProduct = () => {
     is_active: props.product.is_active !== false,
     default_processes: props.product.default_processes || []
   })
-  materialItems.value = (props.product.default_materials || []).map(m => ({
+  materialItems.value = (props.product.default_materials || []).map((m: any) => ({
     id: m.id, material: m.material, material_size: m.material_size || '', material_usage: m.material_usage || '', need_cutting: m.need_cutting || false, notes: m.notes || '', sort_order: m.sort_order || 0
   }))
-  nextTick(() => { formRef.value?.clearValidate() })
 }
 
 const resetForm = () => {
   Object.assign(form, FORM_INITIAL)
   materialItems.value = []
-  nextTick(() => { formRef.value?.clearValidate() })
 }
 
-const handleProductTypeChange = (value) => { if (value === 'single') form.product_group = null }
+const handleProductTypeChange = (value: any) => { if (value === 'single') form.product_group = null }
 const addMaterialItem = () => { materialItems.value.push({ material: null, material_size: '', material_usage: '', need_cutting: false, notes: '', sort_order: materialItems.value.length }) }
-const removeMaterialItem = (index) => { materialItems.value.splice(index, 1) }
+const removeMaterialItem = (index: any) => { materialItems.value.splice(index, 1) }
+
 const handleSubmit = () => {
-  formRef.value?.validate((valid) => {
-    if (valid) emit('confirm', { form: { ...form }, materialItems: [...materialItems.value] })
-  })
+  if (!form.code) { ElMessage.warning('请输入产品编码'); return }
+  if (!form.name) { ElMessage.warning('请输入产品名称'); return }
+  if (!form.specification) { ElMessage.warning('请输入产品规格'); return }
+  emit('confirm', { form: { ...form }, materialItems: [...materialItems.value] })
 }
+
 const handleClose = () => { resetForm(); emit('update:visible', false) }
 </script>
-
-<style scoped>
-.el-divider { margin: 20px 0; }
-
-.table-scroll {
-  margin-top: var(--ui-control-gap);
-  overflow-x: auto;
-}
-
-.dialog-table {
-  width: 100%;
-}
-</style>

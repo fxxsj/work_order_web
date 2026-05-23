@@ -29,12 +29,7 @@
           @click="handleProcessClick(process)"
         >
           <div class="node-icon">
-            <el-icon>
-              <Clock v-if="process.status === 'pending'" />
-              <Loading v-else-if="process.status === 'in_progress'" />
-              <CircleCheck v-else-if="process.status === 'completed'" />
-              <CircleClose v-else />
-            </el-icon>
+            <Icon :name="getProcessIcon(process.status)" />
           </div>
           <div class="node-content">
             <div class="node-name">
@@ -44,44 +39,49 @@
               <StatusTag :status="process.status" category="process" :label="process.status_display" size="small" />
             </div>
             <div v-if="process.department_name" class="node-department">
-              <el-icon><OfficeBuilding /></el-icon>
+              <Icon name="building" class="h-4 w-4" />
               <span>{{ process.department_name }}</span>
             </div>
           </div>
           <div class="node-arrow" v-if="index < sortedProcesses.length - 1">
-            <el-icon><ArrowRight /></el-icon>
+            <Icon name="arrowRight" class="h-4 w-4" />
           </div>
         </div>
       </div>
     </div>
-    <el-empty v-else description="暂无工序数据" />
+    <EmptyState v-else title="暂无工序数据" />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { Clock, Loading, CircleCheck, CircleClose, OfficeBuilding, ArrowRight } from '@element-plus/icons-vue'
-import { StatusTag } from '@/components/common'
+import { Icon, StatusTag } from '@/components/common'
 
 const props = defineProps({
-  processes: {
-    type: Array,
-    default: () => []
-  }
+  processes: { type: Array as any, default: () => [] }
 })
 
 const emit = defineEmits(['process-click'])
 
 const sortedProcesses = computed(() => {
-  return [...props.processes].sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
+  return [...props.processes].sort((a: any, b: any) => (a.sequence || 0) - (b.sequence || 0))
 })
 
-const isProcessCompleted = (process) => process.status === 'completed'
-const isProcessActive = (process) => process.status === 'in_progress'
-const isParallelProcess = (process) => process.is_parallel || false
+const isProcessCompleted = (process: any) => process.status === 'completed'
+const isProcessActive = (process: any) => process.status === 'in_progress'
+const isParallelProcess = (process: any) => process.is_parallel || false
 
-const handleProcessClick = (process) => {
+const handleProcessClick = (process: any) => {
   emit('process-click', process)
+}
+
+const getProcessIcon = (status: any) => {
+  const map = {
+    pending: 'clock',
+    in_progress: 'loading',
+    completed: 'checkCircle'
+  }
+  return (map as any)[status] || 'xCircle'
 }
 
 </script>

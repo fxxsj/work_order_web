@@ -1,245 +1,267 @@
 <template>
-  <div class="customer-list">
-    <el-card>
-      <div class="header-section">
-        <el-input
-          class="management-search-control"
-          v-model="searchText"
-          placeholder="搜索客户名称、联系人、电话"
-          clearable
-          @input="handleSearchDebounced"
-          @clear="handleSearch"
+  <TablePageLayout>
+    <template #filters>
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <SearchInput
+            v-model="searchText"
+            class="w-full sm:w-64"
+            placeholder="搜索客户名称、联系人、电话"
+            @search="handleSearch"
+            @clear="handleSearch"
+          />
+        </div>
+      </div>
+    </template>
+
+    <template #actions>
+      <div class="flex justify-end gap-3">
+        <button
+          @click="loadData"
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
         >
-          <template #append>
-            <el-button :icon="Search" @click="handleSearch" />
-          </template>
-        </el-input>
-        <el-button
+          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        </button>
+        <button
           v-if="canCreate"
-          type="primary"
-          :icon="Plus"
-          @click="showCreateDialog"
+          @click="showCreateModal = true"
+          class="btn btn-primary"
         >
+          <Icon name="plus" size="md" class="mr-2" />
           新建客户
-        </el-button>
+        </button>
       </div>
+    </template>
 
-      <el-empty
-        v-if="!loading && tableData.length === 0"
-        description="暂无客户数据"
-        :image-size="200"
-      >
-        <el-button v-if="canCreate" type="primary" @click="showCreateDialog">
-          创建第一个客户
-        </el-button>
-      </el-empty>
-
-      <div
-        v-else
-        class="table-scroll"
-      >
-        <el-table
-        v-loading="loading"
+    <template #table>
+      <DataTable
+        :columns="columns"
         :data="tableData"
-          class="data-table"
-        >
-          <el-table-column prop="name" label="客户名称" width="200" />
-          <el-table-column prop="contact_person" label="联系人" width="120" />
-          <el-table-column prop="phone" label="联系电话" width="150" />
-          <el-table-column prop="email" label="邮箱" width="200" />
-          <el-table-column prop="salesperson_name" label="业务员" width="120">
-            <template #default="scope">
-              {{ scope.row.salesperson_name || '-' }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="address" label="地址" min-width="200" />
-          <el-table-column prop="created_at" label="创建时间" width="180">
-            <template #default="scope">
-              {{ formatDateTime(scope.row.created_at) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="150" fixed="right">
-            <template #default="scope">
-              <el-button
-                v-if="canEdit"
-                type="text"
-                size="small"
-                @click="handleEdit(scope.row)"
-              >
-                编辑
-              </el-button>
-              <el-button
-                v-if="canDelete"
-                type="text"
-                size="small"
-                style="color: #F56C6C;"
-                @click="handleDelete(scope.row)"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+        :loading="loading"
+        :row-key="(row: any) => row.id"
+        @sort="handleSort"
+      >
+        <template #cell-name="{ value }">
+          <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
+        </template>
 
-      <el-pagination
+        <template #cell-contact_person="{ value }">
+          <span class="text-sm text-gray-700 dark:text-gray-300">{{ value || '-' }}</span>
+        </template>
+
+        <template #cell-phone="{ value }">
+          <span class="text-sm text-gray-700 dark:text-gray-300">{{ value || '-' }}</span>
+        </template>
+
+        <template #cell-email="{ value }">
+          <span class="text-sm text-gray-500 dark:text-dark-400">{{ value || '-' }}</span>
+        </template>
+
+        <template #cell-salesperson_name="{ value }">
+          <span v-if="value" class="text-sm text-gray-700 dark:text-gray-300">{{ value }}</span>
+          <span v-else class="text-sm text-gray-400 dark:text-dark-500">-</span>
+        </template>
+
+        <template #cell-created_at="{ value }">
+          <span class="text-sm text-gray-500 dark:text-dark-400">{{ formatDateTime(value) }}</span>
+        </template>
+
+        <template #cell-actions="{ row }">
+          <div class="flex items-center gap-1">
+            <!-- Edit Button -->
+            <button
+              v-if="canEdit"
+              @click="editRow(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+            >
+              <Icon name="edit" size="sm" />
+              <span class="text-xs">编辑</span>
+            </button>
+            <!-- Delete Button -->
+            <button
+              v-if="canDelete"
+              @click="confirmDelete(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            >
+              <Icon name="trash" size="sm" />
+              <span class="text-xs">删除</span>
+            </button>
+          </div>
+        </template>
+
+        <template #empty>
+          <EmptyState
+            :description="hasFilters ? '未找到匹配的客户' : '暂无客户数据'"
+            :action-text="canCreate && !hasFilters ? '创建第一个客户' : undefined"
+            @action="showCreateModal = true"
+          />
+        </template>
+      </DataTable>
+    </template>
+
+    <template #pagination>
+      <Pagination
         v-if="total > 0"
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
+        :page="currentPage"
+        :page-size="pageSize"
         :total="total"
-        layout="total, sizes, prev, pager, next"
-        @size-change="handleSizeChange"
-        @current-change="handlePageChange"
+        @update:page="handlePageChange"
+        @update:page-size="handleSizeChange"
       />
-    </el-card>
+    </template>
+  </TablePageLayout>
 
-    <FormDialog
-      ref="formDialogRef"
-      v-model="dialogVisible"
-      :title="formTitle"
-      width="var(--ui-dialog-width-md)"
-      :form-data="form"
-      :rules="rules"
-      label-width="100px"
-      :loading="formLoading"
-      @submit="handleSubmit"
-      @cancel="resetForm"
-    >
-      <el-form-item label="客户名称" prop="name">
-        <el-input v-model="form.name" placeholder="请输入客户名称" />
-      </el-form-item>
-      <el-form-item label="联系人">
-        <el-input v-model="form.contact_person" placeholder="请输入联系人" />
-      </el-form-item>
-      <el-form-item label="联系电话">
-        <el-input v-model="form.phone" placeholder="请输入联系电话" />
-      </el-form-item>
-      <el-form-item label="邮箱">
-        <el-input v-model="form.email" placeholder="请输入邮箱" />
-      </el-form-item>
-      <el-form-item label="业务员">
-        <el-select
-          v-model="form.salesperson"
+  <!-- Create/Edit Modal -->
+  <BaseDialog
+    :show="showCreateModal || showEditModal"
+    :title="showEditModal ? '编辑客户' : '新建客户'"
+    width="normal"
+    @close="closeModals"
+  >
+    <form id="customer-form" @submit.prevent="handleSubmit" class="space-y-5">
+      <div>
+        <Input v-model="(formData as any).name" label="客户名称" required placeholder="请输入客户名称" />
+      </div>
+      <div>
+        <Input v-model="formData.contact_person" label="联系人" placeholder="请输入联系人" />
+      </div>
+      <div>
+        <Input v-model="formData.phone" label="联系电话" placeholder="请输入联系电话" />
+      </div>
+      <div>
+        <Input v-model="formData.email" label="邮箱" placeholder="请输入邮箱" type="email" />
+      </div>
+      <div>
+        <Select
+          v-model="formData.salesperson"
+          label="业务员"
           placeholder="请选择业务员"
+          :options="salespersonOptions"
           filterable
           clearable
-          style="width: 100%;"
+        />
+      </div>
+      <div>
+        <TextArea v-model="formData.address" label="地址" placeholder="请输入地址" :rows="2" />
+      </div>
+      <div>
+        <TextArea v-model="formData.notes" label="备注" placeholder="请输入备注" :rows="3" />
+      </div>
+    </form>
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <button @click="closeModals" type="button" class="btn btn-secondary">
+          取消
+        </button>
+        <button
+          form="customer-form"
+          type="submit"
+          :disabled="submitting"
+          class="btn btn-primary"
         >
-          <el-option
-            v-for="user in salespersonList"
-            :key="user.id"
-            :label="user.username"
-            :value="user.id"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="地址">
-        <el-input
-          v-model="form.address"
-          type="textarea"
-          :rows="2"
-          placeholder="请输入地址"
-        />
-      </el-form-item>
-      <el-form-item label="备注">
-        <el-input
-          v-model="form.notes"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入备注"
-        />
-      </el-form-item>
-    </FormDialog>
-  </div>
+          <svg
+            v-if="submitting"
+            class="-ml-1 mr-2 h-4 w-4 animate-spin"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ submitting ? '保存中...' : showEditModal ? '更新' : '创建' }}
+        </button>
+      </div>
+    </template>
+  </BaseDialog>
+
+  <!-- Delete Confirmation Dialog -->
+  <ConfirmDialog
+    :show="showDeleteDialog"
+    title="删除客户"
+    :message="`确定要删除客户「${selectedRow?.name}」吗？此操作不可撤销。`"
+    confirm-text="删除"
+    cancel-text="取消"
+    :danger="true"
+    @confirm="handleDelete"
+    @cancel="showDeleteDialog = false"
+  />
 </template>
 
-<script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
-import { Plus, Search } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { authAPI } from '@/api/modules'
+<script setup lang="ts">
+import { ref, reactive, computed, onMounted } from 'vue'
 import { customerAPI } from '@/api/modules/customer'
+import { authAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { FormDialog } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Icon, BaseDialog, ConfirmDialog } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
 
+const columns: Column[] = [
+  { key: 'name', label: '客户名称', sortable: true },
+  { key: 'contact_person', label: '联系人', sortable: true },
+  { key: 'phone', label: '联系电话', sortable: true },
+  { key: 'email', label: '邮箱', sortable: true },
+  { key: 'salesperson_name', label: '业务员', sortable: true },
+  { key: 'address', label: '地址', sortable: false },
+  { key: 'created_at', label: '创建时间', sortable: true },
+  { key: 'actions', label: '操作', sortable: false, class: 'w-32' }
+]
+
 const {
-  searchText,
-  tableData,
-  loading,
-  total,
-  currentPage,
-  pageSize,
-  loadData,
-  handleSearch,
-  handleSearchDebounced,
-  handlePageChange,
-  handleSizeChange
-} = useCrudList(customerAPI, 'getList', {
-  errorContext: '加载客户数据失败'
-})
+  searchText, tableData, loading, total, currentPage, pageSize,
+  loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters
+} = useCrudList(customerAPI, 'getList', { errorContext: '加载客户数据失败' })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('customer')
 
+// Modal states
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const showDeleteDialog = ref(false)
+const submitting = ref(false)
+const selectedRow = ref<any>(null)
+const salespersonList = ref<any[]>([])
+
+const formInitialValues = { name: '', contact_person: '', phone: '', email: '', address: '', salesperson: null as any, notes: '' }
+const formData = reactive({ ...formInitialValues })
+
 const crud = useCRUD(customerAPI, {
-  onSuccess: () => { dialogVisible.value = false; loadData() },
+  onSuccess: () => {
+    closeModals()
+    loadData()
+  }
 })
 
-const dialogVisible = ref(false)
-const dialogType = ref('create')
-const currentRow = ref(null)
-const formLoading = ref(false)
-const salespersonList = ref([])
-const formDialogRef = ref(null)
-
-const formInitialValues = {
-  name: '',
-  contact_person: '',
-  phone: '',
-  email: '',
-  address: '',
-  salesperson: null,
-  notes: ''
-}
-
-const form = reactive({ ...formInitialValues })
-
-const rules = {
-  name: [
-    { required: true, message: '请输入客户名称', trigger: 'blur' }
-  ]
-}
-
-const formTitle = computed(() => dialogType.value === 'edit' ? '编辑客户' : '新建客户')
+const salespersonOptions = computed(() =>
+  salespersonList.value.map((u: any) => ({ value: u.id, label: u.username }))
+)
 
 const loadSalespersons = async () => {
   try {
-    const response = await authAPI.getSalespersons()
-    salespersonList.value = response || []
-  } catch (error) {
+    const response: any = await authAPI.getSalespersons()
+    const list = Array.isArray(response) ? response : (response?.results || response?.data || [])
+    salespersonList.value = list
+  } catch (error: any) {
     ErrorHandler.showMessage(error, '加载业务员列表失败')
   }
 }
 
-const showCreateDialog = () => {
-  resetForm()
-  dialogType.value = 'create'
-  currentRow.value = null
-  dialogVisible.value = true
-}
-
 const resetForm = () => {
-  Object.assign(form, formInitialValues)
-  nextTick(() => {
-    formDialogRef.value?.clearValidate()
-  })
+  Object.assign(formData, formInitialValues)
 }
 
-const handleEdit = (row) => {
-  dialogType.value = 'edit'
-  currentRow.value = row
-  Object.assign(form, {
+const closeModals = () => {
+  showCreateModal.value = false
+  showEditModal.value = false
+  resetForm()
+}
+
+const editRow = (row: any) => {
+  selectedRow.value = row
+  Object.assign(formData, {
     name: row.name,
     contact_person: row.contact_person || '',
     phone: row.phone || '',
@@ -248,30 +270,40 @@ const handleEdit = (row) => {
     salesperson: row.salesperson || null,
     notes: row.notes || ''
   })
-  dialogVisible.value = true
+  showEditModal.value = true
 }
 
 const handleSubmit = async () => {
-  const valid = await formDialogRef.value.validate().catch(() => false)
-  if (!valid) return false
-
-  formLoading.value = true
-  if (dialogType.value === 'edit') {
-    await crud.update(currentRow.value.id, form, '保存成功')
-  } else {
-    await crud.create(form, '创建成功')
+  if (!formData.name) return
+  submitting.value = true
+  try {
+    if (showEditModal.value) {
+      await crud.update(selectedRow.value.id, formData, '保存成功')
+    } else {
+      await crud.create(formData, '创建成功')
+    }
+  } finally {
+    submitting.value = false
   }
-  formLoading.value = false
 }
 
-const handleDelete = async (row) => {
+const confirmDelete = (row: any) => {
+  selectedRow.value = row
+  showDeleteDialog.value = true
+}
+
+const handleDelete = async () => {
   try {
-    const confirmed = await ErrorHandler.confirm(`确定要删除客户"${row.name}"吗？`)
-    if (!confirmed) return
-    await crud.remove(row.id, '删除成功')
-  } catch (error) {
+    await crud.remove(selectedRow.value.id, '删除成功')
+    showDeleteDialog.value = false
+  } catch (error: any) {
     ErrorHandler.showMessage(error, '删除失败')
   }
+}
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  console.log('sort', key, order)
+  // TODO: 实现服务端排序
 }
 
 onMounted(() => {
@@ -279,9 +311,3 @@ onMounted(() => {
   loadSalespersons()
 })
 </script>
-
-<style lang="scss" scoped>
-.customer-list {
-  padding: var(--ui-page-padding);
-}
-</style>

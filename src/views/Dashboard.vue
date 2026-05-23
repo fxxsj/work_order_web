@@ -1,63 +1,69 @@
 <template>
-  <div class="dashboard">
-    <NotificationAlerts
-      :unread-count="unreadNotificationCount"
-      :pending-approval-count="statistics.pending_approval_count || 0"
-      :urgent-priority-count="urgentPriorityCount"
-      :upcoming-deadline-count="upcomingDeadlineCount"
-      :is-salesperson="isSalesperson"
-      :is-admin="isAdmin"
-      @view-notifications="goToNotifications"
-      @view-pending-approvals="goToPendingApprovals"
-      @view-urgent-priority="goToUrgentPriority"
-      @view-upcoming-deadline="goToUpcomingDeadline"
-    />
+  <div class="space-y-6">
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center py-12">
+      <LoadingSpinner />
+    </div>
 
-    <WorkOrderStatistics
-      :statistics="statistics"
-      @navigate="goToWorkOrderList"
-      @navigate-upcoming-deadline="goToUpcomingDeadline"
-    />
+    <template v-else>
+      <NotificationAlerts
+        :unread-count="unreadNotificationCount"
+        :pending-approval-count="(statistics as any).pending_approval_count || 0"
+        :urgent-priority-count="urgentPriorityCount"
+        :upcoming-deadline-count="upcomingDeadlineCount"
+        :is-salesperson="isSalesperson"
+        :is-admin="isAdmin"
+        @view-notifications="goToNotifications"
+        @view-pending-approvals="goToPendingApprovals"
+        @view-urgent-priority="goToUrgentPriority"
+        @view-upcoming-deadline="goToUpcomingDeadline"
+      />
 
-    <TaskStatistics
-      v-if="isOperator || isSupervisor || isAdmin"
-      :task-statistics="taskStatistics"
-      :efficiency-analysis="efficiencyAnalysis"
-      :show-efficiency="isSupervisor || isAdmin"
-      @navigate="goToTaskList"
-    />
+      <WorkOrderStatistics
+        :statistics="statistics"
+        @navigate="goToWorkOrderList"
+        @navigate-upcoming-deadline="goToUpcomingDeadline"
+      />
 
-    <DesignerPendingPlates
-      v-if="isDesigner"
-      :pending-artworks="pendingArtworks"
-      :pending-dies="pendingDies"
-      :pending-foiling-plates="pendingFoilingPlates"
-      :pending-embossing-plates="pendingEmbossingPlates"
-      :confirming-item="confirmingItem"
-      @confirm="handlePlateConfirm"
-    />
+      <TaskStatistics
+        v-if="isOperator || isSupervisor || isAdmin"
+        :task-statistics="taskStatistics"
+        :efficiency-analysis="efficiencyAnalysis"
+        :show-efficiency="isSupervisor || isAdmin"
+        @navigate="goToTaskList"
+      />
 
-    <MyTasks
-      v-if="isOperator && myTasks.length > 0"
-      :tasks="myTasks"
-      @view-all="goToMyTasks"
-    />
+      <DesignerPendingPlates
+        v-if="isDesigner"
+        :pending-artworks="pendingArtworks"
+        :pending-dies="pendingDies"
+        :pending-foiling-plates="pendingFoilingPlates"
+        :pending-embossing-plates="pendingEmbossingPlates"
+        :confirming-item="confirmingItem as any"
+        @confirm="handlePlateConfirm"
+      />
 
-    <BusinessAnalysis
-      v-if="isAdmin"
-      :business-analysis="businessAnalysis"
-      :department-statistics="departmentStatistics"
-      @navigate-tasks="goToTaskList"
-    />
+      <MyTasks
+        v-if="isOperator && myTasks.length > 0"
+        :tasks="myTasks"
+        @view-all="goToMyTasks"
+      />
 
-    <RecentWorkOrders :recent-orders="recentOrders" />
+      <BusinessAnalysis
+        v-if="isAdmin"
+        :business-analysis="businessAnalysis"
+        :department-statistics="departmentStatistics"
+        @navigate-tasks="goToTaskList"
+      />
+
+      <RecentWorkOrders :recent-orders="recentOrders" />
+    </template>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import {
   workOrderAPI,
   workOrderTaskAPI,
@@ -70,6 +76,7 @@ import {
 import { hasRole, hasAnyRole } from '@/utils/userRole'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
+import { LoadingSpinner } from '@/components/common'
 import NotificationAlerts from './dashboard/components/NotificationAlerts.vue'
 import WorkOrderStatistics from './dashboard/components/WorkOrderStatistics.vue'
 import TaskStatistics from './dashboard/components/TaskStatistics.vue'
@@ -82,14 +89,14 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const statistics = ref({})
-const recentOrders = ref([])
-const myTasks = ref([])
+const recentOrders = ref<any[]>([])
+const myTasks = ref<any[]>([])
 const unreadNotificationCount = ref(0)
-const pendingArtworks = ref([])
-const pendingDies = ref([])
-const pendingFoilingPlates = ref([])
-const pendingEmbossingPlates = ref([])
-const confirmingItem = ref(null)
+const pendingArtworks = ref<any[]>([])
+const pendingDies = ref<any[]>([])
+const pendingFoilingPlates = ref<any[]>([])
+const pendingEmbossingPlates = ref<any[]>([])
+const confirmingItem = ref<string | null>(null)
 const loading = ref(false)
 
 const isSalesperson = computed(() => hasRole({ getters: userStore }, '业务员'))
@@ -97,15 +104,15 @@ const isSupervisor = computed(() => hasAnyRole({ getters: userStore }, ['主管'
 const isOperator = computed(() => hasAnyRole({ getters: userStore }, ['操作员', '主管', '经理']))
 const isDesigner = computed(() => hasRole({ getters: userStore }, '设计员'))
 const isAdmin = computed(() => userStore.isSuperuser)
-const businessAnalysis = computed(() => statistics.value.business_analysis || {})
+const businessAnalysis = computed(() => (statistics.value as any).business_analysis || {})
 const departmentStatistics = computed(() => taskStatistics.value.department_statistics || [])
 const urgentPriorityCount = computed(() => {
-  const urgentWorkOrders = statistics.value.priority_statistics?.find(p => p.priority === 'urgent')
+  const urgentWorkOrders = (statistics.value as any).priority_statistics?.find((p: any) => p.priority === 'urgent')
   return urgentWorkOrders?.count || 0
 })
-const upcomingDeadlineCount = computed(() => statistics.value.upcoming_deadline_count || 0)
-const taskStatistics = computed(() => statistics.value.task_statistics || {})
-const efficiencyAnalysis = computed(() => statistics.value.efficiency_analysis || {})
+const upcomingDeadlineCount = computed(() => (statistics.value as any).upcoming_deadline_count || 0)
+const taskStatistics = computed(() => (statistics.value as any).task_statistics || {})
+const efficiencyAnalysis = computed(() => (statistics.value as any).efficiency_analysis || {})
 
 onMounted(() => {
   loadData()
@@ -114,10 +121,10 @@ onMounted(() => {
 const loadData = async () => {
   loading.value = true
   try {
-    const stats = await workOrderAPI.getStatistics().catch(() => null)
+    const stats: any = await workOrderAPI.getStatistics().catch(() => null)
     statistics.value = stats || {}
 
-    const response = await workOrderAPI.getList({
+    const response: any = await workOrderAPI.getList({
       page_size: 10,
       ordering: '-created_at'
     }).catch(() => ({ results: [] }))
@@ -127,30 +134,30 @@ const loadData = async () => {
       const userInfo = userStore.currentUser
       if (userInfo && userInfo.id) {
         try {
-          const taskResponse = await workOrderTaskAPI.getList({
+          const taskResponse: any = await workOrderTaskAPI.getList({
             assigned_operator: userInfo.id,
             page_size: 10,
             ordering: '-created_at'
           })
           myTasks.value = taskResponse.results || []
-        } catch (error) {
+        } catch (error: any) {
           ErrorHandler.handle(error, 'Dashboard.loadMyTasks')
         }
       }
     }
 
     try {
-      const unreadResponse = await notificationAPI.getUnreadCount()
+      const unreadResponse: any = await notificationAPI.getUnreadCount()
       unreadNotificationCount.value = unreadResponse?.unread_count || 0
-    } catch (error) {
+    } catch (error: any) {
       ErrorHandler.handle(error, 'Dashboard.loadUnreadNotifications')
     }
 
     if (isDesigner.value) {
       await loadPendingPlates()
     }
-  } catch (error) {
-    ElMessage.error('加载数据失败，请刷新重试')
+  } catch (error: any) {
+    ErrorHandler.showError('加载数据失败，请刷新重试')
   } finally {
     loading.value = false
   }
@@ -189,59 +196,60 @@ const goToUrgentPriority = () => {
 
 const loadPendingPlates = async () => {
   try {
-    const artworkResponse = await artworkAPI.getList({
+    const artworkResponse: any = await artworkAPI.getList({
       page_size: 50,
       ordering: '-created_at'
     })
     pendingArtworks.value = (artworkResponse.results || [])
-      .filter(item => !item.confirmed)
+      .filter((item: any) => !item.confirmed)
       .slice(0, 10)
-      .map(item => ({
+      .map((item: any) => ({
         ...item,
         code: item.code || (item.base_code ? (item.base_code + (item.version > 1 ? '-v' + item.version : '')) : '-')
       }))
-  } catch (error) {
+  } catch (error: any) {
     ErrorHandler.handle(error, 'Dashboard.loadPendingArtworks')
   }
 
   try {
-    const dieResponse = await dieAPI.getList({
+    const dieResponse: any = await dieAPI.getList({
       page_size: 50,
       ordering: '-created_at'
     })
     pendingDies.value = (dieResponse.results || [])
-      .filter(item => !item.confirmed)
+      .filter((item: any) => !item.confirmed)
       .slice(0, 10)
-  } catch (error) {
+  } catch (error: any) {
     ErrorHandler.handle(error, 'Dashboard.loadPendingDies')
   }
 
   try {
-    const foilingPlateResponse = await foilingPlateAPI.getList({
+    const foilingPlateResponse: any = await foilingPlateAPI.getList({
       page_size: 50,
       ordering: '-created_at'
     })
     pendingFoilingPlates.value = (foilingPlateResponse.results || [])
-      .filter(item => !item.confirmed)
+      .filter((item: any) => !item.confirmed)
       .slice(0, 10)
-  } catch (error) {
+  } catch (error: any) {
     ErrorHandler.handle(error, 'Dashboard.loadPendingFoilingPlates')
   }
 
   try {
-    const embossingPlateResponse = await embossingPlateAPI.getList({
+    const embossingPlateResponse: any = await embossingPlateAPI.getList({
       page_size: 50,
       ordering: '-created_at'
     })
     pendingEmbossingPlates.value = (embossingPlateResponse.results || [])
-      .filter(item => !item.confirmed)
+      .filter((item: any) => !item.confirmed)
       .slice(0, 10)
-  } catch (error) {
+  } catch (error: any) {
     ErrorHandler.handle(error, 'Dashboard.loadPendingEmbossingPlates')
   }
 }
 
-const handlePlateConfirm = async ({ type, item }) => {
+const handlePlateConfirm = async (payload: any) => {
+    const { type, item } = payload
   const itemKey = `${type}-${item.id}`
   confirmingItem.value = itemKey
 
@@ -267,20 +275,15 @@ const handlePlateConfirm = async ({ type, item }) => {
   }
 
   try {
-    await apiMap[type].confirm(item.id)
-    ElMessage.success(`${labelMap[type]}确认成功`)
-    listMap[type].value = listMap[type].value.filter(i => i.id !== item.id)
+    await (apiMap as any)[type].confirm(item.id)
+    ErrorHandler.showSuccess(`${(labelMap as any)[type]}确认成功`);
+    (listMap as any)[type].value = (listMap as any)[type].value.filter((i: any) => i.id !== item.id)
     await loadPendingPlates()
-  } catch (error) {
-    ElMessage.error(error.response?.data?.error || `确认${labelMap[type]}失败`)
+  } catch (error: any) {
+    ErrorHandler.showError(error.response?.data?.error || `确认${(labelMap as any)[type]}失败`)
   } finally {
     confirmingItem.value = null
   }
 }
 </script>
 
-<style scoped>
-.dashboard {
-  padding: 20px;
-}
-</style>

@@ -1,107 +1,79 @@
 <template>
-  <div class="task-drag-drop">
-    <div class="column unassigned-column" :class="{ 'drag-over': dragOverColumn === 'unassigned' }" @dragover.prevent @dragenter="dragOverColumn = 'unassigned'" @dragleave="dragOverColumn = null" @drop="handleDropUnassigned">
-      <div class="column-header"><span class="column-title">待分派任务</span><el-badge :value="unassignedTasks.length" type="warning" /></div>
-      <div class="column-content">
-        <div v-for="task in unassignedTasks" :key="task.id" class="task-card" :class="getPriorityClass(task)" draggable="true" @dragstart="onDragStart(task, $event)">
-          <div class="card-header"><div class="card-title">{{ task.work_content }}</div><StatusTag v-if="task.work_order__priority" :status="task.work_order__priority" category="priority" size="small" /></div>
-          <div class="card-body"><div class="info-item"><el-icon><Document /></el-icon><span>{{ task.work_order__order_number || '-' }}</span></div><div class="info-item"><el-icon><Setting /></el-icon><span>{{ task.process_name || '-' }}</span></div><div class="info-item"><el-icon><Tickets /></el-icon><span>数量: {{ task.production_quantity }}</span></div></div>
-          <div class="card-footer"><StatusTag :status="task.status" category="task" size="small" /></div>
+  <div class="flex gap-6 overflow-x-auto py-4">
+    <div class="flex min-w-0 flex-col rounded-xl bg-danger-50 dark:bg-danger-900/20" :class="{ 'border-2 border-dashed border-danger-500': dragOverColumn === 'unassigned' }" style="width: 280px; min-height: 400px;" @dragover.prevent @dragenter="dragOverColumn = 'unassigned'" @dragleave="dragOverColumn = null" @drop="handleDropUnassigned">
+      <div class="flex items-center justify-between border-b-2 border-gray-200 p-4 dark:border-dark-700"><span class="font-bold">待分派任务</span><span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400">{ unassignedTasks.length }</span></div>
+      <div class="flex-1 overflow-y-auto p-4">
+        <div v-for="task in unassignedTasks" :key="task.id" class="mb-3 cursor-move rounded-lg bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md" :class="getPriorityClass(task)" draggable="true" @dragstart="onDragStart(task, $event)">
+          <div class="mb-2 flex items-start justify-between gap-2"><div class="flex-1 truncate font-bold text-sm">{{ task.work_content }}</div><StatusTag v-if="task.work_order__priority" :status="task.work_order__priority" category="priority" size="small" /></div>
+          <div class="mb-2 flex items-center gap-2 text-xs text-gray-400"><Icon name="document" class="h-3 w-3" /><span>{{ task.work_order__order_number || '-' }}</span></div>
+          <div class="mb-2 flex items-center gap-2 text-xs text-gray-400"><Icon name="cog" class="h-3 w-3" /><span>{{ task.process_name || '-' }}</span></div>
+          <div class="mb-2 flex items-center gap-2 text-xs text-gray-400"><Icon name="list" class="h-3 w-3" /><span>数量: {{ task.production_quantity }}</span></div>
+          <div class="border-t border-gray-100 pt-2"><StatusTag :status="task.status" category="task" size="small" /></div>
         </div>
-        <el-empty v-if="unassignedTasks.length === 0" description="暂无待分派任务" :image-size="80" />
+        <EmptyState v-if="unassignedTasks.length === 0" description="暂无待分派任务" />
       </div>
     </div>
-    <div v-for="operator in operators" :key="operator.id" class="column operator-column" :class="{ 'drag-over': dragOverOperator === operator.id }" @drop="handleDropOperator(operator)" @dragover.prevent @dragenter="dragOverOperator = operator.id" @dragleave="dragOverOperator = null">
-      <div class="column-header"><span class="column-title">{{ operator.name }}</span><el-badge :value="getOperatorTaskCount(operator.id)" type="primary" /></div>
-      <div class="column-content">
-        <div v-for="task in operatorTasks[operator.id] || []" :key="task.id" class="task-card" :class="getPriorityClass(task)" draggable="true" @dragstart="onDragStart(task, $event)">
-          <div class="card-header"><div class="card-title">{{ task.work_content }}</div><StatusTag v-if="task.work_order__priority" :status="task.work_order__priority" category="priority" size="small" /></div>
-          <div class="card-body"><div class="info-item"><el-icon><Document /></el-icon><span>{{ task.work_order__order_number || '-' }}</span></div><div class="info-item"><el-icon><Setting /></el-icon><span>{{ task.process_name || '-' }}</span></div></div>
-          <div class="card-footer"><StatusTag :status="task.status" category="task" size="small" /></div>
+    <div v-for="operator in operators" :key="operator.id" class="flex min-w-0 flex-col rounded-xl bg-gray-50 dark:bg-dark-700" :class="{ 'border-2 border-dashed border-primary-500': dragOverOperator === operator.id }" style="width: 280px; min-height: 400px;" @drop="handleDropOperator(operator)" @dragover.prevent @dragenter="dragOverOperator = operator.id" @dragleave="dragOverOperator = null">
+      <div class="flex items-center justify-between border-b-2 border-gray-200 p-4 dark:border-dark-600"><span class="font-bold">{{ operator.name }}</span><span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">{ getOperatorTaskCount(operator.id) }</span></div>
+      <div class="flex-1 overflow-y-auto p-4">
+        <div v-for="task in (operatorTasks as any)[operator.id] || []" :key="task.id" class="mb-3 cursor-move rounded-lg bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md" :class="getPriorityClass(task)" draggable="true" @dragstart="onDragStart(task, $event)">
+          <div class="mb-2 flex items-start justify-between gap-2"><div class="flex-1 truncate font-bold text-sm">{{ task.work_content }}</div><StatusTag v-if="task.work_order__priority" :status="task.work_order__priority" category="priority" size="small" /></div>
+          <div class="mb-2 flex items-center gap-2 text-xs text-gray-400"><Icon name="document" class="h-3 w-3" /><span>{{ task.work_order__order_number || '-' }}</span></div>
+          <div class="mb-2 flex items-center gap-2 text-xs text-gray-400"><Icon name="cog" class="h-3 w-3" /><span>{{ task.process_name || '-' }}</span></div>
+          <div class="border-t border-gray-100 pt-2"><StatusTag :status="task.status" category="task" size="small" /></div>
         </div>
-        <el-empty v-if="!operatorTasks[operator.id]?.length" description="暂无任务" :image-size="60" />
+        <EmptyState v-if="!(operatorTasks as any)[operator.id]?.length" description="暂无任务" />
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Document, Setting, Tickets } from '@element-plus/icons-vue'
-import { StatusTag } from '@/components/common'
+import { Icon } from '@/components/common'
+import { StatusTag, EmptyState } from '@/components/common'
 
-const props = defineProps({ tasks: { type: Array, default: () => [] }, operators: { type: Array, default: () => [] } })
+const props = defineProps({ tasks: { type: Array as any, default: () => [] }, operators: { type: Array as any, default: () => [] } })
 const emit = defineEmits(['task-assigned', 'task-reassigned', 'task-unassigned'])
 
-const unassignedTasks = ref([])
+const unassignedTasks = ref<any[]>([])
 const operatorTasks = ref({})
-const dragOverOperator = ref(null)
-const dragOverColumn = ref(null)
-const draggedTask = ref(null)
+const dragOverOperator = ref<any>(null)
+const dragOverColumn = ref<any>(null)
+const draggedTask = ref<any>(null)
 const draggedFromOperator = ref(null)
 
 watch(() => props.tasks, () => organizeTasks(), { immediate: true, deep: true })
 watch(() => props.operators, () => initializeOperatorTasks(), { immediate: true, deep: true })
 
 const organizeTasks = () => {
-  unassignedTasks.value = props.tasks.filter(t => !t.assigned_operator && t.status !== 'completed')
-  props.operators.forEach(op => { if (!operatorTasks.value[op.id]) operatorTasks.value[op.id] = []; operatorTasks.value[op.id] = props.tasks.filter(t => t.assigned_operator === op.id) })
+  unassignedTasks.value = props.tasks.filter((t: any) => !t.assigned_operator && t.status !== 'completed')
+  props.operators.forEach((op: any) => { if (!(operatorTasks.value as any)[op.id]) (operatorTasks.value as any)[op.id] = []; (operatorTasks.value as any)[op.id] = props.tasks.filter((t: any) => t.assigned_operator === op.id) })
 }
 
-const initializeOperatorTasks = () => { props.operators.forEach(op => { if (!operatorTasks.value[op.id]) operatorTasks.value[op.id] = [] }) }
-const getOperatorTaskCount = (id) => operatorTasks.value[id]?.length || 0
+const initializeOperatorTasks = () => { props.operators.forEach((op: any) => { if (!(operatorTasks.value as any)[op.id]) (operatorTasks.value as any)[op.id] = [] }) }
+const getOperatorTaskCount = (id: any) => (operatorTasks.value as any)[id]?.length || 0
 
-const onDragStart = (task, event) => { draggedTask.value = task; draggedFromOperator.value = task.assigned_operator; event.dataTransfer.effectAllowed = 'move' }
+const onDragStart = (task: any, event: any) => { draggedTask.value = task; draggedFromOperator.value = task.assigned_operator; event.dataTransfer.effectAllowed = 'move' }
 
-const handleDropOperator = (operator) => {
+const handleDropOperator = (operator: any) => {
   if (!draggedTask.value) return
   if (draggedTask.value.assigned_operator === operator.id) return
-  if (draggedFromOperator.value) emit('task-reassigned', { task: draggedTask.value, fromOperator: props.operators.find(o => o.id === draggedFromOperator.value), toOperator: operator })
+  if (draggedFromOperator.value) emit('task-reassigned', { task: draggedTask.value, fromOperator: props.operators.find((o: any) => o.id === draggedFromOperator.value), toOperator: operator })
   else emit('task-assigned', { task: draggedTask.value, operator })
   resetDrag()
 }
 
 const handleDropUnassigned = () => {
   if (!draggedTask.value || !draggedTask.value.assigned_operator) return
-  emit('task-unassigned', { task: draggedTask.value, fromOperator: props.operators.find(o => o.id === draggedTask.value.assigned_operator) })
+  emit('task-unassigned', { task: draggedTask.value, fromOperator: props.operators.find((o: any) => o.id === draggedTask.value.assigned_operator) })
   resetDrag()
 }
 
 const resetDrag = () => { dragOverOperator.value = null; dragOverColumn.value = null; draggedTask.value = null; draggedFromOperator.value = null }
 
-const getPriorityClass = (task) => `priority-${task.work_order__priority || 'normal'}`
-</script>
-
-<style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.task-drag-drop { display: flex; gap: var(--ui-section-gap); overflow-x: auto; padding: var(--ui-section-gap) 0; min-height: var(--ui-board-column-min-height); }
-.column { flex: 0 0 clamp(var(--ui-board-column-width-min), 32vw, var(--ui-board-column-width)); background: var(--ui-color-fill-light); border-radius: var(--ui-radius-card); display: flex; flex-direction: column; height: min(var(--ui-board-height), calc(100vh - var(--ui-board-height-offset))); min-height: var(--ui-board-column-min-height); border: 2px solid transparent; transition: all var(--ui-transition-base); }
-.column.drag-over { border-color: var(--ui-color-primary); background: var(--ui-color-primary-light); border-style: dashed; }
-.column-header { padding: var(--ui-stat-content-gap) var(--ui-section-gap); background: #fff; border-bottom: 2px solid var(--ui-color-border-strong); border-radius: var(--ui-radius-card) var(--ui-radius-card) 0 0; display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); }
-.column-title { font-weight: 700; font-size: var(--ui-font-size-base); color: var(--ui-color-text-primary); }
-.column-content { flex: 1; padding: var(--ui-stat-content-gap); overflow-y: auto; }
-.task-card { background: #fff; border-radius: var(--ui-radius-card); padding: var(--ui-stat-content-gap); cursor: move; transition: all var(--ui-transition-base); box-shadow: var(--ui-board-card-shadow); border-left: var(--ui-board-priority-border-width) solid var(--ui-color-text-secondary); }
-.task-card:hover { transform: translateY(var(--ui-board-card-lift)); box-shadow: var(--ui-board-card-shadow-hover); }
-.task-card.priority-urgent { border-left-color: var(--ui-color-danger); }
-.task-card.priority-high { border-left-color: var(--ui-color-warning); }
-.task-card.priority-normal { border-left-color: var(--ui-color-primary); }
-.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--ui-control-gap); gap: var(--ui-control-gap); }
-.card-title { font-weight: 700; font-size: var(--ui-font-size-sm); color: var(--ui-color-text-primary); flex: 1; min-width: 0; }
-.card-body { margin-bottom: var(--ui-control-gap); }
-.info-item { display: flex; align-items: center; font-size: var(--ui-font-size-xs); color: var(--ui-color-text-regular); margin-bottom: var(--ui-inline-gap); gap: var(--ui-inline-gap); }
-.card-footer { border-top: 1px solid var(--ui-color-border); padding-top: var(--ui-compact-padding-x); }
-.unassigned-column { background: var(--ui-color-danger-light); }
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .task-drag-drop {
-    gap: var(--ui-control-gap);
-    min-height: 0;
-  }
-
-  .column {
-    flex-basis: min(var(--ui-board-column-mobile-ratio), var(--ui-board-column-width-mobile));
-    height: min(var(--ui-board-mobile-height), calc(100vh - var(--ui-board-mobile-height-offset)));
-  }
+const getPriorityClass = (task: any) => {
+  const p = task.work_order__priority || 'normal'
+  return ({ urgent: 'border-l-4 border-l-danger-500', high: 'border-l-4 border-l-warning-500', normal: 'border-l-4 border-l-primary-500', low: 'border-l-4 border-l-gray-400' } as any)[p] || ''
 }
-</style>
+</script>

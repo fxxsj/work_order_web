@@ -1,49 +1,38 @@
 <template>
-  <el-select
+  <Select
     :model-value="modelValue"
+    :options="normalizedOptions"
     :placeholder="placeholder"
     :filterable="filterable"
-    :remote="remote"
-    :remote-method="handleRemoteSearch"
     :loading="loading"
     :disabled="disabled"
     :clearable="clearable"
     :multiple="multiple"
-    :collapse-tags="collapseTags"
-    :style="selectStyle"
-    :reserve-keyword="reserveKeyword"
-    :default-first-option="defaultFirstOption"
     @update:model-value="handleInput"
     @change="handleChange"
     @focus="handleFocus"
   >
-    <el-option
-      v-for="option in displayOptions"
-      :key="getOptionValue(option)"
-      :label="getOptionLabel(option)"
-      :value="getOptionValue(option)"
-      :disabled="option.disabled"
-    >
-      <slot name="option" :option="option">
-        <span>{{ getOptionLabel(option) }}</span>
-      </slot>
-    </el-option>
-
-    <template v-if="showEmptyOption" #empty>
-      <slot name="empty">
-        <span style="color: #909399; font-size: 13px;">暂无数据</span>
+    <template #option="{ option }">
+      <slot name="option" :option="option.raw || option">
+        <span>{{ option.label }}</span>
       </slot>
     </template>
-  </el-select>
+    <template #empty>
+      <slot name="empty">
+        <span class="text-sm text-gray-400">暂无数据</span>
+      </slot>
+    </template>
+  </Select>
 </template>
 
-<script setup>
-import { ref, computed, watch } from 'vue'
+<script setup lang="ts">
+import { computed } from 'vue'
+import { Select } from '@/components/common'
 
 const props = defineProps({
-  modelValue: { type: [String, Number, Array, Boolean], required: true },
+  modelValue: { type: [String, Number, Boolean, Array] as unknown as () => string | number | boolean | (string | number | boolean)[] | null, required: true },
   placeholder: { type: String, default: '请选择' },
-  options: { type: Array, default: () => [] },
+  options: { type: Array as any, default: () => [] },
   filterable: { type: Boolean, default: false },
   remote: { type: Boolean, default: false },
   remoteMethod: { type: Function, default: null },
@@ -62,15 +51,16 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'change', 'focus'])
 
-const displayOptions = computed(() => props.options)
+const normalizedOptions = computed(() =>
+  props.options.map((option: any) => ({
+    value: option[props.valueKey] ?? option,
+    label: option[props.labelKey] ?? option,
+    disabled: option.disabled || false,
+    raw: option
+  }))
+)
 
-const getOptionLabel = (option) => option[props.labelKey] || option
-const getOptionValue = (option) => option[props.valueKey] || option
-
-const handleInput = (val) => emit('update:modelValue', val)
-const handleChange = (val) => emit('change', val)
+const handleInput = (val: any) => emit('update:modelValue', val)
+const handleChange = (val: any) => emit('change', val)
 const handleFocus = () => emit('focus')
-const handleRemoteSearch = (query) => {
-  if (props.remoteMethod) props.remoteMethod(query)
-}
 </script>

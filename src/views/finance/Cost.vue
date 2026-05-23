@@ -1,117 +1,129 @@
 <template>
-  <div class="cost-container">
-    <cost-stats :stats="stats" :loading="statsLoading" />
+  <div class="space-y-6">
+    <CostStats :stats="stats" :loading="statsLoading" />
 
-    <el-card>
-      <div class="header-section">
-        <div class="action-group">
-          <el-button :loading="loading" :icon="RefreshRight" @click="loadData">刷新</el-button>
-          <el-button :icon="DataAnalysis" type="primary" @click="handleStats">成本统计</el-button>
-        </div>
-      </div>
+    <CrudPageLayout
+      title="成本管理"
+      :loading="loading"
+      :total="total"
+      :current-page="currentPage"
+      :page-size="pageSize"
+      @size-change="handleSizeChange"
+      @current-change="handlePageChange"
+    >
+      <template #search />
+      <template #actions>
+        <button class="btn" :disabled="loading" @click="loadData">刷新</button>
+        <button class="btn btn-primary" @click="handleStats">成本统计</button>
+      </template>
 
-      <div v-if="tableData.length > 0" class="table-scroll">
-      <el-table v-loading="loading" :data="tableData" border class="data-table">
-        <el-table-column prop="work_order_number" label="施工单号" width="150" />
-        <el-table-column prop="product_name" label="产品名称" width="200" show-overflow-tooltip />
-        <el-table-column prop="material_cost" label="材料成本" width="100" align="right">
-          <template #default="scope">¥{{ scope.row.material_cost ? scope.row.material_cost.toLocaleString() : '-' }}</template>
-        </el-table-column>
-        <el-table-column prop="labor_cost" label="人工成本" width="100" align="right">
-          <template #default="scope">¥{{ scope.row.labor_cost ? scope.row.labor_cost.toLocaleString() : '-' }}</template>
-        </el-table-column>
-        <el-table-column prop="equipment_cost" label="设备成本" width="100" align="right">
-          <template #default="scope">¥{{ scope.row.equipment_cost ? scope.row.equipment_cost.toLocaleString() : '-' }}</template>
-        </el-table-column>
-        <el-table-column prop="overhead_cost" label="制造费用" width="100" align="right">
-          <template #default="scope">¥{{ scope.row.overhead_cost ? scope.row.overhead_cost.toLocaleString() : '-' }}</template>
-        </el-table-column>
-        <el-table-column prop="actual_cost" label="实际成本" width="120" align="right">
-          <template #default="scope"><span class="text-strong">¥{{ scope.row.actual_cost ? scope.row.actual_cost.toLocaleString() : '-' }}</span></template>
-        </el-table-column>
-        <el-table-column prop="standard_cost" label="标准成本" width="120" align="right">
-          <template #default="scope">¥{{ scope.row.standard_cost ? scope.row.standard_cost.toLocaleString() : '-' }}</template>
-        </el-table-column>
-        <el-table-column prop="variance" label="成本差异" width="120" align="right">
-          <template #default="scope"><span :class="getVarianceClass(scope.row)">¥{{ scope.row.variance !== null ? scope.row.variance.toLocaleString() : '-' }}</span></template>
-        </el-table-column>
-        <el-table-column prop="variance_rate" label="差异率" width="100" align="right">
-          <template #default="scope"><span :class="getVarianceClass(scope.row)">{{ scope.row.variance_rate !== null ? scope.row.variance_rate.toFixed(1) + '%' : '-' }}</span></template>
-        </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="scope">
-            <el-button type="text" size="small" @click="handleView(scope.row)">查看</el-button>
-            <el-button v-if="canEdit" type="text" size="small" class="text-primary" @click="handleCalculate(scope.row)">计算</el-button>
-            <el-button v-if="canEdit" type="text" size="small" class="text-warning" @click="handleEdit(scope.row)">调整</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      </div>
+      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
+        <template #cell-work_order_number="{ row }"><span>{{ row.work_order_number }}</span></template>
+        <template #cell-product_name="{ row }"><span class="truncate max-w-xs">{{ row.product_name }}</span></template>
+        <template #cell-material_cost="{ row }"><span>¥{{ row.material_cost ? row.material_cost.toLocaleString() : '-' }}</span></template>
+        <template #cell-labor_cost="{ row }"><span>¥{{ row.labor_cost ? row.labor_cost.toLocaleString() : '-' }}</span></template>
+        <template #cell-equipment_cost="{ row }"><span>¥{{ row.equipment_cost ? row.equipment_cost.toLocaleString() : '-' }}</span></template>
+        <template #cell-overhead_cost="{ row }"><span>¥{{ row.overhead_cost ? row.overhead_cost.toLocaleString() : '-' }}</span></template>
+        <template #cell-actual_cost="{ row }"><span class="text-strong">¥{{ row.actual_cost ? row.actual_cost.toLocaleString() : '-' }}</span></template>
+        <template #cell-standard_cost="{ row }"><span>¥{{ row.standard_cost ? row.standard_cost.toLocaleString() : '-' }}</span></template>
+        <template #cell-variance="{ row }"><span :class="getVarianceClass(row)">¥{{ row.variance !== null ? row.variance.toLocaleString() : '-' }}</span></template>
+        <template #cell-variance_rate="{ row }"><span :class="getVarianceClass(row)">{{ row.variance_rate !== null ? row.variance_rate.toFixed(1) + '%' : '-' }}</span></template>
+        <template #cell-actions="{ row }">
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" @click="handleView(row)">查看</button>
+            <button class="btn btn-ghost btn-sm text-primary" v-if="canEdit" @click="handleCalculate(row)">计算</button>
+            <button class="btn btn-ghost btn-sm text-warning" v-if="canEdit" @click="handleEdit(row)">调整</button>
+          </div>
+        </template>
+        <template #empty>
+          <EmptyState description="暂无成本数据" />
+        </template>
+      </DataTable>
+    </CrudPageLayout>
 
-      <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" />
-
-      <el-empty v-if="!loading && tableData.length === 0" description="暂无成本数据" :image-size="200" class="ui-empty-state" />
-    </el-card>
-
-    <el-dialog v-model="detailDialogVisible" title="成本详情" width="var(--ui-dialog-width-xl)" :close-on-click-modal="false">
+    <BaseDialog :show="detailDialogVisible" title="成本详情" width="extra-wide">
       <div v-if="currentCost">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="施工单号">{{ currentCost.work_order_number }}</el-descriptions-item>
-          <el-descriptions-item label="产品名称">{{ currentCost.product_name }}</el-descriptions-item>
-          <el-descriptions-item label="成本中心">{{ currentCost.cost_center_name || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="计算时间">{{ currentCost.calculated_at || '-' }}</el-descriptions-item>
-        </el-descriptions>
+        <div class="descriptions-grid mb-4" style="--col: 2">
+          <div class="description-item"><div class="description-label">施工单号</div><div class="description-value">{{ (currentCost as any).work_order_number }}</div></div>
+          <div class="description-item"><div class="description-label">产品名称</div><div class="description-value">{{ (currentCost as any).product_name }}</div></div>
+          <div class="description-item"><div class="description-label">成本中心</div><div class="description-value">{{ (currentCost as any).cost_center_name || '-' }}</div></div>
+          <div class="description-item"><div class="description-label">计算时间</div><div class="description-value">{{ (currentCost as any).calculated_at || '-' }}</div></div>
+        </div>
         <div class="cost-breakdown">
           <h4>成本构成</h4>
           <div class="table-scroll table-scroll-compact">
-          <el-table :data="getCostBreakdown(currentCost)" border class="data-table">
-            <el-table-column prop="item" label="成本项目" width="150" />
-            <el-table-column prop="amount" label="金额" width="150" align="right">
-              <template #default="scope">¥{{ scope.row.amount ? scope.row.amount.toLocaleString() : '-' }}</template>
-            </el-table-column>
-            <el-table-column prop="proportion" label="占比" width="100" align="right">
-              <template #default="scope">{{ scope.row.proportion ? scope.row.proportion.toFixed(1) + '%' : '-' }}</template>
-            </el-table-column>
-            <el-table-column prop="description" label="说明" />
-          </el-table>
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
+                <th class="px-3 py-2 w-36">成本项目</th>
+                <th class="px-3 py-2 w-36 text-right">金额</th>
+                <th class="px-3 py-2 w-24 text-right">占比</th>
+                <th class="px-3 py-2">说明</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
+              <tr v-for="item in getCostBreakdown(currentCost)" :key="item.item">
+                <td class="px-3 py-2">{{ item.item }}</td>
+                <td class="px-3 py-2 text-right">¥{{ item.amount ? item.amount.toLocaleString() : '-' }}</td>
+                <td class="px-3 py-2 text-right">{{ item.proportion ? item.proportion.toFixed(1) + '%' : '-' }}</td>
+                <td class="px-3 py-2">{{ item.description }}</td>
+              </tr>
+            </tbody>
+          </table>
           </div>
         </div>
-        <div v-if="currentCost.standard_cost" class="cost-comparison">
+        <div v-if="(currentCost as any).standard_cost" class="cost-comparison">
           <h4>成本对比</h4>
-          <el-row :gutter="20" class="comparison-row">
-            <el-col :xs="24" :md="12"><el-card><div class="comparison-item"><div class="comparison-label">标准成本</div><div class="comparison-value">¥{{ currentCost.standard_cost ? currentCost.standard_cost.toLocaleString() : '-' }}</div></div></el-card></el-col>
-            <el-col :xs="24" :md="12"><el-card><div class="comparison-item"><div class="comparison-label">实际成本</div><div class="comparison-value">¥{{ currentCost.actual_cost ? currentCost.actual_cost.toLocaleString() : '-' }}</div></div></el-card></el-col>
-          </el-row>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="card"><div class="comparison-item"><div class="comparison-label">标准成本</div><div class="comparison-value">¥{{ (currentCost as any).standard_cost ? (currentCost as any).standard_cost.toLocaleString() : '-' }}</div></div></div>
+            <div class="card"><div class="comparison-item"><div class="comparison-label">实际成本</div><div class="comparison-value">¥{{ (currentCost as any).actual_cost ? (currentCost as any).actual_cost.toLocaleString() : '-' }}</div></div></div>
+          </div>
         </div>
       </div>
-      <template #footer><el-button @click="detailDialogVisible = false">关闭</el-button></template>
-    </el-dialog>
+      <template #footer><button class="btn" @click="detailDialogVisible = false">关闭</button></template>
+    </BaseDialog>
 
-    <el-dialog v-model="adjustDialogVisible" title="成本调整" width="var(--ui-dialog-width-md)" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="材料成本" prop="material_cost"><el-input-number v-model="form.material_cost" :min="0" :precision="2" class="ui-control-full" /></el-form-item>
-        <el-form-item label="人工成本" prop="labor_cost"><el-input-number v-model="form.labor_cost" :min="0" :precision="2" class="ui-control-full" /></el-form-item>
-        <el-form-item label="设备成本" prop="equipment_cost"><el-input-number v-model="form.equipment_cost" :min="0" :precision="2" class="ui-control-full" /></el-form-item>
-        <el-form-item label="制造费用" prop="overhead_cost"><el-input-number v-model="form.overhead_cost" :min="0" :precision="2" class="ui-control-full" /></el-form-item>
-        <el-form-item label="调整原因" prop="adjust_reason"><el-input v-model="form.adjust_reason" type="textarea" :rows="3" placeholder="请输入调整原因" /></el-form-item>
-      </el-form>
+    <BaseDialog :show="adjustDialogVisible" title="成本调整" width="normal">
+      <div class="space-y-4">
+        <div class="flex items-start gap-3">
+          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">材料成本</label>
+          <InputNumber v-model="form.material_cost" :min="0" :precision="2" class="flex-1" />
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">人工成本</label>
+          <InputNumber v-model="form.labor_cost" :min="0" :precision="2" class="flex-1" />
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">设备成本</label>
+          <InputNumber v-model="form.equipment_cost" :min="0" :precision="2" class="flex-1" />
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">制造费用</label>
+          <InputNumber v-model="form.overhead_cost" :min="0" :precision="2" class="flex-1" />
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">调整原因</label>
+          <TextArea v-model="form.adjust_reason" :rows="3" placeholder="请输入调整原因" class="flex-1" />
+        </div>
+      </div>
       <template #footer>
-        <el-button @click="adjustDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSaveAdjust">保存</el-button>
+        <button class="btn" @click="adjustDialogVisible = false">取消</button>
+        <button class="btn btn-primary" :disabled="submitting" @click="handleSaveAdjust">保存</button>
       </template>
-    </el-dialog>
+    </BaseDialog>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { RefreshRight, DataAnalysis } from '@element-plus/icons-vue'
+import { ElMessage } from '@/utils/message'
 import { productionCostAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import CostStats from './components/CostStats.vue'
+import { InputNumber, TextArea, CrudPageLayout, DataTable, EmptyState } from '@/components/common'
+import type { Column } from '@/components/common/types'
 
 const userStore = useUserStore()
 
@@ -121,12 +133,23 @@ const currentCost = ref(null)
 const stats = ref({})
 const detailDialogVisible = ref(false)
 const adjustDialogVisible = ref(false)
-const formRef = ref(null)
 
-const FORM_INITIAL = { id: null, material_cost: null, labor_cost: null, equipment_cost: null, overhead_cost: null, adjust_reason: '' }
+const FORM_INITIAL: Record<string, any> = { id: undefined, material_cost: undefined, labor_cost: undefined, equipment_cost: undefined, overhead_cost: undefined, adjust_reason: '' }
 const form = reactive({ ...FORM_INITIAL })
 
-const rules = { adjust_reason: [{ required: true, message: '请输入调整原因', trigger: 'blur' }] }
+const columns: Column[] = [
+  { key: 'work_order_number', label: '施工单号', width: 144 },
+  { key: 'product_name', label: '产品名称', minWidth: 192 },
+  { key: 'material_cost', label: '材料成本', width: 96, align: 'right' },
+  { key: 'labor_cost', label: '人工成本', width: 96, align: 'right' },
+  { key: 'equipment_cost', label: '设备成本', width: 96, align: 'right' },
+  { key: 'overhead_cost', label: '制造费用', width: 96, align: 'right' },
+  { key: 'actual_cost', label: '实际成本', width: 112, align: 'right' },
+  { key: 'standard_cost', label: '标准成本', width: 112, align: 'right' },
+  { key: 'variance', label: '成本差异', width: 96, align: 'right' },
+  { key: 'variance_rate', label: '差异率', width: 80, align: 'right' },
+  { key: 'actions', label: '操作', width: 176, fixed: 'right' }
+]
 
 const {
   tableData,
@@ -145,16 +168,16 @@ const canEdit = computed(() => userStore.hasPermission('workorder.change_product
 
 const fetchStats = async () => {
   statsLoading.value = true
-  try { const response = await productionCostAPI.getStats(); stats.value = response || {} } catch (error) { stats.value = {} } finally { statsLoading.value = false }
+  try { const response: any = await productionCostAPI.getStats({}); stats.value = response || {} } catch (error: any) { stats.value = {} } finally { statsLoading.value = false }
 }
 
 const handleStats = () => { /* TODO: 跳转到统计页面 */ }
 
-const handleView = async (row) => {
-  try { const response = await productionCostAPI.getDetail(row.id); currentCost.value = response; detailDialogVisible.value = true } catch (error) { ErrorHandler.showMessage(error, '获取成本详情失败') }
+const handleView = async (row: any) => {
+  try { const response: any = await productionCostAPI.getDetail(row.id); currentCost.value = response; detailDialogVisible.value = true } catch (error: any) { ErrorHandler.showMessage(error, '获取成本详情失败') }
 }
 
-const handleCalculate = async (row) => {
+const handleCalculate = async (row: any) => {
   try {
     const confirmed = await ErrorHandler.confirm('确认重新计算该订单成本？')
     if (!confirmed) return
@@ -162,35 +185,34 @@ const handleCalculate = async (row) => {
     ElMessage.success('计算成功')
     loadData()
     fetchStats()
-  } catch (error) { if (error !== 'cancel') ErrorHandler.showMessage(error, '计算失败') }
+  } catch (error: any) { if (error !== 'cancel') ErrorHandler.showMessage(error, '计算失败') }
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: any) => {
   Object.assign(form, { id: row.id, material_cost: row.material_cost, labor_cost: row.labor_cost, equipment_cost: row.equipment_cost, overhead_cost: row.overhead_cost, adjust_reason: '' })
   adjustDialogVisible.value = true
 }
 
 const handleSaveAdjust = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) return
+  if (!form.adjust_reason) { ElMessage.warning('请输入调整原因'); return }
   submitting.value = true
   try {
     const data = { ...form }
-    const id = data.id; delete data.id
-    await productionCostAPI.update(id, data)
+    const id = data.id; delete (data as any).id
+    await productionCostAPI.update(id!, data)
     ElMessage.success('调整成功')
     adjustDialogVisible.value = false
     loadData()
     fetchStats()
-  } catch (error) { ErrorHandler.showMessage(error, '调整失败') } finally { submitting.value = false }
+  } catch (error: any) { ErrorHandler.showMessage(error, '调整失败') } finally { submitting.value = false }
 }
 
-const getVarianceClass = (row) => {
+const getVarianceClass = (row: any) => {
   if (row.variance === null) return ''
   return row.variance > 0 ? 'text-danger' : row.variance < 0 ? 'text-success' : ''
 }
 
-const getCostBreakdown = (cost) => {
+const getCostBreakdown = (cost: any) => {
   const total = cost.actual_cost || 0
   if (!total) return []
   return [
@@ -219,7 +241,7 @@ onMounted(() => { loadData(); fetchStats() })
 .comparison-item { text-align: center; }
 .comparison-label { font-size: var(--ui-font-size-sm); color: var(--ui-color-text-secondary); margin-bottom: var(--ui-control-gap); }
 .comparison-value { font-size: var(--ui-font-size-lg); font-weight: 700; color: var(--ui-color-text-primary); }
-.el-card { border-radius: var(--ui-radius-card); box-shadow: var(--ui-shadow-card); }
+.card { border-radius: var(--ui-radius-card); box-shadow: var(--ui-shadow-card); }
 
 @media (max-width: bp.$breakpoint-phone-max) {
   .header-section,
@@ -228,7 +250,7 @@ onMounted(() => { loadData(); fetchStats() })
     flex-direction: column;
   }
 
-  .action-group .el-button {
+  .action-group .btn {
     width: 100%;
   }
 }

@@ -1,20 +1,26 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="更新任务" width="var(--ui-dialog-width-md)" @close="handleClose">
-    <el-form ref="formRef" :model="form" label-width="120px" :rules="rules">
-      <el-form-item label="任务内容"><el-input :value="task?.work_content" disabled /></el-form-item>
-      <el-form-item label="生产数量"><el-input :value="task?.production_quantity" disabled /></el-form-item>
-      <el-form-item label="完成数量" prop="quantity_completed"><el-input-number v-model="form.quantity_completed" :min="0" :max="task?.production_quantity || 999999" class="number-control" /></el-form-item>
-      <el-form-item label="更新说明"><el-input v-model="form.notes" type="textarea" :rows="3" placeholder="请输入更新说明（可选）" /></el-form-item>
-    </el-form>
+  <BaseDialog :show="dialogVisible" title="更新任务" width="normal" @close="handleClose; dialogVisible = false;">
+    <div class="space-y-4">
+      <Input :model-value="task?.work_content" label="任务内容" disabled />
+      <Input :model-value="task?.production_quantity" label="生产数量" disabled />
+      <div>
+        <label class="input-label mb-1.5 block">完成数量</label>
+        <InputNumber v-model="form.quantity_completed" :min="0" :max="task?.production_quantity || 999999" class="w-full sm:w-52" />
+      </div>
+      <TextArea v-model="form.notes" label="更新说明" :rows="3" placeholder="请输入更新说明（可选）" />
+    </div>
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="loading" @click="handleConfirm">确定</el-button>
+      <div class="flex justify-end gap-3">
+        <button class="btn btn-secondary" @click="handleClose">取消</button>
+        <button class="btn btn-primary" :disabled="loading" @click="handleConfirm">确定</button>
+      </div>
     </template>
-  </el-dialog>
+  </BaseDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { Input, TextArea, InputNumber } from '@/components/common'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -24,23 +30,17 @@ const props = defineProps({
 
 const emit = defineEmits(['confirm', 'update:visible'])
 
-const formRef = ref(null)
+const formRef = ref<any>(null)
 const FORM_INITIAL = { quantity_completed: 0, notes: '' }
 const form = reactive({ ...FORM_INITIAL })
 const rules = { quantity_completed: [{ required: true, message: '请输入完成数量', trigger: 'blur' }] }
 
-const dialogVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })
+const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
 
-watch(() => props.visible, (val) => { if (val && props.task) initForm() })
+watch(() => props.visible, (val: any) => { if (val && props.task) initForm() })
 
 const initForm = () => { Object.assign(form, { quantity_completed: props.task?.quantity_completed || 0, notes: props.task?.notes || '' }); nextTick(() => { formRef.value?.clearValidate() }) }
 const resetForm = () => { Object.assign(form, FORM_INITIAL); formRef.value?.resetFields() }
-const handleConfirm = () => { formRef.value?.validate((valid) => { if (valid) emit('confirm', { ...form }) }) }
+const handleConfirm = () => { formRef.value?.validate((valid: any) => { if (valid) emit('confirm', { ...form }) }) }
 const handleClose = () => { resetForm(); emit('update:visible', false) }
 </script>
-
-<style scoped>
-.number-control {
-  width: min(100%, 220px);
-}
-</style>

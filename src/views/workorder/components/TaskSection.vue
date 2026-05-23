@@ -1,42 +1,42 @@
 <template>
-  <div v-loading="loading" class="task-section">
-    <div class="task-stats">
-      <el-row :gutter="20" align="middle">
-        <el-col :xs="12" :sm="8" :md="5"><div class="stat-item"><div class="stat-value">{{ taskStats.total }}</div><div class="stat-label">全部任务</div></div></el-col>
-        <el-col :xs="12" :sm="8" :md="5"><div class="stat-item draft"><div class="stat-value">{{ taskStats.draft }}</div><div class="stat-label">草稿</div></div></el-col>
-        <el-col :xs="12" :sm="8" :md="5"><div class="stat-item pending"><div class="stat-value">{{ taskStats.pending }}</div><div class="stat-label">待处理</div></div></el-col>
-        <el-col :xs="12" :sm="8" :md="5"><div class="stat-item completed"><div class="stat-value">{{ taskStats.completed }}</div><div class="stat-label">已完成</div></div></el-col>
-        <el-col :xs="24" :sm="8" :md="4"><div class="progress-display"><div class="progress-label">完成进度</div><el-progress type="circle" :percentage="taskStats.progress || 0" :width="60" /></div></el-col>
-      </el-row>
-    </div>
-    <div class="table-scroll">
-    <el-table :data="tasks" border size="small" style="margin-top: 10px;">
-      <el-table-column prop="id" label="ID" width="60" align="center" />
-      <el-table-column prop="work_content" label="任务内容" min-width="150" />
-      <el-table-column prop="task_type_display" label="类型" width="100" />
-      <el-table-column prop="status_display" label="状态" width="100"><template #default="scope"><StatusTag :status="scope.row.status" category="task" :label="scope.row.status_display" size="small" /></template></el-table-column>
-      <el-table-column prop="production_quantity" label="数量" width="100" align="center" />
-    </el-table>
-    </div>
+  <div class="p-3">
+    <LoadingSpinner v-if="loading" size="lg" class="mx-auto my-8 block" />
+    <template v-else>
+      <div class="mb-4 grid grid-cols-2 gap-4 md:grid-cols-5">
+        <div class="rounded-xl bg-blue-50 p-4 text-center dark:bg-blue-900/20"><div class="text-2xl font-bold text-blue-600">{{ taskStats.total }}</div><div class="text-xs text-gray-500">全部任务</div></div>
+        <div class="rounded-xl bg-gray-100 p-4 text-center dark:bg-dark-700"><div class="text-2xl font-bold text-gray-500">{{ taskStats.draft }}</div><div class="text-xs text-gray-500">草稿</div></div>
+        <div class="rounded-xl bg-yellow-50 p-4 text-center dark:bg-yellow-900/20"><div class="text-2xl font-bold text-yellow-600">{{ taskStats.pending }}</div><div class="text-xs text-gray-500">待处理</div></div>
+        <div class="rounded-xl bg-green-50 p-4 text-center dark:bg-green-900/20"><div class="text-2xl font-bold text-green-600">{{ taskStats.completed }}</div><div class="text-xs text-gray-500">已完成</div></div>
+        <div class="rounded-xl bg-primary-50 p-4 text-center dark:bg-primary-900/20"><CircularProgress :percentage="taskStats.progress || 0" :size="60" :stroke-width="8" /><div class="mt-1 text-xs text-gray-500">完成进度</div></div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="mt-2 w-full border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-gray-200 bg-gray-50 dark:border-dark-700 dark:bg-dark-800">
+              <th class="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-400">ID</th>
+              <th class="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-400">任务内容</th>
+              <th class="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-400">类型</th>
+              <th class="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-400">状态</th>
+              <th class="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-400">数量</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in tasks" :key="row.id" class="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-dark-800 dark:hover:bg-dark-800">
+              <td class="px-3 py-2 text-center">{{ row.id }}</td>
+              <td class="px-3 py-2">{{ row.work_content }}</td>
+              <td class="px-3 py-2">{{ row.task_type_display }}</td>
+              <td class="px-3 py-2"><StatusTag :status="row.status" category="task" :label="row.status_display" size="small" /></td>
+              <td class="px-3 py-2 text-center">{{ row.production_quantity }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
   </div>
 </template>
 
-<script setup>
-import { StatusTag } from '@/components/common'
+<script setup lang="ts">
+import { StatusTag, CircularProgress, LoadingSpinner } from '@/components/common'
 
-const props = defineProps({ tasks: { type: Array, default: () => [] }, taskStats: { type: Object, default: () => ({}) }, loading: { type: Boolean, default: false } })
+const props = defineProps({ tasks: { type: Array as any, default: () => [] }, taskStats: { type: Object, default: () => ({}) }, loading: { type: Boolean, default: false } })
 </script>
-
-<style scoped>
-.task-section { padding: 10px; }
-.task-stats :deep(.el-row) { row-gap: var(--ui-control-gap); }
-.table-scroll { overflow-x: auto; }
-.stat-item { text-align: center; padding: 10px; }
-.stat-value { font-size: 24px; font-weight: bold; color: #409EFF; }
-.stat-item.draft .stat-value { color: #909399; }
-.stat-item.pending .stat-value { color: #E6A23C; }
-.stat-item.completed .stat-value { color: #67C23A; }
-.stat-label { font-size: 12px; color: #909399; }
-.progress-display { text-align: center; }
-.progress-label { font-size: 12px; color: #909399; margin-bottom: 5px; }
-</style>

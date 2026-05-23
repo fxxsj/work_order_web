@@ -1,26 +1,29 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="添加物料" width="var(--ui-dialog-width-sm)" @close="handleClose">
-    <el-form ref="formRef" :model="form" label-width="80px">
-      <el-form-item label="物料">
-        <el-select v-model="form.material_id" placeholder="请选择物料" style="width: 100%;" filterable>
-          <el-option v-for="item in materialList" :key="item.id" :label="item.name" :value="item.id" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="备注"><el-input v-model="form.notes" type="textarea" :rows="3" placeholder="请输入备注（可选）" /></el-form-item>
-    </el-form>
+  <BaseDialog :show="dialogVisible" title="添加物料" width="narrow" @close="handleClose; dialogVisible = false;">
+    <div class="space-y-4">
+      <Select
+        v-model="form.material_id"
+        label="物料"
+        :options="materialList.map((m: any) => ({ value: m.id, label: m.name }))"
+        placeholder="请选择物料"
+        searchable
+      />
+      <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注（可选）" />
+    </div>
     <template #footer>
-      <el-button @click="handleCancel">取消</el-button>
-      <el-button type="primary" :loading="loading" @click="handleSubmit">确定</el-button>
+      <button class="btn" @click="handleCancel">取消</button>
+      <button class="btn btn-primary" :disabled="loading" @click="handleSubmit">确定</button>
     </template>
-  </el-dialog>
+  </BaseDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
+import { Select, TextArea } from '@/components/common'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
-  materialList: { type: Array, default: () => [] },
+  materialList: { type: Array as any, default: () => [] },
   loading: { type: Boolean, default: false }
 })
 
@@ -29,7 +32,7 @@ const emit = defineEmits(['submit', 'update:visible'])
 const formRef = ref(null)
 const form = reactive({ material_id: null, notes: '' })
 
-const dialogVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })
+const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
 
 const handleSubmit = () => { if (form.material_id) emit('submit', { material_id: form.material_id, notes: form.notes }) }
 const handleCancel = () => { emit('update:visible', false) }

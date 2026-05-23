@@ -13,7 +13,7 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import PlateFormDialog from '@/views/components/PlateFormDialog.vue'
 
@@ -22,7 +22,7 @@ const props = defineProps({
   dialogType: { type: String, default: 'create' },
   embossingPlate: { type: Object, default: null },
   loading: { type: Boolean, default: false },
-  productList: { type: Array, default: () => [] }
+  productList: { type: Array as any, default: () => [] }
 })
 
 const emit = defineEmits(['confirm', 'update:visible'])
@@ -32,16 +32,16 @@ const rules = { name: [{ required: true, message: '请输入压凸版名称', tr
 
 const dialogVisibleSync = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: (val: any) => emit('update:visible', val)
 })
 
-const handleSubmit = (data) => {
+const handleSubmit = (data: any) => {
   // PlateFormDialog emits merged data with products_data.
   // Original EmbossingPlateFormDialog emitted { form, productItems } where productItems
   // had { product, quantity, sort_order } objects.
   // Reconstruct to match what EmbossingPlateList.handleFormConfirm expects.
   const { products_data, ...formData } = data
-  const productItems = (products_data || []).map((item, i) => ({
+  const productItems = (products_data || []).map((item: any, i: any) => ({
     product: item.product,
     quantity: item.quantity,
     sort_order: i

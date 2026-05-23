@@ -1,20 +1,20 @@
 <template>
-  <el-dialog v-model="visible" title="质检详情" width="var(--ui-dialog-width-lg)" @close="visible = false">
-    <el-descriptions v-if="data" :column="2" border>
-      <el-descriptions-item label="产品名称">{{ data.product_name }}</el-descriptions-item>
-      <el-descriptions-item label="检验结果"><StatusTag :status="data.status" category="inspection" :label="data.status_display" /></el-descriptions-item>
-      <el-descriptions-item label="合格数量">{{ data.passed_quantity || 0 }}</el-descriptions-item>
-      <el-descriptions-item label="不合格数量">{{ data.failed_quantity || 0 }}</el-descriptions-item>
-    </el-descriptions>
-    <template #footer><el-button @click="visible = false">关闭</el-button></template>
-  </el-dialog>
+  <BaseDialog :show="visible" title="质检详情" width="wide" @close="visible = false">
+    <div v-if="data" class="descriptions-grid" style="--col: 2">
+      <div class="description-item"><div class="description-label">产品名称</div><div class="description-value">{{ data.product_name }}</div></div>
+      <div class="description-item"><div class="description-label">检验结果</div><div class="description-value"><StatusTag :status="data.status" category="inspection" :label="data.status_display" /></div></div>
+      <div class="description-item"><div class="description-label">合格数量</div><div class="description-value">{{ data.passed_quantity || 0 }}</div></div>
+      <div class="description-item"><div class="description-label">不合格数量</div><div class="description-value">{{ data.failed_quantity || 0 }}</div></div>
+    </div>
+    <template #footer><button class="btn" @click="visible = false">关闭</button></template>
+  </BaseDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { StatusTag } from '@/components/common'
 
 const props = defineProps({ visible: { type: Boolean, default: false }, data: { type: Object, default: null } })
 const emit = defineEmits(['update:visible'])
-const visible = computed({ get: () => props.visible, set: (v) => emit('update:visible', v) })
+const visible = computed({ get: () => props.visible, set: (v: any) => emit('update:visible', v) })
 </script>

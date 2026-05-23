@@ -1,72 +1,46 @@
 <template>
-  <div v-if="task.logs?.length" class="task-logs">
-    <div class="task-logs-title">{{ task.work_content }} - 操作记录（{{ task.logs.length }}条）</div>
-    <div class="table-scroll">
-    <el-table :data="task.logs" border size="small" class="logs-table">
-      <el-table-column prop="created_at" label="操作时间" width="160"><template #default="scope">{{ formatDateTime(scope.row.created_at) }}</template></el-table-column>
-      <el-table-column prop="operator_name" label="操作人" width="120" />
-      <el-table-column prop="log_type_display" label="操作类型" width="100" />
-      <el-table-column label="数量变化" width="180">
-        <template #default="scope">
-          <span v-if="scope.row.quantity_before !== null && scope.row.quantity_after !== null">{{ scope.row.quantity_before }} → {{ scope.row.quantity_after }}
-            <span v-if="scope.row.quantity_increment > 0" class="quantity-increment positive">(+{{ scope.row.quantity_increment }})</span>
-            <span v-else-if="scope.row.quantity_increment < 0" class="quantity-increment negative">({{ scope.row.quantity_increment }})</span>
-          </span>
-          <span v-else>-</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态变化" width="150"><template #default="scope"><span v-if="scope.row.status_before && scope.row.status_after">{{ getStatusText(scope.row.status_before) }} → {{ getStatusText(scope.row.status_after) }}</span><span v-else>-</span></template></el-table-column>
-      <el-table-column prop="content" label="操作内容" min-width="200" show-overflow-tooltip />
-    </el-table>
+  <div v-if="task.logs?.length" class="rounded-xl bg-gray-100 p-6 dark:bg-dark-800">
+    <div class="mb-3 font-bold text-primary-600">{{ task.work_content }} - 操作记录（{{ task.logs.length }}条）</div>
+    <div class="overflow-x-auto">
+      <table class="data-table w-full">
+        <thead>
+          <tr>
+            <th class="w-40">操作时间</th>
+            <th class="w-32">操作人</th>
+            <th class="w-28">操作类型</th>
+            <th class="w-44">数量变化</th>
+            <th class="w-40">状态变化</th>
+            <th class="min-w-52">操作内容</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="log in task.logs" :key="log.id">
+            <td>{{ formatDateTime(log.created_at) }}</td>
+            <td>{{ log.operator_name }}</td>
+            <td>{{ log.log_type_display }}</td>
+            <td>
+              <span v-if="log.quantity_before !== null && log.quantity_after !== null">{{ log.quantity_before }} → {{ log.quantity_after }}
+                <span v-if="log.quantity_increment > 0" class="ml-1 font-bold text-success-600">(+{{ log.quantity_increment }})</span>
+                <span v-else-if="log.quantity_increment < 0" class="ml-1 font-bold text-danger-600">({{ log.quantity_increment }})</span>
+              </span>
+              <span v-else>-</span>
+            </td>
+            <td>
+              <span v-if="log.status_before && log.status_after">{{ getStatusText(log.status_before) }} → {{ getStatusText(log.status_after) }}</span>
+              <span v-else>-</span>
+            </td>
+            <td>{{ log.content }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
-  <div v-else class="empty-logs">暂无操作记录</div>
+  <div v-else class="py-6 text-center text-gray-400">暂无操作记录</div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { formatDateTime } from '@/utils/filter'
 
 const props = defineProps({ task: { type: Object, required: true } })
-const getStatusText = (s) => ({ pending: '待开始', in_progress: '进行中', completed: '已完成', cancelled: '已取消' })[s] || s
+const getStatusText = (s: any) => ({ pending: '待开始', in_progress: '进行中', completed: '已完成', cancelled: '已取消' } as any)[s] || s
 </script>
-
-<style scoped>
-.task-logs {
-  padding: var(--ui-section-gap);
-  background-color: #f5f7fa;
-}
-
-.task-logs-title {
-  color: #409EFF;
-  font-weight: bold;
-  margin-bottom: var(--ui-control-gap);
-}
-
-.table-scroll {
-  overflow-x: auto;
-}
-
-.logs-table {
-  width: 100%;
-}
-
-.quantity-increment {
-  display: inline-block;
-  margin-left: 5px;
-  font-weight: bold;
-}
-
-.quantity-increment.positive {
-  color: #67C23A;
-}
-
-.quantity-increment.negative {
-  color: #F56C6C;
-}
-
-.empty-logs {
-  color: #909399;
-  padding: var(--ui-section-gap);
-  text-align: center;
-}
-</style>

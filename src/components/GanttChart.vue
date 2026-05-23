@@ -2,28 +2,28 @@
   <div class="gantt-chart">
     <div class="gantt-header">
       <div class="gantt-controls">
-        <el-button-group>
-          <el-button size="small" :disabled="scale <= SCALE_MIN" @click="zoomOut">
-            <el-icon><ZoomOut /></el-icon> 缩小
-          </el-button>
-          <el-button size="small" @click="resetZoom">
-            <el-icon><Refresh /></el-icon> 重置
-          </el-button>
-          <el-button size="small" :disabled="scale >= SCALE_MAX" @click="zoomIn">
-            <el-icon><ZoomIn /></el-icon> 放大
-          </el-button>
-        </el-button-group>
-        <el-button-group class="view-mode-group">
-          <el-button size="small" :type="viewMode === 'day' ? 'primary' : ''" @click="viewMode = 'day'">
+        <div class="inline-flex overflow-hidden rounded-xl border border-gray-200 dark:border-dark-600">
+          <button class="btn btn-sm" :disabled="scale <= SCALE_MIN" @click="zoomOut">
+            <Icon name="zoomOut" /> 缩小
+          </button>
+          <button class="btn btn-sm" @click="resetZoom">
+            <Icon name="refresh" /> 重置
+          </button>
+          <button class="btn btn-sm" :disabled="scale >= SCALE_MAX" @click="zoomIn">
+            <Icon name="zoomIn" /> 放大
+          </button>
+        </div>
+        <div class="inline-flex overflow-hidden rounded-xl border border-gray-200 dark:border-dark-600 view-mode-group">
+          <button class="btn btn-sm btn-secondary" @click="viewMode = 'day'">
             日视图
-          </el-button>
-          <el-button size="small" :type="viewMode === 'week' ? 'primary' : ''" @click="viewMode = 'week'">
+          </button>
+          <button class="btn btn-sm btn-secondary" @click="viewMode = 'week'">
             周视图
-          </el-button>
-          <el-button size="small" :type="viewMode === 'month' ? 'primary' : ''" @click="viewMode = 'month'">
+          </button>
+          <button class="btn btn-sm btn-secondary" @click="viewMode = 'month'">
             月视图
-          </el-button>
-        </el-button-group>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -95,16 +95,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ZoomOut, ZoomIn, Refresh } from '@element-plus/icons-vue'
-import { StatusTag } from '@/components/common'
+import { StatusTag, Icon } from '@/components/common'
 
 const props = defineProps({
-  processes: {
-    type: Array,
-    default: () => []
-  },
+  processes: { type: Array as any, default: () => [] },
   startDate: {
     type: String,
     default: ''
@@ -126,9 +122,9 @@ const viewMode = ref('day')
 const dayWidth = ref(GANTT_DAY_WIDTH)
 
 const sortedProcesses = computed(() => {
-  return [...props.processes].sort((a, b) => {
+  return [...props.processes].sort((a: any, b: any) => {
     if (a.start_date && b.start_date) {
-      return new Date(a.start_date) - new Date(b.start_date)
+      return new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
     }
     return 0
   })
@@ -146,27 +142,27 @@ const timelineDates = computed(() => {
   return dates
 })
 
-const getBarStyle = (process) => {
+const getBarStyle = (process: any) => {
   const start = new Date(process.start_date)
   const end = new Date(process.end_date)
   const timelineStart = props.startDate ? new Date(props.startDate) : new Date()
-  
-  const offsetDays = Math.floor((start - timelineStart) / (1000 * 60 * 60 * 24))
-  const durationDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1
-  
+
+  const offsetDays = Math.floor((start.getTime() - timelineStart.getTime()) / (1000 * 60 * 60 * 24))
+  const durationDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+
   return {
     left: `${offsetDays * dayWidth.value * scale.value}px`,
     width: `${durationDays * dayWidth.value * scale.value}px`
   }
 }
 
-const getDuration = (process) => {
+const getDuration = (process: any) => {
   const start = new Date(process.start_date)
   const end = new Date(process.end_date)
-  return Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1
+  return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
 }
 
-const formatDate = (dateStr) => {
+const formatDate = (dateStr: any) => {
   const date = new Date(dateStr)
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
@@ -334,7 +330,7 @@ const resetZoom = () => {
     width: min(72vw, var(--ui-chart-sidebar-width));
   }
 
-  .gantt-controls :deep(.el-button-group) {
+  .gantt-controls .view-mode-group {
     display: flex;
   }
 }

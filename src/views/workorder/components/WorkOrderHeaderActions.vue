@@ -1,59 +1,24 @@
 <template>
-  <div class="header-actions">
-    <el-button :icon="Back" @click="emit('back')">返回</el-button>
-    <div class="header-command-group">
-      <el-button :icon="Printer" @click="emit('print')">打印</el-button>
-      <el-button v-if="canEdit" type="primary" :icon="Edit" @click="emit('edit')">编辑</el-button>
-      <el-dropdown @command="handleStatusChange">
-        <el-button type="success">更改状态<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item command="pending">待开始</el-dropdown-item>
-            <el-dropdown-item command="in_progress">进行中</el-dropdown-item>
-            <el-dropdown-item command="paused">已暂停</el-dropdown-item>
-            <el-dropdown-item command="completed">已完成</el-dropdown-item>
-            <el-dropdown-item command="cancelled">已取消</el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <button class="btn btn-secondary" @click="emit('back')"><Icon name="arrowLeft" class="h-4 w-4" /> 返回</button>
+    <div class="flex flex-wrap items-center gap-3">
+      <button class="btn btn-secondary" @click="emit('print')"><Icon name="printer" class="h-4 w-4" /> 打印</button>
+      <button v-if="canEdit" class="btn btn-primary" @click="emit('edit')"><Icon name="edit" class="h-4 w-4" /> 编辑</button>
+      <select class="select btn btn-success" @change="handleStatusChange">
+        <option value="pending">待开始</option>
+        <option value="in_progress">进行中</option>
+        <option value="paused">已暂停</option>
+        <option value="completed">已完成</option>
+        <option value="cancelled">已取消</option>
+      </select>
     </div>
   </div>
 </template>
 
-<script setup>
-import { Back, Printer, Edit, ArrowDown } from '@element-plus/icons-vue'
+<script setup lang="ts">
+import { Icon } from '@/components/common'
 
 const props = defineProps({ canEdit: { type: Boolean, default: false } })
 const emit = defineEmits(['back', 'print', 'edit', 'status-change'])
-const handleStatusChange = (command) => emit('status-change', command)
+const handleStatusChange = (e: any) => emit('status-change', e.target.value)
 </script>
-
-<style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.header-actions,
-.header-command-group {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  flex-wrap: wrap;
-}
-
-.header-actions {
-  justify-content: space-between;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-actions,
-  .header-command-group {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .header-actions .el-button,
-  .header-actions :deep(.el-dropdown),
-  .header-actions :deep(.el-dropdown .el-button) {
-    width: 100%;
-  }
-}
-</style>

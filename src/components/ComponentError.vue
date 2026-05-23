@@ -1,24 +1,21 @@
 <template>
   <div class="component-error">
-    <el-icon class="error-icon">
-      <Warning />
-    </el-icon>
+    <Icon name="exclamationTriangle" class="h-12 w-12 text-danger-500" />
     <p class="error-text">
       {{ text }}
     </p>
-    <el-button
+    <button
       v-if="showRetry"
-      type="primary"
-      size="small"
+      class="btn btn-primary btn-sm"
       @click="handleRetry"
     >
       重试
-    </el-button>
+    </button>
   </div>
 </template>
 
-<script setup>
-import { Warning } from '@element-plus/icons-vue'
+<script setup lang="ts">
+import { Icon } from '@/components/common'
 
 const props = defineProps({
   text: {
@@ -40,7 +37,7 @@ const handleRetry = () => {
 }
 </script>
 
-<style scoped>
+<style>
 .component-error {
   display: flex;
   flex-direction: column;
@@ -50,14 +47,8 @@ const handleRetry = () => {
   padding: 20px;
 }
 
-.error-icon {
-  font-size: 48px;
-  color: #f56c6c;
-  margin-bottom: 16px;
-}
-
 .error-text {
-  margin: 0 0 16px;
+  margin: 16px 0;
   font-size: 14px;
   color: #606266;
 }

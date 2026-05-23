@@ -1,79 +1,78 @@
 <template>
   <div class="assignment-history">
-    <el-row v-if="summary" :gutter="20" class="stats-section">
-      <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><el-icon><Document /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.total || 0 }}</div><div class="stat-label">总记录数</div></div></div></el-card></el-col>
-      <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #67C23A;"><el-icon><Tickets /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.unique_tasks || 0 }}</div><div class="stat-label">涉及任务数</div></div></div></el-card></el-col>
-      <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #E6A23C;"><el-icon><OfficeBuilding /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.unique_departments || 0 }}</div><div class="stat-label">涉及部门数</div></div></div></el-card></el-col>
-      <el-col :xs="24" :sm="12" :md="6"><el-card class="stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #909399;"><el-icon><User /></el-icon></div><div class="stat-info"><div class="stat-value">{{ summary.unique_operators || 0 }}</div><div class="stat-label">涉及操作员数</div></div></div></el-card></el-col>
-    </el-row>
+    <div v-if="summary" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 mb-5">
+      <div class="card stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><Icon name="document" /></div><div class="stat-info"><div class="stat-value">{{ (summary as any).total || 0 }}</div><div class="stat-label">总记录数</div></div></div></div>
+      <div class="card stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #67C23A;"><Icon name="tickets" /></div><div class="stat-info"><div class="stat-value">{{ (summary as any).unique_tasks || 0 }}</div><div class="stat-label">涉及任务数</div></div></div></div>
+      <div class="card stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #E6A23C;"><Icon name="building" /></div><div class="stat-info"><div class="stat-value">{{ (summary as any).unique_departments || 0 }}</div><div class="stat-label">涉及部门数</div></div></div></div>
+      <div class="card stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #909399;"><Icon name="user" /></div><div class="stat-info"><div class="stat-value">{{ (summary as any).unique_operators || 0 }}</div><div class="stat-label">涉及操作员数</div></div></div></div>
+    </div>
 
-    <el-card class="history-card">
+    <div class="card history-card">
       <div class="header-section">
         <div class="filter-group">
-          <el-date-picker v-model="filters.date_range" class="history-date-control" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" @change="handleSearch" />
-          <el-select v-model="filters.action_type" class="history-filter-control" placeholder="操作类型" clearable @change="handleSearch">
-            <el-option label="分派" value="assign" />
-            <el-option label="取消分派" value="unassign" />
-            <el-option label="转交" value="transfer" />
-            <el-option label="完成" value="complete" />
-          </el-select>
-          <el-select v-model="filters.department" class="history-filter-control" placeholder="部门" clearable filterable @change="handleSearch">
-            <el-option v-for="dept in departmentList" :key="dept.id" :label="dept.name" :value="dept.id" />
-          </el-select>
-          <el-input v-model="filters.task_id" class="history-filter-control" placeholder="任务ID" clearable @change="handleSearch" />
+          <input type="date" v-model="filters.start_date" class="input history-date-control" placeholder="开始日期" @change="handleSearch" />
+          <input type="date" v-model="filters.end_date" class="input history-date-control" placeholder="结束日期" @change="handleSearch" />
+          <select v-model="filters.action_type" class="select history-filter-control" placeholder="操作类型" @change="handleSearch">
+            <option value="">全部</option>
+            <option value="assign">分派</option>
+            <option value="unassign">取消分派</option>
+            <option value="transfer">转交</option>
+            <option value="complete">完成</option>
+          </select>
+          <select v-model="filters.department" class="select history-filter-control" placeholder="部门" @change="handleSearch">
+            <option value="">全部</option>
+            <option v-for="dept in departmentList" :key="dept.id" :label="dept.name" :value="dept.id">{{ dept.name }}</option>
+          </select>
+          <input v-model="filters.task_id" class="input history-filter-control" placeholder="任务ID" @change="handleSearch" />
         </div>
         <div class="action-group">
-          <el-button :icon="RefreshRight" @click="resetFilters">重置</el-button>
-          <el-button :icon="Download" type="success" :loading="exporting" @click="handleExport">导出</el-button>
+          <button class="btn" @click="resetFilters">重置</button>
+          <button class="btn btn-success" :disabled="exporting" @click="handleExport">导出</button>
         </div>
       </div>
 
       <div class="table-scroll">
-      <el-table v-loading="loading" :data="tableData" border class="history-table">
-        <el-table-column prop="created_at" label="时间" width="160">
-          <template #default="scope">{{ formatDateTime(scope.row.created_at) }}</template>
-        </el-table-column>
-        <el-table-column prop="action_type_display" label="操作类型" width="100">
-          <template #default="scope"><StatusTag :status="scope.row.action_type" category="assignmentAction" :label="scope.row.action_type_display" /></template>
-        </el-table-column>
-        <el-table-column prop="task_id" label="任务ID" width="80" />
-        <el-table-column prop="work_order_number" label="施工单号" width="150">
-          <template #default="scope">
-            <el-link type="primary" @click="goToWorkOrder(scope.row)">{{ scope.row.work_order_number || '-' }}</el-link>
-          </template>
-        </el-table-column>
-        <el-table-column prop="process_name" label="工序" width="120" />
-        <el-table-column label="原分派" width="200">
-          <template #default="scope">
-            <span v-if="scope.row.from_department_name">{{ scope.row.from_department_name }}</span>
-            <span v-if="scope.row.from_operator_name"> / {{ scope.row.from_operator_name }}</span>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="新分派" width="200">
-          <template #default="scope">
-            <span v-if="scope.row.to_department_name">{{ scope.row.to_department_name }}</span>
-            <span v-if="scope.row.to_operator_name"> / {{ scope.row.to_operator_name }}</span>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="operator_name" label="操作人" width="100" />
-        <el-table-column prop="reason" label="原因" min-width="150" show-overflow-tooltip />
-      </el-table>
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
+              <th class="px-4 py-3 w-40">时间</th>
+              <th class="px-4 py-3 w-24">操作类型</th>
+              <th class="px-4 py-3 w-20">任务ID</th>
+              <th class="px-4 py-3 w-36">施工单号</th>
+              <th class="px-4 py-3 w-28">工序</th>
+              <th class="px-4 py-3 w-48">原分派</th>
+              <th class="px-4 py-3 w-48">新分派</th>
+              <th class="px-4 py-3 w-24">操作人</th>
+              <th class="px-4 py-3 min-w-36">原因</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
+            <tr v-for="row in tableData" :key="row.id">
+              <td class="px-4 py-3">{{ formatDateTime(row.created_at) }}</td>
+              <td class="px-4 py-3"><StatusTag :status="row.action_type" category="assignmentAction" :label="row.action_type_display" /></td>
+              <td class="px-4 py-3">{{ row.task_id }}</td>
+              <td class="px-4 py-3"><a class="text-primary hover:underline cursor-pointer" @click.prevent="goToWorkOrder(row)">{{ row.work_order_number || '-' }}</a></td>
+              <td class="px-4 py-3">{{ row.process_name }}</td>
+              <td class="px-4 py-3">{{ row.from_department_name || '-' }}{{ row.from_operator_name ? ' / ' + row.from_operator_name : '' }}</td>
+              <td class="px-4 py-3">{{ row.to_department_name || '-' }}{{ row.to_operator_name ? ' / ' + row.to_operator_name : '' }}</td>
+              <td class="px-4 py-3">{{ row.operator_name }}</td>
+              <td class="px-4 py-3 truncate max-w-xs">{{ row.reason }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <el-pagination v-if="total > 0" v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange" @current-change="handlePageChange" class="pagination-row" />
+      <Pagination v-if="total > 0" :total="total" :page="currentPage" :pageSize="pageSize" @update:page="handlePageChange" @update:pageSize="handleSizeChange" class="pagination-row" />
 
-      <el-empty v-if="!loading && tableData.length === 0" description="暂无分派历史" />
-    </el-card>
+      <EmptyState v-if="!loading && tableData.length === 0" description="暂无分派历史" />
+    </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { RefreshRight, Download, Document, Tickets, OfficeBuilding, User } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from '@/utils/message'
 import { taskAssignmentHistoryAPI, departmentAPI } from '@/api/modules'
 import { useCrudList } from '@/composables'
 import { StatusTag } from '@/components/common'
@@ -84,9 +83,9 @@ const router = useRouter()
 
 const exporting = ref(false)
 const summary = ref({})
-const departmentList = ref([])
+const departmentList = ref<any[]>([])
 
-const buildHistoryParams = (params) => {
+const buildHistoryParams = (params: any) => {
   const { date_range, ...nextParams } = params
   if (date_range?.length === 2) {
     nextParams.start_date = date_range[0]
@@ -114,24 +113,24 @@ const {
 })
 
 const loadSummary = async () => {
-  try { const res = await taskAssignmentHistoryAPI.getSummary(); summary.value = res?.data || res || {} } catch (error) {}
+  try { const res: any = await taskAssignmentHistoryAPI.getSummary(); summary.value = res?.data || res || {} } catch (error: any) {}
 }
 
 const loadDepartments = async () => {
-  try { const res = await departmentAPI.getList({ page_size: 1000 }); departmentList.value = res?.results || [] } catch (error) {}
+  try { const res: any = await departmentAPI.getList({ page_size: 1000 }); departmentList.value = res?.results || [] } catch (error: any) {}
 }
 
-const goToWorkOrder = (row) => { if (row.work_order_id) router.push(`/workorders/${row.work_order_id}`) }
+const goToWorkOrder = (row: any) => { if (row.work_order_id) router.push(`/workorders/${row.work_order_id}`) }
 
 const handleExport = async () => {
   try {
     exporting.value = true
     const params = {}
     if (filters.value.date_range?.length === 2) {
-      params.start_date = filters.value.date_range[0]
-      params.end_date = filters.value.date_range[1]
+      (params as any).start_date = filters.value.date_range[0]
+      (params as any).end_date = filters.value.date_range[1]
     }
-    const response = await taskAssignmentHistoryAPI.export(params)
+    const response: any = await taskAssignmentHistoryAPI.export(params)
     const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -140,7 +139,7 @@ const handleExport = async () => {
     link.click()
     window.URL.revokeObjectURL(url)
     ElMessage.success('导出成功')
-  } catch (error) { ErrorHandler.showMessage(error, '导出失败') } finally { exporting.value = false }
+  } catch (error: any) { ErrorHandler.showMessage(error, '导出失败') } finally { exporting.value = false }
 }
 
 onMounted(() => { loadData(); loadSummary(); loadDepartments() })

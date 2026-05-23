@@ -10,17 +10,15 @@
     />
     <div v-if="showPlaceholder" class="lazy-placeholder" :style="placeholderStyle">
       <slot name="placeholder">
-        <el-icon class="is-loading">
-          <Loading />
-        </el-icon>
+        <Icon name="loading" class="h-6 w-6 animate-spin text-primary-500" />
       </slot>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Loading } from '@element-plus/icons-vue'
+import { Icon } from '@/components/common'
 
 const props = defineProps({
   src: { type: String, required: true },
@@ -55,7 +53,7 @@ const handleError = () => {
 }
 </script>
 
-<style scoped>
+<style>
 .lazy-image-wrapper {
   position: relative;
   display: inline-block;

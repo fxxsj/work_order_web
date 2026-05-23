@@ -18,7 +18,7 @@
           <label for="username" class="input-label">用户名</label>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <User class="h-5 w-5 text-gray-400 dark:text-dark-500" />
+              <Icon name="user" class="h-5 w-5 text-gray-400 dark:text-dark-500" />
             </div>
             <input
               id="username"
@@ -40,7 +40,7 @@
           <label for="password" class="input-label">密码</label>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Lock class="h-5 w-5 text-gray-400 dark:text-dark-500" />
+              <Icon name="lock" class="h-5 w-5 text-gray-400 dark:text-dark-500" />
             </div>
             <input
               id="password"
@@ -110,13 +110,14 @@
   </AuthLayout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { User, Lock } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { Icon } from '@/components/common'
+import { ElMessage } from '@/utils/message'
 import { authAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { scheduleRefresh } from '@/api'
 import AuthLayout from '@/components/layout/AuthLayout.vue'
 
 const router = useRouter()
@@ -143,7 +144,11 @@ onMounted(async () => {
   if (hasToken) {
     try {
       await authAPI.getCurrentUser()
-    } catch (error) {
+      // 调度主动刷新（如果有过期时间）
+      if (userStore.currentUser?.access_expires_at) {
+        scheduleRefresh(userStore.currentUser.access_expires_at)
+      }
+    } catch (error: any) {
       // 忽略错误
     }
   }
@@ -181,20 +186,26 @@ const handleLogin = async () => {
   loading.value = true
 
   try {
-    const payload = await authAPI.login(loginForm)
+    const payload: any = await authAPI.login(loginForm)
 
     if (payload && payload.id) {
       userStore.setUser(payload)
+
+      // 调度主动 token 刷新
+      if (payload.access_expires_at) {
+        scheduleRefresh(payload.access_expires_at)
+      }
+
       showSuccessAlert.value = true
 
       setTimeout(() => {
-        const redirect = route.query.redirect || '/'
+        const redirect = (route.query.redirect as string) || '/'
         router.push(redirect)
       }, 800)
     } else {
       throw new Error('登录失败，请重试')
     }
-  } catch (error) {
+  } catch (error: any) {
     let message = '登录失败'
     if (error.response) {
       const status = error.response.status
@@ -222,5 +233,3 @@ const handleLogin = async () => {
 }
 </script>
 
-<style scoped>
-</style>

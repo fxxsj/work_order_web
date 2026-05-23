@@ -32,29 +32,12 @@
         />
 
         <!-- Quick Actions -->
-        <el-dropdown trigger="click" @command="handleQuickAction">
-          <button class="btn-ghost btn-icon hidden sm:inline-flex">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-          </button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="workorder">
-                <el-icon><Document /></el-icon>
-                施工单
-              </el-dropdown-item>
-              <el-dropdown-item command="sales">
-                <el-icon><SoldOut /></el-icon>
-                销售订单
-              </el-dropdown-item>
-              <el-dropdown-item command="purchase">
-                <el-icon><ShoppingCart /></el-icon>
-                采购单
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <select class="select btn-ghost btn-icon hidden sm:inline-flex" @change="handleQuickAction">
+          <option value="">新建</option>
+          <option value="workorder">施工单</option>
+          <option value="sales">销售订单</option>
+          <option value="purchase">采购单</option>
+        </select>
 
         <!-- User Dropdown -->
         <div class="relative" ref="dropdownRef">
@@ -128,19 +111,27 @@
       </div>
     </div>
   </header>
+
+  <ConfirmDialog
+    :show="logoutDialogVisible"
+    title="退出登录"
+    message="确定要退出登录吗？"
+    confirm-text="确定"
+    cancel-text="取消"
+    @confirm="handleLogoutConfirm"
+    @cancel="handleLogoutCancel"
+  />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
-import {
-  Document,
-  SoldOut,
-  ShoppingCart
-} from '@element-plus/icons-vue'
+import { ElMessage } from '@/utils/message'
+import { ElLoading } from '@/utils/loading'
+import { Icon, ConfirmDialog } from '@/components/common'
 import { authAPI, notificationAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
+import { clearRefreshTimer } from '@/api'
 import ErrorHandler from '@/utils/errorHandler'
 import NotificationCenter from '@/components/NotificationCenter.vue'
 
@@ -151,7 +142,8 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const dropdownOpen = ref(false)
-const dropdownRef = ref(null)
+const dropdownRef = ref<any>(null)
+const logoutDialogVisible = ref(false)
 
 // Page title from route meta
 const pageTitle = computed(() => route.meta.title || '')
@@ -167,21 +159,21 @@ const displayName = computed(() => {
 })
 
 // Notification state
-const notifications = ref([])
+const notifications = ref<any[]>([])
 const notificationLoading = ref(false)
 const connectionError = ref(false)
-let notificationPolling = null
+let notificationPolling: any = null
 let retryCount = 0
 const MAX_RETRY_COUNT = 3
 const BASE_RETRY_DELAY = 5000
 
 const fetchNotifications = async () => {
   try {
-    const response = await notificationAPI.list({ page: 1, page_size: 10 })
+    const response: any = await notificationAPI.list({ page: 1, page_size: 10 })
     notifications.value = response?.data?.results || response?.data || response?.results || []
     connectionError.value = false
     retryCount = 0
-  } catch (error) {
+  } catch (error: any) {
     connectionError.value = true
     retryCount++
     if (retryCount <= MAX_RETRY_COUNT) {
@@ -196,14 +188,14 @@ const fetchNotifications = async () => {
 const markAllAsRead = async () => {
   try {
     await notificationAPI.markAllRead()
-    notifications.value = notifications.value.map(n => ({ ...n, is_read: true }))
+    notifications.value = notifications.value.map((n: any) => ({ ...n, is_read: true }))
     ElMessage.success('已全部标记为已读')
-  } catch (error) {
-    ErrorHandler.handle(error, { context: '标记已读', fallbackMessage: '标记已读失败' })
+  } catch (error: any) {
+    ErrorHandler.handle(error, '标记已读')
   }
 }
 
-const handleNotificationClick = (notification) => {
+const handleNotificationClick = (notification: any) => {
   if (!notification.is_read) {
     notificationAPI.markAsRead(notification.id).then(() => {
       notification.is_read = true
@@ -214,18 +206,21 @@ const handleNotificationClick = (notification) => {
   }
 }
 
-const handleQuickAction = (command) => {
+const handleQuickAction = (e: any) => {
+  const command = e.target.value
+  if (!command) return
   switch (command) {
     case 'workorder': router.push('/workorders/create'); break
     case 'sales': router.push('/sales-orders/create'); break
     case 'purchase': router.push('/purchase-orders'); break
   }
+  e.target.value = '' // reset select
 }
 
 const openAdmin = () => {
   closeDropdown()
   const adminWindow = window.open('', '_blank', 'noopener')
-  authAPI.createAdminSession().then(result => {
+  authAPI.createAdminSession().then((result: any) => {
     const adminUrl = result?.admin_url || result?.data?.admin_url || '/admin/'
     if (adminWindow) {
       adminWindow.location = adminUrl
@@ -234,37 +229,39 @@ const openAdmin = () => {
     }
   }).catch(error => {
     if (adminWindow) adminWindow.close()
-    ErrorHandler.handle(error, { context: '打开管理后台', fallbackMessage: '无法进入管理后台' })
+    ErrorHandler.handle(error, '打开管理后台')
   })
 }
 
-const handleLogout = async () => {
+const handleLogout = () => {
   closeDropdown()
-  try {
-    await ElMessageBox.confirm('确定要退出登录吗?', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+  logoutDialogVisible.value = true
+}
 
-    const loading = ElLoading.service({ lock: true, text: '正在退出登录...', background: 'rgba(0,0,0,0.7)' })
-    try {
-      await authAPI.logout()
-    } catch (e) {
-      console.warn('后端登出API调用失败，但继续清除本地状态', e)
-    }
-    userStore.clearUser()
-    loading.close()
-    ElMessage.success('已退出登录')
-    setTimeout(() => { window.location.href = '/login' }, 500)
-  } catch {}
+const handleLogoutConfirm = async () => {
+  logoutDialogVisible.value = false
+  const loading = ElLoading.service({ lock: true, text: '正在退出登录...', background: 'rgba(0,0,0,0.7)' })
+  try {
+    await authAPI.logout()
+  } catch (e: any) {
+    console.warn('后端登出API调用失败，但继续清除本地状态', e)
+  }
+  userStore.clearUser()
+  clearRefreshTimer() // 清除主动刷新定时器
+  loading.close()
+  ElMessage.success('已退出登录')
+  setTimeout(() => { window.location.href = '/login' }, 500)
+}
+
+const handleLogoutCancel = () => {
+  logoutDialogVisible.value = false
 }
 
 function closeDropdown() {
   dropdownOpen.value = false
 }
 
-function handleClickOutside(event) {
+function handleClickOutside(event: any) {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
     closeDropdown()
   }
@@ -282,7 +279,7 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
+<style>
 .dropdown-enter-active,
 .dropdown-leave-active {
   transition: all 0.2s ease;

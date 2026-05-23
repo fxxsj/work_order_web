@@ -2,9 +2,8 @@
   <StatsCards title="对账单统计" :items="statItems" :loading="loading" :span="8" layout="media" />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { Document, CircleCheck, Clock } from '@element-plus/icons-vue'
 import { StatsCards } from '@/components/common'
 
 const props = defineProps({
@@ -13,8 +12,8 @@ const props = defineProps({
 })
 
 const statItems = computed(() => [
-  { key: 'total', label: '对账单总数', value: props.stats.total_count, format: 'number', icon: Document, tone: 'primary' },
-  { key: 'paid', label: '已付款', value: props.stats.paid_amount, format: 'currency', icon: CircleCheck, tone: 'success' },
-  { key: 'pending', label: '待付款', value: props.stats.pending_amount, format: 'currency', icon: Clock, tone: 'warning' }
+  { key: 'total', label: '对账单总数', value: props.stats.total_count, format: 'number', iconName: 'document', tone: 'primary' },
+  { key: 'paid', label: '已付款', value: props.stats.paid_amount, format: 'currency', iconName: 'checkCircle', tone: 'success' },
+  { key: 'pending', label: '待付款', value: props.stats.pending_amount, format: 'currency', iconName: 'clock', tone: 'warning' }
 ])
 </script>

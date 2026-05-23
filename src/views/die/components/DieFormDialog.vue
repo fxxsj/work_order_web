@@ -18,24 +18,34 @@
     @close="handleClose"
     @field-change="handleFieldChange"
   />
+
+  <ConfirmDialog
+    :show="truncateConfirmVisible"
+    title="切换刀模类型"
+    message="专用刀模只能关联1个产品，是否只保留第一个产品？"
+    confirm-text="确定"
+    cancel-text="取消"
+    @confirm="handleTruncateConfirm"
+    @cancel="handleTruncateCancel"
+  />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { ElMessageBox } from 'element-plus'
 import PlateFormDialog from '@/views/components/PlateFormDialog.vue'
+import { ConfirmDialog } from '@/components/common'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   dialogType: { type: String, default: 'create' },
   initialData: { type: Object, default: null },
   loading: { type: Boolean, default: false },
-  productList: { type: Array, default: () => [] }
+  productList: { type: Array as any, default: () => [] }
 })
 
 const emit = defineEmits(['submit', 'close', 'update:visible'])
 
-const plateFormRef = ref(null)
+const plateFormRef = ref<any>(null)
 
 const FORM_INITIAL_VALUES = {
   code: '', name: '', die_type: 'dedicated', size: '', material: '', thickness: '', notes: ''
@@ -66,10 +76,11 @@ const rules = {
 
 // Track die_type from PlateFormDialog's form for reactive canAddMoreProducts / productListHint
 const currentDieType = ref('dedicated')
+const truncateConfirmVisible = ref(false)
 
 const dialogVisibleSync = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: (val: any) => emit('update:visible', val)
 })
 
 const canAddMoreProducts = computed(() => currentDieType.value !== 'dedicated')
@@ -80,14 +91,14 @@ const productListHint = computed(() => ({
 }[currentDieType.value] || ''))
 
 // Sync die_type when dialog opens
-watch(() => props.visible, (val) => {
+watch(() => props.visible, (val: any) => {
   if (val) {
     currentDieType.value = (props.dialogType === 'edit' && props.initialData?.die_type) || 'dedicated'
   }
 })
 
 // Handle field changes from PlateFormDialog
-const handleFieldChange = (extraData) => {
+const handleFieldChange = (extraData: any) => {
   if (extraData.die_type !== undefined) {
     const newType = extraData.die_type
     currentDieType.value = newType
@@ -96,26 +107,31 @@ const handleFieldChange = (extraData) => {
     if (newType === 'dedicated' && plateFormRef.value) {
       const items = plateFormRef.value.productItems
       if (items.length > 1) {
-        ElMessageBox.confirm(
-          '专用刀模只能关联1个产品，是否只保留第一个产品？',
-          '提示',
-          { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
-        ).then(() => {
-          plateFormRef.value.productItems.splice(1)
-        }).catch(() => {})
+        truncateConfirmVisible.value = true
       }
     }
   }
+}
+
+const handleTruncateConfirm = () => {
+  truncateConfirmVisible.value = false
+  if (plateFormRef.value) {
+    plateFormRef.value.productItems.splice(1)
+  }
+}
+
+const handleTruncateCancel = () => {
+  truncateConfirmVisible.value = false
 }
 
 const handleClose = () => {
   emit('close')
 }
 
-const handleSubmit = (data) => {
+const handleSubmit = (data: any) => {
   // DieFormDialog adds relation_type to products_data based on die_type
   const relationTypeByDieType = data.die_type === 'combined' ? 'imposition' : 'exclusive'
-  data.products_data = data.products_data.map(item => ({
+  data.products_data = data.products_data.map((item: any) => ({
     ...item,
     relation_type: relationTypeByDieType
   }))

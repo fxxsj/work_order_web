@@ -1,73 +1,78 @@
 <template>
-  <div class="crud-page-layout">
+  <div class="space-y-6">
     <!-- 页面头部 -->
-    <div v-if="title || $slots.header" class="crud-header">
-      <div class="crud-header-left">
-        <h2 v-if="title" class="crud-title">
+    <div v-if="title || $slots.header" class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <h2 v-if="title" class="text-2xl font-bold text-gray-900 dark:text-white">
           {{ title }}
         </h2>
         <slot name="header"></slot>
       </div>
-      <div v-if="$slots.actions" class="crud-header-actions">
+      <div v-if="$slots.actions" class="flex items-center gap-3">
         <slot name="actions"></slot>
       </div>
     </div>
 
     <!-- 筛选/搜索区域 -->
-    <div v-if="$slots.filter || $slots.search" class="crud-filter-section">
+    <div v-if="$slots.filter || $slots.search" class="card p-5">
       <slot name="filter"></slot>
       <slot name="search"></slot>
     </div>
 
     <!-- 工具栏区域 -->
-    <div v-if="showToolbar || $slots.toolbar" class="crud-toolbar">
+    <div v-if="showToolbar || $slots.toolbar" class="flex flex-wrap items-center gap-3">
       <slot name="toolbar">
-        <el-button
+        <button
           v-if="showCreate"
-          type="primary"
-          :icon="Plus"
+          class="btn btn-primary"
           @click="$emit('create')"
         >
+          <Icon name="plus" size="sm" />
           {{ createText }}
-        </el-button>
-        <el-button
+        </button>
+        <button
           v-if="showExport"
-          type="success"
-          :icon="Download"
+          class="btn btn-success"
           @click="$emit('export')"
         >
+          <Icon name="download" size="sm" />
           导出
-        </el-button>
-        <el-button v-if="showRefresh" :icon="Refresh" @click="$emit('refresh')">
+        </button>
+        <button
+          v-if="showRefresh"
+          class="btn btn-secondary"
+          @click="$emit('refresh')"
+        >
+          <Icon name="refresh" size="sm" />
           刷新
-        </el-button>
+        </button>
       </slot>
     </div>
 
     <!-- 内容区域 -->
-    <div v-loading="loading" class="crud-content">
+    <div v-loading="loading" class="card min-w-0 overflow-x-auto">
       <slot></slot>
     </div>
 
     <!-- 分页区域 -->
-    <div v-if="showPagination" class="crud-pagination">
+    <div v-if="showPagination" class="w-full">
       <slot name="pagination">
-        <el-pagination
-          :current-page="currentPage"
+        <Pagination
+          :page="currentPage"
           :page-size="pageSize"
           :total="total"
-          :page-sizes="pageSizes"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
+          :page-size-options="pageSizes"
+          @update:page-size="handleSizeChange"
+          @update:page="handleCurrentChange"
         />
       </slot>
     </div>
   </div>
 </template>
 
-<script setup>
-import { Plus, Download, Refresh } from '@element-plus/icons-vue'
+<script setup lang="ts">
+import Icon from '@/components/icons/Icon.vue'
+import Pagination from './Pagination.vue'
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -81,70 +86,11 @@ const props = defineProps({
   currentPage: { type: Number, default: 1 },
   pageSize: { type: Number, default: 20 },
   total: { type: Number, default: 0 },
-  pageSizes: { type: Array, default: () => [10, 20, 50, 100] }
+  pageSizes: { type: Array as () => number[], default: () => [10, 20, 50, 100] }
 })
 
 const emit = defineEmits(['create', 'export', 'refresh', 'size-change', 'current-change'])
 
-const handleSizeChange = (size) => emit('size-change', size)
-const handleCurrentChange = (page) => emit('current-change', page)
+const handleSizeChange = (size: number) => emit('size-change', size)
+const handleCurrentChange = (page: number) => emit('current-change', page)
 </script>
-
-<style scoped lang="scss">
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.crud-page-layout {
-  padding: var(--ui-page-padding);
-}
-.crud-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  margin-bottom: var(--ui-section-gap);
-}
-.crud-title {
-  margin: 0;
-  font-size: var(--ui-font-size-lg);
-  font-weight: 500;
-}
-.crud-filter-section {
-  margin-bottom: var(--ui-section-gap);
-}
-.crud-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-control-gap);
-  margin-bottom: var(--ui-section-gap);
-}
-.crud-content {
-  min-width: 0;
-  margin-bottom: var(--ui-section-gap);
-  overflow-x: auto;
-}
-.crud-pagination {
-  display: flex;
-  justify-content: flex-end;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .crud-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .crud-header-actions,
-  .crud-toolbar {
-    width: 100%;
-  }
-
-  .crud-header-actions :deep(.el-button),
-  .crud-toolbar :deep(.el-button) {
-    flex: 1 1 auto;
-  }
-
-  .crud-pagination {
-    justify-content: center;
-  }
-}
-</style>

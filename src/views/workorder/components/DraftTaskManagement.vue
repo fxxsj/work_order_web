@@ -1,29 +1,38 @@
 <template>
-  <div v-if="showDraftTasks" class="draft-task-management">
-    <el-card>
-      <template #header><div class="card-header"><span>草稿任务管理</span><el-tag type="info" size="small">{{ draftTasks.length }} 个草稿任务</el-tag></div></template>
-      <el-alert title="提示" type="info" description="草稿任务是系统自动生成的任务预览，您可以在审核前批量编辑或删除这些任务。" :closable="false" style="margin-bottom: 15px;" />
-      <div class="table-scroll">
-      <el-table :data="draftTasks" border size="small" class="draft-task-table">
-        <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="任务ID" width="80" align="center" />
-        <el-table-column prop="work_content" label="任务内容" min-width="200" />
-        <el-table-column prop="task_type_display" label="任务类型" width="120" />
-        <el-table-column prop="production_quantity" label="数量" width="100" align="center" />
-        <el-table-column prop="status_display" label="状态" width="100" />
-      </el-table>
-      </div>
-    </el-card>
+  <div v-if="showDraftTasks" class="card mt-6">
+    <div class="mb-4 flex items-center gap-3 border-b border-gray-200 pb-3 dark:border-dark-700">
+      <span class="font-bold">草稿任务管理</span>
+      <Tag type="info" size="small">{{ draftTasks.length }} 个草稿任务</Tag>
+    </div>
+    <Alert title="提示" type="info" description="草稿任务是系统自动生成的任务预览，您可以在审核前批量编辑或删除这些任务。" :closable="false" :show-icon="true" class="mb-4" />
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 bg-gray-50 dark:border-dark-700 dark:bg-dark-800">
+            <th class="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-400">任务ID</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-400">任务内容</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-400">任务类型</th>
+            <th class="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-400">数量</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-400">状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in draftTasks" :key="row.id" class="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-dark-800 dark:hover:bg-dark-800">
+            <td class="px-3 py-2 text-center">{{ row.id }}</td>
+            <td class="px-3 py-2">{{ row.work_content }}</td>
+            <td class="px-3 py-2">{{ row.task_type_display }}</td>
+            <td class="px-3 py-2 text-center">{{ row.production_quantity }}</td>
+            <td class="px-3 py-2">{{ row.status_display }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
-<script setup>
-const props = defineProps({ draftTasks: { type: Array, default: () => [] }, showDraftTasks: { type: Boolean, default: false } })
+<script setup lang="ts">
+import { Tag, Alert } from '@/components/common'
+
+const props = defineProps({ draftTasks: { type: Array as any, default: () => [] }, showDraftTasks: { type: Boolean, default: false } })
 const emit = defineEmits(['selection-change'])
 </script>
-
-<style scoped>
-.card-header { display: flex; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
-.table-scroll { overflow-x: auto; }
-.draft-task-table { width: 100%; }
-</style>

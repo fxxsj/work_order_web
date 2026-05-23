@@ -1,17 +1,15 @@
 <template>
   <div class="process-list">
-    <el-card class="process-list-card" shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <span class="card-title">工序列表</span>
-          <el-badge :value="processes.length" class="badge" type="primary" />
-        </div>
-      </template>
+    <div class="card card-hover process-list-card">
+      <div class="card-header">
+        <span class="card-title">工序列表</span>
+        <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">{{ processes.length }}</span>
+      </div>
+      <div class="card-body">
 
-      <el-empty
+      <EmptyState
         v-if="!loading && processes.length === 0"
-        description="暂无工序数据"
-        :image-size="100"
+        title="暂无工序数据"
       />
 
       <div v-else class="process-items">
@@ -30,51 +28,40 @@
               {{ process.code }}
             </div>
           </div>
-          <el-icon v-if="isSelected(process)" class="selected-icon"><Check /></el-icon>
+          <Icon v-if="isSelected(process)" name="check" class="selected-icon" />
         </div>
 
-        <el-skeleton
-          v-if="loading"
-          :rows="5"
-          animated
-          style="margin-top: 16px;"
-        />
+        <div v-if="loading" class="space-y-3 mt-4">
+          <div v-for="i in 5" :key="i" class="h-8 animate-pulse rounded bg-gray-200 dark:bg-dark-600" />
+        </div>
       </div>
-    </el-card>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { Check } from '@element-plus/icons-vue'
+import { Icon } from '@/components/common'
 
 const props = defineProps({
-  processes: {
-    type: Array,
-    default: () => []
-  },
-  selectedId: {
-    type: [Number, String],
-    default: null
-  },
-  loading: {
-    type: Boolean,
-    default: false
-  }
+  processes: { type: Array as any, default: () => [] },
+  selectedId: { type: [Number, String], default: null },
+  loading: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['select'])
 
 const displayProcesses = computed(() => props.processes)
 
-const isSelected = (process) => process.id === props.selectedId
+const isSelected = (process: any) => process.id === props.selectedId
 
-const handleSelect = (process) => {
+const handleSelect = (process: any) => {
   emit('select', process)
 }
 </script>
 
-<style scoped>
+<style>
 .process-list {
   padding: 20px;
 }

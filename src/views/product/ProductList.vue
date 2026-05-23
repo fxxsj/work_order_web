@@ -1,321 +1,174 @@
 <template>
-  <div class="product-list">
-    <el-card>
-      <div class="header-section">
-        <el-input
-          class="management-search-control"
-          v-model="searchText"
-          placeholder="搜索产品名称、编码"
-          clearable
-          @input="handleSearchDebounced"
-          @clear="handleSearch"
-        >
-          <template #append>
-            <el-button :icon="Search" @click="handleSearch" />
-          </template>
-        </el-input>
-        <el-button
-          v-if="canCreate"
-          type="primary"
-          :icon="Plus"
-          @click="showCreateDialog"
-        >
-          新建产品
-        </el-button>
-      </div>
-
-      <div
-        v-if="tableData.length > 0"
-        class="table-scroll"
-      >
-        <el-table
-        v-loading="loading"
-        :data="tableData"
-          class="data-table"
-        >
-          <el-table-column prop="code" label="产品编码" width="120" />
-          <el-table-column prop="name" label="产品名称" width="200" />
-          <el-table-column label="产品类型" width="120">
-            <template #default="scope">
-              <el-tag
-                :type="scope.row.product_type === 'single' ? '' : (scope.row.product_type === 'group_main' ? 'warning' : 'info')"
-                size="small"
-              >
-                {{ scope.row.product_type_display || getProductTypeLabel(scope.row.product_type) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="所属产品组" width="150" show-overflow-tooltip>
-            <template #default="scope">
-              <span v-if="scope.row.product_group_name">{{ scope.row.product_group_name }}</span>
-              <span v-else style="color: #909399;">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="specification" label="规格" min-width="150" />
-          <el-table-column prop="unit" label="单位" width="80" align="center" />
-          <el-table-column prop="unit_price" label="单价" width="120" align="right">
-            <template #default="scope">
-              ¥{{ scope.row.unit_price }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="stock_quantity" label="库存数量" width="100" align="right" />
-          <el-table-column prop="min_stock_quantity" label="最小库存" width="100" align="right" />
-          <el-table-column label="状态" width="100">
-            <template #default="scope">
-              <el-tag :type="scope.row.is_active ? 'success' : 'info'">
-                {{ scope.row.is_active ? '启用' : '禁用' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip />
-          <el-table-column label="操作" width="150" fixed="right">
-            <template #default="scope">
-              <el-button
-                v-if="canEdit"
-                type="text"
-                size="small"
-                @click="handleEdit(scope.row)"
-              >
-                编辑
-              </el-button>
-              <el-button
-                v-if="canDelete"
-                type="text"
-                size="small"
-                style="color: #F56C6C;"
-                @click="handleDelete(scope.row)"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-
-      <el-pagination
-        v-if="total > 0"
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :total="total"
-        layout="total, sizes, prev, pager, next"
-        @size-change="handleSizeChange"
-        @current-change="handlePageChange"
+  <CrudPageLayout
+    title="产品管理"
+    :loading="loading"
+    :total="total"
+    :current-page="currentPage"
+    :page-size="pageSize"
+    @size-change="handleSizeChange"
+    @current-change="handlePageChange"
+  >
+    <template #search>
+      <SearchInput
+        v-model="searchText"
+        class="w-full sm:w-72"
+        placeholder="搜索产品名称、编码"
+        @search="handleSearch"
+        @clear="handleSearch"
       />
+    </template>
 
-      <el-empty
-        v-if="!loading && tableData.length === 0"
-        description="暂无产品数据"
-        :image-size="200"
-        style="margin-top: 50px;"
-      >
-        <el-button v-if="canCreate" type="primary" @click="showCreateDialog">
-          创建第一个产品
-        </el-button>
-      </el-empty>
-    </el-card>
+    <template #actions>
+      <button v-if="canCreate && tableData.length > 0" class="btn btn-primary" @click="showCreateDialog">
+        <Icon name="plus" size="sm" />
+        新建产品
+      </button>
+    </template>
 
-    <product-form-dialog
-      v-model="dialogVisible"
-      :dialog-type="dialogType"
-      :product="currentProduct"
-      :loading="formLoading"
-      :materials="materialList"
-      :processes="allProcesses"
-      :product-groups="productGroupList"
-      @confirm="handleFormConfirm"
-    />
-  </div>
+    <DataTable
+      :columns="columns"
+      :data="tableData"
+      :loading="loading"
+      :row-key="(row: any) => row.id"
+      @sort="handleSort"
+    >
+      <template #cell-product_type="{ row }">
+        <Tag :type="row.product_type === 'single' ? '' : (row.product_type === 'group_main' ? 'warning' : 'info')" size="small">
+          {{ row.product_type_display || getProductTypeLabel(row.product_type) }}
+        </Tag>
+      </template>
+
+      <template #cell-is_active="{ value }">
+        <Tag :type="value ? 'success' : 'info'">{{ value ? '启用' : '禁用' }}</Tag>
+      </template>
+
+      <template #cell-unit_price="{ value }">
+        <span class="text-right">¥{{ value }}</span>
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="flex items-center gap-2">
+          <button v-if="canEdit" class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="handleEdit(row)">编辑</button>
+          <button v-if="canDelete" class="btn btn-ghost btn-sm text-danger-600 dark:text-danger-400" @click="handleDelete(row)">删除</button>
+        </div>
+      </template>
+
+      <template #empty>
+        <EmptyState
+          :description="hasFilters ? '未找到匹配的产品' : '暂无产品数据'"
+          :action-text="canCreate && !hasFilters ? '创建第一个产品' : undefined"
+          @action="showCreateDialog"
+        />
+      </template>
+    </DataTable>
+  </CrudPageLayout>
+
+  <product-form-dialog v-model:visible="dialogVisible" :dialog-type="dialogType" :product="currentProduct" :loading="formLoading" :materials="materialList" :processes="allProcesses" :product-groups="productGroupList" @confirm="handleFormConfirm" />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Plus, Search } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from '@/utils/message'
 import { productAPI, processAPI, materialAPI, productMaterialAPI, productGroupAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
+import { CrudPageLayout, DataTable, EmptyState, SearchInput, Icon } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
 
+const columns: Column[] = [
+  { key: 'code', label: '产品编码', sortable: true, class: 'w-28' },
+  { key: 'name', label: '产品名称', sortable: true, class: 'w-48' },
+  { key: 'product_type', label: '产品类型', sortable: true, class: 'w-28 text-center' },
+  { key: 'product_group_name', label: '所属产品组', sortable: true, class: 'w-36' },
+  { key: 'specification', label: '规格', sortable: false },
+  { key: 'unit', label: '单位', sortable: true, class: 'w-20 text-center' },
+  { key: 'unit_price', label: '单价', sortable: true, class: 'w-28 text-right' },
+  { key: 'stock_quantity', label: '库存数量', sortable: true, class: 'w-24 text-right' },
+  { key: 'min_stock_quantity', label: '最小库存', sortable: true, class: 'w-24 text-right' },
+  { key: 'is_active', label: '状态', sortable: true, class: 'w-24 text-center' },
+  { key: 'description', label: '描述', sortable: false },
+  { key: 'actions', label: '操作', sortable: false, class: 'w-36' }
+]
+
 const {
-  searchText,
-  tableData,
-  loading,
-  total,
-  currentPage,
-  pageSize,
-  loadData,
-  handleSearch,
-  handleSearchDebounced,
-  handlePageChange,
-  handleSizeChange
-} = useCrudList(productAPI, 'getList', {
-  errorContext: '加载产品数据失败'
-})
+  searchText, tableData, loading, total, currentPage, pageSize,
+  loadData, handleSearch, handleSearchDebounced, handlePageChange, handleSizeChange, hasFilters
+} = useCrudList(productAPI, 'getList', { errorContext: '加载产品数据失败' })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('product')
-
-const crud = useCRUD(productAPI, {
-  onSuccess: () => { dialogVisible.value = false; loadData() },
-})
+const crud = useCRUD(productAPI, { onSuccess: () => { dialogVisible.value = false; loadData() } })
 
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const formLoading = ref(false)
-const currentProduct = ref(null)
-const allProcesses = ref([])
-const materialList = ref([])
-const productGroupList = ref([])
+const currentProduct = ref<any>(null)
+const allProcesses = ref<any[]>([])
+const materialList = ref<any[]>([])
+const productGroupList = ref<any[]>([])
 
 const loadAllProcesses = async () => {
   try {
-    let allProcesses = []
-    let page = 1
-    let hasMore = true
-
+    let allProcessesArr: any[] = []; let page = 1; let hasMore = true
     while (hasMore) {
-      const response = await processAPI.getList({
-        is_active: true,
-        page_size: 100,
-        page: page
-      })
-      if (response.results && response.results.length > 0) {
-        allProcesses = allProcesses.concat(response.results)
-        hasMore = response.next !== null && response.next !== undefined
-        page++
-      } else {
-        hasMore = false
-      }
+      const response: any = await processAPI.getList({ is_active: true, page_size: 100, page: page })
+      if (response.results && response.results.length > 0) { allProcessesArr = allProcessesArr.concat(response.results); hasMore = response.next !== null && response.next !== undefined; page++ } else { hasMore = false }
     }
-    allProcesses.value = allProcesses
-  } catch (error) {
-    ErrorHandler.showMessage(error, '加载工序列表')
-  }
+    allProcesses.value = allProcessesArr
+  } catch (error: any) { ErrorHandler.showMessage(error, '加载工序列表') }
 }
 
 const loadMaterialList = async () => {
-  try {
-    const response = await materialAPI.getList({ page_size: 100 })
-    materialList.value = response?.results || []
-  } catch (error) {
-    ErrorHandler.showMessage(error, '加载物料列表')
-  }
+  try { const response: any = await materialAPI.getList({ page_size: 100 }); materialList.value = response?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载物料列表') }
 }
 
 const loadProductGroupList = async () => {
-  try {
-    const response = await productGroupAPI.getList({ page_size: 100, is_active: true })
-    productGroupList.value = response?.results || []
-  } catch (error) {
-    ErrorHandler.showMessage(error, '加载产品组列表')
-  }
+  try { const response: any = await productGroupAPI.getList({ page_size: 100, is_active: true }); productGroupList.value = response?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载产品组列表') }
 }
 
-const showCreateDialog = () => {
-  dialogType.value = 'create'
-  currentProduct.value = null
-  dialogVisible.value = true
+const showCreateDialog = () => { dialogType.value = 'create'; currentProduct.value = null; dialogVisible.value = true }
+
+const handleEdit = async (row: any) => {
+  try { const detail: any = await productAPI.getDetail(row.id); currentProduct.value = detail; dialogType.value = 'edit'; dialogVisible.value = true } catch (error: any) { ErrorHandler.showMessage(error, '加载产品详情') }
 }
 
-const handleEdit = async (row) => {
+const handleDelete = async (row: any) => {
   try {
-    const detail = await productAPI.getDetail(row.id)
-    currentProduct.value = detail
-    dialogType.value = 'edit'
-    dialogVisible.value = true
-  } catch (error) {
-    ErrorHandler.showMessage(error, '加载产品详情')
-  }
-}
-
-const handleDelete = async (row) => {
-  try {
-    const confirmed = await ErrorHandler.confirm(
-      `确定要删除产品"${row.name}"吗？此操作不可撤销。`
-    )
+    const confirmed = await ErrorHandler.confirm(`确定要删除产品"${row.name}"吗？此操作不可撤销。`)
     if (!confirmed) return
     await crud.remove(row.id, '删除成功')
-  } catch (error) {
-    ErrorHandler.showMessage(error, '删除失败')
-  }
+  } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
 }
 
-const handleFormConfirm = async ({ form, materialItems }) => {
+const handleFormConfirm = async (payload: any) => { const { form: formData, materialItems } = payload;
   formLoading.value = true
   try {
     let productId
-
-    if (dialogType.value === 'edit') {
-      await productAPI.update(currentProduct.value.id, form)
-      productId = currentProduct.value.id
-      ElMessage.success('保存成功')
-    } else {
-      const result = await productAPI.create(form)
-      productId = result.id
-      ElMessage.success('创建成功')
-    }
-
+    if (dialogType.value === 'edit') { await productAPI.update(currentProduct.value.id, formData); productId = currentProduct.value.id; ElMessage.success('保存成功') }
+    else { const result: any = await productAPI.create(formData); productId = result.id; ElMessage.success('创建成功') }
     await saveProductMaterials(productId, materialItems)
-
     dialogVisible.value = false
     await loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, dialogType.value === 'edit' ? '保存失败' : '创建失败')
-  } finally {
-    formLoading.value = false
-  }
+  } catch (error: any) { ErrorHandler.showMessage(error, dialogType.value === 'edit' ? '保存失败' : '创建失败') } finally { formLoading.value = false }
 }
 
-const saveProductMaterials = async (productId, materialItems) => {
+const saveProductMaterials = async (productId: any, materialItems: any) => {
   if (dialogType.value === 'edit') {
-    try {
-      const existingMaterials = await productMaterialAPI.getList({ product: productId })
-      for (const material of existingMaterials?.results || []) {
-        await productMaterialAPI.delete(material.id)
-      }
-    } catch (error) {
-      logger.warn('删除现有物料失败', error)
-    }
+    try { const existingMaterials: any = await productMaterialAPI.getList({ product: productId }); for (const material of existingMaterials?.results || []) { await productMaterialAPI.delete(material.id) } } catch (error: any) { logger.warn('删除现有物料失败', error) }
   }
-
   for (let i = 0; i < materialItems.length; i++) {
     const item = materialItems[i]
     if (item.material) {
-      try {
-        await productMaterialAPI.create({
-          product: productId,
-          material: item.material,
-          material_size: item.material_size || '',
-          material_usage: item.material_usage || '',
-          need_cutting: item.need_cutting || false,
-          notes: item.notes || '',
-          sort_order: i
-        })
-      } catch (error) {
-        logger.warn('保存物料失败', error)
-      }
+      try { await productMaterialAPI.create({ product: productId, material: item.material, material_size: item.material_size || '', material_usage: item.material_usage || '', need_cutting: item.need_cutting || false, notes: item.notes || '', sort_order: i }) } catch (error: any) { logger.warn('保存物料失败', error) }
     }
   }
 }
 
-const getProductTypeLabel = (type) => {
-  const labels = {
-    single: '单品',
-    group_main: '套装主产品',
-    group_item: '套装子产品'
-  }
-  return labels[type] || '未知'
+const getProductTypeLabel = (type: any) => { const labels = { single: '单品', group_main: '套装主产品', group_item: '套装子产品' }; return (labels as any)[type] || '未知' }
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  console.log('sort', key, order)
 }
 
-onMounted(() => {
-  loadData()
-  loadAllProcesses()
-  loadMaterialList()
-  loadProductGroupList()
-})
+onMounted(() => { loadData(); loadAllProcesses(); loadMaterialList(); loadProductGroupList() })
 </script>
-
-<style lang="scss" scoped>
-.product-list {
-  padding: var(--ui-page-padding);
-}
-</style>

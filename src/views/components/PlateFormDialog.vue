@@ -1,41 +1,33 @@
 <template>
-  <el-dialog v-model="dialogVisibleSync" :title="dialogTitle" width="var(--ui-dialog-width-lg)" :close-on-click-modal="false" @close="handleClose">
-    <el-form ref="formRef" v-loading="loading" :model="form" :rules="rules" label-width="120px">
-      <el-form-item :label="codeLabel" prop="code">
-        <el-input v-model="form.code" :placeholder="codePlaceholder" :disabled="isConfirmed" />
-        <div style="font-size: 12px; color: #909399; margin-top: 5px;">{{ codeHint }}</div>
-      </el-form-item>
-      <el-form-item :label="nameLabel" prop="name">
-        <el-input v-model="form.name" :placeholder="namePlaceholder" :disabled="isConfirmed" />
-      </el-form-item>
+  <BaseDialog :show="dialogVisibleSync" :title="dialogTitle" width="wide" @close="handleClose; dialogVisibleSync = false;">
+    <div class="space-y-4">
+      <Input v-model="form.code" :label="codeLabel" :placeholder="codePlaceholder" :disabled="isConfirmed" />
+      <div class="-mt-2 text-xs text-gray-400">{{ codeHint }}</div>
+      <Input v-model="form.name" :label="nameLabel" :placeholder="namePlaceholder" :disabled="isConfirmed" />
 
       <!-- Extra type-specific fields slot -->
       <template v-for="field in extraFields" :key="field.prop">
-        <el-form-item :label="field.label" :prop="field.prop">
-          <el-select
-            v-if="field.type === 'select'"
-            v-model="form[field.prop]"
-            :placeholder="field.placeholder || '请选择'"
-            style="width: 100%;"
-            :disabled="isConfirmed"
-          >
-            <el-option
-              v-for="option in field.options"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            >
-              <span>{{ option.label }}</span>
-              <span v-if="option.description" style="float: right; color: #8492a6; font-size: 12px;">{{ option.description }}</span>
-            </el-option>
-          </el-select>
-          <el-input
-            v-else
-            v-model="form[field.prop]"
-            :placeholder="field.placeholder || ''"
-            :disabled="isConfirmed"
-          />
-        </el-form-item>
+        <div class="flex items-start gap-3">
+          <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">{{ field.label }}</label>
+          <div class="flex-1">
+            <Select
+              v-if="field.type === 'select'"
+              v-model="form[field.prop]"
+              :options="field.options"
+              :placeholder="field.placeholder || '请选择'"
+              :disabled="isConfirmed"
+              class="w-full"
+            />
+            <input
+              v-else
+              type="text"
+              v-model="form[field.prop]"
+              :placeholder="field.placeholder || ''"
+              :disabled="isConfirmed"
+              class="input w-full"
+            />
+          </div>
+        </div>
       </template>
 
       <!-- Extra fields hint slot (for custom hint text below extra fields) -->
@@ -43,53 +35,60 @@
         <slot name="extraHint" :form="form" />
       </div>
 
-      <el-row :gutter="20">
-        <el-col :xs="24" :md="12"><el-form-item label="尺寸" prop="size"><el-input v-model="form.size" placeholder="如：420x594mm" :disabled="isConfirmed" /></el-form-item></el-col>
-        <el-col :xs="24" :md="12"><el-form-item label="材质" prop="material"><el-input v-model="form.material" placeholder="如：木板、胶板" :disabled="isConfirmed" /></el-form-item></el-col>
-      </el-row>
-      <el-form-item label="厚度" prop="thickness"><el-input v-model="form.thickness" placeholder="如：3mm、5mm" :disabled="isConfirmed" /></el-form-item>
+      <div class="flex flex-wrap gap-5">
+        <div class="flex-1 min-w-[300px]"><Input v-model="form.size" label="尺寸" placeholder="如：420x594mm" :disabled="isConfirmed" /></div>
+        <div class="flex-1 min-w-[300px]"><Input v-model="form.material" label="材质" placeholder="如：木板、胶板" :disabled="isConfirmed" /></div>
+      </div>
+      <Input v-model="form.thickness" label="厚度" placeholder="如：3mm、5mm" :disabled="isConfirmed" />
 
-      <el-divider content-position="left">包含产品及数量</el-divider>
-      <el-form-item label="产品列表">
-        <el-button type="primary" size="small" :icon="Plus" :disabled="!canAddMoreProducts" @click="addProductItem">添加产品</el-button>
+      <div class="flex items-center my-4"><span class="pr-3 text-sm text-gray-500 dark:text-gray-400">包含产品及数量</span><hr class="flex-1 border-t border-gray-200 dark:border-dark-700" /></div>
+      <div class="space-y-2">
+        <button class="btn btn-primary btn-sm" :disabled="!canAddMoreProducts" @click="addProductItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加产品</button>
         <div v-if="productListHint" style="font-size: 12px; color: #909399; margin-top: 5px;">{{ productListHint }}</div>
-        <div class="table-scroll">
-          <el-table :data="productItems" border class="dialog-table">
-            <el-table-column label="产品名称" min-width="250">
-              <template #default="scope">
-                <el-select v-model="scope.row.product" placeholder="请选择产品" filterable style="width: 100%;">
-                  <el-option v-for="p in productList" :key="p.id" :label="`${p.name} (${p.code})`" :value="p.id" />
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column :label="quantityColumnLabel" width="150">
-              <template #default="scope"><el-input-number v-model="scope.row.quantity" :min="1" style="width: 100%;" size="small" /></template>
-            </el-table-column>
-            <el-table-column label="操作" width="80" align="center">
-              <template #default="scope"><el-button type="danger" size="small" :icon="Delete" @click="removeProductItem(scope.$index)" /></template>
-            </el-table-column>
-          </el-table>
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
+                <th class="px-4 py-2 min-w-64">产品名称</th>
+                <th class="px-4 py-2 w-36">{{ quantityColumnLabel }}</th>
+                <th class="px-4 py-2 w-20 text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
+              <tr v-for="(item, index) in productItems" :key="index">
+                <td class="px-4 py-2">
+                  <Select v-model="item.product" :options="productOptions" placeholder="请选择产品" filterable class="w-full" />
+                </td>
+                <td class="px-4 py-2">
+                  <InputNumber v-model="item.quantity" :min="1" class="w-full" />
+                </td>
+                <td class="px-4 py-2 text-center">
+                  <button class="btn btn-danger btn-sm" @click="removeProductItem(index)"><Icon name="trash" class="h-3 w-3" /></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </el-form-item>
-      <el-form-item label="备注" prop="notes"><el-input v-model="form.notes" type="textarea" :rows="3" placeholder="请输入备注信息" /></el-form-item>
-    </el-form>
+      </div>
+      <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注信息" />
+    </div>
     <template #footer>
-      <el-button @click="handleCancel">取消</el-button>
-      <el-button type="primary" :loading="loading" @click="handleSubmit">确定</el-button>
+      <button class="btn" @click="handleCancel">取消</button>
+      <button class="btn btn-primary" :disabled="loading" @click="handleSubmit">确定</button>
     </template>
-  </el-dialog>
+  </BaseDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { Icon, Input, TextArea, Select, InputNumber } from '@/components/common'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   dialogType: { type: String, default: 'create' },
   initialData: { type: Object, default: null },
   loading: { type: Boolean, default: false },
-  productList: { type: Array, default: () => [] },
+  productList: { type: Array as any, default: () => [] },
   /** Display name, e.g. "刀模" */
   title: { type: String, required: true },
   /** Code prefix for auto-generation hint, e.g. "DIE" */
@@ -97,7 +96,7 @@ const props = defineProps({
   /** Initial form values (base fields + any extra fields) */
   formInitialValues: { type: Object, default: () => ({ code: '', name: '', size: '', material: '', thickness: '', notes: '' }) },
   /** Extra field definitions for type-specific fields */
-  extraFields: { type: Array, default: () => [] },
+  extraFields: { type: Array as any, default: () => [] },
   /** Validation rules */
   rules: { type: Object, default: () => ({}) },
   /** Column label for quantity in product table */
@@ -110,14 +109,14 @@ const props = defineProps({
 
 const emit = defineEmits(['submit', 'close', 'update:visible', 'field-change'])
 
-const formRef = ref(null)
-const productItems = ref([])
+const formRef = ref<any>(null)
+const productItems = ref<any[]>([])
 
 const form = reactive({ ...props.formInitialValues })
 
 const dialogVisibleSync = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: (val: any) => emit('update:visible', val)
 })
 
 const dialogTitle = computed(() => props.dialogType === 'edit' ? `编辑${props.title}` : `新建${props.title}`)
@@ -130,12 +129,13 @@ const codePlaceholder = computed(() => `留空则系统自动生成（格式：$
 const codeHint = computed(() => `留空则自动生成，格式：${props.codePrefix}202412001`)
 const namePlaceholder = computed(() => `请输入${props.title}名称`)
 const productListHint = computed(() => props.productListHintText)
+const productOptions = computed(() => props.productList.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
 
-watch(() => props.visible, (val) => { if (val) initForm() })
+watch(() => props.visible, (val: any) => { if (val) initForm() })
 
 // Watch extra fields and emit change events
-watch(() => props.extraFields.map(f => form[f.prop]).join('|'), () => {
-  const extraData = {}
+watch(() => props.extraFields.map((f: any) => form[f.prop]).join('|'), () => {
+  const extraData: Record<string, unknown> = {}
   for (const f of props.extraFields) {
     extraData[f.prop] = form[f.prop]
   }
@@ -144,12 +144,12 @@ watch(() => props.extraFields.map(f => form[f.prop]).join('|'), () => {
 
 const initForm = () => {
   if (props.dialogType === 'edit' && props.initialData) {
-    const data = {}
+    const data: Record<string, unknown> = {}
     for (const key of Object.keys(props.formInitialValues)) {
       data[key] = props.initialData[key] ?? props.formInitialValues[key]
     }
     Object.assign(form, data)
-    productItems.value = (props.initialData.products || []).map(p => ({
+    productItems.value = (props.initialData.products || []).map((p: any) => ({
       id: p.id,
       product: p.product,
       quantity: p.quantity,
@@ -172,7 +172,7 @@ const addProductItem = () => {
   productItems.value.push({ product: null, quantity: 1, sort_order: productItems.value.length })
 }
 
-const removeProductItem = (index) => { productItems.value.splice(index, 1) }
+const removeProductItem = (index: any) => { productItems.value.splice(index, 1) }
 
 const handleSubmit = async () => {
   const valid = await formRef.value.validate().catch(() => false)
@@ -182,8 +182,8 @@ const handleSubmit = async () => {
   if (props.dialogType === 'create' && !data.code) delete data.code
 
   data.products_data = productItems.value
-    .filter(item => item.product)
-    .map(item => ({ product: item.product, quantity: item.quantity || 1 }))
+    .filter((item: any) => item.product)
+    .map((item: any) => ({ product: item.product, quantity: item.quantity || 1 }))
 
   emit('submit', data)
 }
@@ -195,13 +195,3 @@ const handleClose = () => { resetForm(); emit('close') }
 defineExpose({ form, productItems })
 </script>
 
-<style scoped>
-.table-scroll {
-  margin-top: var(--ui-control-gap);
-  overflow-x: auto;
-}
-
-.dialog-table {
-  width: 100%;
-}
-</style>

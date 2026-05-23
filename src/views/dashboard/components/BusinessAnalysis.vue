@@ -1,33 +1,59 @@
 <template>
-  <div class="business-analysis">
-    <el-row :gutter="20">
-      <el-col :xs="24" :sm="12" :md="12">
-        <el-card>
-          <template #header><span>客户统计（Top 10）</span></template>
-          <el-table :data="businessAnalysis?.customer_statistics || []" style="width: 100%" max-height="300">
-            <el-table-column prop="customer" label="客户" min-width="150" />
-            <el-table-column prop="total" label="施工单数" width="100" align="right" />
-            <el-table-column prop="completed" label="已完成" width="100" align="right" />
-            <el-table-column label="完成率" width="120" align="right"><template #default="scope"><el-progress :percentage="scope.row.completion_rate || 0" :color="getProgressColor(scope.row.completion_rate)" :stroke-width="8" /></template></el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="12">
-        <el-card>
-          <template #header><span>产品统计（Top 10）</span></template>
-          <el-table :data="businessAnalysis?.product_statistics || []" style="width: 100%" max-height="300">
-            <el-table-column prop="product" label="产品" min-width="150" />
-            <el-table-column prop="total" label="施工单数" width="100" align="right" />
-            <el-table-column prop="completed" label="已完成" width="100" align="right" />
-            <el-table-column label="完成率" width="120" align="right"><template #default="scope"><el-progress :percentage="scope.row.completion_rate || 0" :color="getProgressColor(scope.row.completion_rate)" :stroke-width="8" /></template></el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-    </el-row>
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div class="card">
+      <div class="card-header flex items-center justify-between">
+        <span class="text-sm font-semibold text-gray-900 dark:text-white">客户统计（Top 10）</span>
+      </div>
+      <div class="card-body overflow-x-auto">
+        <table class="data-table w-full">
+          <thead>
+            <tr>
+              <th class="min-w-40">客户</th>
+              <th class="w-28 text-right">施工单数</th>
+              <th class="w-28 text-right">已完成</th>
+              <th class="w-32 text-right">完成率</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in (businessAnalysis?.customer_statistics || [])" :key="row.customer">
+              <td>{{ row.customer }}</td>
+              <td class="text-right">{{ row.total }}</td>
+              <td class="text-right">{{ row.completed }}</td>
+              <td class="text-right"><ProgressBar :percentage="row.completion_rate || 0" :color="getProgressColor(row.completion_rate)" :stroke-width="8" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header flex items-center justify-between">
+        <span class="text-sm font-semibold text-gray-900 dark:text-white">产品统计（Top 10）</span>
+      </div>
+      <div class="card-body overflow-x-auto">
+        <table class="data-table w-full">
+          <thead>
+            <tr>
+              <th class="min-w-40">产品</th>
+              <th class="w-28 text-right">施工单数</th>
+              <th class="w-28 text-right">已完成</th>
+              <th class="w-32 text-right">完成率</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in (businessAnalysis?.product_statistics || [])" :key="row.product">
+              <td>{{ row.product }}</td>
+              <td class="text-right">{{ row.total }}</td>
+              <td class="text-right">{{ row.completed }}</td>
+              <td class="text-right"><ProgressBar :percentage="row.completion_rate || 0" :color="getProgressColor(row.completion_rate)" :stroke-width="8" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 defineProps({ businessAnalysis: { type: Object, default: () => ({}) } })
-const getProgressColor = (rate) => rate >= 80 ? '#67C23A' : rate >= 50 ? '#409EFF' : '#E6A23C'
+const getProgressColor = (rate: any) => rate >= 80 ? '#67C23A' : rate >= 50 ? '#409EFF' : '#E6A23C'
 </script>

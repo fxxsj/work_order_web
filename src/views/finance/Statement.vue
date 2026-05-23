@@ -1,45 +1,99 @@
 <template>
-  <div class="statement-container">
+  <div class="space-y-6">
     <StatementStats :stats="stats" :loading="statsLoading" />
-    <el-card class="statement-card">
-      <div class="header-section">
-        <div class="filter-group">
-          <el-select v-model="filters.statement_type" class="statement-filter-control" placeholder="对账类型" clearable @change="handleSearch"><el-option label="客户对账" value="customer" /><el-option label="供应商对账" value="supplier" /></el-select>
-          <el-select v-model="filters.status" class="statement-filter-control" placeholder="状态" clearable @change="handleSearch"><el-option label="草稿" value="draft" /><el-option label="已发送" value="sent" /><el-option label="已确认" value="confirmed" /><el-option label="有异议" value="disputed" /></el-select>
+
+    <CrudPageLayout
+      title="对账管理"
+      :loading="loading"
+      :total="total"
+      :current-page="currentPage"
+      :page-size="pageSize"
+      @size-change="handleSizeChange"
+      @current-change="handlePageChange"
+    >
+      <template #search>
+        <Select v-model="filters.statement_type" :options="statementTypeOptions" class="w-36" placeholder="对账类型" clearable @change="handleSearch" />
+        <Select v-model="filters.status" :options="statementStatusOptions" class="w-36" placeholder="状态" clearable @change="handleSearch" />
+      </template>
+      <template #actions>
+        <button class="btn btn-primary" @click="handleCreate">生成</button>
+        <button class="btn" @click="handlePrint">打印</button>
+      </template>
+
+      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
+        <template #cell-period_start="{ row }"><span>{{ row.period_start }}</span></template>
+        <template #cell-period_end="{ row }"><span>{{ row.period_end }}</span></template>
+        <template #cell-opening_balance="{ row }"><span>¥{{ row.opening_balance?.toLocaleString() || '-' }}</span></template>
+        <template #cell-closing_balance="{ row }"><span class="text-strong">¥{{ row.closing_balance?.toLocaleString() || '-' }}</span></template>
+        <template #cell-status="{ row }"><StatusTag :status="row.status" category="statement" :label="row.status_display" /></template>
+        <template #cell-actions="{ row }">
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" @click="handleView(row)">查看</button>
+            <button class="btn btn-ghost btn-sm" v-if="row.status === 'draft'" @click="handleConfirm(row)">确认</button>
+          </div>
+        </template>
+        <template #empty>
+          <EmptyState description="暂无对账单数据" />
+        </template>
+      </DataTable>
+    </CrudPageLayout>
+
+    <BaseDialog :show="formDialogVisible" title="生成对账单" width="narrow">
+      <div class="space-y-4">
+        <div class="flex items-center gap-3">
+          <label class="w-28 text-sm text-gray-600 dark:text-gray-400">对账类型</label>
+          <Select v-model="form.statement_type" :options="statementTypeOptions" class="flex-1" />
         </div>
-        <div class="action-group"><el-button type="primary" :icon="Plus" @click="handleCreate">生成</el-button><el-button :icon="Printer" @click="handlePrint">打印</el-button></div>
+        <div class="flex items-center gap-3">
+          <label class="w-28 text-sm text-gray-600 dark:text-gray-400">对账日期</label>
+          <input type="date" v-model="form.statement_date" class="input flex-1" />
+        </div>
       </div>
-      <div class="table-scroll">
-      <el-table v-loading="loading" :data="tableData" border class="statement-table">
-        <el-table-column prop="period_start" label="期间开始" width="120" /><el-table-column prop="period_end" label="期间结束" width="120" />
-        <el-table-column label="期初余额" width="120" align="right"><template #default="scope">¥{{ scope.row.opening_balance?.toLocaleString() || '-' }}</template></el-table-column>
-        <el-table-column label="期末余额" width="120" align="right"><template #default="scope"><span class="text-strong">¥{{ scope.row.closing_balance?.toLocaleString() || '-' }}</span></template></el-table-column>
-        <el-table-column label="状态" width="100"><template #default="scope"><StatusTag :status="scope.row.status" category="statement" :label="scope.row.status_display" /></template></el-table-column>
-        <el-table-column label="操作" width="150"><template #default="scope"><el-button type="text" size="small" @click="handleView(scope.row)">查看</el-button><el-button v-if="scope.row.status === 'draft'" type="text" size="small" @click="handleConfirm(scope.row)">确认</el-button></template></el-table-column>
-      </el-table>
-      </div>
-      <div v-if="total > 0" class="pagination-row"><el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total" layout="total, prev, pager, next" @current-change="handlePageChange" /></div>
-    </el-card>
-    <el-dialog v-model="formDialogVisible" title="生成对账单" width="var(--ui-dialog-width-sm)"><el-form ref="formRef" :model="form" :rules="rules" label-width="120px"><el-form-item label="对账类型" prop="statement_type"><el-select v-model="form.statement_type" class="ui-control-full"><el-option label="客户对账" value="customer" /><el-option label="供应商对账" value="supplier" /></el-select></el-form-item><el-form-item label="对账日期" prop="statement_date"><el-date-picker v-model="form.statement_date" type="date" value-format="YYYY-MM-DD" class="ui-control-full" /></el-form-item></el-form><template #footer><el-button @click="formDialogVisible = false">取消</el-button><el-button type="primary" :loading="submitting" @click="handleGenerate">生成</el-button></template></el-dialog>
+      <template #footer>
+        <button class="btn" @click="formDialogVisible = false">取消</button>
+        <button class="btn btn-primary" :disabled="submitting" @click="handleGenerate">生成</button>
+      </template>
+    </BaseDialog>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { Plus, Printer } from '@element-plus/icons-vue'
 import { statementAPI } from '@/api/modules'
 import { useCrudList } from '@/composables'
-import { StatusTag } from '@/components/common'
+import { StatusTag, Select, Input, CrudPageLayout, DataTable, EmptyState } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import StatementStats from './components/StatementStats.vue'
 
 const statsLoading = ref(false)
 const submitting = ref(false)
 const stats = ref({})
-const formRef = ref(null)
+const formRef = ref<any>(null)
 const formDialogVisible = ref(false)
 
 const form = reactive({ statement_type: 'customer', statement_date: '' })
 const rules = { statement_type: [{ required: true, message: '请选择对账类型', trigger: 'change' }], statement_date: [{ required: true, message: '请选择对账日期', trigger: 'change' }] }
+
+const columns: Column[] = [
+  { key: 'period_start', label: '期间开始', width: 112 },
+  { key: 'period_end', label: '期间结束', width: 112 },
+  { key: 'opening_balance', label: '期初余额', width: 112, align: 'right' },
+  { key: 'closing_balance', label: '期末余额', width: 112, align: 'right' },
+  { key: 'status', label: '状态', width: 96 },
+  { key: 'actions', label: '操作', width: 128, fixed: 'right' }
+]
+
+// Select options
+const statementTypeOptions = [
+  { value: 'customer', label: '客户对账' },
+  { value: 'supplier', label: '供应商对账' }
+]
+const statementStatusOptions = [
+  { value: 'draft', label: '草稿' },
+  { value: 'sent', label: '已发送' },
+  { value: 'confirmed', label: '已确认' },
+  { value: 'disputed', label: '有异议' }
+]
 const {
   filters,
   tableData,
@@ -49,7 +103,8 @@ const {
   pageSize,
   loadData,
   handleSearch,
-  handlePageChange
+  handlePageChange,
+  handleSizeChange
 } = useCrudList(statementAPI, 'getList', {
   initialFilters: { statement_type: '', status: '' },
   errorContext: '加载对账单失败'
@@ -57,16 +112,16 @@ const {
 
 const fetchStats = async () => {
   statsLoading.value = true
-  try { const res = await statementAPI.getList({ page_size: 1000 }); const list = res?.results || []; stats.value = { total_count: list.length, draft_count: list.filter(s => s.status === 'draft').length, confirmed_count: list.filter(s => s.status === 'confirmed').length } } catch (e) {}
+  try { const res: any = await statementAPI.getList({ page_size: 1000 }); const list = res?.results || []; stats.value = { total_count: list.length, draft_count: list.filter((s: any) => s.status === 'draft').length, confirmed_count: list.filter((s: any) => s.status === 'confirmed').length } } catch (e: any) {}
   statsLoading.value = false
 }
 
 onMounted(() => { loadData(); fetchStats() })
 
-const handleView = (row) => console.log('View', row);
-const handleConfirm = (row) => console.log('Confirm', row);
+const handleView = (row: any) => console.log('View', row);
+const handleConfirm = (row: any) => console.log('Confirm', row);
 const handleCreate = () => { form.statement_date = new Date().toISOString().split('T')[0]; formDialogVisible.value = true };
-const handleGenerate = () => formRef.value?.validate((valid) => { if (valid) console.log('Generate', form) });
+const handleGenerate = () => formRef.value?.validate((valid: any) => { if (valid) console.log('Generate', form) });
 const handlePrint = () => window.print();
 </script>
 

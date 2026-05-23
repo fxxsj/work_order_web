@@ -1,44 +1,41 @@
 <template>
-  <el-card>
-    <template #header><div class="card-header"><span>工序信息</span><el-button v-if="editable" type="primary" size="small" :icon="Plus" @click="emit('add-process')">添加工序</el-button></div></template>
-    <div v-for="process in processes" :key="process.id" class="process-item" :style="{ borderLeftColor: getProcessColor(process.status) }">
-      <el-card>
-        <template #header><div class="process-header"><div class="process-title"><span>{{ process.sequence }}. {{ process.process_name }}</span><StatusTag :status="process.status" category="process" :label="process.status_display" size="small" /></div><span>进度: {{ calculateProcessProgress(process) }}%</span></div></template>
-        <el-row :gutter="20" class="process-info-row">
-          <el-col :xs="24" :sm="12" :md="6"><div class="process-info-item"><label>负责部门:</label><span>{{ getProcessDepartment(process) }}</span></div></el-col>
-          <el-col :xs="24" :sm="12" :md="6"><div class="process-info-item"><label>负责人:</label><span>{{ process.assigned_operator_name || '-' }}</span></div></el-col>
-          <el-col :xs="24" :sm="12" :md="6"><div class="process-info-item"><label>开始时间:</label><span>{{ formatDate(process.started_at) }}</span></div></el-col>
-          <el-col :xs="24" :sm="12" :md="6"><div class="process-info-item"><label>完成时间:</label><span>{{ formatDate(process.completed_at) }}</span></div></el-col>
-        </el-row>
-        <div v-if="process.tasks?.length" class="process-tasks">
-          <div style="font-size: 12px; color: #909399; margin-bottom: 5px;">任务 ({{ process.tasks.length }}):</div>
-          <div class="task-tags"><StatusTag v-for="task in process.tasks" :key="task.id" :status="task.status" category="task" :label="task.work_content" size="small" /></div>
-        </div>
-      </el-card>
+  <div class="card mt-6">
+    <div class="mb-4 flex items-center justify-between border-b border-gray-200 pb-3 dark:border-dark-700">
+      <span class="font-bold">工序信息</span>
+      <button v-if="editable" class="btn btn-primary btn-sm" @click="emit('add-process')"><Icon name="plus" class="h-3 w-3" /> 添加工序</button>
     </div>
-  </el-card>
+    <div v-for="process in processes" :key="process.id" class="mb-3 border-l-4 bg-gray-50 p-4 dark:bg-dark-800" :style="{ borderLeftColor: getProcessColor(process.status) }">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-bold">{{ process.sequence }}. {{ process.process_name }}</span>
+          <StatusTag :status="process.status" category="process" :label="process.status_display" size="small" />
+        </div>
+        <span class="text-sm">进度: {{ calculateProcessProgress(process) }}%</span>
+      </div>
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div><span class="text-sm text-gray-500">负责部门:</span> {{ getProcessDepartment(process) }}</div>
+        <div><span class="text-sm text-gray-500">负责人:</span> {{ process.assigned_operator_name || '-' }}</div>
+        <div><span class="text-sm text-gray-500">开始时间:</span> {{ formatDate(process.started_at) }}</div>
+        <div><span class="text-sm text-gray-500">完成时间:</span> {{ formatDate(process.completed_at) }}</div>
+      </div>
+      <div v-if="process.tasks?.length" class="mt-3">
+        <div class="mb-2 text-xs text-gray-400">任务 ({{ process.tasks.length }}):</div>
+        <div class="flex flex-wrap gap-2">
+          <StatusTag v-for="task in process.tasks" :key="task.id" :status="task.status" category="task" :label="task.work_content" size="small" />
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
-<script setup>
-import { Plus } from '@element-plus/icons-vue'
+<script setup lang="ts">
+import { Icon } from '@/components/common'
 import { StatusTag } from '@/components/common'
 import { formatDate } from '@/utils/filter'
 
-const props = defineProps({ processes: { type: Array, default: () => [] }, editable: { type: Boolean, default: false } })
+const props = defineProps({ processes: { type: Array as any, default: () => [] }, editable: { type: Boolean, default: false } })
 const emit = defineEmits(['add-process', 'start-process', 'complete-process', 'click-process'])
-const getProcessColor = (s) => ({ pending: '#909399', in_progress: '#409EFF', completed: '#67C23A', draft: '#E6A23C' }[s] || '#909399')
-const getProcessDepartment = (p) => p.department_name || '-'
-const calculateProcessProgress = (p) => p.tasks?.length ? Math.round((p.tasks.filter(t => t.status === 'completed').length / p.tasks.length) * 100) : 0
+const getProcessColor = (s: any) => ({ pending: '#909399', in_progress: '#409EFF', completed: '#67C23A', draft: '#E6A23C' } as any)[s] || '#909399'
+const getProcessDepartment = (p: any) => p.department_name || '-'
+const calculateProcessProgress = (p: any) => p.tasks?.length ? Math.round((p.tasks.filter((t: any) => t.status === 'completed').length / p.tasks.length) * 100) : 0
 </script>
-
-<style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.process-item { margin-bottom: 10px; border-left: 4px solid; padding-left: 10px; }
-.process-header { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
-.process-title { display: flex; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
-.process-info-row { row-gap: var(--ui-control-gap); }
-.process-info-item { font-size: 14px; }
-.process-info-item label { color: #909399; margin-right: 5px; }
-.process-tasks { margin-top: var(--ui-control-gap); }
-.task-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-</style>

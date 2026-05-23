@@ -1,34 +1,35 @@
 <template>
-  <div class="task-management">
-    <div class="table-scroll">
-    <el-table :data="tasks" border class="task-table" size="small">
-      <el-table-column prop="id" label="任务ID" width="80" align="center" />
-      <el-table-column label="任务名称" min-width="150"><template #default="scope">{{ scope.row.work_content || scope.row.task_name || '-' }}</template></el-table-column>
-      <el-table-column label="操作员" width="100"><template #default="scope">{{ scope.row.assigned_operator_name || scope.row.operator_name || '-' }}</template></el-table-column>
-      <el-table-column label="状态" width="100" align="center"><template #default="scope"><StatusTag :status="scope.row.status" category="task" :label="scope.row.status_display" size="small" /></template></el-table-column>
-      <el-table-column label="进度" width="120" align="center"><template #default="scope"><el-progress :percentage="calculateTaskProgress(scope.row)" :color="getProgressColor(scope.row)" /></template></el-table-column>
-      <el-table-column label="完成数量" width="100" align="right"><template #default="scope">{{ scope.row.quantity_completed || 0 }} / {{ scope.row.production_quantity || 0 }}</template></el-table-column>
-    </el-table>
-    </div>
+  <div class="mt-6 overflow-x-auto">
+    <table class="data-table w-full">
+      <thead>
+        <tr>
+          <th class="w-20 text-center">任务ID</th>
+          <th class="min-w-40">任务名称</th>
+          <th class="w-28">操作员</th>
+          <th class="w-28 text-center">状态</th>
+          <th class="w-32 text-center">进度</th>
+          <th class="w-28 text-right">完成数量</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="row in tasks" :key="row.id">
+          <td class="text-center">{{ row.id }}</td>
+          <td>{{ row.work_content || row.task_name || '-' }}</td>
+          <td>{{ row.assigned_operator_name || row.operator_name || '-' }}</td>
+          <td class="text-center"><StatusTag :status="row.status" category="task" :label="row.status_display" size="small" /></td>
+          <td class="text-center"><ProgressBar :percentage="calculateTaskProgress(row)" :color="getProgressColor(row)" /></td>
+          <td class="text-right">{{ row.quantity_completed || 0 }} / {{ row.production_quantity || 0 }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { StatusTag } from '@/components/common'
 
-const props = defineProps({ tasks: { type: Array, default: () => [] } })
+const props = defineProps({ tasks: { type: Array as any, default: () => [] } })
 
-const calculateTaskProgress = (t) => t.production_quantity ? Math.round(((t.quantity_completed || 0) / t.production_quantity) * 100) : 0
-const getProgressColor = (t) => calculateTaskProgress(t) === 100 ? 'var(--ui-color-success)' : 'var(--ui-color-primary)'
+const calculateTaskProgress = (t: any) => t.production_quantity ? Math.round(((t.quantity_completed || 0) / t.production_quantity) * 100) : 0
+const getProgressColor = (t: any) => calculateTaskProgress(t) === 100 ? 'var(--ui-color-success)' : 'var(--ui-color-primary)'
 </script>
-
-<style scoped>
-.table-scroll {
-  margin-top: var(--ui-control-gap);
-  overflow-x: auto;
-}
-
-.task-table {
-  width: 100%;
-}
-</style>

@@ -1,16 +1,14 @@
 <template>
   <div class="component-loading">
-    <el-icon class="is-loading">
-      <Loading />
-    </el-icon>
+    <Icon name="loading" class="h-8 w-8 animate-spin text-primary-500" />
     <p class="loading-text">
       {{ text }}
     </p>
   </div>
 </template>
 
-<script setup>
-import { Loading } from '@element-plus/icons-vue'
+<script setup lang="ts">
+import { Icon } from '@/components/common'
 
 const props = defineProps({
   text: {
@@ -20,7 +18,7 @@ const props = defineProps({
 })
 </script>
 
-<style scoped>
+<style>
 .component-loading {
   display: flex;
   flex-direction: column;
@@ -30,14 +28,8 @@ const props = defineProps({
   padding: 20px;
 }
 
-.component-loading .el-icon {
-  font-size: 32px;
-  color: #409eff;
-  margin-bottom: 16px;
-}
-
 .loading-text {
-  margin: 0;
+  margin: 16px 0 0;
   font-size: 14px;
   color: #909399;
 }

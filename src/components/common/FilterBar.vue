@@ -1,55 +1,52 @@
 <template>
-  <div class="filter-bar">
-    <el-form :inline="true" :model="filterData" class="filter-form">
+  <div class="mb-6">
+    <div class="flex flex-wrap items-center gap-3">
       <template v-for="field in fields" :key="field.name">
-        <el-form-item v-if="field.type === 'text'" :label="field.label">
-          <el-input
-            v-model="filterData[field.name]"
+        <div v-if="field.type === 'text'" class="flex items-center gap-2">
+          <label class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ field.label }}</label>
+          <SearchInput
+            :model-value="filterData[field.name]"
             :placeholder="field.placeholder || `请输入${field.label}`"
-            :clearable="field.clearable !== false"
-            @input="handleFilterChange"
+            @update:model-value="v => { filterData[field.name] = v; handleFilterChange() }"
           />
-        </el-form-item>
-        <el-form-item v-else-if="field.type === 'select'" :label="field.label">
-          <el-select
-            v-model="filterData[field.name]"
+        </div>
+        <div v-else-if="field.type === 'select'" class="flex items-center gap-2">
+          <label class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ field.label }}</label>
+          <Select
+            :model-value="filterData[field.name]"
+            :options="field.options"
             :placeholder="field.placeholder || `请选择${field.label}`"
             :clearable="field.clearable !== false"
             :filterable="field.filterable"
             :multiple="field.multiple"
-            @change="handleFilterChange"
-          >
-            <el-option
-              v-for="option in field.options"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item v-else-if="field.type === 'date'" :label="field.label">
-          <el-date-picker
-            v-model="filterData[field.name]"
-            type="date"
-            :placeholder="field.placeholder || `请选择${field.label}`"
-            :clearable="field.clearable !== false"
-            @change="handleFilterChange"
+            @update:model-value="v => { filterData[field.name] = v; handleFilterChange() }"
           />
-        </el-form-item>
+        </div>
+        <div v-else-if="field.type === 'date'" class="flex items-center gap-2">
+          <label class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ field.label }}</label>
+          <input
+            type="date"
+            :value="filterData[field.name]"
+            class="input"
+            :placeholder="field.placeholder || `请选择${field.label}`"
+            @input="v => { filterData[field.name] = (v.target as HTMLInputElement)?.value || ''; handleFilterChange() }"
+          />
+        </div>
       </template>
-      <el-form-item>
-        <el-button type="primary" @click="handleSearch">查询</el-button>
-        <el-button @click="handleReset">重置</el-button>
-      </el-form-item>
-    </el-form>
+      <div class="flex items-center gap-2">
+        <button class="btn btn-primary btn-sm" @click="handleSearch">查询</button>
+        <button class="btn btn-secondary btn-sm" @click="handleReset">重置</button>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { Select, SearchInput } from '@/components/common'
 
 const props = defineProps({
-  fields: { type: Array, default: () => [] },
+  fields: { type: Array as any, default: () => [] },
   modelValue: { type: Object, default: () => ({}) }
 })
 
@@ -57,7 +54,7 @@ const emit = defineEmits(['update:modelValue', 'search', 'reset'])
 
 const filterData = reactive({ ...props.modelValue })
 
-watch(() => props.modelValue, (val) => {
+watch(() => props.modelValue, (val: any) => {
   Object.assign(filterData, val)
 }, { deep: true })
 
@@ -70,43 +67,10 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  Object.keys(filterData).forEach(key => {
+  Object.keys(filterData).forEach((key: any) => {
     filterData[key] = undefined
   })
   emit('update:modelValue', {})
   emit('reset')
 }
 </script>
-
-<style scoped lang="scss">
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.filter-bar {
-  margin-bottom: var(--ui-section-gap);
-}
-.filter-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ui-control-gap);
-}
-
-.filter-form :deep(.el-form-item) {
-  margin-right: 0;
-  margin-bottom: 0;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .filter-form {
-    align-items: stretch;
-  }
-
-  .filter-form :deep(.el-form-item),
-  .filter-form :deep(.el-form-item__content),
-  .filter-form :deep(.el-input),
-  .filter-form :deep(.el-select),
-  .filter-form :deep(.el-date-editor) {
-    width: 100%;
-  }
-}
-</style>

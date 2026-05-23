@@ -29,9 +29,7 @@
           :title="collapsed ? item.label : undefined"
           @click="$emit('close-mobile')"
         >
-          <el-icon :size="20" class="flex-shrink-0">
-            <component :is="item.icon" />
-          </el-icon>
+          <Icon :name="(item.icon as any)" size="md" class="flex-shrink-0" />
           <span class="sidebar-label" :class="{ 'sidebar-label-collapsed': collapsed }" :aria-hidden="collapsed ? 'true' : 'false'">{{ item.label }}</span>
         </router-link>
       </div>
@@ -41,19 +39,19 @@
         <div class="sidebar-section">
           <div class="sidebar-section-title">任务管理</div>
           <router-link to="/tasks" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks' && route.path.startsWith('/tasks') }" @click="$emit('close-mobile')">
-            <el-icon :size="16" class="flex-shrink-0"><Tickets /></el-icon>
+            <Icon name="tickets" size="sm" class="flex-shrink-0" />
             <span>任务列表</span>
           </router-link>
           <router-link to="/tasks/board" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/board' }" @click="$emit('close-mobile')">
-            <el-icon :size="16" class="flex-shrink-0"><Grid /></el-icon>
+            <Icon name="grid" size="sm" class="flex-shrink-0" />
             <span>部门任务看板</span>
           </router-link>
           <router-link to="/tasks/stats" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/stats' }" @click="$emit('close-mobile')">
-            <el-icon :size="16" class="flex-shrink-0"><DataAnalysis /></el-icon>
+            <Icon name="chartBar" size="sm" class="flex-shrink-0" />
             <span>协作统计</span>
           </router-link>
           <router-link to="/tasks/assignment-history" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/assignment-history' }" @click="$emit('close-mobile')">
-            <el-icon :size="16" class="flex-shrink-0"><Clock /></el-icon>
+            <Icon name="clock" size="sm" class="flex-shrink-0" />
             <span>分派历史</span>
           </router-link>
         </div>
@@ -63,15 +61,15 @@
       <div v-if="(canViewProduct || canViewMaterial || canViewProductGroup) && !collapsed" class="sidebar-section">
         <div class="sidebar-section-title">产品物料</div>
         <router-link v-if="canViewProduct" to="/products" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/products') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Goods /></el-icon>
+          <Icon name="package" size="sm" class="flex-shrink-0" />
           <span>产品管理</span>
         </router-link>
         <router-link v-if="canViewMaterial" to="/materials" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/materials') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Box /></el-icon>
+          <Icon name="archive" size="sm" class="flex-shrink-0" />
           <span>物料管理</span>
         </router-link>
         <router-link v-if="canViewProductGroup" to="/product-groups" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/product-groups') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Collection /></el-icon>
+          <Icon name="collection" size="sm" class="flex-shrink-0" />
           <span>产品组管理</span>
         </router-link>
       </div>
@@ -80,19 +78,19 @@
       <div v-if="(canViewArtwork || canViewDie || canViewFoilingPlate || canViewEmbossingPlate) && !collapsed" class="sidebar-section">
         <div class="sidebar-section-title">制版管理</div>
         <router-link v-if="canViewArtwork" to="/artworks" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/artworks') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Picture /></el-icon>
+          <Icon name="image" size="sm" class="flex-shrink-0" />
           <span>图稿管理</span>
         </router-link>
         <router-link v-if="canViewDie" to="/dies" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/dies') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Scissor /></el-icon>
+          <Icon name="scissors" size="sm" class="flex-shrink-0" />
           <span>刀模管理</span>
         </router-link>
         <router-link v-if="canViewFoilingPlate" to="/foiling-plates" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/foiling-plates') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><EditPen /></el-icon>
+          <Icon name="edit" size="sm" class="flex-shrink-0" />
           <span>烫金版管理</span>
         </router-link>
         <router-link v-if="canViewEmbossingPlate" to="/embossing-plates" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/embossing-plates') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Grid /></el-icon>
+          <Icon name="grid" size="sm" class="flex-shrink-0" />
           <span>压凸版管理</span>
         </router-link>
       </div>
@@ -101,11 +99,11 @@
       <div v-if="(canViewPurchaseOrder || canViewSalesOrder) && !collapsed" class="sidebar-section">
         <div class="sidebar-section-title">采购销售</div>
         <router-link v-if="canViewPurchaseOrder" to="/purchase-orders" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/purchase-orders') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Document /></el-icon>
+          <Icon name="document" size="sm" class="flex-shrink-0" />
           <span>采购单管理</span>
         </router-link>
         <router-link v-if="canViewSalesOrder" to="/sales-orders" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/sales-orders') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><SoldOut /></el-icon>
+          <Icon name="tag" size="sm" class="flex-shrink-0" />
           <span>销售订单</span>
         </router-link>
       </div>
@@ -114,15 +112,15 @@
       <div v-if="!collapsed" class="sidebar-section">
         <div class="sidebar-section-title">库存管理</div>
         <router-link to="/inventory/stocks" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/stocks') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Goods /></el-icon>
+          <Icon name="package" size="sm" class="flex-shrink-0" />
           <span>成品库存</span>
         </router-link>
         <router-link to="/inventory/delivery" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/delivery') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Van /></el-icon>
+          <Icon name="truck" size="sm" class="flex-shrink-0" />
           <span>发货管理</span>
         </router-link>
         <router-link to="/inventory/quality" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/quality') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><CircleCheck /></el-icon>
+          <Icon name="checkCircle" size="sm" class="flex-shrink-0" />
           <span>质量检验</span>
         </router-link>
       </div>
@@ -131,19 +129,19 @@
       <div v-if="!collapsed" class="sidebar-section">
         <div class="sidebar-section-title">财务管理</div>
         <router-link to="/finance/invoices" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/invoices') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Ticket /></el-icon>
+          <Icon name="ticket" size="sm" class="flex-shrink-0" />
           <span>发票管理</span>
         </router-link>
         <router-link to="/finance/payments" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/payments') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Coin /></el-icon>
+          <Icon name="dollar" size="sm" class="flex-shrink-0" />
           <span>收款管理</span>
         </router-link>
         <router-link to="/finance/costs" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/costs') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><PieChart /></el-icon>
+          <Icon name="chart" size="sm" class="flex-shrink-0" />
           <span>成本核算</span>
         </router-link>
         <router-link to="/finance/statements" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/statements') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Money /></el-icon>
+          <Icon name="dollar" size="sm" class="flex-shrink-0" />
           <span>对账管理</span>
         </router-link>
       </div>
@@ -152,45 +150,37 @@
       <div v-if="!collapsed" class="sidebar-section">
         <div class="sidebar-section-title">系统设置</div>
         <router-link v-if="canViewCustomer" to="/customers" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/customers') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><User /></el-icon>
+          <Icon name="user" size="sm" class="flex-shrink-0" />
           <span>客户管理</span>
         </router-link>
         <router-link v-if="canViewSupplier" to="/suppliers" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/suppliers') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><UserFilled /></el-icon>
+          <Icon name="user" size="sm" class="flex-shrink-0" />
           <span>供应商管理</span>
         </router-link>
         <router-link v-if="canViewDepartment" to="/departments" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/departments') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><MenuIcon /></el-icon>
+          <Icon name="menu" size="sm" class="flex-shrink-0" />
           <span>部门管理</span>
         </router-link>
         <router-link v-if="canViewProcess" to="/processes" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/processes') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Tools /></el-icon>
+          <Icon name="wrench" size="sm" class="flex-shrink-0" />
           <span>工序管理</span>
         </router-link>
         <router-link to="/tasks/assignment-rules" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/assignment-rules' }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><Operation /></el-icon>
+          <Icon name="sliders" size="sm" class="flex-shrink-0" />
           <span>分派规则配置</span>
         </router-link>
         <router-link v-if="canViewAuditLog" to="/audit-logs" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/audit-logs') }" @click="$emit('close-mobile')">
-          <el-icon :size="16" class="flex-shrink-0"><DocumentChecked /></el-icon>
+          <Icon name="document" size="sm" class="flex-shrink-0" />
           <span>审计日志</span>
         </router-link>
       </div>
 
       <!-- Collapsed: dropdown for extra items -->
       <div v-if="collapsed" class="sidebar-section">
-        <el-dropdown trigger="click" placement="right-start" @command="handleCommand">
-          <div class="sidebar-link sidebar-link-collapsed justify-center">
-            <el-icon :size="20" class="flex-shrink-0"><More /></el-icon>
-          </div>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item v-for="item in collapsedMenuItems" :key="item.path" :command="item.path">
-                {{ item.label }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <select class="sidebar-link sidebar-link-collapsed justify-center w-full" @change="handleCommand">
+          <option value="">更多</option>
+          <option v-for="item in collapsedMenuItems" :key="item.path" :value="item.path">{{ item.label }}</option>
+        </select>
       </div>
     </nav>
 
@@ -242,38 +232,11 @@
   </transition>
 </template>
 
-<script setup>
-import { computed, ref } from 'vue'
+<script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  HomeFilled,
-  Document,
-  Tickets,
-  Grid,
-  DataAnalysis,
-  Clock,
-  Goods,
-  Box,
-  Collection,
-  Picture,
-  Scissor,
-  EditPen,
-  SoldOut,
-  Van,
-  CircleCheck,
-  Ticket,
-  Coin,
-  PieChart,
-  Money,
-  User,
-  UserFilled,
-  Menu as MenuIcon,
-  Tools,
-  Operation,
-  DocumentChecked,
-  More
-} from '@element-plus/icons-vue'
-import { useUserStore } from '@/stores'
+import { Icon } from '@/components/common'
+import { useUserStore, useUIStore } from '@/stores'
 
 const props = defineProps({
   collapsed: { type: Boolean, default: false },
@@ -285,8 +248,9 @@ const emit = defineEmits(['toggle-collapse', 'close-mobile'])
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const uiStore = useUIStore()
 
-const isDark = ref(document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark')
+const isDark = computed(() => uiStore.theme === 'dark')
 
 // 权限检查
 const canViewCustomer = computed(() => userStore.hasPermission('workorder.view_customer'))
@@ -306,8 +270,8 @@ const canViewAuditLog = computed(() => userStore.hasPermission('workorder.view_a
 
 // 主要导航项
 const mainNavItems = [
-  { path: '/dashboard', label: '工作台', icon: HomeFilled },
-  { path: '/workorders', label: '施工单', icon: Document }
+  { path: '/dashboard', label: '工作台', icon: 'home' },
+  { path: '/workorders', label: '施工单', icon: 'document' }
 ]
 
 // Collapsed menu items
@@ -324,25 +288,25 @@ const collapsedMenuItems = computed(() => {
 })
 
 // 路由激活判断
-const isActiveRoute = (path) => {
+const isActiveRoute = (path: any) => {
   if (path === '/dashboard') return route.path === '/dashboard'
   return route.path.startsWith(path) || route.path === path
 }
 
 const toggleTheme = () => {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
-  window.dispatchEvent(new CustomEvent('theme-toggle', { detail: { dark: isDark.value } }))
+  uiStore.toggleTheme()
 }
 
-const handleCommand = (path) => {
+const handleCommand = (e: any) => {
+  const path = e.target.value
+  if (!path) return
   router.push(path)
   emit('close-mobile')
+  e.target.value = '' // reset select
 }
 </script>
 
-<style scoped>
+<style>
 .sidebar-header-collapsed {
   gap: 0;
   padding-left: 1.125rem;

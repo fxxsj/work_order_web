@@ -1,57 +1,60 @@
 <template>
-  <el-card>
-    <template #header><div class="card-header"><span>通知中心</span><div class="header-actions"><el-button v-if="unreadCount > 0" type="primary" size="small" :loading="markingAll" @click="markAllRead">标记全部已读</el-button><el-button size="small" :icon="Refresh" @click="loadData">刷新</el-button></div></div></template>
-    <div class="table-scroll">
-    <el-table v-loading="loading" :data="notificationList" class="notification-table" :row-class-name="getRowClassName">
-      <el-table-column label="状态" width="80" align="center"><template #default="scope"><el-badge v-if="!scope.row.is_read" is-dot class="unread-badge" /><span v-else style="color: #909399;">已读</span></template></el-table-column>
-      <el-table-column prop="notification_type_display" label="类型" width="120" />
-      <el-table-column prop="title" label="标题" min-width="200" />
-      <el-table-column prop="content" label="内容" min-width="300" show-overflow-tooltip />
-      <el-table-column label="时间" width="160"><template #default="scope">{{ formatDateTime(scope.row.created_at) }}</template></el-table-column>
-      <el-table-column label="操作" width="150"><template #default="scope"><el-button type="text" size="small" @click="handleClick(scope.row)">查看</el-button><el-button v-if="!scope.row.is_read" type="text" size="small" @click="markRead(scope.row)">标记已读</el-button></template></el-table-column>
-    </el-table>
+  <div class="card">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <span class="font-bold">通知中心</span>
+      <div class="flex flex-wrap items-center gap-3">
+        <button v-if="unreadCount > 0" class="btn btn-primary btn-sm" :disabled="markingAll" @click="markAllRead">标记全部已读</button>
+        <button class="btn btn-secondary btn-sm" @click="loadData"><Icon name="refresh" class="h-3 w-3" /> 刷新</button>
+      </div>
     </div>
-  </el-card>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
+            <th class="px-4 py-3 w-20 text-center">状态</th>
+            <th class="px-4 py-3 w-32">类型</th>
+            <th class="px-4 py-3 min-w-48">标题</th>
+            <th class="px-4 py-3 min-w-64">内容</th>
+            <th class="px-4 py-3 w-40">时间</th>
+            <th class="px-4 py-3 w-36">操作</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
+          <tr v-for="row in notificationList" :key="row.id" :class="[!row.is_read ? 'bg-primary-50/50 dark:bg-primary-900/10' : '']">
+            <td class="px-4 py-3 text-center">
+              <span v-if="!row.is_read" class="relative flex justify-center"><span class="h-2 w-2 rounded-full bg-primary-500"></span></span>
+              <span v-else class="text-gray-400">已读</span>
+            </td>
+            <td class="px-4 py-3">{{ row.notification_type_display }}</td>
+            <td class="px-4 py-3">{{ row.title }}</td>
+            <td class="px-4 py-3 truncate max-w-xs">{{ row.content }}</td>
+            <td class="px-4 py-3">{{ formatDateTime(row.created_at) }}</td>
+            <td class="px-4 py-3">
+              <button class="btn btn-ghost btn-sm text-primary-600" @click="handleClick(row)">查看</button>
+              <button v-if="!row.is_read" class="btn btn-ghost btn-sm text-primary-600" @click="markRead(row)">标记已读</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { Refresh } from '@element-plus/icons-vue'
+<script setup lang="ts">
+import { Icon } from '@/components/common'
 import { formatDateTime } from '@/utils/filter'
 
 defineProps({
-  notificationList: { type: Array, default: () => [] },
+  notificationList: { type: Array as any, default: () => [] },
   unreadCount: { type: Number, default: 0 },
   loading: { type: Boolean, default: false },
   markingAll: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['mark-read', 'mark-all-read', 'click', 'refresh'])
-const getRowClassName = ({ row }) => row.is_read ? '' : 'unread-row'
-const markRead = (row) => emit('mark-read', row)
+const getRowClassName = (payload: any) => { const { row } = payload; return row.is_read ? '' : 'bg-primary-50/50' }
+const markRead = (row: any) => emit('mark-read', row)
 const markAllRead = () => emit('mark-all-read')
-const handleClick = (row) => emit('click', row)
+const handleClick = (row: any) => emit('click', row)
 const loadData = () => emit('refresh')
 </script>
-
-<style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.card-header { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
-.header-actions { display: flex; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
-.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
-.notification-table { width: 100%; }
-:deep(.unread-row) { background-color: #f0f9ff; }
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .card-header,
-  .header-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .header-actions .el-button {
-    width: 100%;
-  }
-}
-</style>

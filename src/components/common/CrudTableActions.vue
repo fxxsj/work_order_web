@@ -1,35 +1,31 @@
 <template>
-  <div class="crud-table-actions">
-    <el-button
+  <div class="flex items-center justify-center gap-2">
+    <button
       v-if="showView"
-      type="text"
-      size="small"
+      class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400"
       @click="emit('view')"
     >
       查看
-    </el-button>
-    <el-button
+    </button>
+    <button
       v-if="showEdit"
-      type="text"
-      size="small"
+      class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400"
       @click="emit('edit')"
     >
       编辑
-    </el-button>
-    <el-button
+    </button>
+    <button
       v-if="showDelete"
-      type="text"
-      size="small"
-      style="color: #F56C6C;"
+      class="btn btn-ghost btn-sm text-danger-600 dark:text-danger-400"
       @click="emit('delete')"
     >
       删除
-    </el-button>
+    </button>
     <slot></slot>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 defineProps({
   showView: { type: Boolean, default: true },
   showEdit: { type: Boolean, default: true },
@@ -38,11 +34,3 @@ defineProps({
 
 const emit = defineEmits(['view', 'edit', 'delete'])
 </script>
-
-<style scoped>
-.crud-table-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-</style>

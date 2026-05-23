@@ -1,94 +1,96 @@
 <template>
-  <div class="task-kanban">
-    <div class="kanban-container">
+  <div class="p-5">
+    <div class="flex gap-6 overflow-x-auto">
       <div
         v-for="column in columns"
         :key="column.status"
-        class="kanban-column"
+        class="flex-shrink-0 flex-1"
+        style="min-width: 280px; max-width: 360px;"
       >
-        <div class="column-header">
-          <span class="column-title">{{ column.title }}</span>
-          <el-badge :value="column.tasks.length" class="column-badge" />
+        <!-- Column Header -->
+        <div class="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-dark-800 rounded-t-2xl border-b-2 border-gray-200 dark:border-dark-700">
+          <span class="font-medium text-sm text-gray-900 dark:text-white">{{ column.title }}</span>
+          <span class="badge badge-gray">{{ column.tasks.length }}</span>
         </div>
-        <div
-          class="column-content"
-          :class="`column-${column.status}`"
-        >
+
+        <!-- Column Content -->
+        <div class="bg-gray-50 dark:bg-dark-900/50 min-h-64 p-3 rounded-b-2xl space-y-3">
           <div
             v-for="task in column.tasks"
             :key="task.id"
-            class="kanban-card"
+            class="card card-hover p-4 cursor-pointer"
             @click="handleTaskClick(task)"
           >
-            <div class="card-header">
-              <div class="card-title">
+            <!-- Card Header -->
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div class="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0 truncate">
                 {{ task.work_content }}
               </div>
               <StatusTag :status="task.task_type" category="taskType" :label="task.task_type_display" size="small" />
             </div>
-            <div class="card-body">
-              <div class="card-info">
-                <div class="info-item">
-                  <el-icon><Document /></el-icon>
-                  <span>{{ task.work_order_number || '-' }}</span>
-                </div>
-                <div v-if="task.assigned_department_name" class="info-item">
-                  <el-icon><OfficeBuilding /></el-icon>
-                  <span>{{ task.assigned_department_name }}</span>
-                </div>
-                <div v-if="task.assigned_operator_name" class="info-item">
-                  <el-icon><User /></el-icon>
-                  <span>{{ task.assigned_operator_name }}</span>
-                </div>
+
+            <!-- Card Body -->
+            <div class="mb-3 space-y-2">
+              <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-400">
+                <Icon name="document" class="h-3 w-3" />
+                <span>{{ task.work_order_number || '-' }}</span>
               </div>
-              <div v-if="task.production_quantity > 0" class="card-progress">
-                <div class="progress-info">
-                  <span>进度: {{ getProgressPercentage(task) }}%</span>
-                  <span>{{ task.quantity_completed || 0 }}/{{ task.production_quantity }}</span>
-                </div>
-                <el-progress
-                  :percentage="getProgressPercentage(task)"
-                  :status="getProgressStatus(task)"
-                  :stroke-width="6"
-                />
+              <div v-if="task.assigned_department_name" class="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-400">
+                <Icon name="building" class="h-3 w-3" />
+                <span>{{ task.assigned_department_name }}</span>
+              </div>
+              <div v-if="task.assigned_operator_name" class="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-400">
+                <Icon name="user" class="h-3 w-3" />
+                <span>{{ task.assigned_operator_name }}</span>
               </div>
             </div>
-            <div class="card-footer">
-              <div class="footer-left">
-                <StatusTag
-                  v-if="task.priority"
-                  :status="task.priority"
-                  category="priority"
-                  :label="task.priority_display"
-                  size="small"
-                  effect="plain"
-                />
+
+            <!-- Progress -->
+            <div v-if="task.production_quantity > 0" class="mb-3">
+              <div class="flex justify-between text-xs text-gray-500 dark:text-dark-400 mb-1">
+                <span>进度: {{ getProgressPercentage(task) }}%</span>
+                <span>{{ task.quantity_completed || 0 }}/{{ task.production_quantity }}</span>
               </div>
-              <div class="footer-right">
-                <span class="deadline" :class="{ 'deadline-overdue': isOverdue(task) }">
-                  <el-icon><Clock /></el-icon>
-                  {{ formatDate(task.deadline) }}
-                </span>
-              </div>
+              <ProgressBar
+                :percentage="getProgressPercentage(task)"
+                :status="getProgressStatus(task)"
+                :stroke-width="6"
+              />
+            </div>
+
+            <!-- Card Footer -->
+            <div class="flex items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-dark-700">
+              <StatusTag
+                v-if="task.priority"
+                :status="task.priority"
+                category="priority"
+                :label="task.priority_display"
+                size="small"
+                effect="plain"
+              />
+              <span
+                class="flex items-center gap-1 text-xs"
+                :class="isOverdue(task) ? 'text-danger-500' : 'text-gray-500 dark:text-dark-400'"
+              >
+                <Icon name="clock" class="h-3 w-3" />
+                {{ formatDate(task.deadline) }}
+              </span>
             </div>
           </div>
-          <el-empty v-if="column.tasks.length === 0" description="暂无任务" />
+
+          <EmptyState v-if="column.tasks.length === 0" title="暂无任务" />
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { Document, OfficeBuilding, User, Clock } from '@element-plus/icons-vue'
-import { StatusTag } from '@/components/common'
+import { Icon, StatusTag } from '@/components/common'
 
 const props = defineProps({
-  tasks: {
-    type: Array,
-    default: () => []
-  }
+  tasks: { type: Array as any, default: () => [] }
 })
 
 const emit = defineEmits(['task-click'])
@@ -99,163 +101,33 @@ const columns = computed(() => {
     in_progress: { title: '进行中', status: 'in_progress' },
     completed: { title: '已完成', status: 'completed' }
   }
-
-  return Object.values(statusMap).map(col => ({
+  return Object.values(statusMap).map((col: any) => ({
     ...col,
-    tasks: props.tasks.filter(task => task.status === col.status)
+    tasks: props.tasks.filter((task: any) => task.status === col.status)
   }))
 })
 
-const handleTaskClick = (task) => {
-  emit('task-click', task)
-}
+const handleTaskClick = (task: any) => emit('task-click', task)
 
-const getProgressPercentage = (task) => {
+const getProgressPercentage = (task: any) => {
   if (!task.production_quantity) return 0
   return Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100)
 }
 
-const getProgressStatus = (task) => {
+const getProgressStatus = (task: any) => {
   const percentage = getProgressPercentage(task)
   if (percentage >= 100) return 'success'
   if (percentage >= 80) return 'warning'
   return ''
 }
 
-const isOverdue = (task) => {
+const isOverdue = (task: any) => {
   if (!task.deadline) return false
   return new Date(task.deadline) < new Date() && task.status !== 'completed'
 }
 
-const formatDate = (date) => {
+const formatDate = (date: any) => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('zh-CN')
 }
 </script>
-
-<style scoped lang="scss">
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.task-kanban {
-  padding: var(--ui-page-padding);
-}
-
-.kanban-container {
-  display: flex;
-  gap: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.kanban-column {
-  flex: 1 0 clamp(var(--ui-board-column-width-min), 32vw, var(--ui-board-column-width));
-}
-
-.column-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--ui-control-gap) var(--ui-stat-content-gap);
-  background-color: var(--ui-color-fill-light);
-  border-radius: var(--ui-radius-card) var(--ui-radius-card) 0 0;
-  border-bottom: 2px solid var(--ui-color-border-strong);
-}
-
-.column-title {
-  font-weight: 500;
-  font-size: var(--ui-font-size-base);
-}
-
-.column-content {
-  background-color: var(--ui-color-fill-light);
-  min-height: var(--ui-board-kanban-min-height);
-  padding: var(--ui-control-gap);
-  border-radius: 0 0 var(--ui-radius-card) var(--ui-radius-card);
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .kanban-column {
-    flex-basis: min(var(--ui-board-column-mobile-ratio), var(--ui-board-column-width-mobile));
-  }
-}
-
-.kanban-card {
-  background-color: #fff;
-  border-radius: var(--ui-radius-card);
-  padding: var(--ui-stat-content-gap);
-  margin-bottom: var(--ui-control-gap);
-  cursor: pointer;
-  transition: all var(--ui-transition-base);
-  box-shadow: var(--ui-board-card-shadow);
-}
-
-.kanban-card:hover {
-  box-shadow: var(--ui-board-card-shadow-hover);
-  transform: translateY(var(--ui-board-card-lift));
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--ui-control-gap);
-  gap: var(--ui-control-gap);
-}
-
-.card-title {
-  font-weight: 500;
-  font-size: var(--ui-font-size-sm);
-  flex: 1;
-  min-width: 0;
-}
-
-.card-body {
-  margin-bottom: var(--ui-control-gap);
-}
-
-.card-info {
-  margin-bottom: var(--ui-control-gap);
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-inline-gap);
-  font-size: var(--ui-font-size-xs);
-  color: var(--ui-color-text-regular);
-  margin-bottom: var(--ui-inline-gap);
-}
-
-.card-progress {
-  margin-top: var(--ui-control-gap);
-}
-
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--ui-font-size-xs);
-  color: var(--ui-color-text-regular);
-  margin-bottom: var(--ui-inline-gap);
-  gap: var(--ui-control-gap);
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  padding-top: var(--ui-control-gap);
-  border-top: 1px solid var(--ui-color-border);
-}
-
-.deadline {
-  font-size: var(--ui-font-size-xs);
-  color: var(--ui-color-text-secondary);
-  display: flex;
-  align-items: center;
-  gap: var(--ui-inline-gap);
-}
-
-.deadline-overdue {
-  color: var(--ui-color-danger);
-}
-</style>

@@ -2,69 +2,10 @@
 
 /* ============================================
    Global Styles - Teal Glass System
-
-   NOTE: CSS reset, scrollbar styles, selection,
-   and base body styles are now handled by
-   tailwindcss.css (@layer base). This file
-   contains only Element Plus overrides and
-   legacy --ui-* token based styles.
    ============================================ */
 
 /* ============================================
-   Element Plus Typography Overrides
-   ============================================ */
-
-.el-button,
-.el-input__inner,
-.el-textarea__inner,
-.el-form-item__label,
-.el-select-dropdown__item,
-.el-dropdown-menu__item,
-.el-menu-item,
-.el-submenu__title,
-.el-radio__label,
-.el-checkbox__label,
-.el-descriptions-item__label,
-.el-descriptions-item__content,
-.el-pagination,
-.el-table,
-.el-tag,
-.el-tabs__item,
-.el-step__title,
-.el-step__description,
-.el-alert__title,
-.el-alert__description {
-  font-size: var(--ui-font-size-base);
-}
-
-.el-dialog__title,
-.el-card__header,
-.el-page-header__title {
-  font-size: var(--ui-font-size-md);
-  font-weight: 600;
-}
-
-.el-form-item__error,
-.el-table .cell,
-.el-tag--mini,
-.el-button--mini,
-.el-button--small,
-.el-input--mini .el-input__inner,
-.el-input--small .el-input__inner,
-.el-textarea--mini .el-textarea__inner,
-.el-textarea--small .el-textarea__inner,
-.el-checkbox__label,
-.el-radio__label {
-  font-size: var(--ui-font-size-sm);
-}
-
-.el-table th,
-.el-table td {
-  padding: 13px 16px;
-}
-
-/* ============================================
-   Utility Classes (legacy --ui-* token based)
+   Utility Classes
    ============================================ */
 
 .ui-control-full {
@@ -132,63 +73,6 @@
    ============================================ */
 
 @media (max-width: bp.$breakpoint-phone-max) {
-  /* Touch targets */
-  .el-button,
-  .el-input__wrapper,
-  .el-select__wrapper {
-    min-height: var(--ui-touch-target-min);
-  }
-
-  /* Inline forms */
-  .el-form--inline .el-form-item {
-    display: flex;
-    width: 100%;
-    margin-right: 0;
-  }
-
-  .el-form--inline .el-form-item__content,
-  .el-form--inline .el-input,
-  .el-form--inline .el-select,
-  .el-form--inline .el-date-editor {
-    width: 100%;
-  }
-
-  /* Block forms */
-  .el-form:not(.el-form--inline) .el-form-item {
-    display: block;
-  }
-
-  .el-form:not(.el-form--inline) .el-form-item__label {
-    width: auto !important;
-    min-height: 0;
-    margin-bottom: 6px;
-    line-height: 1.4;
-    text-align: left;
-  }
-
-  .el-form:not(.el-form--inline) .el-form-item__content {
-    margin-left: 0 !important;
-    width: 100%;
-  }
-
-  /* Dialog */
-  .el-dialog {
-    width: calc(100vw - var(--ui-page-padding) * 2) !important;
-    max-width: none;
-    margin: var(--ui-page-padding) auto !important;
-  }
-
-  .el-dialog__body {
-    max-height: calc(100vh - var(--ui-dialog-mobile-chrome-height));
-    overflow: auto;
-  }
-
-  /* Pagination */
-  .el-pagination {
-    justify-content: center;
-    white-space: normal;
-  }
-
   /* Flex groups become stacked */
   .button-group,
   .filter-group,
@@ -203,17 +87,6 @@
   .action-group > *,
   .actions > * {
     flex: 1 1 100%;
-  }
-
-  .filter-section .el-row,
-  .responsive-form-row {
-    row-gap: var(--ui-control-gap);
-  }
-
-  .filter-section .el-col,
-  .responsive-form-row .el-col {
-    max-width: 100% !important;
-    flex: 0 0 100% !important;
   }
 }
 
@@ -272,30 +145,5 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: var(--ui-control-gap);
-  }
-}
-
-/* ============================================
-   Table Responsive
-   ============================================ */
-
-@media (max-width: bp.$breakpoint-tablet-max) {
-  .el-table {
-    font-size: var(--ui-font-size-sm);
-  }
-
-  .el-table th,
-  .el-table td {
-    padding: 8px 12px;
-  }
-
-  /* Hide header on mobile */
-  .el-table__header-wrapper {
-    display: none;
-  }
-
-  .el-table__body-wrapper {
-    border: 1px solid var(--ui-color-border);
-    border-radius: var(--ui-radius-base);
   }
 }

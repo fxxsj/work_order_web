@@ -1,69 +1,89 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="var(--ui-dialog-width-sm)" @close="handleClose">
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-      <el-form-item label="任务内容"><div class="task-info">{{ task?.work_content }}</div></el-form-item>
-      <el-form-item label="当前进度">
-        <el-progress :percentage="currentProgress" :color="progressColor" />
-        <div class="progress-text">{{ task?.quantity_completed || 0 }} / {{ task?.production_quantity || 0 }}</div>
-      </el-form-item>
-      <el-radio-group v-model="updateMode" style="margin-bottom: 20px;">
-        <el-radio-button label="increment">增量更新</el-radio-button>
-        <el-radio-button label="complete">直接完成</el-radio-button>
-      </el-radio-group>
+  <BaseDialog :show="dialogVisible" :title="dialogTitle" width="narrow" @close="handleClose; dialogVisible = false;">
+    <div class="space-y-4">
+      <div class="flex items-start gap-3">
+        <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">任务内容</label>
+        <div class="flex-1 rounded-lg bg-gray-100 p-3 text-sm text-gray-600 dark:bg-dark-700 dark:text-gray-300">{{ task?.work_content }}</div>
+      </div>
+      <div class="flex items-start gap-3">
+        <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">当前进度</label>
+        <div class="flex-1">
+          <ProgressBar :percentage="currentProgress" :color="progressColor" />
+          <div class="mt-2 text-xs text-gray-400">{{ task?.quantity_completed || 0 }} / {{ task?.production_quantity || 0 }}</div>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">更新方式</label>
+        <RadioGroup v-model="updateMode" :options="updateModeOptions" />
+      </div>
       <template v-if="updateMode === 'increment'">
-        <el-form-item label="本次完成数量" prop="quantity_increment">
-          <el-input-number v-model="form.quantity_increment" :min="0" :max="maxIncrement" :step="1" controls-position="right" style="width: 100%;" />
-          <div class="hint">更新后进度: {{ projectedCompleted }} / {{ task?.production_quantity }}</div>
-        </el-form-item>
-        <el-form-item label="不良品数量" prop="quantity_defective"><el-input-number v-model="form.quantity_defective" :min="0" :step="1" controls-position="right" style="width: 100%;" /></el-form-item>
+        <div class="flex items-start gap-3">
+          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">本次完成数量</label>
+          <div class="flex-1">
+            <InputNumber v-model="form.quantity_increment" :min="0" :max="maxIncrement" :step="1" class="w-full" />
+            <div class="mt-2 text-xs text-gray-400">更新后进度: {{ projectedCompleted }} / {{ task?.production_quantity }}</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">不良品数量</label>
+          <InputNumber v-model="form.quantity_defective" :min="0" :step="1" class="w-full" />
+        </div>
       </template>
       <template v-else>
-        <el-form-item label="完成理由"><el-input v-model="form.completion_reason" type="textarea" :rows="2" placeholder="请输入完成理由（可选）" /></el-form-item>
-        <el-form-item label="不良品数量"><el-input-number v-model="form.quantity_defective" :min="0" :max="task?.production_quantity" :step="1" controls-position="right" style="width: 100%;" /></el-form-item>
+        <TextArea v-model="form.completion_reason" label="完成理由" :rows="2" placeholder="请输入完成理由（可选）" />
+        <div class="flex items-start gap-3">
+          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">不良品数量</label>
+          <InputNumber v-model="form.quantity_defective" :min="0" :max="task?.production_quantity" :step="1" class="w-full" />
+        </div>
       </template>
-      <el-form-item label="备注"><el-input v-model="form.notes" type="textarea" :rows="2" placeholder="请输入备注（可选）" /></el-form-item>
-    </el-form>
+      <TextArea v-model="form.notes" label="备注" :rows="2" placeholder="请输入备注（可选）" />
+    </div>
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="submitting" @click="handleSubmit">{{ updateMode === 'complete' ? '确认完成' : '确认更新' }}</el-button>
+      <button class="btn btn-secondary" @click="handleClose">取消</button>
+      <button class="btn btn-primary" :disabled="submitting" @click="handleSubmit">{{ updateMode === 'complete' ? '确认完成' : '确认更新' }}</button>
     </template>
-  </el-dialog>
+  </BaseDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { BaseDialog, TextArea, InputNumber, RadioGroup, ProgressBar } from '@/components/common'
 import { workOrderTaskAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
+import { ElMessage } from '@/utils/message'
 
 const props = defineProps({ visible: Boolean, task: { type: Object, default: () => ({}) } })
 const emit = defineEmits(['success', 'update:visible'])
 
-const formRef = ref(null)
 const updateMode = ref('increment')
 const submitting = ref(false)
 const form = reactive({ quantity_increment: 1, quantity_defective: 0, completion_reason: '', notes: '' })
-const rules = { quantity_increment: [{ required: true, message: '请输入完成数量', trigger: 'blur' }, { type: 'number', min: 1, message: '数量必须大于0', trigger: 'blur' }] }
 
-const dialogVisible = computed({ get: () => props.visible, set: (val) => emit('update:visible', val) })
+const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
 const dialogTitle = computed(() => updateMode.value === 'complete' ? '完成任务' : '更新进度')
 const currentProgress = computed(() => props.task?.production_quantity ? Math.round((props.task.quantity_completed / props.task.production_quantity) * 100) : 0)
 const progressColor = computed(() => { const p = currentProgress.value; return p >= 100 ? '#67C23A' : p >= 50 ? '#409EFF' : '#E6A23C' })
 const maxIncrement = computed(() => (props.task?.production_quantity || 0) - (props.task?.quantity_completed || 0))
 const projectedCompleted = computed(() => (props.task?.quantity_completed || 0) + (form.quantity_increment || 0))
+const updateModeOptions = [
+  { value: 'increment', label: '增量更新' },
+  { value: 'complete', label: '直接完成' }
+]
 
-watch(() => props.visible, (val) => { if (val) resetForm() })
+watch(() => props.visible, (val: any) => { if (val) resetForm() })
 
-const resetForm = () => { updateMode.value = 'increment'; Object.assign(form, { quantity_increment: 1, quantity_defective: 0, completion_reason: '', notes: '' }); nextTick(() => { formRef.value?.clearValidate() }) }
+const resetForm = () => { updateMode.value = 'increment'; Object.assign(form, { quantity_increment: 1, quantity_defective: 0, completion_reason: '', notes: '' }) }
 
 const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) return
+  if (updateMode.value === 'increment') {
+    if (!form.quantity_increment || form.quantity_increment < 1) { ElMessage.warning('请输入有效的完成数量'); return }
+  }
   submitting.value = true
   try {
     const data = { ...form, version: props.task.version }
     if (updateMode.value === 'complete') { await workOrderTaskAPI.complete(props.task.id, data); ErrorHandler.showSuccess('任务已完成') } else { await workOrderTaskAPI.updateQuantity(props.task.id, data); ErrorHandler.showSuccess('进度已更新') }
     emit('success'); handleClose()
-  } catch (error) {
+  } catch (error: any) {
     if (error.response?.status === 409) ErrorHandler.showError('任务已被其他操作员更新，请刷新后重试')
     else ErrorHandler.showMessage(error, updateMode.value === 'complete' ? '完成任务' : '更新进度')
   } finally { submitting.value = false }
@@ -71,9 +91,3 @@ const handleSubmit = async () => {
 
 const handleClose = () => emit('update:visible', false)
 </script>
-
-<style scoped>
-.task-info { background-color: #F5F7FA; padding: 12px; border-radius: 4px; color: #606266; font-size: 14px; line-height: 1.5; }
-.progress-text { margin-top: 8px; font-size: 12px; color: #909399; }
-.hint { margin-top: 8px; font-size: 12px; color: #909399; }
-</style>

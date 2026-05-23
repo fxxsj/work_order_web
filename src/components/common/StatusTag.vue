@@ -1,24 +1,50 @@
 <template>
-  <el-tag :type="tagType" :size="size" :effect="effect" :hit="hit" :disable-transitions="disableTransitions" :color="color">
+  <Tag :type="tagType" :size="size" :effect="effect" :hit="hit" :disable-transitions="disableTransitions" :color="variantColor || color">
     <slot>{{ displayText }}</slot>
-    <el-icon v-if="icon"><component :is="icon" /></el-icon>
-  </el-tag>
+    <Icon v-if="icon" :name="icon" size="sm" />
+  </Tag>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
+import { Icon } from '@/components/common'
 import { getStatusMeta } from '@/constants/statusMeta'
 
-const props = defineProps({
-  status: { type: [String, Number], default: '' },
-  category: { type: String, default: '' },
-  statusMap: { type: Object, default: () => ({}) },
-  label: { type: String, default: '' },
-  size: { type: String, default: 'default' },
-  effect: { type: String, default: 'light' },
-  hit: { type: Boolean, default: false },
-  disableTransitions: { type: Boolean, default: false },
-  color: { type: String, default: '' }
+interface Props {
+  status?: string | number
+  category?: string
+  statusMap?: Record<string, any>
+  label?: string
+  size?: 'small' | 'default' | 'large'
+  effect?: string
+  hit?: boolean
+  disableTransitions?: boolean
+  color?: string
+  variant?: 'success' | 'warning' | 'danger' | 'info'
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  status: '',
+  category: '',
+  statusMap: () => ({}),
+  label: '',
+  size: 'default',
+  effect: 'light',
+  hit: false,
+  disableTransitions: false,
+  color: ''
+})
+
+// Variant color mapping
+const variantColor = computed(() => {
+  if (!props.variant) return ''
+  const map: Record<string, string> = {
+    success: '#67C23A',
+    warning: '#E6A23C',
+    danger: '#F56C6C',
+    info: '#909399'
+  }
+  return map[props.variant] || ''
 })
 
 const statusConfig = computed(() => {
@@ -26,16 +52,19 @@ const statusConfig = computed(() => {
   if (props.category) return getStatusMeta(props.category, props.status, { text: props.label })
   return {}
 })
-const tagType = computed(() => statusConfig.value.type || 'info')
+const tagType = computed(() => {
+  if (props.variant) return props.variant
+  return statusConfig.value.type || 'info'
+})
 const displayText = computed(() => props.label || statusConfig.value.text || props.status)
 const icon = computed(() => statusConfig.value.icon || '')
 </script>
 
-<style scoped>
+<style>
 .status-icon {
   margin-right: 4px;
 }
-.el-tag .status-icon + span {
+.status-icon + span {
   margin-left: 4px;
 }
 </style>

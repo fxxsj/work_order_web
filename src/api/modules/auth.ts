@@ -1,0 +1,145 @@
+/**
+ * Authentication API Module
+ * 用户认证和授权 API
+ */
+import request from '@/api/index'
+import { BaseAPI } from '@/api/base/BaseAPI'
+
+class AuthAPI extends BaseAPI {
+  constructor() {
+    super('/auth/', request)
+  }
+
+  /**
+   * 用户登录
+   * @param {Object} credentials - 登录凭证 { username, password }
+   * @returns {Promise} 登录结果（包含 token）
+   */
+  login(credentials: Record<string, unknown>) {
+    return this.request({
+      url: `${this.baseUrl}login/`,
+      method: 'post',
+      data: credentials
+    }).then(response => this._unwrap(response))
+  }
+
+  /**
+   * 用户登出
+   * @returns {Promise} 登出结果
+   */
+  logout() {
+    return this.request({
+      url: `${this.baseUrl}logout/`,
+      method: 'post'
+    })
+  }
+
+  /**
+   * 为 Django Admin 创建会话
+   * @returns {Promise} 后台会话结果
+   */
+  createAdminSession() {
+    return this.request({
+      url: `${this.baseUrl}admin-session/`,
+      method: 'post'
+    })
+  }
+
+  /**
+   * 获取当前用户信息
+   * @returns {Promise} 用户信息对象
+   */
+  getCurrentUser() {
+    return this.request({
+      url: `${this.baseUrl}user/`,
+      method: 'get'
+    })
+  }
+
+  /**
+   * 用户注册
+   * @param {Object} data - 注册信息 { username, password, email, ... }
+   * @returns {Promise} 注册结果
+   */
+  register(data: unknown) {
+    return this.request({
+      url: `${this.baseUrl}register/`,
+      method: 'post',
+      data
+    })
+  }
+
+  /**
+   * 获取业务员列表
+   * @returns {Promise} 业务员列表
+   */
+  getSalespersons() {
+    return this.request({
+      url: `${this.baseUrl}salespersons/`,
+      method: 'get'
+    })
+  }
+
+  /**
+   * 根据部门获取用户列表
+   * @param {number|null} departmentId - 部门ID，null表示获取所有用户
+   * @returns {Promise} 用户列表
+   */
+  getUsersByDepartment(departmentId: number | string | null = null) {
+    const params: Record<string, unknown> = {}
+    if (departmentId) {
+      params.department_id = departmentId
+    }
+    return this.request({
+      url: `${this.baseUrl}users/`,
+      method: 'get',
+      params
+    })
+  }
+
+  /**
+   * 修改密码
+   * @param {Object} data - 密码信息 { old_password, new_password }
+   * @returns {Promise} 修改结果
+   */
+  changePassword(data: unknown) {
+    return this.request({
+      url: `${this.baseUrl}change-password/`,
+      method: 'post',
+      data
+    })
+  }
+
+  /**
+   * 获取用户列表（兼容旧 API）
+   * @param {Object} params - 查询参数 { department, ... }
+   * @returns {Promise} 用户列表
+   */
+  getUserList(params: Record<string, unknown> = {}) {
+    const queryParams: Record<string, unknown> = {}
+    if (params.department) {
+      queryParams.department_id = params.department
+    }
+    return this.request({
+      url: `${this.baseUrl}users/`,
+      method: 'get',
+      params: queryParams
+    })
+  }
+
+  /**
+   * 更新个人信息
+   * @param {Object} data - 用户信息 { name, email, phone, ... }
+   * @returns {Promise} 更新结果
+   */
+  updateProfile(data: unknown) {
+    return this.request({
+      url: `${this.baseUrl}update-profile/`,
+      method: 'put',
+      data
+    })
+  }
+}
+
+export const authAPI = new AuthAPI()
+export default authAPI

@@ -1,40 +1,35 @@
 <template>
-  <el-select
-    v-model="selectedValue"
-    :remote="true"
-    :remote-method="remoteMethod"
+  <Select
+    :model-value="selectedValue"
+    :options="selectOptions"
     :loading="loading"
     :clearable="clearable"
     :filterable="filterable"
     :multiple="multiple"
     :disabled="disabled"
     :placeholder="placeholder"
-    :collapse-tags="collapseTags"
+    @update:model-value="handleInput"
     @change="handleChange"
     @focus="handleFocus"
   >
-    <el-option
-      v-for="item in options"
-      :key="item[valueKey]"
-      :label="item[labelKey]"
-      :value="item[valueKey]"
-    >
-      <slot name="option" :option="item">
-        {{ item[labelKey] }}
+    <template #option="{ option }">
+      <slot name="option" :option="option">
+        {{ option[props.labelKey] }}
       </slot>
-    </el-option>
-  </el-select>
+    </template>
+  </Select>
 </template>
 
-<script setup>
-import { ref, watch } from 'vue'
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { Select } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
 
 const props = defineProps({
   fetchMethod: { type: Function, required: true },
   labelKey: { type: String, default: 'label' },
   valueKey: { type: String, default: 'value' },
-  modelValue: { type: [String, Number, Array], default: null },
+  modelValue: { type: [String, Number, Array] as unknown as () => string | number | (string | number)[] | null, default: null },
   clearable: { type: Boolean, default: true },
   filterable: { type: Boolean, default: true },
   multiple: { type: Boolean, default: false },
@@ -46,31 +41,40 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'change', 'focus'])
 
 const selectedValue = ref(props.modelValue)
-const options = ref([])
+const options = ref<any[]>([])
 const loading = ref(false)
 
-watch(() => props.modelValue, (val) => {
+const selectOptions = computed(() => options.value.map((item: any) => ({
+  value: item[props.valueKey],
+  label: item[props.labelKey],
+  raw: item
+})))
+
+watch(() => props.modelValue, (val: any) => {
   selectedValue.value = val
 })
 
-watch(selectedValue, (val) => {
-  emit('update:modelValue', val)
-})
-
-const remoteMethod = async (query) => {
+const remoteMethod = async (query: any) => {
   loading.value = true
   try {
     const res = await props.fetchMethod(query)
     options.value = res?.results || res || []
-  } catch (error) {
+  } catch (error: any) {
     ErrorHandler.handle(error)
   } finally {
     loading.value = false
   }
 }
 
-const handleChange = (val) => emit('change', val)
-const handleFocus = () => emit('focus')
+const handleInput = (val: any) => {
+  selectedValue.value = val
+  emit('update:modelValue', val)
+}
+const handleChange = (val: any) => emit('change', val)
+const handleFocus = () => {
+  emit('focus')
+  if (options.value.length === 0) remoteMethod('')
+}
 
 // 初始加载
 remoteMethod('')

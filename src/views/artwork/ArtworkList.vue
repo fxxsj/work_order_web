@@ -1,398 +1,195 @@
 <template>
-  <div class="artwork-list">
-    <el-card>
-      <div class="header-section">
-        <div class="filter-group">
-          <el-input
-            class="management-search-control"
-            v-model="searchText"
-            placeholder="搜索图稿编码、名称、拼版尺寸"
-            clearable
-            @input="handleSearchDebounced"
-            @clear="handleSearch"
-          >
-            <template #append>
-              <el-button :icon="Search" @click="handleSearch" />
-            </template>
-          </el-input>
-        </div>
-        <div class="action-group">
-          <el-button :icon="RefreshRight" @click="loadData">
-            刷新
-          </el-button>
-          <el-button
-            v-if="canCreate"
-            type="primary"
-            :icon="Plus"
-            @click="showDialog()"
-          >
-            新建图稿
-          </el-button>
-        </div>
-      </div>
-
-      <div class="table-scroll">
-        <el-table
-          v-loading="loading"
-          :data="tableData"
-          class="data-table"
-        >
-          <el-table-column label="图稿编码" width="180">
-            <template #default="scope">
-              {{ scope.row.code || (scope.row.base_code + (scope.row.version > 1 ? '-v' + scope.row.version : '')) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="name" label="图稿名称" width="200" />
-          <el-table-column prop="color_display" label="色数" width="200" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.color_display && scope.row.color_display !== '-'">
-                {{ scope.row.color_display }}
-              </el-tag>
-              <span v-else style="color: #909399;">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="imposition_size" label="拼版尺寸" width="180" />
-          <el-table-column label="确认状态" width="120" align="center">
-            <template #default="scope">
-              <el-tag
-                :type="scope.row.confirmed ? 'success' : 'info'"
-                size="small"
-              >
-                {{ scope.row.confirmed ? '已确认' : '未确认' }}
-              </el-tag>
-              <div v-if="scope.row.confirmed && scope.row.confirmed_by_name" style="font-size: 12px; color: #909399; margin-top: 5px;">
-                {{ scope.row.confirmed_by_name }}
-              </div>
-              <div v-if="scope.row.confirmed && scope.row.confirmed_at" style="font-size: 12px; color: #909399;">
-                {{ formatDateTime(scope.row.confirmed_at) }}
-              </div>
-            </template>
-          </el-table-column>
-          <el-table-column label="关联刀模" min-width="200">
-            <template #default="scope">
-              <el-tag
-                v-for="(code, index) in scope.row.die_codes"
-                :key="index"
-                style="margin-right: 5px; margin-bottom: 5px;"
-              >
-                {{ code }}<span v-if="scope.row.die_names && scope.row.die_names[index]"> - {{ scope.row.die_names[index] }}</span>
-              </el-tag>
-              <span v-if="!scope.row.die_codes || scope.row.die_codes.length === 0" style="color: #909399;">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="关联烫金版" min-width="200">
-            <template #default="scope">
-              <el-tag
-                v-for="(code, index) in scope.row.foiling_plate_codes"
-                :key="index"
-                type="success"
-                style="margin-right: 5px; margin-bottom: 5px;"
-              >
-                {{ code }}<span v-if="scope.row.foiling_plate_names && scope.row.foiling_plate_names[index]"> - {{ scope.row.foiling_plate_names[index] }}</span>
-              </el-tag>
-              <span v-if="!scope.row.foiling_plate_codes || scope.row.foiling_plate_codes.length === 0" style="color: #909399;">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="关联压凸版" min-width="200">
-            <template #default="scope">
-              <el-tag
-                v-for="(code, index) in scope.row.embossing_plate_codes"
-                :key="index"
-                type="warning"
-                style="margin-right: 5px; margin-bottom: 5px;"
-              >
-                {{ code }}<span v-if="scope.row.embossing_plate_names && scope.row.embossing_plate_names[index]"> - {{ scope.row.embossing_plate_names[index] }}</span>
-              </el-tag>
-              <span v-if="!scope.row.embossing_plate_codes || scope.row.embossing_plate_codes.length === 0" style="color: #909399;">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="包含产品" min-width="200">
-            <template #default="scope">
-              <el-tag
-                v-for="product in scope.row.products"
-                :key="product.id"
-                style="margin-right: 5px; margin-bottom: 5px;"
-              >
-                {{ product.product_name }} ({{ product.imposition_quantity }}拼)
-              </el-tag>
-              <span v-if="!scope.row.products || scope.row.products.length === 0" style="color: #909399;">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="created_at" label="创建时间" width="180">
-            <template #default="scope">
-              {{ formatDateTime(scope.row.created_at) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="180" fixed="right">
-            <template #default="scope">
-              <el-button
-                v-if="canEdit"
-                type="text"
-                size="small"
-                @click="showDialog(scope.row)"
-              >
-                编辑
-              </el-button>
-              <el-button
-                v-if="canEdit"
-                type="text"
-                size="small"
-                @click="createNewVersion(scope.row)"
-              >
-                创建新版本
-              </el-button>
-              <el-button
-                v-if="!scope.row.confirmed && canConfirm"
-                type="text"
-                size="small"
-                style="color: #67C23A;"
-                @click="handleConfirm(scope.row)"
-              >
-                确认
-              </el-button>
-              <el-button
-                v-if="canDelete"
-                type="text"
-                size="small"
-                style="color: #F56C6C;"
-                @click="handleDelete(scope.row)"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-
-      <el-pagination
-        v-if="total > 0"
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :total="total"
-        layout="total, sizes, prev, pager, next"
-        @size-change="handleSizeChange"
-        @current-change="handlePageChange"
+  <CrudPageLayout
+    title="图稿管理"
+    :loading="loading"
+    :total="total"
+    :current-page="currentPage"
+    :page-size="pageSize"
+    @size-change="handleSizeChange"
+    @current-change="handlePageChange"
+  >
+    <template #search>
+      <SearchInput
+        v-model="searchText"
+        class="w-full sm:w-72"
+        placeholder="搜索图稿编码、名称、拼版尺寸"
+        @search="handleSearch"
+        @clear="handleSearch"
       />
+    </template>
 
-      <el-empty
-        v-if="!loading && tableData.length === 0"
-        description="暂无图稿数据"
-        :image-size="200"
-      >
-        <el-button v-if="canCreate" type="primary" @click="showDialog()">
-          创建第一个图稿
-        </el-button>
-      </el-empty>
-    </el-card>
+    <template #actions>
+      <button class="btn btn-secondary btn-sm" @click="loadData">
+        <Icon name="refresh" size="sm" />
+        刷新
+      </button>
+      <button v-if="canCreate" class="btn btn-primary btn-sm" @click="showDialog()">
+        <Icon name="plus" size="sm" />
+        新建图稿
+      </button>
+    </template>
 
-    <ArtworkFormDialog
-      v-model="dialogVisible"
-      :artwork="currentArtwork"
-      :loading="formLoading"
-      :product-list="productList"
-      :die-list="dieList"
-      :foiling-plate-list="foilingPlateList"
-      :embossing-plate-list="embossingPlateList"
-      @confirm="handleFormConfirm"
-    />
-  </div>
+    <DataTable
+      :columns="columns"
+      :data="tableData"
+      :loading="loading"
+      :row-key="(row: any) => row.id"
+      @sort="handleSort"
+    >
+      <template #cell-code="{ row }">
+        {{ row.code || (row.base_code + (row.version > 1 ? '-v' + row.version : '')) }}
+      </template>
+
+      <template #cell-color_display="{ value }">
+        <Tag v-if="value && value !== '-'">{{ value }}</Tag>
+        <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+      </template>
+
+      <template #cell-confirmed="{ row }">
+        <Tag :type="row.confirmed ? 'success' : 'info'" size="small">{{ row.confirmed ? '已确认' : '未确认' }}</Tag>
+        <div v-if="row.confirmed && row.confirmed_by_name" class="mt-1 text-xs text-gray-400">{{ row.confirmed_by_name }}</div>
+        <div v-if="row.confirmed && row.confirmed_at" class="text-xs text-gray-400">{{ formatDateTime(row.confirmed_at) }}</div>
+      </template>
+
+      <template #cell-die_codes="{ row }">
+        <template v-if="row.die_codes && row.die_codes.length > 0">
+          <Tag v-for="(code, index) in row.die_codes" :key="index" class="mr-1 mb-1">{{ code }}<span v-if="row.die_names && row.die_names[index]"> - {{ row.die_names[index] }}</span></Tag>
+        </template>
+        <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+      </template>
+
+      <template #cell-foiling_plate_codes="{ row }">
+        <template v-if="row.foiling_plate_codes && row.foiling_plate_codes.length > 0">
+          <Tag v-for="(code, index) in row.foiling_plate_codes" :key="index" type="success" class="mr-1 mb-1">{{ code }}<span v-if="row.foiling_plate_names && row.foiling_plate_names[index]"> - {{ row.foiling_plate_names[index] }}</span></Tag>
+        </template>
+        <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+      </template>
+
+      <template #cell-embossing_plate_codes="{ row }">
+        <template v-if="row.embossing_plate_codes && row.embossing_plate_codes.length > 0">
+          <Tag v-for="(code, index) in row.embossing_plate_codes" :key="index" type="warning" class="mr-1 mb-1">{{ code }}<span v-if="row.embossing_plate_names && row.embossing_plate_names[index]"> - {{ row.embossing_plate_names[index] }}</span></Tag>
+        </template>
+        <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+      </template>
+
+      <template #cell-products="{ row }">
+        <template v-if="row.products && row.products.length > 0">
+          <Tag v-for="product in row.products" :key="product.id" class="mr-1 mb-1">{{ product.product_name }} ({{ product.imposition_quantity }}拼)</Tag>
+        </template>
+        <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+      </template>
+
+      <template #cell-created_at="{ value }">
+        {{ formatDateTime(value) }}
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="flex items-center gap-2">
+          <button v-if="canEdit" class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="showDialog(row)">编辑</button>
+          <button v-if="canEdit" class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="createNewVersion(row)">创建新版本</button>
+          <button v-if="!row.confirmed && canConfirm" class="btn btn-ghost btn-sm text-success-600 dark:text-success-400" @click="handleConfirm(row)">确认</button>
+          <button v-if="canDelete" class="btn btn-ghost btn-sm text-danger-600 dark:text-danger-400" @click="handleDelete(row)">删除</button>
+        </div>
+      </template>
+
+      <template #empty>
+        <EmptyState
+          :description="hasFilters ? '未找到匹配的图稿' : '暂无图稿数据'"
+          :action-text="canCreate && !hasFilters ? '创建第一个图稿' : undefined"
+          @action="showDialog()"
+        />
+      </template>
+    </DataTable>
+  </CrudPageLayout>
+
+  <ArtworkFormDialog v-model="dialogVisible" :artwork="currentArtwork" :loading="formLoading" :product-list="productList" :die-list="dieList" :foiling-plate-list="foilingPlateList" :embossing-plate-list="embossingPlateList" @confirm="handleFormConfirm" />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from '@/utils/message'
 import { artworkAPI, productAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
+import { CrudPageLayout, DataTable, EmptyState, SearchInput, Icon } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
 import ArtworkFormDialog from './components/ArtworkFormDialog.vue'
 
+const columns: Column[] = [
+  { key: 'code', label: '图稿编码', sortable: true, class: 'w-44' },
+  { key: 'name', label: '图稿名称', sortable: true, class: 'w-48' },
+  { key: 'color_display', label: '色数', sortable: true, class: 'w-48 text-center' },
+  { key: 'imposition_size', label: '拼版尺寸', sortable: true, class: 'w-44' },
+  { key: 'confirmed', label: '确认状态', sortable: true, class: 'w-28 text-center' },
+  { key: 'die_codes', label: '关联刀模', sortable: false, class: 'min-w-48' },
+  { key: 'foiling_plate_codes', label: '关联烫金版', sortable: false, class: 'min-w-48' },
+  { key: 'embossing_plate_codes', label: '关联压凸版', sortable: false, class: 'min-w-48' },
+  { key: 'products', label: '包含产品', sortable: false, class: 'min-w-48' },
+  { key: 'notes', label: '备注', sortable: false },
+  { key: 'created_at', label: '创建时间', sortable: true, class: 'w-44' },
+  { key: 'actions', label: '操作', sortable: false, class: 'w-44' }
+]
+
 const {
-  searchText,
-  tableData,
-  loading,
-  total,
-  currentPage,
-  pageSize,
-  loadData,
-  handleSearch,
-  handleSearchDebounced,
-  handlePageChange,
-  handleSizeChange
-} = useCrudList(artworkAPI, 'getList', {
-  errorContext: '加载图稿数据失败'
-})
+  searchText, tableData, loading, total, currentPage, pageSize,
+  loadData, handleSearch, handleSearchDebounced, handlePageChange, handleSizeChange, hasFilters
+} = useCrudList(artworkAPI, 'getList', { errorContext: '加载图稿数据失败' })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('artwork')
-const canConfirm = canEdit // confirm uses change_artwork permission
-
-const crud = useCRUD(artworkAPI, {
-  onSuccess: () => { dialogVisible.value = false; loadData() },
-})
+const canConfirm = canEdit
+const crud = useCRUD(artworkAPI, { onSuccess: () => { dialogVisible.value = false; loadData() } })
 
 const dialogVisible = ref(false)
 const formLoading = ref(false)
-const currentArtwork = ref(null)
-
-const productList = ref([])
-const dieList = ref([])
-const foilingPlateList = ref([])
-const embossingPlateList = ref([])
+const currentArtwork = ref<any>(null)
+const productList = ref<any[]>([])
+const dieList = ref<any[]>([])
+const foilingPlateList = ref<any[]>([])
+const embossingPlateList = ref<any[]>([])
 
 const loadProductList = async () => {
-  try {
-    const response = await productAPI.getList({ is_active: true, page_size: 100 })
-    productList.value = response?.results || []
-  } catch (error) {
-    ErrorHandler.showMessage(error, '加载产品列表失败')
-  }
+  try { const response: any = await productAPI.getList({ is_active: true, page_size: 100 }); productList.value = response?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载产品列表失败') }
 }
-
 const loadDieList = async () => {
-  try {
-    const response = await dieAPI.getList({ page_size: 100 })
-    dieList.value = response?.results || []
-  } catch (error) {
-    ErrorHandler.showMessage(error, '加载刀模列表失败')
-  }
+  try { const response: any = await dieAPI.getList({ page_size: 100 }); dieList.value = response?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载刀模列表失败') }
 }
-
 const loadFoilingPlateList = async () => {
-  try {
-    const response = await foilingPlateAPI.getList({ page_size: 100 })
-    foilingPlateList.value = response?.results || []
-  } catch (error) {
-    ErrorHandler.showMessage(error, '加载烫金版列表失败')
-  }
+  try { const response: any = await foilingPlateAPI.getList({ page_size: 100 }); foilingPlateList.value = response?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载烫金版列表失败') }
 }
-
 const loadEmbossingPlateList = async () => {
-  try {
-    const response = await embossingPlateAPI.getList({ page_size: 100 })
-    embossingPlateList.value = response?.results || []
-  } catch (error) {
-    ErrorHandler.showMessage(error, '加载压凸版列表失败')
-  }
+  try { const response: any = await embossingPlateAPI.getList({ page_size: 100 }); embossingPlateList.value = response?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载压凸版列表失败') }
 }
 
-const handleConfirm = async (row) => {
-  try {
-    const confirmed = await ErrorHandler.confirm('确认该图稿？', '确认操作')
-    if (!confirmed) return
-    await artworkAPI.confirm(row.id)
-    ElMessage.success('图稿已确认')
-    loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, '确认失败')
-  }
+const handleConfirm = async (row: any) => {
+  try { const confirmed = await ErrorHandler.confirm('确认该图稿？', '确认操作'); if (!confirmed) return; await artworkAPI.confirm(row.id); ElMessage.success('图稿已确认'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '确认失败') }
 }
 
-const createNewVersion = async (row) => {
+const createNewVersion = async (row: any) => {
   const fullCode = row.code || (row.base_code + (row.version > 1 ? '-v' + row.version : ''))
-  try {
-    const confirmed = await ErrorHandler.confirm(`确定要基于 "${fullCode}" 创建新版本吗？`, '创建新版本')
-    if (!confirmed) return
-    await artworkAPI.createVersion(row.id)
-    ElMessage.success('新版本创建成功')
-    loadData()
-  } catch (error) {
-    ErrorHandler.showMessage(error, '创建新版本失败')
-  }
+  try { const confirmed = await ErrorHandler.confirm(`确定要基于 "${fullCode}" 创建新版本吗？`, '创建新版本'); if (!confirmed) return; await artworkAPI.createVersion(row.id); ElMessage.success('新版本创建成功'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '创建新版本失败') }
 }
 
 const showDialog = async (row = null) => {
   if (row) {
-    try {
-      const detail = await artworkAPI.getDetail(row.id)
-      currentArtwork.value = detail
-    } catch (error) {
-      ErrorHandler.showMessage(error, '加载图稿详情失败')
-      return
-    }
-  } else {
-    currentArtwork.value = null
-  }
+    try { const detail: any = await artworkAPI.getDetail((row as any).id); currentArtwork.value = detail } catch (error: any) { ErrorHandler.showMessage(error, '加载图稿详情失败'); return }
+  } else { currentArtwork.value = null }
   dialogVisible.value = true
 }
 
-const handleFormConfirm = async (formData) => {
+const handleFormConfirm = async (formData: any) => {
   formLoading.value = true
-  if (currentArtwork.value) {
-    await crud.update(currentArtwork.value.id, formData, '保存成功')
-  } else {
-    await crud.create(formData, '创建成功')
-  }
+  if (currentArtwork.value) { await crud.update(currentArtwork.value.id, formData, '保存成功') } else { await crud.create(formData, '创建成功') }
   formLoading.value = false
 }
 
-const handleDelete = async (row) => {
-  try {
-    const confirmed = await ErrorHandler.confirm(`确定要删除图稿"${row.name}"吗？`)
-    if (!confirmed) return
-    await crud.remove(row.id, '删除成功')
-  } catch (error) {
-    ErrorHandler.showMessage(error, '删除失败')
-  }
+const handleDelete = async (row: any) => {
+  try { const confirmed = await ErrorHandler.confirm(`确定要删除图稿"${row.name}"吗？`); if (!confirmed) return; await crud.remove(row.id, '删除成功') } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
 }
 
-onMounted(() => {
-  loadData()
-  loadProductList()
-  loadDieList()
-  loadFoilingPlateList()
-  loadEmbossingPlateList()
-})
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  console.log('sort', key, order)
+}
+
+onMounted(() => { loadData(); loadProductList(); loadDieList(); loadFoilingPlateList(); loadEmbossingPlateList() })
 </script>
-
-<style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.artwork-list {
-  padding: var(--ui-page-padding);
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--ui-control-gap);
-}
-
-.filter-group,
-.action-group {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-control-gap);
-  flex-wrap: wrap;
-}
-
-.management-search-control {
-  width: min(100%, 360px);
-}
-
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section,
-  .filter-group,
-  .action-group {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .management-search-control,
-  .action-group .el-button {
-    width: 100%;
-  }
-}
-</style>

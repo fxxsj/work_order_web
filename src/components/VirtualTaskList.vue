@@ -7,24 +7,24 @@
       :has-more="hasMore"
       :loading="loading"
       :show-pagination="showPagination"
-      :current-page="currentPage"
+      :page="currentPage"
       :page-size="pageSize"
       :total="total"
       @row-click="handleTaskClick"
       @load-more="handleLoadMore"
       @page-change="handlePageChange"
-      @size-change="handleSizeChange"
+      @update:page-size="handleSizeChange"
     >
       <!-- 表头列定义 -->
       <template #columns>
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="施工单号" width="150" />
-        <el-table-column label="工序" width="120" />
-        <el-table-column prop="work_content" label="任务内容" min-width="200" />
-        <el-table-column label="分派部门" width="120" />
-        <el-table-column label="状态" width="100" />
-        <el-table-column label="优先级" width="80" />
-        <el-table-column label="操作" width="200" fixed="right" />
+        <th style="width:80px">ID</th>
+        <th style="width:150px">施工单号</th>
+        <th style="width:120px">工序</th>
+        <th style="min-width:200px">任务内容</th>
+        <th style="width:120px">分派部门</th>
+        <th style="width:100px">状态</th>
+        <th style="width:80px">优先级</th>
+        <th style="width:200px">操作</th>
       </template>
 
       <!-- 列表项模板 -->
@@ -44,13 +44,14 @@
 
           <!-- 施工单号 -->
           <div class="task-cell task-cell-order">
-            <el-link
+            <a
               v-if="item.work_order_process_info?.work_order?.id"
-              type="primary"
-              @click.stop="goToWorkOrder(item.work_order_process_info.work_order)"
+              href="#"
+              class="text-primary-600 hover:text-primary-700 dark:text-primary-400 cursor-pointer"
+              @click.prevent.stop="goToWorkOrder(item.work_order_process_info.work_order)"
             >
               {{ item.work_order_process_info.work_order.order_number }}
-            </el-link>
+            </a>
             <span v-else>-</span>
           </div>
 
@@ -81,30 +82,15 @@
 
           <!-- 操作 -->
           <div class="task-cell task-cell-actions">
-            <el-button
-              v-if="item.status === 'pending'"
-              type="text"
-              size="small"
-              @click.stop="handleAssign(item)"
-            >
+            <button class="btn btn-ghost btn-sm" v-if="item.status === 'pending'" @click.stop="handleAssign(item)">
               分派
-            </el-button>
-            <el-button
-              v-if="item.status === 'in_progress'"
-              type="text"
-              size="small"
-              @click.stop="handleUpdate(item)"
-            >
+            </button>
+            <button class="btn btn-ghost btn-sm" v-if="item.status === 'in_progress'" @click.stop="handleUpdate(item)">
               更新
-            </el-button>
-            <el-button
-              v-if="item.status !== 'completed'"
-              type="text"
-              size="small"
-              @click.stop="handleComplete(item)"
-            >
+            </button>
+            <button class="btn btn-ghost btn-sm" v-if="item.status !== 'completed'" @click.stop="handleComplete(item)">
               完成
-            </el-button>
+            </button>
           </div>
         </div>
       </template>
@@ -112,13 +98,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { StatusTag } from '@/components/common'
 import VirtualList from './VirtualList.vue'
 
 const props = defineProps({
-  tasks: { type: Array, default: () => [] },
+  tasks: { type: Array as any, default: () => [] },
   listHeight: { type: Number, default: 400 },
   hasMore: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
@@ -140,13 +126,13 @@ const emit = defineEmits([
 
 const router = useRouter()
 
-const goToWorkOrder = (workOrder) => {
+const goToWorkOrder = (workOrder: any) => {
   if (workOrder?.id) {
     router.push(`/workorders/${workOrder.id}`)
   }
 }
 
-const handleTaskClick = (item) => {
+const handleTaskClick = (item: any) => {
   emit('task-click', item)
 }
 
@@ -154,29 +140,29 @@ const handleLoadMore = () => {
   emit('load-more')
 }
 
-const handlePageChange = (page) => {
+const handlePageChange = (page: any) => {
   emit('page-change', page)
 }
 
-const handleSizeChange = (size) => {
+const handleSizeChange = (size: any) => {
   emit('size-change', size)
 }
 
-const handleAssign = (item) => {
+const handleAssign = (item: any) => {
   emit('assign', item)
 }
 
-const handleUpdate = (item) => {
+const handleUpdate = (item: any) => {
   emit('update', item)
 }
 
-const handleComplete = (item) => {
+const handleComplete = (item: any) => {
   emit('complete', item)
 }
 
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 @use '@/assets/styles/tokens/breakpoints' as bp;
 
 .virtual-task-list {

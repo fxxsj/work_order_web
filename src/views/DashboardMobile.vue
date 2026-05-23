@@ -1,55 +1,65 @@
 <template>
-  <div v-loading="loading" class="dashboard-mobile">
-    <div class="mobile-header"><div class="header-title"><el-icon><HomeFilled /></el-icon><span>工作台</span></div><div class="header-actions"><el-button type="primary" size="small" :icon="Plus" @click="createWorkOrder">新建</el-button></div></div>
+  <div class="dashboard-mobile">
+    <div class="mobile-header"><div class="header-title"><Icon name="home" /><span>工作台</span></div><div class="header-actions"><button class="btn btn-primary btn-sm" @click="createWorkOrder"><Icon name="plus" class="h-3 w-3" /> 新建</button></div></div>
     <div class="quick-stats">
-      <div class="stat-card pending" @click="goToOrders('pending')"><div class="stat-icon"><el-icon><Clock /></el-icon></div><div class="stat-content"><div class="stat-number">{{ statistics.pending_orders || 0 }}</div><div class="stat-label">待开始</div></div></div>
-      <div class="stat-card progress" @click="goToOrders('in_progress')"><div class="stat-icon"><el-icon><Loading /></el-icon></div><div class="stat-content"><div class="stat-number">{{ statistics.in_progress_orders || 0 }}</div><div class="stat-label">进行中</div></div></div>
-      <div class="stat-card urgent" @click="goToUrgentPriority"><div class="stat-icon"><el-icon><Warning /></el-icon></div><div class="stat-content"><div class="stat-number">{{ statistics.urgent_orders || 0 }}</div><div class="stat-label">紧急</div></div></div>
-      <div class="stat-card approval" @click="goToApprovals"><div class="stat-icon"><el-icon><Checked /></el-icon></div><div class="stat-content"><div class="stat-number">{{ statistics.pending_approval || 0 }}</div><div class="stat-label">待审核</div></div></div>
+      <div class="stat-card pending" @click="goToOrders('pending')"><div class="stat-icon"><Icon name="clock" /></div><div class="stat-content"><div class="stat-number">{{ statistics.pending_orders || 0 }}</div><div class="stat-label">待开始</div></div></div>
+      <div class="stat-card progress" @click="goToOrders('in_progress')"><div class="stat-icon"><Icon name="loading" /></div><div class="stat-content"><div class="stat-number">{{ statistics.in_progress_orders || 0 }}</div><div class="stat-label">进行中</div></div></div>
+      <div class="stat-card urgent" @click="goToUrgentPriority"><div class="stat-icon"><Icon name="exclamationTriangle" /></div><div class="stat-content"><div class="stat-number">{{ statistics.urgent_orders || 0 }}</div><div class="stat-label">紧急</div></div></div>
+      <div class="stat-card approval" @click="goToApprovals"><div class="stat-icon"><Icon name="checkCircle" /></div><div class="stat-content"><div class="stat-number">{{ statistics.pending_approval || 0 }}</div><div class="stat-label">待审核</div></div></div>
     </div>
-    <el-card class="recent-orders-card">
-      <template #header><span>最近的施工单</span></template>
-      <div class="table-scroll">
-        <el-table :data="recentOrders" class="recent-orders-table">
-          <el-table-column prop="order_number" label="施工单号" width="120" />
-          <el-table-column prop="customer_name" label="客户" min-width="120" />
-          <el-table-column label="状态" width="88">
-            <template #default="scope">
-              <StatusTag :status="scope.row.status" :label="scope.row.status_display" category="workOrder" size="small" />
-            </template>
-          </el-table-column>
-        </el-table>
+    <div class="card">
+  <div class="card-header flex items-center justify-between">
+    <span>最近的施工单</span>
+  </div>
+  <div class="card-body">
+    <div class="table-scroll">
+        <table class="data-table w-full">
+          <thead>
+            <tr>
+              <th class="w-32">施工单号</th>
+              <th class="min-w-32">客户</th>
+              <th class="w-24">状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in recentOrders" :key="row.id">
+              <td>{{ row.order_number }}</td>
+              <td>{{ row.customer_name }}</td>
+              <td><StatusTag :status="row.status" :label="row.status_display" category="workOrder" size="small" /></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </el-card>
+  </div>
+</div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { HomeFilled, Clock, Loading, Warning, Checked, Plus } from '@element-plus/icons-vue'
 import { workOrderAPI } from '@/api/modules'
-import { StatusTag } from '@/components/common'
+import { Icon, StatusTag } from '@/components/common'
 
 const router = useRouter()
 const loading = ref(false)
 const statistics = reactive({ pending_orders: 0, in_progress_orders: 0, urgent_orders: 0, pending_approval: 0 })
-const recentOrders = ref([])
+const recentOrders = ref<any[]>([])
 
 onMounted(async () => {
   loading.value = true
-  try { const res = await workOrderAPI.getStatistics(); Object.assign(statistics, res || {}) } catch (e) {}
-  try { const res = await workOrderAPI.getList({ page_size: 5 }); recentOrders.value = res?.results || [] } catch (e) {}
+  try { const res: any = await workOrderAPI.getStatistics(); Object.assign(statistics, res || {}) } catch (e: any) {}
+  try { const res: any = await workOrderAPI.getList({ page_size: 5 }); recentOrders.value = res?.results || [] } catch (e: any) {}
   loading.value = false
 })
 
 const createWorkOrder = () => router.push('/workorders/create')
-const goToOrders = (status) => router.push({ path: '/workorders', query: status ? { status } : {} })
+const goToOrders = (status: any) => router.push({ path: '/workorders', query: status ? { status } : {} })
 const goToUrgentPriority = () => router.push({ path: '/workorders', query: { priority: 'urgent' } })
 const goToApprovals = () => router.push('/workorders?approval_status=pending')
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 @use '@/assets/styles/tokens/breakpoints' as bp;
 
 .dashboard-mobile { padding: var(--ui-page-padding); }
@@ -70,7 +80,7 @@ const goToApprovals = () => router.push('/workorders?approval_status=pending')
 
 @media (max-width: bp.$breakpoint-phone-max) {
   .mobile-header,
-  .header-actions .el-button {
+  .header-actions button {
     width: 100%;
   }
 

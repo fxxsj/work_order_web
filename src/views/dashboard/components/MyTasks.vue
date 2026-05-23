@@ -1,28 +1,45 @@
 <template>
-  <el-card>
-    <template #header><div class="card-header"><span>我的待处理任务</span><el-button type="primary" size="small" @click="emit('view-all')">查看全部</el-button></div></template>
-    <el-table :data="tasks" style="width: 100%">
-      <el-table-column label="施工单号" width="150"><template #default="scope"><el-link v-if="scope.row.work_order_process_info?.work_order?.id" type="primary" @click="goTo(`/workorders/${scope.row.work_order_process_info.work_order.id}`)">{{ scope.row.work_order_process_info.work_order.order_number || '-' }}</el-link><span v-else>-</span></template></el-table-column>
-      <el-table-column prop="work_content" label="任务内容" min-width="200" show-overflow-tooltip />
-      <el-table-column label="状态" width="100"><template #default="scope"><StatusTag :status="scope.row.status" :label="scope.row.status_display" category="task" size="small" /></template></el-table-column>
-      <el-table-column label="进度" width="150"><template #default="scope"><el-progress :percentage="getProgress(scope.row)" :color="getProgress(scope.row) === 100 ? '#67C23A' : '#409EFF'" /></template></el-table-column>
-      <el-table-column label="操作" width="100" fixed="right"><template #default=""><el-button type="text" size="small" @click="goTo('/tasks')">详情</el-button></template></el-table-column>
-    </el-table>
-  </el-card>
+  <div class="card">
+    <div class="card-header flex items-center justify-between">
+      <span class="text-sm font-semibold text-gray-900 dark:text-white">我的待处理任务</span>
+      <button class="btn btn-primary btn-sm" @click="emit('view-all')">查看全部</button>
+    </div>
+    <div class="card-body overflow-x-auto">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+            <th class="px-3 py-2 w-36">施工单号</th>
+            <th class="px-3 py-2 min-w-48">任务内容</th>
+            <th class="px-3 py-2 w-24">状态</th>
+            <th class="px-3 py-2 w-36">进度</th>
+            <th class="px-3 py-2 w-24">操作</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
+          <tr v-for="row in tasks" :key="row.id" class="hover:bg-gray-50 dark:hover:bg-dark-800">
+            <td class="px-3 py-2">
+              <button v-if="row.work_order_process_info?.work_order?.id" class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="goTo(`/workorders/${row.work_order_process_info.work_order.id}`)">{{ row.work_order_process_info.work_order.order_number || '-' }}</button>
+              <span v-else>-</span>
+            </td>
+            <td class="px-3 py-2 truncate max-w-xs">{{ row.work_content }}</td>
+            <td class="px-3 py-2"><StatusTag :status="row.status" :label="row.status_display" category="task" size="small" /></td>
+            <td class="px-3 py-2"><ProgressBar :percentage="getProgress(row)" :color="getProgress(row) === 100 ? '#67C23A' : '#409EFF'" /></td>
+            <td class="px-3 py-2"><button class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="goTo('/tasks')">详情</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { StatusTag } from '@/components/common'
 
-defineProps({ tasks: { type: Array, default: () => [] } })
+defineProps({ tasks: { type: Array as any, default: () => [] } })
 const emit = defineEmits(['view-all'])
 const router = useRouter()
-const goTo = (path) => router.push(path)
+const goTo = (path: any) => router.push(path)
 
-const getProgress = (t) => t.production_quantity ? Math.round(((t.quantity_completed || 0) / t.production_quantity) * 100) : 0;
+const getProgress = (t: any) => t.production_quantity ? Math.round(((t.quantity_completed || 0) / t.production_quantity) * 100) : 0
 </script>
-
-<style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-</style>

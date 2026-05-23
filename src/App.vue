@@ -1,40 +1,13 @@
 <template>
-  <div id="app" :class="{ dark: isDarkMode }">
+  <div id="app">
     <router-view />
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useUserStore } from '@/stores'
-
-// 初始化用户状态
-const userStore = useUserStore()
-userStore.restoreSession()
-
-// Dark mode toggle - sync with AppHeader
-const isDarkMode = ref(localStorage.getItem('theme') === 'dark')
-
-const handleThemeToggle = (event) => {
-  isDarkMode.value = event.detail.dark
-}
-
-onMounted(() => {
-  // Check for saved preference or system preference
-  const savedTheme = localStorage.getItem('theme')
-  if (savedTheme) {
-    isDarkMode.value = savedTheme === 'dark'
-  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    isDarkMode.value = true
-  }
-
-  // Listen for theme toggle events from header
-  window.addEventListener('theme-toggle', handleThemeToggle)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('theme-toggle', handleThemeToggle)
-})
+<script setup lang="ts">
+// App.vue 不再负责主题初始化和用户恢复
+// 主题初始化已前移到 main.ts（mount 前）
+// 用户恢复由 main.ts 的 initApp 处理
 </script>
 
 <style>

@@ -1,93 +1,123 @@
 <template>
   <div class="timeline-view">
-    <el-timeline>
-      <el-timeline-item
+    <div class="timeline-container">
+      <div
         v-for="(item, index) in timelineItems"
         :key="index"
-        :timestamp="item.timestamp"
-        :type="item.type"
-        :icon="item.icon"
-        :color="item.color"
-        placement="top"
-        size="large"
+        class="timeline-item"
       >
-        <el-card class="timeline-card" :class="`card-${item.type}`">
-          <div class="card-header">
-            <h4 class="card-title">
-              {{ item.title }}
-            </h4>
-            <el-tag
-              :type="getTagType(item.type)"
-              size="small"
-            >
-              {{ item.typeLabel }}
-            </el-tag>
-          </div>
-          <div class="card-content">
-            <p v-if="item.content">
-              {{ item.content }}
-            </p>
-            <div v-if="item.details" class="card-details">
-              <div
-                v-for="(detail, key) in item.details"
-                :key="key"
-                class="detail-item"
-              >
-                <span class="detail-label">{{ getDetailLabel(key) }}:</span>
-                <span class="detail-value">{{ detail }}</span>
+        <div class="timeline-tail"></div>
+        <div class="timeline-node" :class="`timeline-node-${item.type}`" :style="item.color ? { backgroundColor: item.color } : {}">
+          <Icon v-if="item.icon" :name="item.icon" class="h-3 w-3" />
+        </div>
+        <div class="timeline-content">
+          <div class="card timeline-card" :class="`card-${item.type}`">
+            <div class="card-header">
+              <h4 class="card-title">{{ item.title }}</h4>
+              <Tag :type="getTagType(item.type)" size="small">{{ item.typeLabel }}</Tag>
+            </div>
+            <div class="card-content">
+              <p v-if="item.content">{{ item.content }}</p>
+              <div v-if="item.details" class="card-details">
+                <div v-for="(detail, key) in item.details" :key="key" class="detail-item">
+                  <span class="detail-label">{{ getDetailLabel(key) }}:</span>
+                  <span class="detail-value">{{ detail }}</span>
+                </div>
               </div>
             </div>
+            <div v-if="item.operator" class="card-footer">
+              <Icon name="user" class="h-4 w-4" />
+              <span>{{ item.operator }}</span>
+            </div>
           </div>
-          <div v-if="item.operator" class="card-footer">
-            <el-icon><User /></el-icon>
-            <span>{{ item.operator }}</span>
-          </div>
-        </el-card>
-      </el-timeline-item>
-    </el-timeline>
-    <el-empty v-if="timelineItems.length === 0" description="暂无时间线数据" />
+          <div v-if="item.timestamp" class="timeline-timestamp">{{ item.timestamp }}</div>
+        </div>
+      </div>
+    </div>
+    <EmptyState v-if="timelineItems.length === 0" title="暂无时间线数据" />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { User } from '@element-plus/icons-vue'
+import { Icon } from '@/components/common'
 
 const props = defineProps({
-  items: {
-    type: Array,
-    default: () => []
-  }
+  items: { type: Array as any, default: () => [] }
 })
 
 const timelineItems = computed(() => props.items)
 
-const getTagType = (type) => {
-  const typeMap = {
-    create: 'success',
-    update: 'warning',
-    delete: 'danger',
-    complete: 'success',
-    assign: 'primary',
-    status: 'info'
-  }
-  return typeMap[type] || 'info'
+const getTagType = (type: any) => {
+  const typeMap = { create: 'success', update: 'warning', delete: 'danger', complete: 'success', assign: 'primary', status: 'info' }
+  return (typeMap as any)[type] || 'info'
 }
 
-const getDetailLabel = (key) => {
-  const labelMap = {
-    operator: '操作人',
-    department: '部门',
-    status: '状态',
-    remark: '备注'
-  }
-  return labelMap[key] || key
+const getDetailLabel = (key: any) => {
+  const labelMap = { operator: '操作人', department: '部门', status: '状态', remark: '备注' }
+  return (labelMap as any)[key] || key
 }
 </script>
 
-<style scoped>
+<style>
 .timeline-view {
   padding: var(--ui-page-padding);
+}
+
+.timeline-container {
+  padding-left: 20px;
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 28px;
+  padding-bottom: 20px;
+}
+
+.timeline-item:last-child .timeline-tail {
+  display: none;
+}
+
+.timeline-tail {
+  position: absolute;
+  left: 7px;
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background-color: #e4e7ed;
+}
+
+.timeline-node {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #e4e7ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.timeline-node-create,
+.timeline-node-complete { background-color: #67c23a; }
+.timeline-node-update { background-color: #e6a23c; }
+.timeline-node-delete { background-color: #f56c6c; }
+.timeline-node-assign,
+.timeline-node-primary { background-color: #409eff; }
+.timeline-node-status,
+.timeline-node-info { background-color: #909399; }
+
+.timeline-content {
+  position: relative;
+}
+
+.timeline-timestamp {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 4px;
 }
 
 .timeline-card {
@@ -139,9 +169,8 @@ const getDetailLabel = (key) => {
   border-top: 1px solid #ebeef5;
   color: #909399;
   font-size: 12px;
-}
-
-.card-footer .el-icon {
-  margin-right: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 </style>

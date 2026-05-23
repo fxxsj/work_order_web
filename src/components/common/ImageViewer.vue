@@ -1,20 +1,21 @@
 <template>
-  <el-dialog
-    v-model="dialogVisible"
+  <BaseDialog
+    :show="dialogVisible"
     title="图片预览"
-    width="800px"
+    width="extra-wide"
     :close-on-click-modal="true"
     class="image-viewer-dialog"
+    @close="handleClose"
   >
     <div class="image-viewer-container">
       <div class="image-viewer-toolbar">
-        <el-button-group>
-          <el-button :icon="ZoomIn" title="放大" @click="zoomIn" />
-          <el-button :icon="ZoomOut" title="缩小" @click="zoomOut" />
-          <el-button :icon="RefreshLeft" title="左旋转" @click="rotateLeft" />
-          <el-button :icon="RefreshRight" title="右旋转" @click="rotateRight" />
-          <el-button :icon="FullScreen" title="全屏" @click="toggleFullscreen" />
-        </el-button-group>
+        <div class="flex gap-1">
+          <button class="btn btn-secondary btn-sm" title="放大" @click="zoomIn"><Icon name="zoomIn" class="h-4 w-4" /></button>
+          <button class="btn btn-secondary btn-sm" title="缩小" @click="zoomOut"><Icon name="zoomOut" class="h-4 w-4" /></button>
+          <button class="btn btn-secondary btn-sm" title="左旋转" @click="rotateLeft"><Icon name="rotateCcw" class="h-4 w-4" /></button>
+          <button class="btn btn-secondary btn-sm" title="右旋转" @click="rotateRight"><Icon name="rotateCw" class="h-4 w-4" /></button>
+          <button class="btn btn-secondary btn-sm" title="全屏" @click="toggleFullscreen"><Icon name="maximize" class="h-4 w-4" /></button>
+        </div>
         <span class="scale-info">{{ Math.round(scale * 100) }}%</span>
       </div>
 
@@ -38,34 +39,34 @@
           :class="{ active: currentIndex === index }"
           @click="handleSelectImage(index)"
         >
-          <img :src="img.src || img" :alt="`图片 ${index + 1}`" />
+          <img :src="img.src || img" :alt="`图片 ${Number(index) + 1}`" />
         </div>
       </div>
     </div>
-  </el-dialog>
+  </BaseDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
-import { ZoomIn, ZoomOut, RefreshLeft, RefreshRight, FullScreen } from '@element-plus/icons-vue'
+import { Icon } from '@/components/common'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   src: { type: String, default: '' },
-  images: { type: Array, default: () => [] }
+  images: { type: Array as any, default: () => [] }
 })
 
 const emit = defineEmits(['update:visible'])
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: (val: any) => emit('update:visible', val)
 })
 
 const currentIndex = ref(0)
 const scale = ref(1)
 const rotation = ref(0)
-const imageRef = ref(null)
+const imageRef = ref<any>(null)
 
 const imageSrc = computed(() => {
   if (props.images.length > 0) {
@@ -93,20 +94,23 @@ const toggleFullscreen = () => {
     }
   }
 }
-const handleWheel = (e) => {
+const handleWheel = (e: any) => {
   if (e.deltaY < 0) zoomIn()
   else zoomOut()
 }
-const handleSelectImage = (index) => {
+const handleSelectImage = (index: any) => {
   currentIndex.value = index
   scale.value = 1
   rotation.value = 0
+}
+const handleClose = () => {
+  emit('update:visible', false)
 }
 const handleLoad = () => {}
 const handleError = () => {}
 </script>
 
-<style scoped>
+<style>
 .image-viewer-container {
   display: flex;
   flex-direction: column;

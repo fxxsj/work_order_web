@@ -1,43 +1,36 @@
 <template>
-  <div class="operator-task-list">
-    <el-scrollbar wrap-class="scrollbar-wrapper">
-      <div v-for="task in tasks" :key="task.id" class="task-card" :class="`priority-${task.priority}`" @click="emit('task-click', task)">
-        <div class="task-header">
+  <div class="h-[400px]">
+    <div class="h-full overflow-y-auto">
+      <div v-for="task in tasks" :key="task.id" class="mb-3 cursor-pointer rounded-lg border border-l-4 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md" :class="{ 'border-l-danger-500': task.priority === 'urgent', 'border-l-warning-500': task.priority === 'high', 'border-l-primary-500': task.priority === 'normal', 'border-l-gray-400': task.priority === 'low' }" @click="emit('task-click', task)">
+        <div class="mb-2 flex items-center justify-between gap-2">
           <StatusTag :status="task.status" category="task" :label="task.status_display" size="small" />
-          <el-tag v-if="task.priority === 'urgent'" type="danger" size="small">紧急</el-tag>
+          <Tag v-if="task.priority === 'urgent'" type="danger" size="small">紧急</Tag>
         </div>
-        <div class="task-content">{{ task.work_content }}</div>
-        <div class="task-meta">
-          <span>{{ task.work_order_process_info?.work_order?.order_number || '-' }}</span>
-          <span>{{ task.work_order_process_info?.process?.name || '-' }}</span>
+        <div class="mb-2 line-clamp-2 text-sm font-medium text-gray-700 dark:text-gray-200">{{ task.work_content }}</div>
+        <div class="mb-2 flex justify-between text-xs text-gray-400">{{ task.work_order_process_info?.work_order?.order_number || '-' }} / {{ task.work_order_process_info?.process?.name || '-' }}</div>
+        <div v-if="task.production_quantity" class="mb-2 flex items-center gap-2">
+          <ProgressBar :percentage="getProgress(task)" :stroke-width="6" :show-text="false" class="flex-1" />
+          <span class="min-w-12 text-right text-xs text-gray-500">{{ task.quantity_completed }}/{{ task.production_quantity }}</span>
         </div>
-        <div v-if="task.production_quantity" class="task-progress">
-          <el-progress :percentage="getProgress(task)" :stroke-width="6" :show-text="false" />
-          <span class="progress-text">{{ task.quantity_completed }}/{{ task.production_quantity }}</span>
-        </div>
-        <div v-if="showClaimButton && !task.assigned_operator" class="task-actions">
-          <el-button type="primary" size="small" :loading="claimingTaskId === task.id" @click.stop="emit('claim', task)">认领</el-button>
-        </div>
-        <div v-if="showUpdateButtons && isMyTask(task)" class="task-actions">
-          <el-button-group>
-            <el-button size="small" :icon="Edit" @click.stop="emit('update', task)">更新</el-button>
-            <el-button v-if="canComplete(task)" size="small" type="success" :icon="Check" @click.stop="emit('complete', task)">完成</el-button>
-          </el-button-group>
+        <div v-if="showClaimButton && !task.assigned_operator" class="mt-3 text-right"><button class="btn btn-primary btn-sm" :disabled="claimingTaskId === task.id" @click.stop="emit('claim', task)">认领</button></div>
+        <div v-if="showUpdateButtons && isMyTask(task)" class="mt-3 flex justify-end gap-2">
+          <button class="btn btn-secondary btn-sm" @click.stop="emit('update', task)"><Icon name="edit" class="h-3 w-3" /> 更新</button>
+          <button v-if="canComplete(task)" class="btn btn-success btn-sm" @click.stop="emit('complete', task)"><Icon name="check" class="h-3 w-3" /> 完成</button>
         </div>
       </div>
-    </el-scrollbar>
-    <el-empty v-if="tasks.length === 0" :description="emptyText" />
+    </div>
+    <EmptyState v-if="tasks.length === 0" :title="emptyText" />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { Edit, Check } from '@element-plus/icons-vue'
+import { Icon } from '@/components/common'
 import { useUserStore } from '@/stores'
 import { StatusTag } from '@/components/common'
 
 const props = defineProps({
-  tasks: { type: Array, default: () => [] },
+  tasks: { type: Array as any, default: () => [] },
   showClaimButton: { type: Boolean, default: false },
   showUpdateButtons: { type: Boolean, default: false },
   claimingTaskId: { type: Number, default: null },
@@ -49,24 +42,7 @@ const emit = defineEmits(['task-click', 'claim', 'update', 'complete'])
 const userStore = useUserStore()
 const currentUser = computed(() => userStore.currentUser)
 
-const getProgress = (task) => task.production_quantity ? Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100) : 0
-const isMyTask = (task) => task.assigned_operator === currentUser.value?.id
-const canComplete = (task) => isMyTask(task) && ['pending', 'in_progress'].includes(task.status)
+const getProgress = (task: any) => task.production_quantity ? Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100) : 0
+const isMyTask = (task: any) => task.assigned_operator === currentUser.value?.id
+const canComplete = (task: any) => isMyTask(task) && ['pending', 'in_progress'].includes(task.status)
 </script>
-
-<style scoped>
-.operator-task-list { height: 400px; }
-.scrollbar-wrapper { height: 100%; }
-.task-card { padding: 12px; margin-bottom: 12px; border: 1px solid #EBEEF5; border-radius: 4px; cursor: pointer; transition: all 0.3s; border-left: 3px solid #DCDFE6; }
-.task-card:hover { box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
-.task-card.priority-urgent { border-left-color: #F56C6C; }
-.task-card.priority-high { border-left-color: #E6A23C; }
-.task-card.priority-normal { border-left-color: #409EFF; }
-.task-card.priority-low { border-left-color: #909399; }
-.task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.task-content { font-size: 14px; font-weight: 500; color: #303133; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.task-meta { display: flex; justify-content: space-between; font-size: 12px; color: #909399; margin-bottom: 8px; }
-.task-progress { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.progress-text { font-size: 12px; color: #606266; min-width: 5ch; text-align: right; }
-.task-actions { margin-top: 12px; text-align: right; }
-</style>
