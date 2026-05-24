@@ -1,17 +1,15 @@
 <template>
   <TablePageLayout>
     <template #filters>
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <SearchInput
-            v-model="searchText"
-            class="w-full sm:w-72"
-            placeholder="搜索刀模编码、名称、尺寸、材质"
-            @search="handleSearch"
-            @clear="handleSearch"
-          />
-        </div>
-      </div>
+      <FilterRow>
+        <SearchInput
+          v-model="searchText"
+          class="w-full sm:w-72"
+          placeholder="搜索刀模编码、名称、尺寸、材质"
+          @search="handleSearch"
+          @clear="handleSearch"
+        />
+      </FilterRow>
     </template>
 
     <template #actions>
@@ -58,16 +56,13 @@
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
-            <button v-if="canEdit" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleEdit(row)">
-              <Icon name="edit" size="sm" />
-              <span class="text-xs">编辑</span>
-            </button>
-            <button v-if="canDelete" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400" @click="openDeleteDialog(row)">
-              <Icon name="trash" size="sm" />
-              <span class="text-xs">删除</span>
-            </button>
-          </div>
+          <RowActions
+            :actions="[
+              { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
+              { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
+            ]"
+            @action="action => handleRowAction(action.key, row)"
+          />
         </template>
 
         <template #empty>
@@ -121,7 +116,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { dieAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, Tag, ConfirmDialog } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, Tag, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -214,6 +209,11 @@ const handleDialogClose = () => { closeFormDialog() }
 const openDeleteDialog = (row: any) => {
   targetDieForDelete.value = row
   showDeleteDialog.value = true
+}
+
+const handleRowAction = (action: string, row: any) => {
+  if (action === 'edit') handleEdit(row)
+  if (action === 'delete') openDeleteDialog(row)
 }
 
 const cancelDelete = () => {

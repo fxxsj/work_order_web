@@ -13,7 +13,7 @@
       </div>
       <TextArea v-model="localForm.notes" label="备注" :rows="2" placeholder="请输入备注" />
 
-      <div class="flex items-center my-4"><span class="pr-3 text-sm text-gray-500 dark:text-gray-400">采购明细</span><hr class="flex-1 border-t border-gray-200 dark:border-dark-700" /></div>
+      <SectionDivider title="采购明细" />
       <button class="btn btn-sm btn-primary" @click="handleAddItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加明细</button>
 
       <div class="mt-3 w-full overflow-x-auto">
@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import { Icon, Select, TextArea, InputNumber } from '@/components/common'
+import { Icon, Select, TextArea, InputNumber, SectionDivider } from '@/components/common'
 import { supplierAPI, materialAPI, workOrderAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 

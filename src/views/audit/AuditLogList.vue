@@ -122,12 +122,12 @@
         <div class="h-4 bg-gray-200 rounded animate-pulse"></div>
       </div>
       <div v-else>
-        <div class="descriptions-grid" style="--col: 2; font-size: 14px;">
-          <div class="description-item"><div class="description-label">操作类型</div><div class="description-value">{{ actionTypeLabel(diffData?.action_type) }}</div></div>
-          <div class="description-item"><div class="description-label">用户</div><div class="description-value">{{ diffData?.user || diffData?.username || '-' }}</div></div>
-          <div class="description-item"><div class="description-label">对象</div><div class="description-value">{{ diffData?.object_repr || '-' }}</div></div>
-          <div class="description-item"><div class="description-label">时间</div><div class="description-value">{{ formatDateTime(diffData?.created_at) }}</div></div>
-        </div>
+        <DescriptionGrid :columns="2">
+          <DescriptionItem label="操作类型">{{ actionTypeLabel(diffData?.action_type) }}</DescriptionItem>
+          <DescriptionItem label="用户">{{ diffData?.user || diffData?.username || '-' }}</DescriptionItem>
+          <DescriptionItem label="对象">{{ diffData?.object_repr || '-' }}</DescriptionItem>
+          <DescriptionItem label="时间">{{ formatDateTime(diffData?.created_at) }}</DescriptionItem>
+        </DescriptionGrid>
         <div class="diff-section">
           <div class="diff-title">变更内容</div>
           <pre class="diff-content">{{ formattedDiff }}</pre>
@@ -232,7 +232,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
-import { Icon, Select, SearchInput, Tag, Pagination, TablePageLayout, DataTable, EmptyState, BaseDialog } from '@/components/common'
+import { Icon, Select, SearchInput, Tag, Pagination, TablePageLayout, DataTable, EmptyState, BaseDialog, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 
 const userStore = useUserStore()

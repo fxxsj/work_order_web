@@ -1,9 +1,11 @@
 <template>
-  <div class="descriptions-grid mt-6" style="--col: 1">
-    <div class="description-item"><div class="description-label">备注</div><div class="description-value">{{ notes || '-' }}</div></div>
-  </div>
+  <DescriptionGrid :columns="1" class="mt-6">
+    <DescriptionItem label="备注">{{ notes || '-' }}</DescriptionItem>
+  </DescriptionGrid>
 </template>
 
 <script setup lang="ts">
+import { DescriptionGrid, DescriptionItem } from '@/components/common'
+
 defineProps({ notes: { type: String, default: '' } })
 </script>

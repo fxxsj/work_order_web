@@ -4,14 +4,12 @@
     :loading="loading"
   >
     <template #filters>
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <SearchInput v-model="searchText" class="w-full sm:w-64" placeholder="搜索采购单号" @search="handleSearch" @clear="handleSearch" />
-          <SearchInput v-model="filters.supplier_name" class="w-full sm:w-64" placeholder="供应商名称" @search="handleSearch" @clear="handleSearch" />
-          <Select v-model="filters.status" :options="statusOptions" class="w-40" placeholder="状态" clearable @change="handleSearch" />
-          <button class="btn btn-secondary" @click="resetFilters">重置</button>
-        </div>
-      </div>
+      <FilterRow>
+        <SearchInput v-model="searchText" class="w-full sm:w-64" placeholder="搜索采购单号" @search="handleSearch" @clear="handleSearch" />
+        <SearchInput v-model="filters.supplier_name" class="w-full sm:w-64" placeholder="供应商名称" @search="handleSearch" @clear="handleSearch" />
+        <Select v-model="filters.status" :options="statusOptions" class="w-40" placeholder="状态" clearable @change="handleSearch" />
+        <button class="btn btn-secondary" @click="resetFilters">重置</button>
+      </FilterRow>
     </template>
     
     <template #actions>
@@ -139,7 +137,7 @@ import { ElMessage } from '@/utils/message'
 import { purchaseOrderAPI, workOrderAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, Icon, StatusTag, Pagination, ConfirmDialog } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, Icon, StatusTag, Pagination, ConfirmDialog, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { PurchaseFormDialog, PurchaseDetailDialog, LowStockAlertDialog, ReceiveDialog, InspectionDialog } from './components'
 

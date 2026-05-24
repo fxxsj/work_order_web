@@ -106,6 +106,8 @@
       confirm-text="删除"
       cancel-text="取消"
       :danger="true"
+      :loading="deleting"
+      loading-text="删除中..."
       @confirm="handleDelete"
       @cancel="showDeleteDialog = false"
     />
@@ -130,6 +132,7 @@ const { canCreate, canEdit, canDelete } = useCrudPermission('qualityinspection')
 const statsLoading = ref(false)
 const submitting = ref(false)
 const inspecting = ref(false)
+const deleting = ref(false)
 const productList = ref<any[]>([])
 const currentQuality = ref<any>(null)
 const stats = ref({})
@@ -227,6 +230,7 @@ const confirmDelete = (row: any) => {
 
 const handleDelete = async () => {
   try {
+    deleting.value = true
     const row = selectedRowAction.value
     if (!row) return
     await qualityInspectionAPI.delete(row.id)
@@ -234,6 +238,7 @@ const handleDelete = async () => {
     showDeleteDialog.value = false
     loadData()
   } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
+  finally { deleting.value = false }
 }
 
 const handleConfirmInspect = async (data: any) => { 

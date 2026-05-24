@@ -1,17 +1,15 @@
 <template>
   <TablePageLayout>
     <template #filters>
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <SearchInput
-            v-model="searchText"
-            class="w-full sm:w-64"
-            placeholder="搜索压凸版编码、名称、尺寸、材质"
-            @search="handleSearch"
-            @clear="handleSearch"
-          />
-        </div>
-      </div>
+      <FilterRow>
+        <SearchInput
+          v-model="searchText"
+          class="w-full sm:w-64"
+          placeholder="搜索压凸版编码、名称、尺寸、材质"
+          @search="handleSearch"
+          @clear="handleSearch"
+        />
+      </FilterRow>
     </template>
 
     <template #actions>
@@ -59,32 +57,14 @@
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
-            <button
-              v-if="!row.confirmed && canEdit"
-              @click="confirmPlate(row)"
-              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400"
-            >
-              <Icon name="check" size="sm" />
-              <span class="text-xs">确认</span>
-            </button>
-            <button
-              v-if="canEdit"
-              @click="handleEdit(row)"
-              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
-            >
-              <Icon name="edit" size="sm" />
-              <span class="text-xs">编辑</span>
-            </button>
-            <button
-              v-if="canDelete"
-              @click="confirmDelete(row)"
-              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-            >
-              <Icon name="trash" size="sm" />
-              <span class="text-xs">删除</span>
-            </button>
-          </div>
+          <RowActions
+            :actions="[
+              { key: 'confirm', label: '确认', icon: 'check', tone: 'success', visible: !row.confirmed && canEdit },
+              { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
+              { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
+            ]"
+            @action="action => handleRowAction(action.key, row)"
+          />
         </template>
 
         <template #empty>
@@ -126,6 +106,8 @@
     confirm-text="删除"
     cancel-text="取消"
     :danger="true"
+    :loading="deleting"
+    loading-text="删除中..."
     @confirm="handleDelete"
     @cancel="showDeleteDialog = false"
   />
@@ -137,6 +119,8 @@
     :message="`确定要确认压凸版「${selectedRow?.name}」吗？确认后关键字段将不可修改。`"
     confirm-text="确认"
     cancel-text="取消"
+    :loading="confirming"
+    loading-text="确认中..."
     @confirm="handleConfirmPlate"
     @cancel="showConfirmDialog = false"
   />
@@ -147,7 +131,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from '@/utils/message'
 import { embossingPlateAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Icon, Tag, ConfirmDialog } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Icon, Tag, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -177,6 +161,8 @@ const crud = useCRUD(embossingPlateAPI, { onSuccess: () => { dialogVisible.value
 const dialogVisible = ref(false)
 const dialogType = ref('create')
 const formLoading = ref(false)
+const deleting = ref(false)
+const confirming = ref(false)
 const currentEmbossingPlate = ref<any>(null)
 const productList = ref<any[]>([])
 const selectedRow = ref<any>(null)
@@ -196,20 +182,30 @@ const handleEdit = async (row: any) => {
 const confirmDelete = (row: any) => { selectedRow.value = row; showDeleteDialog.value = true }
 const confirmPlate = (row: any) => { selectedRow.value = row; showConfirmDialog.value = true }
 
+const handleRowAction = (action: string, row: any) => {
+  if (action === 'confirm') confirmPlate(row)
+  if (action === 'edit') handleEdit(row)
+  if (action === 'delete') confirmDelete(row)
+}
+
 const handleDelete = async () => {
   try {
+    deleting.value = true
     await crud.remove(selectedRow.value.id, '删除成功')
     showDeleteDialog.value = false
   } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
+  finally { deleting.value = false }
 }
 
 const handleConfirmPlate = async () => {
   try {
+    confirming.value = true
     await embossingPlateAPI.confirm(selectedRow.value.id)
     ElMessage.success('确认成功')
     showConfirmDialog.value = false
     await loadData()
   } catch (error: any) { ErrorHandler.showMessage(error, '确认失败') }
+  finally { confirming.value = false }
 }
 
 const handleFormConfirm = async (payload: any) => {

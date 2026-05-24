@@ -4,14 +4,12 @@
     :loading="loading"
   >
     <template #filters>
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <SearchInput v-model="filters.search" class="w-full sm:w-64" placeholder="搜索订单号/客户名称" @search="handleSearch" @clear="handleSearch" />
-          <Select v-model="filters.status" :options="statusOptions" class="w-full sm:w-36" placeholder="订单状态" clearable @change="handleSearch" />
-          <Select v-model="filters.payment_status" :options="paymentStatusOptions" class="w-full sm:w-36" placeholder="付款状态" clearable @change="handleSearch" />
-          <button class="btn btn-secondary" @click="handleReset">重置</button>
-        </div>
-      </div>
+      <FilterRow>
+        <SearchInput v-model="filters.search" class="w-full sm:w-64" placeholder="搜索订单号/客户名称" @search="handleSearch" @clear="handleSearch" />
+        <Select v-model="filters.status" :options="statusOptions" class="w-full sm:w-36" placeholder="订单状态" clearable @change="handleSearch" />
+        <Select v-model="filters.payment_status" :options="paymentStatusOptions" class="w-full sm:w-36" placeholder="付款状态" clearable @change="handleSearch" />
+        <button class="btn btn-secondary" @click="handleReset">重置</button>
+      </FilterRow>
     </template>
     
     <template #actions>
@@ -75,34 +73,17 @@
         </template>
         
         <template #cell-actions="{ row }">
-          <div class="flex items-center justify-center gap-1">
-            <button v-if="canEdit(row)" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleEdit(row)">
-              <Icon name="edit" size="sm" />
-              <span class="text-[10px]">编辑</span>
-            </button>
-            <button v-if="canConvert(row)" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-green-600 dark:hover:bg-dark-700 dark:hover:text-green-400" @click="handleConvertRequest(row)">
-              <Icon name="list" size="sm" />
-              <span class="text-[10px]">转换</span>
-            </button>
-            <button v-if="row.status === 'draft'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-dark-700 dark:hover:text-blue-400" @click="handleSubmit(row)">
-              <Icon name="upload" size="sm" />
-              <span class="text-[10px]">提交</span>
-            </button>
-            <template v-if="row.status === 'submitted'">
-              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-green-600 dark:hover:bg-dark-700 dark:hover:text-green-400" @click="handleApprove(row)">
-                <Icon name="check" size="sm" />
-                <span class="text-[10px]">审核</span>
-              </button>
-              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-red-600 dark:hover:bg-dark-700 dark:hover:text-red-400" @click="handleReject(row)">
-                <Icon name="x" size="sm" />
-                <span class="text-[10px]">拒绝</span>
-              </button>
-            </template>
-            <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-dark-700 dark:hover:text-gray-100" @click="handleView(row)">
-              <Icon name="eye" size="sm" />
-              <span class="text-[10px]">查看</span>
-            </button>
-          </div>
+          <RowActions
+            :actions="[
+              { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit(row) },
+              { key: 'convert', label: '转换', icon: 'list', tone: 'success', visible: canConvert(row) },
+              { key: 'submit', label: '提交', icon: 'upload', tone: 'primary', visible: row.status === 'draft' },
+              { key: 'approve', label: '审核', icon: 'check', tone: 'success', visible: row.status === 'submitted' },
+              { key: 'reject', label: '拒绝', icon: 'x', tone: 'danger', visible: row.status === 'submitted' },
+              { key: 'view', label: '查看', icon: 'eye' },
+            ]"
+            @action="action => handleRowAction(action.key, row)"
+          />
         </template>
         
         <template #empty>
@@ -141,6 +122,8 @@
     :message="`确定要将订单「${currentRow?.order_number}」转换为施工单？`"
     confirm-text="确定"
     cancel-text="取消"
+    :loading="converting"
+    loading-text="转换中..."
     @confirm="executeConvert"
     @cancel="showConvertDialog = false"
   />
@@ -151,6 +134,8 @@
     :message="`确定要将已选的 ${selectedRows.length} 个订单转换为施工单？`"
     confirm-text="确定"
     cancel-text="取消"
+    :loading="batchConverting"
+    loading-text="转换中..."
     @confirm="executeBatchConvert"
     @cancel="showBatchConvertDialog = false"
   />
@@ -163,7 +148,7 @@ import { ElMessage } from '@/utils/message'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
-import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog } from '@/components/common'
+import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -172,6 +157,8 @@ const userStore = useUserStore()
 
 const selectedRows = ref<any[]>([])
 
+const converting = ref(false)
+const batchConverting = ref(false)
 const showConvertDialog = ref(false)
 const showBatchConvertDialog = ref(false)
 const currentRow = ref<any>(null)
@@ -241,12 +228,15 @@ const handleConvertRequest = (row: any) => {
 const executeConvert = async () => {
   if (!currentRow.value) return;
   try {
+    converting.value = true
     const response: any = await salesOrderAPI.convertToWorkOrder(currentRow.value.id)
     ElMessage.success('转换成功')
     showConvertDialog.value = false;
     router.push(`/workorders/${response.work_order_id || response.id}`)
-  } catch (error: any) { 
-    ErrorHandler.showMessage(error, '转换失败') 
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '转换失败')
+  } finally {
+    converting.value = false
   }
 }
 
@@ -257,14 +247,17 @@ const handleBatchConvertRequest = () => {
 const executeBatchConvert = async () => {
   if (selectedRows.value.length === 0) return;
   try {
+    batchConverting.value = true
     const orderIds = selectedRows.value.map((r: any) => r.id)
     const response: any = await salesOrderAPI.batchConvertToWorkOrder(orderIds)
     ElMessage.success(`成功转换 ${response.success_count} 个订单`)
     showBatchConvertDialog.value = false;
     selectedRows.value = []
     loadData()
-  } catch (error: any) { 
-    ErrorHandler.showMessage(error, '批量转换失败') 
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '批量转换失败')
+  } finally {
+    batchConverting.value = false
   }
 }
 
@@ -278,6 +271,15 @@ const handleApprove = async (row: any) => {
 
 const handleReject = async (row: any) => {
   try { await salesOrderAPI.reject(row.id); ElMessage.success('已拒绝'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '操作失败') }
+}
+
+const handleRowAction = (action: string, row: any) => {
+  if (action === 'edit') handleEdit(row)
+  if (action === 'convert') handleConvertRequest(row)
+  if (action === 'submit') handleSubmit(row)
+  if (action === 'approve') handleApprove(row)
+  if (action === 'reject') handleReject(row)
+  if (action === 'view') handleView(row)
 }
 
 const isOverdue = (row: any) => row.delivery_date && new Date(row.delivery_date) < new Date() && !['completed', 'cancelled'].includes(row.status)

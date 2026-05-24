@@ -130,6 +130,8 @@
     confirm-text="删除"
     cancel-text="取消"
     :danger="true"
+    :loading="deleting"
+    loading-text="删除中..."
     @confirm="handleConfirmDelete"
     @cancel="deleteConfirmVisible = false"
   />
@@ -154,6 +156,7 @@ const route = useRoute()
 const userStore = useUserStore()
 
 const exporting = ref(false)
+const deleting = ref(false)
 const ordering = ref('-created_at')
 const editConfirmVisible = ref(false)
 const pendingEditRow = ref<any>(null)
@@ -264,10 +267,12 @@ const handleDelete = (row: any) => {
 const handleConfirmDelete = async () => {
   if (!rowToDelete.value) return
   try {
+    deleting.value = true
     await crud.remove(rowToDelete.value.id, '删除成功')
   } catch (error: any) {
     ErrorHandler.showMessage(error, '删除施工单')
   } finally {
+    deleting.value = false
     deleteConfirmVisible.value = false
     rowToDelete.value = null
   }

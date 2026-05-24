@@ -128,6 +128,8 @@
     confirm-text="确定"
     cancel-text="取消"
     :danger="confirmDialogAction === 'delete' || confirmDialogAction === 'cancel'"
+    :loading="batchOperationLoading"
+    loading-text="处理中..."
     @confirm="handleConfirmDialog"
     @cancel="confirmDialogVisible = false"
   />
@@ -322,8 +324,9 @@ const handleConfirmDialog = async () => {
   const action = confirmDialogAction.value
   const ids = selectedTasks.value.map((t: any) => t.id)
   confirmDialogVisible.value = false
-  
+
   try {
+    batchOperationLoading.value = true
     if (action === 'complete') {
       await workOrderTaskAPI.batchComplete({ task_ids: ids })
       ElMessage.success('批量完成成功')
@@ -338,6 +341,8 @@ const handleConfirmDialog = async () => {
     loadData()
   } catch (error: any) {
     ErrorHandler.showMessage(error, `批量操作失败`)
+  } finally {
+    batchOperationLoading.value = false
   }
 }
 

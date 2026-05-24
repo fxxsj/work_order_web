@@ -4,17 +4,15 @@
     :loading="loading"
   >
     <template #filters>
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <SearchInput
-            v-model="searchText"
-            class="w-full sm:w-72"
-            placeholder="搜索物料名称、编码"
-            @search="handleSearch"
-            @clear="handleSearch"
-          />
-        </div>
-      </div>
+      <FilterRow>
+        <SearchInput
+          v-model="searchText"
+          class="w-full sm:w-72"
+          placeholder="搜索物料名称、编码"
+          @search="handleSearch"
+          @clear="handleSearch"
+        />
+      </FilterRow>
     </template>
 
     <template #actions>
@@ -42,24 +40,13 @@
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
-            <button
-              v-if="canEdit"
-              @click="handleEdit(row)"
-              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
-            >
-              <Icon name="edit" size="sm" />
-              <span class="text-xs">编辑</span>
-            </button>
-            <button
-              v-if="canDelete"
-              @click="confirmDelete(row)"
-              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-            >
-              <Icon name="trash" size="sm" />
-              <span class="text-xs">删除</span>
-            </button>
-          </div>
+          <RowActions
+            :actions="[
+              { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
+              { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
+            ]"
+            @action="action => handleRowAction(action.key, row)"
+          />
         </template>
 
         <template #empty>
@@ -172,7 +159,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { materialAPI, supplierAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, BaseDialog, ConfirmDialog, Pagination, Input, InputNumber, Select, TextArea, Toggle, Icon } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, BaseDialog, ConfirmDialog, Pagination, Input, InputNumber, Select, TextArea, Toggle, Icon, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -260,6 +247,11 @@ const handleSubmit = async () => {
 const confirmDelete = (row: any) => {
   selectedRow.value = row;
   showDeleteDialog.value = true;
+}
+
+const handleRowAction = (action: string, row: any) => {
+  if (action === 'edit') handleEdit(row)
+  if (action === 'delete') confirmDelete(row)
 }
 
 const cancelDelete = () => {

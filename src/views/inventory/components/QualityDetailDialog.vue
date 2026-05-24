@@ -1,18 +1,20 @@
 <template>
   <BaseDialog :show="visible" title="质检详情" width="wide" @close="visible = false">
-    <div v-if="data" class="descriptions-grid" style="--col: 2">
-      <div class="description-item"><div class="description-label">产品名称</div><div class="description-value">{{ data.product_name }}</div></div>
-      <div class="description-item"><div class="description-label">检验结果</div><div class="description-value"><StatusTag :status="data.status" category="inspection" :label="data.status_display" /></div></div>
-      <div class="description-item"><div class="description-label">合格数量</div><div class="description-value">{{ data.passed_quantity || 0 }}</div></div>
-      <div class="description-item"><div class="description-label">不合格数量</div><div class="description-value">{{ data.failed_quantity || 0 }}</div></div>
-    </div>
+    <DescriptionGrid v-if="data" :columns="2">
+      <DescriptionItem label="产品名称">{{ data.product_name }}</DescriptionItem>
+      <DescriptionItem label="检验结果">
+        <StatusTag :status="data.status" category="inspection" :label="data.status_display" />
+      </DescriptionItem>
+      <DescriptionItem label="合格数量">{{ data.passed_quantity || 0 }}</DescriptionItem>
+      <DescriptionItem label="不合格数量">{{ data.failed_quantity || 0 }}</DescriptionItem>
+    </DescriptionGrid>
     <template #footer><button class="btn" @click="visible = false">关闭</button></template>
   </BaseDialog>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { StatusTag } from '@/components/common'
+import { StatusTag, DescriptionGrid, DescriptionItem } from '@/components/common'
 
 const props = defineProps({ visible: { type: Boolean, default: false }, data: { type: Object, default: null } })
 const emit = defineEmits(['update:visible'])

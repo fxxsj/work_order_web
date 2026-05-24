@@ -1,23 +1,31 @@
 <template>
-  <div class="descriptions-grid" style="--col: 3">
-    <div class="description-item"><div class="description-label">施工单号</div><div class="description-value">{{ workOrder?.order_number }}</div></div>
-    <div class="description-item"><div class="description-label">客户</div><div class="description-value">{{ workOrder?.customer_name }}</div></div>
-    <div class="description-item"><div class="description-label">业务员</div><div class="description-value">{{ salespersonName }}</div></div>
-    <div class="description-item"><div class="description-label">制表人</div><div class="description-value">{{ workOrder?.manager_name || '-' }}</div></div>
-    <div v-if="workOrder?.product_name" class="description-item"><div class="description-label">产品名称</div><div class="description-value">{{ workOrder.product_name }}</div></div>
-    <div v-if="displayQuantity" class="description-item"><div class="description-label">生产数量</div><div class="description-value">{{ displayQuantity }} 车</div></div>
-    <div class="description-item"><div class="description-label">总金额</div><div class="description-value">¥{{ workOrder?.total_amount }}</div></div>
-    <div class="description-item"><div class="description-label">状态</div><div class="description-value"><StatusTag :status="workOrder?.status" :label="workOrder?.status_display || statusText" category="workOrder" /></div></div>
-    <div class="description-item"><div class="description-label">审核状态</div><div class="description-value"><StatusTag :status="workOrder?.approval_status" :label="workOrder?.approval_status_display || approvalStatusText" category="approval" /></div></div>
-    <div class="description-item"><div class="description-label">优先级</div><div class="description-value"><StatusTag :status="workOrder?.priority" :label="workOrder?.priority_display || priorityText" category="priority" /></div></div>
-    <div class="description-item"><div class="description-label">进度</div><div class="description-value"><ProgressBar :percentage="workOrder?.progress_percentage ?? progress" :color="workOrder?.progress_percentage === 100 ? '#67C23A' : '#409EFF'" /></div></div>
-    <div class="description-item"><div class="description-label">下单日期</div><div class="description-value">{{ formatDate(workOrder?.order_date) }}</div></div>
-    <div class="description-item"><div class="description-label">交货日期</div><div class="description-value">{{ formatDate(workOrder?.delivery_date) }}</div></div>
-  </div>
+  <DescriptionGrid :columns="3">
+    <DescriptionItem label="施工单号">{{ workOrder?.order_number }}</DescriptionItem>
+    <DescriptionItem label="客户">{{ workOrder?.customer_name }}</DescriptionItem>
+    <DescriptionItem label="业务员">{{ salespersonName }}</DescriptionItem>
+    <DescriptionItem label="制表人">{{ workOrder?.manager_name || '-' }}</DescriptionItem>
+    <DescriptionItem v-if="workOrder?.product_name" label="产品名称">{{ workOrder.product_name }}</DescriptionItem>
+    <DescriptionItem v-if="displayQuantity" label="生产数量">{{ displayQuantity }} 车</DescriptionItem>
+    <DescriptionItem label="总金额">¥{{ workOrder?.total_amount }}</DescriptionItem>
+    <DescriptionItem label="状态">
+      <StatusTag :status="workOrder?.status" :label="workOrder?.status_display || statusText" category="workOrder" />
+    </DescriptionItem>
+    <DescriptionItem label="审核状态">
+      <StatusTag :status="workOrder?.approval_status" :label="workOrder?.approval_status_display || approvalStatusText" category="approval" />
+    </DescriptionItem>
+    <DescriptionItem label="优先级">
+      <StatusTag :status="workOrder?.priority" :label="workOrder?.priority_display || priorityText" category="priority" />
+    </DescriptionItem>
+    <DescriptionItem label="进度">
+      <ProgressBar :percentage="workOrder?.progress_percentage ?? progress" :color="workOrder?.progress_percentage === 100 ? '#67C23A' : '#409EFF'" />
+    </DescriptionItem>
+    <DescriptionItem label="下单日期">{{ formatDate(workOrder?.order_date) }}</DescriptionItem>
+    <DescriptionItem label="交货日期">{{ formatDate(workOrder?.delivery_date) }}</DescriptionItem>
+  </DescriptionGrid>
 </template>
 
 <script setup lang="ts">
-import { StatusTag } from '@/components/common'
+import { StatusTag, DescriptionGrid, DescriptionItem } from '@/components/common'
 import { formatDate } from '@/utils/filter'
 
 const props = defineProps({

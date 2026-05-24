@@ -1,17 +1,15 @@
 <template>
   <TablePageLayout>
     <template #filters>
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <SearchInput
-            v-model="searchText"
-            class="w-full sm:w-72"
-            placeholder="搜索图稿编码、名称、拼版尺寸"
-            @search="handleSearch"
-            @clear="handleSearch"
-          />
-        </div>
-      </div>
+      <FilterRow>
+        <SearchInput
+          v-model="searchText"
+          class="w-full sm:w-72"
+          placeholder="搜索图稿编码、名称、拼版尺寸"
+          @search="handleSearch"
+          @clear="handleSearch"
+        />
+      </FilterRow>
     </template>
 
     <template #actions>
@@ -75,24 +73,15 @@
           {{ formatDateTime(value) }}
         </template>
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
-            <button v-if="canEdit" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="openEditModal(row)">
-              <Icon name="edit" size="sm" />
-              <span class="text-xs">编辑</span>
-            </button>
-            <button v-if="canEdit" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="openCreateVersionDialog(row)">
-              <Icon name="document" size="sm" />
-              <span class="text-xs">新版本</span>
-            </button>
-            <button v-if="!row.confirmed && canConfirm" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400" @click="openConfirmDialog(row)">
-              <Icon name="check" size="sm" />
-              <span class="text-xs">确认</span>
-            </button>
-            <button v-if="canDelete" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400" @click="openDeleteDialog(row)">
-              <Icon name="trash" size="sm" />
-              <span class="text-xs">删除</span>
-            </button>
-          </div>
+          <RowActions
+            :actions="[
+              { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
+              { key: 'version', label: '新版本', icon: 'document', visible: canEdit },
+              { key: 'confirm', label: '确认', icon: 'check', tone: 'success', visible: !row.confirmed && canConfirm },
+              { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
+            ]"
+            @action="action => handleRowAction(action.key, row)"
+          />
         </template>
         <template #empty>
           <EmptyState
@@ -171,7 +160,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from '@/utils/message'
 import { artworkAPI, productAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, ConfirmDialog, Tag } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, ConfirmDialog, Tag, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -336,6 +325,13 @@ const closeFormDialog = () => {
 const openDeleteDialog = (row: any) => {
   targetArtworkForDelete.value = row
   showDeleteDialog.value = true
+}
+
+const handleRowAction = (action: string, row: any) => {
+  if (action === 'edit') openEditModal(row)
+  if (action === 'version') openCreateVersionDialog(row)
+  if (action === 'confirm') openConfirmDialog(row)
+  if (action === 'delete') openDeleteDialog(row)
 }
 
 const cancelDelete = () => {

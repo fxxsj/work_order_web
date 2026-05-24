@@ -41,7 +41,7 @@
       </div>
       <Input v-model="form.thickness" label="厚度" placeholder="如：3mm、5mm" :disabled="isConfirmed" />
 
-      <div class="flex items-center my-4"><span class="pr-3 text-sm text-gray-500 dark:text-gray-400">包含产品及数量</span><hr class="flex-1 border-t border-gray-200 dark:border-dark-700" /></div>
+      <SectionDivider title="包含产品及数量" />
       <div class="space-y-2">
         <button class="btn btn-primary btn-sm" :disabled="!canAddMoreProducts" @click="addProductItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加产品</button>
         <div v-if="productListHint" style="font-size: 12px; color: #909399; margin-top: 5px;">{{ productListHint }}</div>
@@ -81,7 +81,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, TextArea, Select, InputNumber } from '@/components/common'
+import { Icon, Input, TextArea, Select, InputNumber, SectionDivider } from '@/components/common'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -194,4 +194,3 @@ const handleClose = () => { resetForm(); emit('close') }
 // Expose internal state for parent wrappers that need to react to form changes
 defineExpose({ form, productItems })
 </script>
-

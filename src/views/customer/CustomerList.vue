@@ -1,17 +1,15 @@
 <template>
   <TablePageLayout>
     <template #filters>
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <SearchInput
-            v-model="searchText"
-            class="w-full sm:w-64"
-            placeholder="搜索客户名称、联系人、电话"
-            @search="handleSearch"
-            @clear="handleSearch"
-          />
-        </div>
-      </div>
+      <FilterRow>
+        <SearchInput
+          v-model="searchText"
+          class="w-full sm:w-64"
+          placeholder="搜索客户名称、联系人、电话"
+          @search="handleSearch"
+          @clear="handleSearch"
+        />
+      </FilterRow>
     </template>
 
     <template #actions>
@@ -69,26 +67,13 @@
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
-            <!-- Edit Button -->
-            <button
-              v-if="canEdit"
-              @click="editRow(row)"
-              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
-            >
-              <Icon name="edit" size="sm" />
-              <span class="text-xs">编辑</span>
-            </button>
-            <!-- Delete Button -->
-            <button
-              v-if="canDelete"
-              @click="confirmDelete(row)"
-              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-            >
-              <Icon name="trash" size="sm" />
-              <span class="text-xs">删除</span>
-            </button>
-          </div>
+          <RowActions
+            :actions="[
+              { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
+              { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
+            ]"
+            @action="action => handleRowAction(action.key, row)"
+          />
         </template>
 
         <template #empty>
@@ -194,7 +179,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { customerAPI } from '@/api/modules/customer'
 import { authAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Icon, BaseDialog, ConfirmDialog } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Icon, BaseDialog, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -290,6 +275,11 @@ const handleSubmit = async () => {
 const confirmDelete = (row: any) => {
   selectedRow.value = row
   showDeleteDialog.value = true
+}
+
+const handleRowAction = (action: string, row: any) => {
+  if (action === 'edit') editRow(row)
+  if (action === 'delete') confirmDelete(row)
 }
 
 const handleDelete = async () => {

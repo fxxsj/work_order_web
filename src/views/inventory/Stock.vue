@@ -97,22 +97,26 @@
     </TablePageLayout>
 
     <BaseDialog :show="detailDialogVisible" title="库存详情" width="wide" @close="detailDialogVisible = false">
-      <div v-if="currentStock" class="descriptions-grid" style="--col: 2">
-        <div class="description-item"><div class="description-label">产品名称</div><div class="description-value">{{ (currentStock as any).product_name }}</div></div>
-        <div class="description-item"><div class="description-label">批次号</div><div class="description-value">{{ (currentStock as any).batch_no }}</div></div>
-        <div class="description-item"><div class="description-label">库存数量</div><div class="description-value">{{ (currentStock as any).quantity }}</div></div>
-        <div class="description-item"><div class="description-label">预留数量</div><div class="description-value">{{ (currentStock as any).reserved_quantity }}</div></div>
-        <div class="description-item"><div class="description-label">可用数量</div><div class="description-value">{{ (currentStock as any).available_quantity }}</div></div>
-        <div class="description-item"><div class="description-label">最小库存</div><div class="description-value">{{ (currentStock as any).min_stock_level }}</div></div>
-        <div class="description-item"><div class="description-label">库位</div><div class="description-value">{{ (currentStock as any).location || '-' }}</div></div>
-        <div class="description-item"><div class="description-label">生产日期</div><div class="description-value">{{ (currentStock as any).production_date || '-' }}</div></div>
-        <div class="description-item"><div class="description-label">过期日期</div><div class="description-value">{{ (currentStock as any).expiry_date || '-' }}</div></div>
-        <div class="description-item"><div class="description-label">状态</div><div class="description-value"><StatusTag :status="(currentStock as any).status" category="stock" :label="(currentStock as any).status_display" /></div></div>
-        <div class="description-item"><div class="description-label">单位成本</div><div class="description-value">¥{{ (currentStock as any).unit_cost ? (currentStock as any).unit_cost.toLocaleString() : '-' }}</div></div>
-        <div class="description-item"><div class="description-label">总价值</div><div class="description-value">¥{{ (currentStock as any).total_value ? (currentStock as any).total_value.toLocaleString() : '-' }}</div></div>
-        <div class="description-item col-span-2"><div class="description-label">创建时间</div><div class="description-value">{{ (currentStock as any).created_at }}</div></div>
-        <div v-if="(currentStock as any).notes" class="description-item col-span-2"><div class="description-label">备注</div><div class="description-value"><pre class="m-0 whitespace-pre-wrap">{{ (currentStock as any).notes }}</pre></div></div>
-      </div>
+      <DescriptionGrid v-if="currentStock" :columns="2">
+        <DescriptionItem label="产品名称">{{ (currentStock as any).product_name }}</DescriptionItem>
+        <DescriptionItem label="批次号">{{ (currentStock as any).batch_no }}</DescriptionItem>
+        <DescriptionItem label="库存数量">{{ (currentStock as any).quantity }}</DescriptionItem>
+        <DescriptionItem label="预留数量">{{ (currentStock as any).reserved_quantity }}</DescriptionItem>
+        <DescriptionItem label="可用数量">{{ (currentStock as any).available_quantity }}</DescriptionItem>
+        <DescriptionItem label="最小库存">{{ (currentStock as any).min_stock_level }}</DescriptionItem>
+        <DescriptionItem label="库位">{{ (currentStock as any).location || '-' }}</DescriptionItem>
+        <DescriptionItem label="生产日期">{{ (currentStock as any).production_date || '-' }}</DescriptionItem>
+        <DescriptionItem label="过期日期">{{ (currentStock as any).expiry_date || '-' }}</DescriptionItem>
+        <DescriptionItem label="状态">
+          <StatusTag :status="(currentStock as any).status" category="stock" :label="(currentStock as any).status_display" />
+        </DescriptionItem>
+        <DescriptionItem label="单位成本">¥{{ (currentStock as any).unit_cost ? (currentStock as any).unit_cost.toLocaleString() : '-' }}</DescriptionItem>
+        <DescriptionItem label="总价值">¥{{ (currentStock as any).total_value ? (currentStock as any).total_value.toLocaleString() : '-' }}</DescriptionItem>
+        <DescriptionItem label="创建时间" :span="2">{{ (currentStock as any).created_at }}</DescriptionItem>
+        <DescriptionItem v-if="(currentStock as any).notes" label="备注" :span="2">
+          <pre class="m-0 whitespace-pre-wrap">{{ (currentStock as any).notes }}</pre>
+        </DescriptionItem>
+      </DescriptionGrid>
       <template #footer>
         <div class="flex justify-end gap-3">
           <button class="btn btn-secondary" @click="detailDialogVisible = false">关闭</button>
@@ -205,7 +209,7 @@ import { productStockAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, EmptyState, Pagination, InputNumber, TextArea, Select, TablePageLayout, DataTable, Tag, BaseDialog } from '@/components/common'
+import { StatusTag, EmptyState, Pagination, InputNumber, TextArea, Select, TablePageLayout, DataTable, Tag, BaseDialog, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import StockStats from './components/StockStats.vue'
 

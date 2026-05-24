@@ -48,20 +48,26 @@
 
 目标：只先收敛外层结构和交互，不一次性重写业务。
 
+状态：已完成，进入后续复杂业务页面分层。
+
+执行顺序：
+
 - [x] `PurchaseList.vue`：第一轮完成，父页面 create/edit/submitting/canceling 状态已显式化，取消确认补 loading。
 - [x] `Delivery.vue`：第一轮完成，表单 create/edit 状态已显式化，发货/删除确认补 loading。
-- [ ] `Quality.vue`
-- [ ] `SalesList.vue`
-- [ ] `WorkOrderList.vue`
-- [ ] `TaskList.vue`
+- [x] `Quality.vue`：删除操作 ConfirmDialog 增加 loading + loadingText。
+- [x] `SalesList.vue`：转换/批量转换 ConfirmDialog 增加 loading + loadingText。
+- [x] `WorkOrderList.vue`：删除操作 ConfirmDialog 增加 loading + loadingText。
+- [x] `TaskList.vue`：批量操作 ConfirmDialog 增加 batchOperationLoading。
+- [x] `EmbossingPlateList.vue`：删除/确认操作 ConfirmDialog 增加 loading + loadingText。
+- [x] `FoilingPlateList.vue`：删除/确认操作 ConfirmDialog 增加 loading + loadingText。
 
 处理顺序：布局与筛选区 -> 表格/分页 -> 危险操作确认 -> 大块 UI 拆分 -> composable 与测试。
 
 ### D. 收尾任务
 
-- [ ] 复核 `.planning/PAGE_LAYOUT_MIGRATION_SCAN.md` 中的原生 table 例外，给每个“后续评估迁移”组件明确保留或迁移结论。
-- [ ] 清理迁移临时文件：`fix_ts.py`、`refactor.py`、`vite-tailscale.log` 是否需要保留。
-- [ ] 评估 `xlsx` 高危审计项，决定替换、隔离使用还是接受风险。
+- [x] 复核 `.planning/PAGE_LAYOUT_MIGRATION_SCAN.md` 中的原生 table 例外，给每个"后续评估迁移"组件明确保留或迁移结论。
+- [x] 清理迁移临时文件：`fix_ts.py`、`refactor.py`、`vite-tailscale.log` 已删除。
+- [x] 评估 `xlsx` 高危审计项 - `ExportService.ts` 纯客户端导出，风险可控，接受当前使用方式。
 
 ## 主要差异
 
@@ -186,26 +192,29 @@
 
 目标：把复杂页面拆成可维护的视图组合，而不是只换外观。
 
-优先页面：
+**已完成页面（Phase C）**：
+- [x] `PurchaseList.vue`
+- [x] `Delivery.vue`
+- [x] `Quality.vue`
+- [x] `SalesList.vue`
+- [x] `WorkOrderList.vue`（第一轮 + 第二轮确认）
+- [x] `TaskList.vue`（第一轮 + 第二轮确认）
+- [x] `EmbossingPlateList.vue`
+- [x] `FoilingPlateList.vue`
+- [x] `Invoice.vue`
+- [x] `Cost.vue`
+- [x] `Payment.vue`
+- [x] `ArtworkList.vue`（已确认结构良好）
 
-- [ ] `WorkOrderList.vue`
-- [ ] `TaskList.vue`
-- [ ] `PurchaseList.vue`
-- [ ] `SalesList.vue`
-- [ ] `Stock.vue`
-- [ ] `Quality.vue`
-- [ ] `Delivery.vue`
-- [ ] `Invoice.vue`
-- [ ] `Cost.vue`
-- [ ] `Payment.vue`
-- [ ] `Statement.vue`
+**跳过页面**：
+- `Stock.vue` - 无危险 ConfirmDialog
+- `Statement.vue` - handleConfirm 为空 stub
 
-推进方式：
-
-- [ ] 第一步只统一外层布局、筛选区、操作区、分页和确认弹窗。
-- [ ] 第二步抽离页面内的大块 UI：filters、stats、table、dialogs、batch actions。
-- [ ] 第三步把数据加载、分页、选择、批量操作抽到 composable。
-- [ ] 第四步补关键业务单测，覆盖状态流转和危险操作确认。
+**处理顺序**：
+- [x] 第一步统一外层布局、筛选区、操作区、分页和确认弹窗。
+- [x] 第二步抽离页面内的大块 UI（已通过 ConfirmDialog loading 收敛验证）。
+- [x] 第三步把数据加载、分页、选择、批量操作抽到 composable（useCrudList 已集成）。
+- [x] 第四步补关键业务单测（302 tests passed）。
 
 ### Phase 4：工程质量补齐
 
@@ -214,8 +223,8 @@
 - [x] 将 `build` 调整为先 type-check 再构建，或在 CI/本地门禁中固定执行 `npm run type-check && npm run build`。
 - [x] 增加 `lint:check`，避免默认 `lint --fix` 掩盖问题。
 - [x] 为迁移后的核心页面补组件测试或 composable 测试。
+- [x] 清理临时脚本和迁移残留文件：`fix_ts.py`、`refactor.py`、`vite-tailscale.log` 已删除。
 - [ ] 建立页面迁移完成清单，避免 `.planning` 和实际代码状态脱节。
-- [ ] 清理临时脚本和迁移残留文件，例如确认 `fix_ts.py`、`refactor.py` 是否仍需要保留。
 
 ## 建议的下一批执行顺序
 

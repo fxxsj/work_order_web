@@ -1,11 +1,13 @@
 <template>
   <BaseDialog :show="dialogVisible" title="采购收货" width="extra-wide" @close="handleClose; dialogVisible = false;">
     <div v-loading="loading">
-      <div class="descriptions-grid mb-4" style="--col: 3; font-size: 14px;">
-        <div class="description-item"><div class="description-label">采购单号</div><div class="description-value">{{ purchaseOrder?.order_number }}</div></div>
-        <div class="description-item"><div class="description-label">供应商</div><div class="description-value">{{ purchaseOrder?.supplier_name }}</div></div>
-        <div class="description-item"><div class="description-label">状态</div><div class="description-value"><StatusTag :status="purchaseOrder?.status" category="purchaseOrder" :label="purchaseOrder?.status_display" /></div></div>
-      </div>
+      <DescriptionGrid :columns="3" class="mb-4">
+        <DescriptionItem label="采购单号">{{ purchaseOrder?.order_number }}</DescriptionItem>
+        <DescriptionItem label="供应商">{{ purchaseOrder?.supplier_name }}</DescriptionItem>
+        <DescriptionItem label="状态">
+          <StatusTag :status="purchaseOrder?.status" category="purchaseOrder" :label="purchaseOrder?.status_display" />
+        </DescriptionItem>
+      </DescriptionGrid>
       <div class="mb-4">
         <div class="flex flex-wrap gap-5">
           <div class="flex-1 min-w-[200px]"><div class="form-item"><label class="form-label">收货日期</label><input type="date" v-model="form.received_date" class="input w-full" /></div></div>
@@ -22,7 +24,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
-import { StatusTag, Input } from '@/components/common'
+import { StatusTag, Input, DescriptionGrid, DescriptionItem } from '@/components/common'
 
 const props = defineProps({ visible: { type: Boolean, default: false }, purchaseOrder: { type: Object, default: null }, loading: { type: Boolean, default: false } })
 const emit = defineEmits(['submit', 'update:visible'])
@@ -32,4 +34,3 @@ const dialogVisible = computed({ get: () => props.visible, set: (val: any) => em
 const handleSubmit = () => emit('submit', form)
 const handleClose = () => { form.received_date = ''; form.delivery_note_number = ''; emit('update:visible', false) }
 </script>
-

@@ -77,19 +77,21 @@
     </TablePageLayout>
 
     <BaseDialog :show="detailDialogVisible" title="发票详情" width="wide" @close="detailDialogVisible = false">
-      <div v-if="currentInvoice" class="descriptions-grid" style="--col: 2">
-        <div class="description-item"><div class="description-label">发票号码</div><div class="description-value">{{ (currentInvoice as any).invoice_number }}</div></div>
-        <div class="description-item"><div class="description-label">发票类型</div><div class="description-value">{{ (currentInvoice as any).invoice_type_display }}</div></div>
-        <div class="description-item"><div class="description-label">客户名称</div><div class="description-value">{{ (currentInvoice as any).customer_name }}</div></div>
-        <div class="description-item"><div class="description-label">状态</div><div class="description-value"><StatusTag :status="(currentInvoice as any).status" category="invoice" :label="(currentInvoice as any).status_display" /></div></div>
-        <div class="description-item"><div class="description-label">金额(不含税)</div><div class="description-value">¥{{ (currentInvoice as any).amount ? (currentInvoice as any).amount.toLocaleString() : '-' }}</div></div>
-        <div class="description-item"><div class="description-label">税率</div><div class="description-value">{{ (currentInvoice as any).tax_rate }}%</div></div>
-        <div class="description-item"><div class="description-label">税额</div><div class="description-value">¥{{ (currentInvoice as any).tax_amount ? (currentInvoice as any).tax_amount.toLocaleString() : '-' }}</div></div>
-        <div class="description-item"><div class="description-label">价税合计</div><div class="description-value">¥{{ (currentInvoice as any).total_amount ? (currentInvoice as any).total_amount.toLocaleString() : '-' }}</div></div>
-        <div class="description-item"><div class="description-label">开票日期</div><div class="description-value">{{ (currentInvoice as any).issue_date || '-' }}</div></div>
-        <div class="description-item col-span-2"><div class="description-label">关联单号</div><div class="description-value">{{ (currentInvoice as any).sales_order_number || (currentInvoice as any).work_order_number || '-' }}</div></div>
-        <div class="description-item col-span-2"><div class="description-label">备注</div><div class="description-value">{{ (currentInvoice as any).notes || '-' }}</div></div>
-      </div>
+      <DescriptionGrid v-if="currentInvoice" :columns="2">
+        <DescriptionItem label="发票号码">{{ (currentInvoice as any).invoice_number }}</DescriptionItem>
+        <DescriptionItem label="发票类型">{{ (currentInvoice as any).invoice_type_display }}</DescriptionItem>
+        <DescriptionItem label="客户名称">{{ (currentInvoice as any).customer_name }}</DescriptionItem>
+        <DescriptionItem label="状态">
+          <StatusTag :status="(currentInvoice as any).status" category="invoice" :label="(currentInvoice as any).status_display" />
+        </DescriptionItem>
+        <DescriptionItem label="金额(不含税)">¥{{ (currentInvoice as any).amount ? (currentInvoice as any).amount.toLocaleString() : '-' }}</DescriptionItem>
+        <DescriptionItem label="税率">{{ (currentInvoice as any).tax_rate }}%</DescriptionItem>
+        <DescriptionItem label="税额">¥{{ (currentInvoice as any).tax_amount ? (currentInvoice as any).tax_amount.toLocaleString() : '-' }}</DescriptionItem>
+        <DescriptionItem label="价税合计">¥{{ (currentInvoice as any).total_amount ? (currentInvoice as any).total_amount.toLocaleString() : '-' }}</DescriptionItem>
+        <DescriptionItem label="开票日期">{{ (currentInvoice as any).issue_date || '-' }}</DescriptionItem>
+        <DescriptionItem label="关联单号" :span="2">{{ (currentInvoice as any).sales_order_number || (currentInvoice as any).work_order_number || '-' }}</DescriptionItem>
+        <DescriptionItem label="备注" :span="2">{{ (currentInvoice as any).notes || '-' }}</DescriptionItem>
+      </DescriptionGrid>
       <template #footer>
         <button class="btn btn-secondary" @click="detailDialogVisible = false">关闭</button>
       </template>
@@ -135,6 +137,8 @@
       message="确认提交该发票？"
       confirm-text="确认"
       cancel-text="取消"
+      :loading="submittingInvoice"
+      loading-text="提交中..."
       @confirm="handleSubmit"
       @cancel="showSubmitDialogFlag = false"
     />
@@ -148,7 +152,7 @@ import { invoiceAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, SearchInput, Icon, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog } from '@/components/common'
+import { StatusTag, Select, SearchInput, Icon, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import InvoiceStats from './components/InvoiceStats.vue'
 
@@ -161,6 +165,7 @@ const detailDialogVisible = ref(false)
 const formDialogVisible = ref(false)
 const isEdit = ref(false)
 
+const submittingInvoice = ref(false)
 const showSubmitDialogFlag = ref(false)
 const targetInvoiceForSubmit = ref<any>(null)
 
@@ -311,12 +316,15 @@ const handleSubmit = async () => {
   showSubmitDialogFlag.value = false
   if (!row) return
   try {
+    submittingInvoice.value = true
     await invoiceAPI.submit(row.id)
     ElMessage.success('提交成功')
     loadData()
     fetchStats()
   } catch (error: any) {
     ErrorHandler.showMessage(error, '提交失败')
+  } finally {
+    submittingInvoice.value = false
   }
 }
 

@@ -24,17 +24,19 @@
             <StatusTag :status="detailData.payment_status" :label="detailData.payment_status_display" category="payment" size="default" />
           </div>
         </div>
-        <div class="descriptions-grid" style="--col: 3">
-          <div class="description-item"><div class="description-label">订单号</div><div class="description-value">{{ detailData.order_number }}</div></div>
-          <div class="description-item"><div class="description-label">客户</div><div class="description-value">{{ detailData.customer_name }}</div></div>
-          <div class="description-item"><div class="description-label">状态</div><div class="description-value"><StatusTag :status="detailData.status" :label="detailData.status_display" category="salesOrder" /></div></div>
-          <div class="description-item"><div class="description-label">订单日期</div><div class="description-value">{{ formatDate(detailData.order_date) }}</div></div>
-          <div class="description-item"><div class="description-label">预计交货日期</div><div class="description-value">{{ formatDate(detailData.delivery_date) }}</div></div>
-          <div class="description-item"><div class="description-label">实际交货日期</div><div class="description-value">{{ formatDate(detailData.actual_delivery_date) || '-' }}</div></div>
-          <div class="description-item"><div class="description-label">联系人</div><div class="description-value">{{ detailData.contact_person || '-' }}</div></div>
-          <div class="description-item"><div class="description-label">联系电话</div><div class="description-value">{{ detailData.contact_phone || '-' }}</div></div>
-          <div class="description-item col-span-3"><div class="description-label">送货地址</div><div class="description-value">{{ detailData.shipping_address || '-' }}</div></div>
-        </div>
+        <DescriptionGrid :columns="3">
+          <DescriptionItem label="订单号">{{ detailData.order_number }}</DescriptionItem>
+          <DescriptionItem label="客户">{{ detailData.customer_name }}</DescriptionItem>
+          <DescriptionItem label="状态">
+            <StatusTag :status="detailData.status" :label="detailData.status_display" category="salesOrder" />
+          </DescriptionItem>
+          <DescriptionItem label="订单日期">{{ formatDate(detailData.order_date) }}</DescriptionItem>
+          <DescriptionItem label="预计交货日期">{{ formatDate(detailData.delivery_date) }}</DescriptionItem>
+          <DescriptionItem label="实际交货日期">{{ formatDate(detailData.actual_delivery_date) || '-' }}</DescriptionItem>
+          <DescriptionItem label="联系人">{{ detailData.contact_person || '-' }}</DescriptionItem>
+          <DescriptionItem label="联系电话">{{ detailData.contact_phone || '-' }}</DescriptionItem>
+          <DescriptionItem label="送货地址" :span="3">{{ detailData.shipping_address || '-' }}</DescriptionItem>
+        </DescriptionGrid>
       </div>
 
       <div class="card mb-6">
@@ -147,7 +149,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from '@/utils/message'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
-import { ConfirmDialog, StatusTag } from '@/components/common'
+import { ConfirmDialog, StatusTag, DescriptionGrid, DescriptionItem } from '@/components/common'
 import { formatDate } from '@/utils/filter'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -206,44 +208,3 @@ const formatAmount = (amount: any) => amount ? amount.toLocaleString('zh-CN', { 
 
 onMounted(() => { loadData() })
 </script>
-
-<style lang="scss" scoped>
-.descriptions-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--col, 3), 1fr);
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  overflow: hidden;
-}
-.description-item {
-  display: flex;
-  border-right: 1px solid #ebeef5;
-  border-bottom: 1px solid #ebeef5;
-  &:last-child { border-right: none; }
-}
-.description-item.col-span-2 { grid-column: span 2; }
-.description-item.col-span-3 { grid-column: span 3; }
-.description-label {
-  width: 120px;
-  min-width: 120px;
-  padding: 12px 16px;
-  background: #fafafa;
-  color: #909399;
-  font-size: 14px;
-  border-right: 1px solid #ebeef5;
-  flex-shrink: 0;
-}
-.description-value {
-  padding: 12px 16px;
-  color: #303133;
-  font-size: 14px;
-  flex: 1;
-  word-break: break-word;
-}
-.dark {
-  .descriptions-grid { border-color: #434343; }
-  .description-item { border-color: #434343; }
-  .description-label { background: #2d2d2d; color: #9e9e9e; border-color: #434343; }
-  .description-value { color: #e0e0e0; }
-}
-</style>

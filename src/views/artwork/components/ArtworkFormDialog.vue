@@ -37,7 +37,7 @@
         <Select v-model="form.embossing_plates" :options="embossingPlateOptions" multiple filterable placeholder="请选择压凸版（可多选）" class="flex-1" />
       </div>
 
-      <div class="flex items-center my-4"><span class="pr-3 text-sm text-gray-500 dark:text-gray-400">包含产品及拼版数量</span><hr class="flex-1 border-t border-gray-200 dark:border-dark-700" /></div>
+      <SectionDivider title="包含产品及拼版数量" />
       <div class="flex items-start gap-3">
         <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">产品列表</label>
         <div class="flex-1">
@@ -79,7 +79,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, InputNumber, TextArea, CheckboxGroup, Select } from '@/components/common'
+import { Icon, Input, InputNumber, TextArea, CheckboxGroup, Select, SectionDivider } from '@/components/common'
 import { ElMessage } from '@/utils/message'
 
 const props = defineProps({

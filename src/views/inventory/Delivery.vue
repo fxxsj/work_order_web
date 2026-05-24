@@ -4,13 +4,11 @@
 
     <TablePageLayout>
       <template #filters>
-        <div class="flex flex-col gap-3">
-          <div class="flex flex-wrap items-center gap-3">
-            <Select v-model="filters.customer" :options="customerOptions" class="w-40" placeholder="选择客户" clearable filterable @change="handleSearch" />
-            <Select v-model="filters.status" :options="statusOptions" class="w-36" placeholder="发货状态" clearable @change="handleSearch" />
-            <SearchInput v-model="filters.tracking_number" placeholder="搜索物流单号" class="w-full sm:w-64" @search="handleSearchDebounced" @clear="handleSearch" />
-          </div>
-        </div>
+        <FilterRow>
+          <Select v-model="filters.customer" :options="customerOptions" class="w-40" placeholder="选择客户" clearable filterable @change="handleSearch" />
+          <Select v-model="filters.status" :options="statusOptions" class="w-36" placeholder="发货状态" clearable @change="handleSearch" />
+          <SearchInput v-model="filters.tracking_number" placeholder="搜索物流单号" class="w-full sm:w-64" @search="handleSearchDebounced" @clear="handleSearch" />
+        </FilterRow>
       </template>
       <template #actions>
         <div class="flex justify-end gap-3">
@@ -142,7 +140,7 @@ import { deliveryOrderAPI, salesOrderAPI, productAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog } from '@/components/common'
+import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import DeliveryStats from './components/DeliveryStats.vue'
 import DeliveryDetailDialog from './components/DeliveryDetailDialog.vue'

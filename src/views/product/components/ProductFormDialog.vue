@@ -18,7 +18,7 @@
       <div><label class="input-label mb-1.5 block">最小库存</label><InputNumber v-model="form.min_stock_quantity" :min="0" class="w-full" /></div>
       <TextArea v-model="form.description" label="产品描述" :rows="2" placeholder="请输入产品描述" />
 
-      <div class="flex items-center my-4"><span class="pr-3 text-sm text-gray-500 dark:text-gray-400">默认物料配置</span><hr class="flex-1 border-t border-gray-200 dark:border-dark-700" /></div>
+      <SectionDivider title="默认物料配置" />
       <div class="flex items-start gap-3">
         <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">物料列表</label>
         <div class="flex-1">
@@ -58,7 +58,7 @@
         </div>
       </div>
 
-      <div class="flex items-center my-4"><span class="pr-3 text-sm text-gray-500 dark:text-gray-400">默认工序配置</span><hr class="flex-1 border-t border-gray-200 dark:border-dark-700" /></div>
+      <SectionDivider title="默认工序配置" />
       <div class="flex items-start gap-3">
         <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">默认工序</label>
         <CheckboxGroup v-model="form.default_processes" :options="processOptions" class="flex-1" />
@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, InputNumber, Select, TextArea, Toggle, CheckboxGroup } from '@/components/common'
+import { Icon, Input, InputNumber, Select, TextArea, Toggle, CheckboxGroup, SectionDivider } from '@/components/common'
 import { ElMessage } from '@/utils/message'
 
 const props = defineProps({

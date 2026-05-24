@@ -69,12 +69,12 @@
 
     <BaseDialog :show="detailDialogVisible" title="成本详情" width="extra-wide" @close="detailDialogVisible = false">
       <div v-if="currentCost">
-        <div class="descriptions-grid mb-4" style="--col: 2">
-          <div class="description-item"><div class="description-label">施工单号</div><div class="description-value">{{ (currentCost as any).work_order_number }}</div></div>
-          <div class="description-item"><div class="description-label">产品名称</div><div class="description-value">{{ (currentCost as any).product_name }}</div></div>
-          <div class="description-item"><div class="description-label">成本中心</div><div class="description-value">{{ (currentCost as any).cost_center_name || '-' }}</div></div>
-          <div class="description-item"><div class="description-label">计算时间</div><div class="description-value">{{ (currentCost as any).calculated_at || '-' }}</div></div>
-        </div>
+        <DescriptionGrid :columns="2" class="mb-4">
+          <DescriptionItem label="施工单号">{{ (currentCost as any).work_order_number }}</DescriptionItem>
+          <DescriptionItem label="产品名称">{{ (currentCost as any).product_name }}</DescriptionItem>
+          <DescriptionItem label="成本中心">{{ (currentCost as any).cost_center_name || '-' }}</DescriptionItem>
+          <DescriptionItem label="计算时间">{{ (currentCost as any).calculated_at || '-' }}</DescriptionItem>
+        </DescriptionGrid>
         <div class="cost-breakdown">
           <h4>成本构成</h4>
           <div class="table-scroll table-scroll-compact">
@@ -145,6 +145,8 @@
       message="确认重新计算该订单成本？"
       confirm-text="确认"
       cancel-text="取消"
+      :loading="calculating"
+      loading-text="计算中..."
       @confirm="handleCalculate"
       @cancel="showCalculateDialogFlag = false"
     />
@@ -159,13 +161,14 @@ import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import CostStats from './components/CostStats.vue'
-import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog } from '@/components/common'
+import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 
 const userStore = useUserStore()
 
 const statsLoading = ref(false)
 const submitting = ref(false)
+const calculating = ref(false)
 const currentCost = ref(null)
 const stats = ref({})
 const detailDialogVisible = ref(false)
@@ -227,11 +230,13 @@ const handleCalculate = async () => {
   showCalculateDialogFlag.value = false
   if (!row) return
   try {
+    calculating.value = true
     await productionCostAPI.calculateTotal(row.id)
     ElMessage.success('计算成功')
     loadData()
     fetchStats()
   } catch (error: any) { ErrorHandler.showMessage(error, '计算失败') }
+  finally { calculating.value = false }
 }
 
 const handleEdit = (row: any) => {

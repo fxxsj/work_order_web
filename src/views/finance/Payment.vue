@@ -87,22 +87,22 @@
     </TablePageLayout>
 
     <BaseDialog :show="detailDialogVisible" title="收款详情" width="normal" @close="detailDialogVisible = false">
-      <div v-if="currentPayment" class="descriptions-grid" style="--col: 2">
-        <div class="description-item"><div class="description-label">收款单号</div><div class="description-value">{{ (currentPayment as any).payment_number }}</div></div>
-        <div class="description-item"><div class="description-label">客户名称</div><div class="description-value">{{ (currentPayment as any).customer_name }}</div></div>
-        <div class="description-item"><div class="description-label">收款日期</div><div class="description-value">{{ (currentPayment as any).payment_date }}</div></div>
-        <div class="description-item"><div class="description-label">付款方式</div><div class="description-value">{{ (currentPayment as any).payment_method_display }}</div></div>
-        <div class="description-item"><div class="description-label">收款金额</div><div class="description-value">¥{{ (currentPayment as any).amount ? (currentPayment as any).amount.toLocaleString() : '-' }}</div></div>
-        <div class="description-item"><div class="description-label">已核销金额</div><div class="description-value">¥{{ (currentPayment as any).applied_amount ? (currentPayment as any).applied_amount.toLocaleString() : '0' }}</div></div>
-        <div class="description-item"><div class="description-label">未核销金额</div><div class="description-value">¥{{ (currentPayment as any).remaining_amount ? (currentPayment as any).remaining_amount.toLocaleString() : (currentPayment as any).amount.toLocaleString() }}</div></div>
-        <div class="description-item"><div class="description-label">银行账户</div><div class="description-value">{{ (currentPayment as any).bank_account || '-' }}</div></div>
-        <div class="description-item col-span-2"><div class="description-label">交易流水号</div><div class="description-value">{{ (currentPayment as any).transaction_number || '-' }}</div></div>
-        <div class="description-item"><div class="description-label">关联发票</div><div class="description-value">{{ (currentPayment as any).invoice_number || '-' }}</div></div>
-        <div class="description-item"><div class="description-label">关联销售订单</div><div class="description-value">{{ (currentPayment as any).sales_order_number || '-' }}</div></div>
-        <div class="description-item col-span-2"><div class="description-label">备注</div><div class="description-value">{{ (currentPayment as any).notes || '-' }}</div></div>
-        <div class="description-item"><div class="description-label">创建时间</div><div class="description-value">{{ (currentPayment as any).created_at }}</div></div>
-        <div class="description-item"><div class="description-label">创建人</div><div class="description-value">{{ (currentPayment as any).recorded_by_name || '-' }}</div></div>
-      </div>
+      <DescriptionGrid v-if="currentPayment" :columns="2">
+        <DescriptionItem label="收款单号">{{ (currentPayment as any).payment_number }}</DescriptionItem>
+        <DescriptionItem label="客户名称">{{ (currentPayment as any).customer_name }}</DescriptionItem>
+        <DescriptionItem label="收款日期">{{ (currentPayment as any).payment_date }}</DescriptionItem>
+        <DescriptionItem label="付款方式">{{ (currentPayment as any).payment_method_display }}</DescriptionItem>
+        <DescriptionItem label="收款金额">¥{{ (currentPayment as any).amount ? (currentPayment as any).amount.toLocaleString() : '-' }}</DescriptionItem>
+        <DescriptionItem label="已核销金额">¥{{ (currentPayment as any).applied_amount ? (currentPayment as any).applied_amount.toLocaleString() : '0' }}</DescriptionItem>
+        <DescriptionItem label="未核销金额">¥{{ (currentPayment as any).remaining_amount ? (currentPayment as any).remaining_amount.toLocaleString() : (currentPayment as any).amount.toLocaleString() }}</DescriptionItem>
+        <DescriptionItem label="银行账户">{{ (currentPayment as any).bank_account || '-' }}</DescriptionItem>
+        <DescriptionItem label="交易流水号" :span="2">{{ (currentPayment as any).transaction_number || '-' }}</DescriptionItem>
+        <DescriptionItem label="关联发票">{{ (currentPayment as any).invoice_number || '-' }}</DescriptionItem>
+        <DescriptionItem label="关联销售订单">{{ (currentPayment as any).sales_order_number || '-' }}</DescriptionItem>
+        <DescriptionItem label="备注" :span="2">{{ (currentPayment as any).notes || '-' }}</DescriptionItem>
+        <DescriptionItem label="创建时间">{{ (currentPayment as any).created_at }}</DescriptionItem>
+        <DescriptionItem label="创建人">{{ (currentPayment as any).recorded_by_name || '-' }}</DescriptionItem>
+      </DescriptionGrid>
       <template #footer><button class="btn btn-secondary" @click="detailDialogVisible = false">关闭</button></template>
     </BaseDialog>
 
@@ -155,6 +155,8 @@
       confirm-text="删除"
       cancel-text="取消"
       :danger="true"
+      :loading="deleting"
+      loading-text="删除中..."
       @confirm="handleDelete"
       @cancel="showDeleteDialog = false"
     />
@@ -169,7 +171,7 @@ import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import PaymentStats from './components/PaymentStats.vue'
-import { Select, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, ConfirmDialog } from '@/components/common'
+import { Select, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('payment')
@@ -185,6 +187,7 @@ const detailDialogVisible = ref(false)
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteDialog = ref(false)
+const deleting = ref(false)
 const selectedRowForDelete = ref<any>(null)
 
 const FORM_INITIAL: Record<string, any> = { id: undefined, customer: undefined, payment_date: '', payment_method: '', amount: undefined, bank_account: '', transaction_number: '', notes: '' }
@@ -287,6 +290,7 @@ const confirmDelete = (row: any) => {
 
 const handleDelete = async () => {
   try {
+    deleting.value = true
     const row = selectedRowForDelete.value
     if (!row) return
     await paymentAPI.delete(row.id)
@@ -295,6 +299,7 @@ const handleDelete = async () => {
     loadData()
     fetchStats()
   } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
+  finally { deleting.value = false }
 }
 
 const handleSave = async () => {
