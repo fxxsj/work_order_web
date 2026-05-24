@@ -23,35 +23,34 @@
         </div>
         <div class="mb-6">
           <button class="btn btn-primary btn-sm" @click="handleAddItem"><Icon name="plus" class="h-3 w-3" /> 添加产品</button>
-          <div class="mt-3 overflow-x-auto">
-            <table class="data-table w-full">
-              <thead>
-                <tr>
-                  <th class="min-w-[200px]">产品</th>
-                  <th class="w-[150px]">规格</th>
-                  <th class="w-[150px]">数量</th>
-                  <th class="w-[80px]">单位</th>
-                  <th class="w-[120px]">单价</th>
-                  <th class="w-[120px]">金额</th>
-                  <th class="min-w-[120px]">备注</th>
-                  <th class="w-[80px]">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(row, index) in form.items" :key="index">
-                  <td>
-                    <Select v-model="row.product" :options="productSelectOptions" placeholder="请选择产品" searchable class="w-full" @change="(val) => handleProductChange(val, index)" />
-                  </td>
-                  <td>{{ getProductSpec(row.product) }}</td>
-                  <td><InputNumber v-model="row.quantity" :min="1" class="w-full" /></td>
-                  <td>{{ getProductUnit(row.product) }}</td>
-                  <td><InputNumber v-model="row.unit_price" :min="0" :precision="2" class="w-full" /></td>
-                  <td>¥{{ ((row.quantity || 0) * (row.unit_price || 0)).toLocaleString() }}</td>
-                  <td><Input v-model="row.notes" placeholder="备注" /></td>
-                  <td><button class="btn btn-danger btn-xs" :disabled="form.items.length <= 1" @click="handleRemoveItem(index)"><Icon name="trash" class="h-3 w-3" /></button></td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="mt-3">
+            <LineItemsTable
+              :columns="lineItemColumns"
+              :items="form.items"
+              @delete="handleRemoveItem"
+            >
+              <template #cell-product="{ row, index }">
+                <Select v-model="row.product" :options="productSelectOptions" placeholder="请选择产品" searchable class="w-full" @change="(val) => handleProductChange(val, index)" />
+              </template>
+              <template #cell-spec="{ row }">
+                {{ getProductSpec(row.product) }}
+              </template>
+              <template #cell-quantity="{ row }">
+                <InputNumber v-model="row.quantity" :min="1" class="w-full" />
+              </template>
+              <template #cell-unit="{ row }">
+                {{ getProductUnit(row.product) }}
+              </template>
+              <template #cell-unit_price="{ row }">
+                <InputNumber v-model="row.unit_price" :min="0" :precision="2" class="w-full" />
+              </template>
+              <template #cell-amount="{ row }">
+                <span>¥{{ ((row.quantity || 0) * (row.unit_price || 0)).toLocaleString() }}</span>
+              </template>
+              <template #cell-notes="{ row }">
+                <Input v-model="row.notes" placeholder="备注" />
+              </template>
+            </LineItemsTable>
           </div>
         </div>
 
@@ -89,7 +88,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Icon, Input, TextArea, InputNumber, Select } from '@/components/common'
+import { Icon, Input, TextArea, InputNumber, Select, LineItemsTable } from '@/components/common'
 import { ElMessage } from '@/utils/message'
 import { salesOrderAPI, productAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
@@ -121,6 +120,16 @@ const totalAmount = computed(() => {
 
 const customerSelectOptions = computed(() => customerOptions.value.map((c: any) => ({ value: c.id, label: c.name })))
 const productSelectOptions = computed(() => productOptions.value.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
+
+const lineItemColumns = [
+  { key: 'product', label: '产品', minWidth: 200 },
+  { key: 'spec', label: '规格', width: 150 },
+  { key: 'quantity', label: '数量', width: 150 },
+  { key: 'unit', label: '单位', width: 80 },
+  { key: 'unit_price', label: '单价', width: 120 },
+  { key: 'amount', label: '金额', width: 120 },
+  { key: 'notes', label: '备注', minWidth: 120 },
+]
 
 const loadCustomers = async () => { try { const res: any = await customerAPI.getList({ page_size: 1000 }); customerOptions.value = res?.results || [] } catch (error: any) {} }
 const loadProducts = async () => { try { const res: any = await productAPI.getList({ page_size: 1000 }); productOptions.value = res?.results || [] } catch (error: any) {} }

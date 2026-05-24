@@ -17,28 +17,24 @@
       <button class="btn btn-sm btn-primary" @click="handleAddItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加明细</button>
 
       <div class="mt-3 w-full overflow-x-auto">
-        <table class="data-table w-full">
-          <thead>
-            <tr>
-              <th class="w-[250px]">物料</th>
-              <th class="w-[150px]">采购数量</th>
-              <th class="w-[150px]">单价</th>
-              <th class="w-[120px] text-right">小计</th>
-              <th class="w-[80px] text-center">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, index) in localForm.items" :key="index">
-              <td>
-                <Select v-model="(row as any).material" :options="materialSelectOptions" placeholder="请选择物料" searchable class="w-full" @change="handleMaterialChange(row)" />
-              </td>
-              <td><InputNumber v-model="(row as any).quantity" :min="1" :precision="2" class="w-full" /></td>
-              <td><InputNumber v-model="(row as any).unit_price" :min="0" :precision="2" class="w-full" /></td>
-              <td class="text-right">¥{{ (((row as any).quantity || 0) * ((row as any).unit_price || 0)).toFixed(2) }}</td>
-              <td class="text-center"><button class="btn btn-ghost btn-sm" style="color: #F56C6C" @click="handleDeleteItem(index)">删除</button></td>
-            </tr>
-          </tbody>
-        </table>
+        <LineItemsTable
+          :columns="lineItemColumns"
+          :items="localForm.items"
+          @delete="handleDeleteItem"
+        >
+          <template #cell-material="{ row }">
+            <Select v-model="row.material" :options="materialSelectOptions" placeholder="请选择物料" searchable class="w-full" @change="handleMaterialChange(row)" />
+          </template>
+          <template #cell-quantity="{ row }">
+            <InputNumber v-model="row.quantity" :min="1" :precision="2" class="w-full" />
+          </template>
+          <template #cell-unit_price="{ row }">
+            <InputNumber v-model="row.unit_price" :min="0" :precision="2" class="w-full" />
+          </template>
+          <template #cell-subtotal="{ row }">
+            <span class="text-right">¥{{ ((row.quantity || 0) * (row.unit_price || 0)).toFixed(2) }}</span>
+          </template>
+        </LineItemsTable>
       </div>
 
       <div v-if="localForm.items.length > 0" class="mt-4 text-right text-sm"><span>合计金额：</span><span class="text-lg font-bold text-danger-600">¥{{ totalAmount }}</span></div>
@@ -54,7 +50,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import { Icon, Select, TextArea, InputNumber, SectionDivider } from '@/components/common'
+import { Icon, Select, TextArea, InputNumber, SectionDivider, LineItemsTable } from '@/components/common'
 import { supplierAPI, materialAPI, workOrderAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -81,6 +77,13 @@ const totalAmount = computed(() => localForm.items.reduce((sum: any, item: any) 
 const supplierSelectOptions = computed(() => supplierOptions.value.map((s: any) => ({ value: s.id, label: s.name })))
 const materialSelectOptions = computed(() => materialOptions.value.map((m: any) => ({ value: m.id, label: `${m.code} - ${m.name}` })))
 const workOrderSelectOptions = computed(() => workOrderOptions.value.map((o: any) => ({ value: o.id, label: o.order_number })))
+
+const lineItemColumns = [
+  { key: 'material', label: '物料', width: 250 },
+  { key: 'quantity', label: '采购数量', width: 150 },
+  { key: 'unit_price', label: '单价', width: 150 },
+  { key: 'subtotal', label: '小计', width: 120, align: 'right' as const },
+]
 
 watch(() => props.visible, (val: any) => {
   if (val) {

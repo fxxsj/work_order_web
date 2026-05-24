@@ -41,6 +41,7 @@ declare module 'vue' {
     Input: typeof import('./components/common/Input.vue')['default']
     InputNumber: typeof import('./components/common/InputNumber.vue')['default']
     LazyImage: typeof import('./components/LazyImage.vue')['default']
+    LineItemsTable: typeof import('./components/common/LineItemsTable.vue')['default']
     LoadingSpinner: typeof import('./components/common/LoadingSpinner.vue')['default']
     NotificationCenter: typeof import('./components/NotificationCenter.vue')['default']
     Pagination: typeof import('./components/common/Pagination.vue')['default']

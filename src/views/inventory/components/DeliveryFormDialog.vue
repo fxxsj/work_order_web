@@ -35,32 +35,30 @@
         <span>发货明细</span>
         <button class="btn btn-primary btn-sm" @click="addItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加明细</button>
       </h4>
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-sm">
-          <thead>
-            <tr class="border-b border-gray-200 bg-gray-50 dark:border-dark-600 dark:bg-dark-800">
-              <th class="border border-gray-200 px-3 py-2 text-left font-medium dark:border-dark-600" style="min-width:250px">产品</th>
-              <th class="border border-gray-200 px-3 py-2 text-left font-medium dark:border-dark-600" style="width:150px">数量</th>
-              <th class="border border-gray-200 px-3 py-2 text-left font-medium dark:border-dark-600" style="width:160px">库存批次</th>
-              <th class="border border-gray-200 px-3 py-2 text-left font-medium dark:border-dark-600" style="width:100px">单位</th>
-              <th class="border border-gray-200 px-3 py-2 text-left font-medium dark:border-dark-600" style="width:150px">单价（元）</th>
-              <th class="border border-gray-200 px-3 py-2 text-right font-medium dark:border-dark-600" style="width:120px">小计（元）</th>
-              <th class="border border-gray-200 px-3 py-2 text-center font-medium dark:border-dark-600" style="width:80px">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(item, index) in localForm.items_data" :key="index" class="border-b border-gray-100 dark:border-dark-700">
-              <td class="border border-gray-200 px-2 py-1.5 dark:border-dark-600"><Select v-model="item.product" placeholder="请选择产品" :searchable="true" :options="productOptions" /></td>
-              <td class="border border-gray-200 px-2 py-1.5 dark:border-dark-600"><InputNumber v-model="item.quantity" :min="1" :precision="2" /></td>
-              <td class="border border-gray-200 px-2 py-1.5 dark:border-dark-600"><input v-model="item.stock_batch" placeholder="批次号（可选）" class="input w-full" /></td>
-              <td class="border border-gray-200 px-2 py-1.5 dark:border-dark-600"><input v-model="item.unit" placeholder="单位" class="input w-full" /></td>
-              <td class="border border-gray-200 px-2 py-1.5 dark:border-dark-600"><InputNumber v-model="item.unit_price" :min="0" :precision="2" /></td>
-              <td class="border border-gray-200 px-2 py-1.5 text-right dark:border-dark-600">¥{{ calculateSubtotal(item).toFixed(2) }}</td>
-              <td class="border border-gray-200 px-2 py-1.5 text-center dark:border-dark-600"><button class="btn btn-danger btn-sm" @click="removeItem(index)"><Icon name="trash" class="h-3 w-3" /></button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <LineItemsTable
+          :columns="lineItemColumns"
+          :items="localForm.items_data"
+          @delete="removeItem"
+        >
+          <template #cell-product="{ row }">
+            <Select v-model="row.product" placeholder="请选择产品" :searchable="true" :options="productOptions" />
+          </template>
+          <template #cell-quantity="{ row }">
+            <InputNumber v-model="row.quantity" :min="1" :precision="2" />
+          </template>
+          <template #cell-stock_batch="{ row }">
+            <input v-model="row.stock_batch" placeholder="批次号（可选）" class="input w-full" />
+          </template>
+          <template #cell-unit="{ row }">
+            <input v-model="row.unit" placeholder="单位" class="input w-full" />
+          </template>
+          <template #cell-unit_price="{ row }">
+            <InputNumber v-model="row.unit_price" :min="0" :precision="2" />
+          </template>
+          <template #cell-subtotal="{ row }">
+            <span class="text-right">¥{{ calculateSubtotal(row).toFixed(2) }}</span>
+          </template>
+        </LineItemsTable>
       <TextArea v-model="localForm.notes" label="备注" :rows="3" placeholder="请输入备注信息" class="mt-6" />
     </div>
     <template #footer>
@@ -72,7 +70,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, nextTick, computed } from 'vue'
-import { Icon, Input, InputNumber, TextArea, Select, BaseDialog } from '@/components/common'
+import { Icon, Input, InputNumber, TextArea, Select, BaseDialog, LineItemsTable } from '@/components/common'
 import ErrorHandler from '@/utils/errorHandler'
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -104,6 +102,16 @@ const logisticsOptions = [
   { value: '德邦物流', label: '德邦物流' },
   { value: '京东物流', label: '京东物流' }
 ]
+
+const lineItemColumns = [
+  { key: 'product', label: '产品', minWidth: 250 },
+  { key: 'quantity', label: '数量', width: 150 },
+  { key: 'stock_batch', label: '库存批次', width: 160 },
+  { key: 'unit', label: '单位', width: 100 },
+  { key: 'unit_price', label: '单价（元）', width: 150 },
+  { key: 'subtotal', label: '小计（元）', width: 120, align: 'right' as const },
+]
+
 const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
 
 watch(() => props.visible, (val: any) => { if (val) nextTick(() => {}) })
