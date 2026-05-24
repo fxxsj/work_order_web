@@ -7,38 +7,24 @@
         <button class="btn btn-primary btn-sm" @click="emit('add-process')"><Icon name="plus" class="h-3 w-3" /> 添加工序</button>
       </div>
     </div>
-    <div v-if="viewMode === 'list'" class="overflow-x-auto">
-      <table class="data-table w-full">
-        <thead>
-          <tr>
-            <th class="w-16 text-center">序号</th>
-            <th class="min-w-40">工序名称</th>
-            <th class="w-28">状态</th>
-            <th class="w-32">负责部门</th>
-            <th class="w-28">负责人</th>
-            <th class="w-20 text-center">任务数</th>
-            <th class="w-44">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in processes" :key="row.id || row.sequence">
-            <td class="text-center">{{ row.sequence }}</td>
-            <td>{{ row.process_name }}</td>
-            <td><StatusTag :status="row.status" category="process" :label="row.status_display" size="small" /></td>
-            <td>{{ row.department_name }}</td>
-            <td>{{ row.assigned_operator_name }}</td>
-            <td class="text-center">{{ row.tasks?.length || 0 }}</td>
-            <td><button class="btn btn-ghost btn-sm text-primary-600" @click="emit('process-click', row)">详情</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <SummaryTable v-if="viewMode === 'list'" :columns="columns" :data="processes" :row-key="rowKey">
+      <template #cell-status="{ row }">
+        <StatusTag :status="row.status" category="process" :label="row.status_display" size="small" />
+      </template>
+      <template #cell-task_count="{ row }">
+        {{ row.tasks?.length || 0 }}
+      </template>
+      <template #cell-actions="{ row }">
+        <button class="btn btn-ghost btn-sm text-primary-600" @click="emit('process-click', row)">详情</button>
+      </template>
+    </SummaryTable>
     <EmptyState v-else title="其他视图暂未实现" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Icon, StatusTag, RadioGroup } from '@/components/common'
+import { Icon, StatusTag, RadioGroup, SummaryTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 
 const props = defineProps({
   workOrder: { type: Object, default: null },
@@ -54,4 +40,16 @@ const viewModeOptions = [
   { value: 'flowchart', label: '流程图' },
   { value: 'list', label: '列表' }
 ]
+
+const columns: Column[] = [
+  { key: 'sequence', label: '序号', width: 64, align: 'center' },
+  { key: 'process_name', label: '工序名称', minWidth: 160 },
+  { key: 'status', label: '状态', width: 112 },
+  { key: 'department_name', label: '负责部门', width: 128 },
+  { key: 'assigned_operator_name', label: '负责人', width: 112 },
+  { key: 'task_count', label: '任务数', width: 80, align: 'center' },
+  { key: 'actions', label: '操作', width: 176 },
+]
+
+const rowKey = (row: any, index: number) => row.id || row.sequence || index
 </script>

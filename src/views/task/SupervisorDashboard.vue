@@ -19,7 +19,7 @@
       </div>
       <div class="card-body">
 
-      <Alert v-if="!isSupervisor" title="权限不足" type="error" description="您没有权限访问主管看板，需要具有施工单修改权限。" :closable="false" show-icon style="margin-bottom: 20px;" />
+      <Alert v-if="!isSupervisor" title="权限不足" type="error" description="您没有权限访问主管看板，需要具有施工单修改权限。" :closable="false" show-icon class="mb-5" />
 
       <div v-else-if="viewMode === 'dragdrop'">
         <task-drag-drop-list v-if="!loading && departmentTasks.length > 0" :tasks="departmentTasks" :operators="operators" @task-assigned="handleTaskAssigned" @task-reassigned="handleTaskReassigned" @task-unassigned="handleTaskUnassigned" />
@@ -27,66 +27,21 @@
       </div>
 
       <div v-else-if="viewMode === 'dashboard' && workloadData">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div class="card stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #409EFF;"><Icon name="user" size="lg" /></div><div class="stat-info"><div class="stat-value">{{ workloadData.total_operators || 0 }}</div><div class="stat-label">操作员数</div></div></div></div>
-          <div class="card stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #67C23A;"><Icon name="checkCircle" size="lg" /></div><div class="stat-info"><div class="stat-value">{{ workloadData.total_tasks || 0 }}</div><div class="stat-label">总任务数</div></div></div></div>
-          <div class="card stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #E6A23C;"><Icon name="clock" size="lg" /></div><div class="stat-info"><div class="stat-value">{{ workloadData.in_progress_count || 0 }}</div><div class="stat-label">进行中</div></div></div></div>
-          <div class="card stat-card"><div class="stat-content"><div class="stat-icon" style="background-color: #F56C6C;"><Icon name="exclamationTriangle" size="lg" /></div><div class="stat-info"><div class="stat-value">{{ workloadData.overdue_count || 0 }}</div><div class="stat-label">逾期任务</div></div></div></div>
-        </div>
+        <StatsCards :items="statItems" :loading="loading" layout="media" />
 
         <hr class="border-t border-gray-200 dark:border-dark-700 my-4" />
 
-        <h4>操作员工作负载</h4>
-        <div class="table-scroll">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-                <th class="px-4 py-3 w-36">操作员</th>
-                <th class="px-4 py-3 w-24 text-center">进行中</th>
-                <th class="px-4 py-3 w-24 text-center">已完成</th>
-                <th class="px-4 py-3 w-48">工作负载</th>
-                <th class="px-4 py-3 w-36 text-center">平均完成时间</th>
-                <th class="px-4 py-3 w-24 text-center">效率</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-              <tr v-for="row in operatorWorkloads" :key="row.operator_name">
-                <td class="px-4 py-3">{{ row.operator_name }}</td>
-                <td class="px-4 py-3 text-center">{{ row.in_progress_count || 0 }}</td>
-                <td class="px-4 py-3 text-center">{{ row.completed_count || 0 }}</td>
-                <td class="px-4 py-3"><ProgressBar :percentage="row.load_percentage || 0" :color="getLoadColor(row.load_percentage)" /></td>
-                <td class="px-4 py-3 text-center">{{ row.avg_completion_time ? row.avg_completion_time.toFixed(1) + 'h' : '-' }}</td>
-                <td class="px-4 py-3 text-center">{{ row.efficiency_rate ? (row.efficiency_rate * 100).toFixed(0) + '%' : '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <h4 class="my-4 text-base font-semibold text-gray-900 dark:text-gray-100">操作员工作负载</h4>
+        <SummaryTable :columns="operatorColumns" :data="operatorWorkloads" row-key="operator_name">
+          <template #cell-load_percentage="{ value }">
+            <ProgressBar :percentage="value || 0" :color="getLoadColor(value)" />
+          </template>
+        </SummaryTable>
 
         <hr class="border-t border-gray-200 dark:border-dark-700 my-4" />
 
-        <h4>工序统计</h4>
-        <div class="table-scroll">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-                <th class="px-4 py-3 w-36">工序</th>
-                <th class="px-4 py-3 w-24 text-center">总任务</th>
-                <th class="px-4 py-3 w-24 text-center">进行中</th>
-                <th class="px-4 py-3 w-24 text-center">已完成</th>
-                <th class="px-4 py-3 w-36 text-center">平均耗时</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-              <tr v-for="row in processStats" :key="row.process_name">
-                <td class="px-4 py-3">{{ row.process_name }}</td>
-                <td class="px-4 py-3 text-center">{{ row.total_count || 0 }}</td>
-                <td class="px-4 py-3 text-center">{{ row.in_progress_count || 0 }}</td>
-                <td class="px-4 py-3 text-center">{{ row.completed_count || 0 }}</td>
-                <td class="px-4 py-3 text-center">{{ row.avg_duration ? row.avg_duration.toFixed(1) + 'h' : '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <h4 class="my-4 text-base font-semibold text-gray-900 dark:text-gray-100">工序统计</h4>
+        <SummaryTable :columns="processColumns" :data="processStats" row-key="process_name" />
       </div>
       </div>
     </div>
@@ -95,7 +50,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Icon } from '@/components/common'
+import { Icon, StatsCards, SummaryTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import { ElMessage } from '@/utils/message'
 import { supervisorAPI, departmentAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
@@ -115,6 +71,30 @@ const operators = ref<any[]>([])
 const isSupervisor = computed(() => userStore.hasPermission('workorder.change_workorder'))
 const operatorWorkloads = computed(() => workloadData.value?.by_operator || [])
 const processStats = computed(() => workloadData.value?.by_process || [])
+
+const statItems = computed(() => [
+  { key: 'operators', label: '操作员数', value: workloadData.value?.total_operators || 0, format: 'number', iconName: 'user', tone: 'primary' },
+  { key: 'tasks', label: '总任务数', value: workloadData.value?.total_tasks || 0, format: 'number', iconName: 'checkCircle', tone: 'success' },
+  { key: 'in-progress', label: '进行中', value: workloadData.value?.in_progress_count || 0, format: 'number', iconName: 'clock', tone: 'warning' },
+  { key: 'overdue', label: '逾期任务', value: workloadData.value?.overdue_count || 0, format: 'number', iconName: 'exclamationTriangle', tone: 'danger' },
+])
+
+const operatorColumns: Column[] = [
+  { key: 'operator_name', label: '操作员', minWidth: 144 },
+  { key: 'in_progress_count', label: '进行中', align: 'center', width: 96, formatter: value => String(value || 0) },
+  { key: 'completed_count', label: '已完成', align: 'center', width: 96, formatter: value => String(value || 0) },
+  { key: 'load_percentage', label: '工作负载', minWidth: 192 },
+  { key: 'avg_completion_time', label: '平均完成时间', align: 'center', width: 144, formatter: value => value ? `${Number(value).toFixed(1)}h` : '-' },
+  { key: 'efficiency_rate', label: '效率', align: 'center', width: 96, formatter: value => value ? `${(Number(value) * 100).toFixed(0)}%` : '-' },
+]
+
+const processColumns: Column[] = [
+  { key: 'process_name', label: '工序', minWidth: 144 },
+  { key: 'total_count', label: '总任务', align: 'center', width: 96, formatter: value => String(value || 0) },
+  { key: 'in_progress_count', label: '进行中', align: 'center', width: 96, formatter: value => String(value || 0) },
+  { key: 'completed_count', label: '已完成', align: 'center', width: 96, formatter: value => String(value || 0) },
+  { key: 'avg_duration', label: '平均耗时', align: 'center', width: 144, formatter: value => value ? `${Number(value).toFixed(1)}h` : '-' },
+]
 
 const loadDepartments = async () => {
   try { const res: any = await departmentAPI.getList({ page_size: 1000 }); departmentList.value = res?.results || []; if (departmentList.value.length === 1) selectedDepartment.value = departmentList.value[0].id } catch (error: any) {}
@@ -153,14 +133,6 @@ onMounted(() => { loadDepartments(); if (isSupervisor.value) loadWorkloadData() 
 .header-section { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
 .header-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: bold; }
 .header-actions { display: flex; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
-.stat-card { border-radius: 10px; }
-.stat-content { display: flex; align-items: center; gap: 12px; }
-.stat-icon { width: 48px; height: 48px; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-.stat-value { font-size: 24px; font-weight: bold; }
-.stat-label { font-size: 12px; color: #909399; }
-.table-scroll { margin-top: var(--ui-control-gap); overflow-x: auto; }
-.dashboard-table { width: 100%; }
-h4 { margin: var(--ui-section-gap) 0 var(--ui-control-gap); color: #303133; }
 
 @media (max-width: bp.$breakpoint-phone-max) {
   .header-section,

@@ -76,27 +76,8 @@
           <DescriptionItem label="计算时间">{{ (currentCost as any).calculated_at || '-' }}</DescriptionItem>
         </DescriptionGrid>
         <div class="cost-breakdown">
-          <h4>成本构成</h4>
-          <div class="table-scroll table-scroll-compact">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-                <th class="px-3 py-2 w-36">成本项目</th>
-                <th class="px-3 py-2 w-36 text-right">金额</th>
-                <th class="px-3 py-2 w-24 text-right">占比</th>
-                <th class="px-3 py-2">说明</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-              <tr v-for="item in getCostBreakdown(currentCost)" :key="item.item">
-                <td class="px-3 py-2">{{ item.item }}</td>
-                <td class="px-3 py-2 text-right">¥{{ item.amount ? item.amount.toLocaleString() : '-' }}</td>
-                <td class="px-3 py-2 text-right">{{ item.proportion ? item.proportion.toFixed(1) + '%' : '-' }}</td>
-                <td class="px-3 py-2">{{ item.description }}</td>
-              </tr>
-            </tbody>
-          </table>
-          </div>
+          <h4 class="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">成本构成</h4>
+          <SummaryTable :columns="costBreakdownColumns" :data="getCostBreakdown(currentCost)" row-key="item" />
         </div>
         <div v-if="(currentCost as any).standard_cost" class="cost-comparison">
           <h4>成本对比</h4>
@@ -161,7 +142,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import CostStats from './components/CostStats.vue'
-import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem } from '@/components/common'
+import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, SummaryTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 
 const userStore = useUserStore()
@@ -192,6 +173,13 @@ const columns: Column[] = [
   { key: 'variance', label: '成本差异', width: 96, align: 'right' },
   { key: 'variance_rate', label: '差异率', width: 80, align: 'right' },
   { key: 'actions', label: '操作', width: 176, fixed: 'right' }
+]
+
+const costBreakdownColumns: Column[] = [
+  { key: 'item', label: '成本项目', width: 144 },
+  { key: 'amount', label: '金额', width: 144, align: 'right', formatter: value => value ? `¥${Number(value).toLocaleString()}` : '-' },
+  { key: 'proportion', label: '占比', width: 96, align: 'right', formatter: value => value ? `${Number(value).toFixed(1)}%` : '-' },
+  { key: 'description', label: '说明', minWidth: 160 },
 ]
 
 const {
@@ -283,11 +271,8 @@ onMounted(() => { loadData(); fetchStats() })
 .cost-container { padding: var(--ui-page-padding); }
 .header-section { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
 .action-group { display: flex; align-items: center; gap: var(--ui-control-gap); flex-wrap: wrap; }
-.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
-.table-scroll-compact { margin-top: var(--ui-control-gap); }
-.data-table { width: 100%; }
 .cost-breakdown, .cost-comparison { margin-top: var(--ui-section-gap); }
-.cost-breakdown h4, .cost-comparison h4 { margin-bottom: var(--ui-control-gap); }
+.cost-comparison h4 { margin-bottom: var(--ui-control-gap); }
 .comparison-row { margin-top: var(--ui-control-gap); }
 .comparison-item { text-align: center; }
 .comparison-label { font-size: var(--ui-font-size-sm); color: var(--ui-color-text-secondary); margin-bottom: var(--ui-control-gap); }

@@ -63,6 +63,7 @@ declare module 'vue' {
     StatsCards: typeof import('./components/common/StatsCards.vue')['default']
     StatusBadge: typeof import('./components/common/StatusBadge.vue')['default']
     StatusTag: typeof import('./components/common/StatusTag.vue')['default']
+    SummaryTable: typeof import('./components/common/SummaryTable.vue')['default']
     TablePageLayout: typeof import('./components/common/TablePageLayout.vue')['default']
     TabPane: typeof import('./components/common/TabPane.vue')['default']
     Tabs: typeof import('./components/common/Tabs.vue')['default']

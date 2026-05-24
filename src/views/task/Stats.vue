@@ -24,41 +24,22 @@
       </div>
       <hr class="border-t border-gray-200 dark:border-dark-700 my-4" />
       <div><h4 class="mb-4 font-bold">操作员任务统计</h4>
-        <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-                <th class="px-4 py-3 w-36">操作员</th>
-                <th class="px-4 py-3 w-24 text-center">任务数</th>
-                <th class="px-4 py-3 w-24 text-center">已完成</th>
-                <th class="px-4 py-3 w-24 text-center">进行中</th>
-                <th class="px-4 py-3 w-28 text-center">完成数量</th>
-                <th class="px-4 py-3 w-28 text-center">平均耗时</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-              <tr v-for="row in operatorStats" :key="row.operator_name">
-                <td class="px-4 py-3">{{ row.operator_name }}</td>
-                <td class="px-4 py-3 text-center">{{ row.total_tasks }}</td>
-                <td class="px-4 py-3 text-center">{{ row.completed_tasks }}</td>
-                <td class="px-4 py-3 text-center">{{ row.in_progress_tasks }}</td>
-                <td class="px-4 py-3 text-center">{{ row.completed_quantity }}</td>
-                <td class="px-4 py-3 text-center">{{ row.avg_time ? row.avg_time.toFixed(1) + 'h' : '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <SummaryTable :columns="operatorColumns" :data="operatorStats" row-key="operator_name">
+          <template #cell-avg_time="{ row }">
+            {{ row.avg_time ? row.avg_time.toFixed(1) + 'h' : '-' }}
+          </template>
+        </SummaryTable>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { ElMessage } from '@/utils/message'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { workOrderTaskAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
-import { Icon } from '@/components/common'
+import { Icon, SummaryTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 
 const startDate = ref('')
 const endDate = ref('')
@@ -68,6 +49,15 @@ const deptChartRef = ref(null)
 const trendChartRef = ref(null)
 let deptChart: any = null
 let trendChart: any = null
+
+const operatorColumns: Column[] = [
+  { key: 'operator_name', label: '操作员', class: 'w-36' },
+  { key: 'total_tasks', label: '任务数', align: 'center', class: 'w-24' },
+  { key: 'completed_tasks', label: '已完成', align: 'center', class: 'w-24' },
+  { key: 'in_progress_tasks', label: '进行中', align: 'center', class: 'w-24' },
+  { key: 'completed_quantity', label: '完成数量', align: 'center', class: 'w-28' },
+  { key: 'avg_time', label: '平均耗时', align: 'center', class: 'w-28' },
+]
 
 const loadStats = async () => {
   try {
