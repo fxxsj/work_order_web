@@ -48,55 +48,73 @@
       </div>
     </div>
 
-    <CrudPageLayout
-      title="审计日志"
-      :loading="loading"
-      :total="total"
-      :current-page="currentPage"
-      :page-size="pageSize"
-      @size-change="handleSizeChange"
-      @current-change="handlePageChange"
-    >
-      <template #search>
-        <Select v-model="filters.action_type" :options="actionTypeOptions" class="audit-filter-control" placeholder="操作类型" clearable @change="handleSearch" />
-        <Select v-model="filters.model" :options="modelOptions" class="audit-filter-control" placeholder="对象类型" clearable @change="handleSearch" />
-        <input v-model="filters.user" class="input audit-filter-control" placeholder="用户ID" @keyup.enter="handleSearch" />
-        <input v-model="filters.object_id" class="input audit-filter-control" placeholder="对象ID" @keyup.enter="handleSearch" />
-        <input v-model="filters.ip_address" class="input audit-filter-control" placeholder="IP地址" @keyup.enter="handleSearch" />
-        <input type="date" v-model="filters.start_date" class="input audit-filter-control" placeholder="开始日期" @change="handleSearch" />
-        <input type="date" v-model="filters.end_date" class="input audit-filter-control" placeholder="结束日期" @change="handleSearch" />
+    <TablePageLayout>
+      <template #filters>
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <Select v-model="filters.action_type" :options="actionTypeOptions" class="audit-filter-control" placeholder="操作类型" clearable @change="handleSearch" />
+            <Select v-model="filters.model" :options="modelOptions" class="audit-filter-control" placeholder="对象类型" clearable @change="handleSearch" />
+            <input v-model="filters.user" class="input audit-filter-control" placeholder="用户ID" @keyup.enter="handleSearch" />
+            <input v-model="filters.object_id" class="input audit-filter-control" placeholder="对象ID" @keyup.enter="handleSearch" />
+            <input v-model="filters.ip_address" class="input audit-filter-control" placeholder="IP地址" @keyup.enter="handleSearch" />
+            <input type="date" v-model="filters.start_date" class="input audit-filter-control" placeholder="开始日期" @change="handleSearch" />
+            <input type="date" v-model="filters.end_date" class="input audit-filter-control" placeholder="结束日期" @change="handleSearch" />
+          </div>
+        </div>
       </template>
+
       <template #actions>
-        <SearchInput v-model="searchText" class="audit-search-control" placeholder="搜索对象/用户名/IP" @search="handleSearch" @clear="handleSearch" />
-        <button class="btn" @click="resetFilters">重置</button>
-        <button class="btn btn-primary" v-if="canExportAuditLog" @click="exportDialogVisible = true">导出</button>
-        <button class="btn btn-secondary" v-if="canViewAuditExport" @click="openExportList">导出记录</button>
+        <div class="flex justify-end gap-3 items-center">
+          <SearchInput v-model="searchText" class="audit-search-control" placeholder="搜索对象/用户名/IP" @search="handleSearch" @clear="handleSearch" />
+          <button class="btn btn-secondary" @click="resetFilters">重置</button>
+          <button class="btn btn-primary" v-if="canExportAuditLog" @click="exportDialogVisible = true">导出</button>
+          <button class="btn btn-secondary" v-if="canViewAuditExport" @click="openExportList">导出记录</button>
+        </div>
       </template>
 
-      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
-        <template #cell-created_at="{ row }"><span>{{ formatDateTime(row.created_at) }}</span></template>
-        <template #cell-action_type="{ row }"><Tag :type="actionTagType(row.action_type)" size="small">{{ actionTypeLabel(row.action_type) }}</Tag></template>
-        <template #cell-username="{ row }"><span>{{ row.username }}</span></template>
-        <template #cell-content_type_name="{ row }"><span>{{ row.content_type_name }}</span></template>
-        <template #cell-object_repr="{ row }"><span>{{ row.object_repr }}</span></template>
-        <template #cell-object_id="{ row }"><span>{{ row.object_id }}</span></template>
-        <template #cell-ip_address="{ row }"><span>{{ row.ip_address || '-' }}</span></template>
-        <template #cell-changed_fields="{ row }">
-          <span class="changed-fields">
-            <Tag v-for="field in row.changed_fields || []" :key="field" size="small">{{ field }}</Tag>
-          </span>
-          <span v-if="!row.changed_fields || row.changed_fields.length === 0">-</span>
-        </template>
-        <template #cell-actions="{ row }">
-          <button class="btn btn-ghost btn-sm" @click="openDiff(row)">查看变更</button>
-        </template>
-        <template #empty>
-          <EmptyState description="暂无审计日志数据" />
-        </template>
-      </DataTable>
-    </CrudPageLayout>
+      <template #table>
+        <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
+          <template #cell-created_at="{ row }"><span>{{ formatDateTime(row.created_at) }}</span></template>
+          <template #cell-action_type="{ row }"><Tag :type="actionTagType(row.action_type)" size="small">{{ actionTypeLabel(row.action_type) }}</Tag></template>
+          <template #cell-username="{ row }"><span>{{ row.username }}</span></template>
+          <template #cell-content_type_name="{ row }"><span>{{ row.content_type_name }}</span></template>
+          <template #cell-object_repr="{ row }"><span>{{ row.object_repr }}</span></template>
+          <template #cell-object_id="{ row }"><span>{{ row.object_id }}</span></template>
+          <template #cell-ip_address="{ row }"><span>{{ row.ip_address || '-' }}</span></template>
+          <template #cell-changed_fields="{ row }">
+            <span class="changed-fields">
+              <Tag v-for="field in row.changed_fields || []" :key="field" size="small">{{ field }}</Tag>
+            </span>
+            <span v-if="!row.changed_fields || row.changed_fields.length === 0">-</span>
+          </template>
+          <template #cell-actions="{ row }">
+            <div class="flex items-center gap-1">
+              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="openDiff(row)">
+                <Icon name="document" size="sm" />
+                <span class="text-xs">查看变更</span>
+              </button>
+            </div>
+          </template>
+          <template #empty>
+            <EmptyState description="暂无审计日志数据" />
+          </template>
+        </DataTable>
+      </template>
 
-    <BaseDialog :show="diffVisible" title="变更详情" width="normal">
+      <template #pagination>
+        <Pagination
+          v-if="total > 0"
+          v-model:page="currentPage"
+          v-model:page-size="pageSize"
+          :total="total"
+          layout="total, sizes, prev, pager, next"
+          @update:page-size="handleSizeChange"
+          @update:page="handlePageChange"
+        />
+      </template>
+    </TablePageLayout>
+
+    <BaseDialog :show="diffVisible" title="变更详情" width="normal" @close="diffVisible = false">
       <div v-if="diffLoading" class="space-y-4">
         <div class="h-4 bg-gray-200 rounded animate-pulse"></div>
         <div class="h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -116,45 +134,59 @@
         </div>
       </div>
       <template #footer>
-        <button class="btn" @click="diffVisible = false">关闭</button>
+        <button class="btn btn-secondary" @click="diffVisible = false">关闭</button>
       </template>
     </BaseDialog>
 
-    <BaseDialog :show="exportDialogVisible" title="导出审计日志" width="narrow">
-      <div class="space-y-4">
-        <div class="flex items-start gap-3">
-          <label class="w-20 text-sm text-gray-600 dark:text-gray-400 pt-2">日期范围</label>
-          <div class="flex-1 flex gap-2">
+    <BaseDialog :show="exportDialogVisible" title="导出审计日志" width="narrow" @close="exportDialogVisible = false">
+      <form class="space-y-5" @submit.prevent="handleExport" id="export-form">
+        <div>
+          <label class="input-label mb-1.5 block">日期范围</label>
+          <div class="flex gap-2 items-center">
             <input type="date" v-model="exportStartDate" class="input flex-1" />
-            <span class="text-gray-400 pt-2">至</span>
+            <span class="text-gray-400">至</span>
             <input type="date" v-model="exportEndDate" class="input flex-1" />
           </div>
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-20 text-sm text-gray-600 dark:text-gray-400 pt-2">操作类型</label>
-          <Select v-model="exportFilters.action_type" :options="actionTypeOptions" clearable class="flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">操作类型</label>
+          <Select v-model="exportFilters.action_type" :options="actionTypeOptions" clearable />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-20 text-sm text-gray-600 dark:text-gray-400 pt-2">对象类型</label>
-          <Select v-model="exportFilters.model" :options="modelOptions" clearable class="flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">对象类型</label>
+          <Select v-model="exportFilters.model" :options="modelOptions" clearable />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-20 text-sm text-gray-600 dark:text-gray-400 pt-2">用户ID</label>
-          <input v-model="exportFilters.user_id" class="input flex-1" placeholder="可选" />
+        <div>
+          <label class="input-label mb-1.5 block">用户ID</label>
+          <input v-model="exportFilters.user_id" class="input w-full" placeholder="可选" />
         </div>
-      </div>
+      </form>
       <template #footer>
-        <button class="btn" @click="exportDialogVisible = false">取消</button>
-        <button class="btn btn-primary" :disabled="exportLoading" @click="handleExport">确认导出</button>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-secondary" @click="exportDialogVisible = false" type="button">取消</button>
+          <button form="export-form" type="submit" class="btn btn-primary" :disabled="exportLoading">确认导出</button>
+        </div>
       </template>
     </BaseDialog>
 
-    <BaseDialog :show="exportListVisible" title="导出记录" width="wide">
-      <div class="export-filter">
-        <Select v-model="exportListFilters.status" :options="exportStatusOptions" class="audit-filter-control" placeholder="状态" clearable @change="loadExportList" />
-        <input v-model="exportListFilters.user_id" class="input audit-filter-control" placeholder="用户ID" @keyup.enter="loadExportList" />
-        <input type="date" v-model="exportListFilters.start_date" class="input audit-filter-control" placeholder="开始日期" @change="loadExportList" />
-        <input type="date" v-model="exportListFilters.end_date" class="input audit-filter-control" placeholder="结束日期" @change="loadExportList" />
+    <BaseDialog :show="exportListVisible" title="导出记录" width="wide" @close="exportListVisible = false">
+      <div class="export-filter mb-4 flex gap-3 flex-wrap">
+        <div>
+          <label class="input-label mb-1.5 block">状态</label>
+          <Select v-model="exportListFilters.status" :options="exportStatusOptions" class="w-40" placeholder="状态" clearable @change="loadExportList" />
+        </div>
+        <div>
+          <label class="input-label mb-1.5 block">用户ID</label>
+          <input v-model="exportListFilters.user_id" class="input w-40" placeholder="用户ID" @keyup.enter="loadExportList" />
+        </div>
+        <div>
+          <label class="input-label mb-1.5 block">开始日期</label>
+          <input type="date" v-model="exportListFilters.start_date" class="input w-40" placeholder="开始日期" @change="loadExportList" />
+        </div>
+        <div>
+          <label class="input-label mb-1.5 block">结束日期</label>
+          <input type="date" v-model="exportListFilters.end_date" class="input w-40" placeholder="结束日期" @change="loadExportList" />
+        </div>
       </div>
       <div class="table-scroll">
         <table class="w-full border-collapse">
@@ -186,7 +218,7 @@
       </div>
       <Pagination v-if="exportListTotal > 0" v-model:page="exportListPage" v-model:page-size="exportListPageSize" :total="exportListTotal" layout="total, sizes, prev, pager, next" @update:page-size="handleExportPageSizeChange" @update:page="handleExportPageChange" />
       <template #footer>
-        <button class="btn" @click="exportListVisible = false">关闭</button>
+        <button class="btn btn-secondary" @click="exportListVisible = false">关闭</button>
       </template>
     </BaseDialog>
   </div>
@@ -199,9 +231,8 @@ import { auditLogAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import unwrapApiResponse from '@/utils/apiResponse'
 import { formatDateTime } from '@/utils/filter'
-import { Icon, Select, SearchInput, Tag, Pagination, CrudPageLayout, DataTable, EmptyState } from '@/components/common'
+import { Icon, Select, SearchInput, Tag, Pagination, TablePageLayout, DataTable, EmptyState, BaseDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 
 const userStore = useUserStore()
@@ -321,7 +352,7 @@ const formattedDiff = computed(() => {
 const loadStats = async () => {
   try {
     const response: any = await auditLogAPI.getStatistics()
-    stats.value = unwrapApiResponse(response) || {}
+    stats.value = Array.isArray(response) ? response : (response?.results || response?.data || response || {})
   } catch (error: any) {
     ErrorHandler.handle(error, 'AuditLogList.loadStats')
   }
@@ -354,7 +385,7 @@ const openDiff = async (row: any) => {
   diffData.value = null
   try {
     const response: any = await auditLogAPI.getDiff(row.id)
-    diffData.value = unwrapApiResponse(response) || {}
+    diffData.value = Array.isArray(response) ? response : (response?.results || response?.data || response || {})
   } catch (error: any) {
     ErrorHandler.handle(error, 'AuditLogList.openDiff')
     ElMessage.error('获取变更详情失败')
@@ -373,7 +404,7 @@ const handleExport = async () => {
 
     const payload = { start_date: exportStartDate.value, end_date: exportEndDate.value, filters: expFilters }
     const response: any = await auditLogAPI.exportLogs(payload)
-    const exportInfo = unwrapApiResponse(response) || {}
+    const exportInfo = Array.isArray(response) ? response : (response?.results || response?.data || response || {})
     ElMessage.success(`导出任务已创建: ${exportInfo?.export_id || '-'}`)
     exportDialogVisible.value = false
   } catch (error: any) {
@@ -404,7 +435,7 @@ const loadExportList = async () => {
 
     const response: any = await auditLogAPI.getExportList(params)
     const payload = response || {}
-    exportList.value = payload?.results || payload?.items || []
+    exportList.value = Array.isArray(payload) ? payload : (payload?.results || payload?.data || payload?.items || [])
     exportListTotal.value = payload?.count || payload?.pagination?.total_items || 0
   } catch (error: any) {
     ErrorHandler.handle(error, 'AuditLogList.loadExportList')

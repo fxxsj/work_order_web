@@ -1,88 +1,127 @@
 <template>
-  <CrudPageLayout
-    title="刀模管理"
-    :loading="loading"
-    :total="total"
-    :current-page="currentPage"
-    :page-size="pageSize"
-    @size-change="handleSizeChange"
-    @current-change="handlePageChange"
-  >
-    <template #search>
-      <SearchInput
-        v-model="searchText"
-        class="w-full sm:w-72"
-        placeholder="搜索刀模编码、名称、尺寸、材质"
-        @search="handleSearch"
-        @clear="handleSearch"
-      />
+  <TablePageLayout>
+    <template #filters>
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <SearchInput
+            v-model="searchText"
+            class="w-full sm:w-72"
+            placeholder="搜索刀模编码、名称、尺寸、材质"
+            @search="handleSearch"
+            @clear="handleSearch"
+          />
+        </div>
+      </div>
     </template>
 
     <template #actions>
-      <button class="btn btn-secondary btn-sm" :disabled="loading" @click="handleRefresh">
-        <Icon name="refresh" size="sm" />
-        刷新
-      </button>
-      <button v-if="canCreate" class="btn btn-primary btn-sm" @click="handleCreate">
-        <Icon name="plus" size="sm" />
-        新建刀模
-      </button>
+      <div class="flex justify-end gap-3">
+        <button class="btn btn-secondary" :disabled="loading" @click="handleRefresh" title="刷新">
+          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          刷新
+        </button>
+        <button v-if="canCreate" class="btn btn-primary" @click="handleCreate">
+          <Icon name="plus" size="md" class="mr-2" />
+          新建刀模
+        </button>
+      </div>
     </template>
 
-    <DataTable
-      :columns="columns"
-      :data="tableData"
-      :loading="loading"
-      :row-key="(row: any) => row.id"
-      @sort="handleSort"
-    >
-      <template #cell-die_type="{ row }">
-        <Tag :type="getDieTypeTagType(row.die_type)" size="small">{{ row.die_type_display || getDieTypeLabel(row.die_type) }}</Tag>
-      </template>
-
-      <template #cell-confirmed="{ value }">
-        <Tag v-if="value" type="success" size="small">已确认</Tag>
-        <Tag v-else type="info" size="small">待确认</Tag>
-      </template>
-
-      <template #cell-products="{ row }">
-        <template v-if="row.products && row.products.length > 0">
-          <Tag v-for="product in row.products" :key="product.id" :type="product.relation_type === 'imposition' ? 'warning' : ''" class="mr-1 mb-1">
-            {{ product.product_name }} ({{ product.quantity }}拼)<span v-if="product.relation_type === 'imposition'" class="text-[10px]">拼</span>
-          </Tag>
+    <template #table>
+      <DataTable
+        :columns="columns"
+        :data="tableData"
+        :loading="loading"
+        :row-key="(row: any) => row.id"
+        @sort="handleSort"
+      >
+        <template #cell-die_type="{ row }">
+          <Tag :type="getDieTypeTagType(row.die_type)" size="small">{{ row.die_type_display || getDieTypeLabel(row.die_type) }}</Tag>
         </template>
-        <span v-else class="text-gray-400 dark:text-dark-400">-</span>
-      </template>
 
-      <template #cell-created_at="{ value }">
-        {{ formatDateTime(value) }}
-      </template>
+        <template #cell-confirmed="{ value }">
+          <Tag v-if="value" type="success" size="small">已确认</Tag>
+          <Tag v-else type="info" size="small">待确认</Tag>
+        </template>
 
-      <template #cell-actions="{ row }">
-        <div class="flex items-center gap-2">
-          <button v-if="canEdit" class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="handleEdit(row)">编辑</button>
-          <button v-if="canDelete" class="btn btn-ghost btn-sm text-danger-600 dark:text-danger-400" @click="handleDelete(row)">删除</button>
-        </div>
-      </template>
+        <template #cell-products="{ row }">
+          <template v-if="row.products && row.products.length > 0">
+            <Tag v-for="product in row.products" :key="product.id" :type="product.relation_type === 'imposition' ? 'warning' : ''" class="mr-1 mb-1">
+              {{ product.product_name }} ({{ product.quantity }}拼)<span v-if="product.relation_type === 'imposition'" class="text-[10px]">拼</span>
+            </Tag>
+          </template>
+          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+        </template>
 
-      <template #empty>
-        <EmptyState
-          :description="hasFilters ? '未找到匹配的刀模' : '暂无刀模数据'"
-          :action-text="canCreate && !hasFilters ? '创建第一个刀模' : undefined"
-          @action="handleCreate"
-        />
-      </template>
-    </DataTable>
-  </CrudPageLayout>
+        <template #cell-created_at="{ value }">
+          {{ formatDateTime(value) }}
+        </template>
 
-  <DieFormDialog v-model="dialogVisible" :dialog-type="dialogType" :initial-data="currentRow" :loading="formLoading" :product-list="productList" @submit="handleFormSubmit" @close="handleDialogClose" />
+        <template #cell-actions="{ row }">
+          <div class="flex items-center gap-1">
+            <button v-if="canEdit" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleEdit(row)">
+              <Icon name="edit" size="sm" />
+              <span class="text-xs">编辑</span>
+            </button>
+            <button v-if="canDelete" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400" @click="openDeleteDialog(row)">
+              <Icon name="trash" size="sm" />
+              <span class="text-xs">删除</span>
+            </button>
+          </div>
+        </template>
+
+        <template #empty>
+          <EmptyState
+            :description="hasFilters ? '未找到匹配的刀模' : '暂无刀模数据'"
+            :action-text="canCreate && !hasFilters ? '创建第一个刀模' : undefined"
+            @action="handleCreate"
+          />
+        </template>
+      </DataTable>
+    </template>
+
+    <template #pagination>
+      <Pagination
+        v-if="total > 0"
+        v-model:page="currentPage"
+        v-model:page-size="pageSize"
+        :total="total"
+        layout="total, sizes, prev, pager, next"
+        @update:page-size="handleSizeChange"
+        @update:page="handlePageChange"
+      />
+    </template>
+  </TablePageLayout>
+
+  <DieFormDialog
+    v-model:visible="formDialogVisible"
+    :dialog-type="dialogType"
+    :initial-data="currentRow"
+    :loading="submitting"
+    :product-list="productList"
+    @submit="handleFormSubmit"
+    @close="handleDialogClose"
+  />
+
+  <ConfirmDialog
+    :show="showDeleteDialog"
+    title="删除确认"
+    :message="`确定要删除刀模「${targetDieForDelete?.name}」吗？此操作不可恢复。`"
+    confirm-text="删除"
+    cancel-text="取消"
+    :danger="true"
+    :loading="deleting"
+    loading-text="删除中..."
+    @confirm="handleDelete"
+    @cancel="cancelDelete"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { dieAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { CrudPageLayout, DataTable, EmptyState, SearchInput, Icon } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, Tag, ConfirmDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -108,37 +147,92 @@ const {
 } = useCrudList(dieAPI, 'getList', { errorContext: '加载刀模数据失败' })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('die')
-const crud = useCRUD(dieAPI, { onSuccess: () => { dialogVisible.value = false; loadData() } })
+const crud = useCRUD(dieAPI, { onSuccess: () => { closeFormDialog(); loadData() } })
 
-const dialogVisible = ref(false)
-const dialogType = ref('create')
-const formLoading = ref(false)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const showDeleteDialog = ref(false)
+const submitting = ref(false)
+const deleting = ref(false)
 const currentRow = ref<any>(null)
 const productList = ref<any[]>([])
 
+const targetDieForDelete = ref<any>(null)
+
+const formDialogVisible = computed({
+  get: () => showCreateModal.value || showEditModal.value,
+  set: (visible: boolean) => {
+    if (!visible) closeFormDialog()
+  }
+})
+
+const dialogType = computed(() => showEditModal.value ? 'edit' : 'create')
+
 const loadProductList = async () => {
-  try { const response: any = await productAPI.getList({ is_active: true, page_size: 100 }); productList.value = response?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载产品列表') }
+  try { const response: any = await productAPI.getList({ is_active: true, page_size: 100 }); productList.value = Array.isArray(response) ? response : (response?.results || response?.data || []) } catch (error: any) { ErrorHandler.showMessage(error, '加载产品列表') }
 }
 
 const handleRefresh = () => { loadData() }
-const handleCreate = () => { currentRow.value = null; dialogType.value = 'create'; dialogVisible.value = true }
+const handleCreate = () => {
+  currentRow.value = null
+  showEditModal.value = false
+  showCreateModal.value = true
+}
 
 const handleEdit = async (row: any) => {
-  try { const detail: any = await dieAPI.getDetail(row.id); currentRow.value = detail; dialogType.value = 'edit'; dialogVisible.value = true } catch (error: any) { ErrorHandler.showMessage(error, '加载刀模详情') }
+  try {
+    const detail: any = await dieAPI.getDetail(row.id)
+    currentRow.value = detail
+    showCreateModal.value = false
+    showEditModal.value = true
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载刀模详情')
+  }
 }
 
 const handleFormSubmit = async (data: any) => {
-  formLoading.value = true
-  if (dialogType.value === 'edit' && currentRow.value) { await crud.update(currentRow.value.id, data, '保存成功') } else { await crud.create(data, '创建成功') }
-  formLoading.value = false
+  submitting.value = true
+  try {
+    if (showEditModal.value && currentRow.value) {
+      await crud.update(currentRow.value.id, data, '保存成功')
+    } else {
+      await crud.create(data, '创建成功')
+    }
+  } finally {
+    submitting.value = false
+  }
 }
 
-const handleDialogClose = () => { currentRow.value = null }
+const closeFormDialog = () => {
+  showCreateModal.value = false
+  showEditModal.value = false
+  currentRow.value = null
+}
 
-const handleDelete = async (row: any) => {
-  const confirmed = await ErrorHandler.confirm(`确定要删除刀模"${row.name}"吗？此操作不可恢复。`, '删除确认')
-  if (!confirmed) return
-  await crud.remove(row.id, '删除成功')
+const handleDialogClose = () => { closeFormDialog() }
+
+const openDeleteDialog = (row: any) => {
+  targetDieForDelete.value = row
+  showDeleteDialog.value = true
+}
+
+const cancelDelete = () => {
+  if (deleting.value) return
+  showDeleteDialog.value = false
+  targetDieForDelete.value = null
+}
+
+const handleDelete = async () => {
+  const row = targetDieForDelete.value
+  if (!row) return
+  deleting.value = true
+  try {
+    await crud.remove(row.id, '删除成功')
+    showDeleteDialog.value = false
+    targetDieForDelete.value = null
+  } finally {
+    deleting.value = false
+  }
 }
 
 const getDieTypeTagType = (dieType: any) => { const typeMap = { combined: 'warning', dedicated: 'primary', universal: 'success' }; return (typeMap as any)[dieType] || 'info' }

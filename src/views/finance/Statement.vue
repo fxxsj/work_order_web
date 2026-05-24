@@ -2,56 +2,91 @@
   <div class="space-y-6">
     <StatementStats :stats="stats" :loading="statsLoading" />
 
-    <CrudPageLayout
-      title="对账管理"
-      :loading="loading"
-      :total="total"
-      :current-page="currentPage"
-      :page-size="pageSize"
-      @size-change="handleSizeChange"
-      @current-change="handlePageChange"
-    >
-      <template #search>
-        <Select v-model="filters.statement_type" :options="statementTypeOptions" class="w-36" placeholder="对账类型" clearable @change="handleSearch" />
-        <Select v-model="filters.status" :options="statementStatusOptions" class="w-36" placeholder="状态" clearable @change="handleSearch" />
+    <TablePageLayout>
+      <template #filters>
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <Select v-model="filters.statement_type" :options="statementTypeOptions" class="w-36" placeholder="对账类型" clearable @change="handleSearch" />
+            <Select v-model="filters.status" :options="statementStatusOptions" class="w-36" placeholder="状态" clearable @change="handleSearch" />
+          </div>
+        </div>
       </template>
       <template #actions>
-        <button class="btn btn-primary" @click="handleCreate">生成</button>
-        <button class="btn" @click="handlePrint">打印</button>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-secondary" :disabled="loading" @click="loadData" title="刷新">
+            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          </button>
+          <button class="btn btn-secondary" @click="handlePrint">打印</button>
+          <button class="btn btn-primary" @click="handleCreate">
+            <Icon name="plus" size="md" class="mr-2" />
+            生成
+          </button>
+        </div>
       </template>
 
-      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
-        <template #cell-period_start="{ row }"><span>{{ row.period_start }}</span></template>
-        <template #cell-period_end="{ row }"><span>{{ row.period_end }}</span></template>
-        <template #cell-opening_balance="{ row }"><span>¥{{ row.opening_balance?.toLocaleString() || '-' }}</span></template>
-        <template #cell-closing_balance="{ row }"><span class="text-strong">¥{{ row.closing_balance?.toLocaleString() || '-' }}</span></template>
-        <template #cell-status="{ row }"><StatusTag :status="row.status" category="statement" :label="row.status_display" /></template>
-        <template #cell-actions="{ row }">
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" @click="handleView(row)">查看</button>
-            <button class="btn btn-ghost btn-sm" v-if="row.status === 'draft'" @click="handleConfirm(row)">确认</button>
-          </div>
-        </template>
-        <template #empty>
-          <EmptyState description="暂无对账单数据" />
-        </template>
-      </DataTable>
-    </CrudPageLayout>
+      <template #table>
+        <DataTable :columns="columns" :data="tableData" :loading="loading" :row-key="(row: any) => row.id">
+          <template #cell-period_start="{ row }"><span>{{ row.period_start }}</span></template>
+          <template #cell-period_end="{ row }"><span>{{ row.period_end }}</span></template>
+          <template #cell-opening_balance="{ row }"><span>¥{{ row.opening_balance?.toLocaleString() || '-' }}</span></template>
+          <template #cell-closing_balance="{ row }"><span class="text-strong">¥{{ row.closing_balance?.toLocaleString() || '-' }}</span></template>
+          <template #cell-status="{ row }"><StatusTag :status="row.status" category="statement" :label="row.status_display" /></template>
+          <template #cell-actions="{ row }">
+            <div class="flex items-center gap-1">
+              <button
+                @click="handleView(row)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+              >
+                <Icon name="eye" size="sm" />
+                <span class="text-xs">查看</span>
+              </button>
+              <button
+                v-if="row.status === 'draft'"
+                @click="handleConfirm(row)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+              >
+                <Icon name="check" size="sm" />
+                <span class="text-xs">确认</span>
+              </button>
+            </div>
+          </template>
+          <template #empty>
+            <EmptyState description="暂无对账单数据" />
+          </template>
+        </DataTable>
+      </template>
 
-    <BaseDialog :show="formDialogVisible" title="生成对账单" width="narrow">
-      <div class="space-y-4">
-        <div class="flex items-center gap-3">
-          <label class="w-28 text-sm text-gray-600 dark:text-gray-400">对账类型</label>
-          <Select v-model="form.statement_type" :options="statementTypeOptions" class="flex-1" />
+      <template #pagination>
+        <Pagination
+          v-if="total > 0"
+          :page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          @update:page="handlePageChange"
+          @update:page-size="handleSizeChange"
+        />
+      </template>
+    </TablePageLayout>
+
+    <BaseDialog :show="showCreateModal" title="生成对账单" width="narrow" @close="showCreateModal = false">
+      <form id="statement-form" @submit.prevent="handleGenerate" class="space-y-5">
+        <div>
+          <label class="input-label mb-1.5 block">对账类型</label>
+          <Select v-model="form.statement_type" :options="statementTypeOptions" class="w-full" required />
         </div>
-        <div class="flex items-center gap-3">
-          <label class="w-28 text-sm text-gray-600 dark:text-gray-400">对账日期</label>
-          <input type="date" v-model="form.statement_date" class="input flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">对账日期</label>
+          <input type="date" v-model="form.statement_date" class="input w-full" required />
         </div>
-      </div>
+      </form>
       <template #footer>
-        <button class="btn" @click="formDialogVisible = false">取消</button>
-        <button class="btn btn-primary" :disabled="submitting" @click="handleGenerate">生成</button>
+        <div class="flex justify-end gap-3">
+          <button type="button" class="btn btn-secondary" @click="showCreateModal = false">取消</button>
+          <button form="statement-form" type="submit" class="btn btn-primary" :disabled="submitting">
+            <Icon v-if="submitting" name="refresh" size="sm" class="-ml-1 mr-2 animate-spin" />
+            {{ submitting ? '生成中...' : '生成' }}
+          </button>
+        </div>
       </template>
     </BaseDialog>
   </div>
@@ -61,18 +96,16 @@
 import { ref, reactive, onMounted } from 'vue'
 import { statementAPI } from '@/api/modules'
 import { useCrudList } from '@/composables'
-import { StatusTag, Select, Input, CrudPageLayout, DataTable, EmptyState } from '@/components/common'
+import { StatusTag, Select, Input, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import StatementStats from './components/StatementStats.vue'
 
 const statsLoading = ref(false)
 const submitting = ref(false)
 const stats = ref({})
-const formRef = ref<any>(null)
-const formDialogVisible = ref(false)
+const showCreateModal = ref(false)
 
 const form = reactive({ statement_type: 'customer', statement_date: '' })
-const rules = { statement_type: [{ required: true, message: '请选择对账类型', trigger: 'change' }], statement_date: [{ required: true, message: '请选择对账日期', trigger: 'change' }] }
 
 const columns: Column[] = [
   { key: 'period_start', label: '期间开始', width: 112 },
@@ -112,17 +145,32 @@ const {
 
 const fetchStats = async () => {
   statsLoading.value = true
-  try { const res: any = await statementAPI.getList({ page_size: 1000 }); const list = res?.results || []; stats.value = { total_count: list.length, draft_count: list.filter((s: any) => s.status === 'draft').length, confirmed_count: list.filter((s: any) => s.status === 'confirmed').length } } catch (e: any) {}
+  try { 
+    const res: any = await statementAPI.getList({ page_size: 1000 })
+    const list = Array.isArray(res) ? res : (res?.results || res?.data || [])
+    stats.value = { 
+      total_count: list.length, 
+      draft_count: list.filter((s: any) => s.status === 'draft').length, 
+      confirmed_count: list.filter((s: any) => s.status === 'confirmed').length 
+    } 
+  } catch (e: any) {}
   statsLoading.value = false
 }
 
 onMounted(() => { loadData(); fetchStats() })
 
-const handleView = (row: any) => console.log('View', row);
-const handleConfirm = (row: any) => console.log('Confirm', row);
-const handleCreate = () => { form.statement_date = new Date().toISOString().split('T')[0]; formDialogVisible.value = true };
-const handleGenerate = () => formRef.value?.validate((valid: any) => { if (valid) console.log('Generate', form) });
-const handlePrint = () => window.print();
+const handleView = (row: any) => console.log('View', row)
+const handleConfirm = (row: any) => console.log('Confirm', row)
+const handleCreate = () => { 
+  form.statement_date = new Date().toISOString().split('T')[0]
+  showCreateModal.value = true 
+}
+const handleGenerate = () => {
+  if (form.statement_type && form.statement_date) {
+    console.log('Generate', form)
+  }
+}
+const handlePrint = () => window.print()
 </script>
 
 <style scoped lang="scss">

@@ -2,46 +2,72 @@
   <div class="space-y-6">
     <CostStats :stats="stats" :loading="statsLoading" />
 
-    <CrudPageLayout
-      title="成本管理"
-      :loading="loading"
-      :total="total"
-      :current-page="currentPage"
-      :page-size="pageSize"
-      @size-change="handleSizeChange"
-      @current-change="handlePageChange"
-    >
-      <template #search />
-      <template #actions>
-        <button class="btn" :disabled="loading" @click="loadData">刷新</button>
-        <button class="btn btn-primary" @click="handleStats">成本统计</button>
+    <TablePageLayout>
+      <template #filters>
+        <!-- No search fields in original Cost.vue but empty template -->
       </template>
 
-      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
-        <template #cell-work_order_number="{ row }"><span>{{ row.work_order_number }}</span></template>
-        <template #cell-product_name="{ row }"><span class="truncate max-w-xs">{{ row.product_name }}</span></template>
-        <template #cell-material_cost="{ row }"><span>¥{{ row.material_cost ? row.material_cost.toLocaleString() : '-' }}</span></template>
-        <template #cell-labor_cost="{ row }"><span>¥{{ row.labor_cost ? row.labor_cost.toLocaleString() : '-' }}</span></template>
-        <template #cell-equipment_cost="{ row }"><span>¥{{ row.equipment_cost ? row.equipment_cost.toLocaleString() : '-' }}</span></template>
-        <template #cell-overhead_cost="{ row }"><span>¥{{ row.overhead_cost ? row.overhead_cost.toLocaleString() : '-' }}</span></template>
-        <template #cell-actual_cost="{ row }"><span class="text-strong">¥{{ row.actual_cost ? row.actual_cost.toLocaleString() : '-' }}</span></template>
-        <template #cell-standard_cost="{ row }"><span>¥{{ row.standard_cost ? row.standard_cost.toLocaleString() : '-' }}</span></template>
-        <template #cell-variance="{ row }"><span :class="getVarianceClass(row)">¥{{ row.variance !== null ? row.variance.toLocaleString() : '-' }}</span></template>
-        <template #cell-variance_rate="{ row }"><span :class="getVarianceClass(row)">{{ row.variance_rate !== null ? row.variance_rate.toFixed(1) + '%' : '-' }}</span></template>
-        <template #cell-actions="{ row }">
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" @click="handleView(row)">查看</button>
-            <button class="btn btn-ghost btn-sm text-primary" v-if="canEdit" @click="handleCalculate(row)">计算</button>
-            <button class="btn btn-ghost btn-sm text-warning" v-if="canEdit" @click="handleEdit(row)">调整</button>
-          </div>
-        </template>
-        <template #empty>
-          <EmptyState description="暂无成本数据" />
-        </template>
-      </DataTable>
-    </CrudPageLayout>
+      <template #actions>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-secondary" :disabled="loading" @click="loadData">
+            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+            刷新
+          </button>
+          <button class="btn btn-primary" @click="handleStats">
+            <Icon name="chart" size="md" class="mr-2" />
+            成本统计
+          </button>
+        </div>
+      </template>
 
-    <BaseDialog :show="detailDialogVisible" title="成本详情" width="extra-wide">
+      <template #table>
+        <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
+          <template #cell-work_order_number="{ row }"><span>{{ row.work_order_number }}</span></template>
+          <template #cell-product_name="{ row }"><span class="truncate max-w-xs">{{ row.product_name }}</span></template>
+          <template #cell-material_cost="{ row }"><span>¥{{ row.material_cost ? row.material_cost.toLocaleString() : '-' }}</span></template>
+          <template #cell-labor_cost="{ row }"><span>¥{{ row.labor_cost ? row.labor_cost.toLocaleString() : '-' }}</span></template>
+          <template #cell-equipment_cost="{ row }"><span>¥{{ row.equipment_cost ? row.equipment_cost.toLocaleString() : '-' }}</span></template>
+          <template #cell-overhead_cost="{ row }"><span>¥{{ row.overhead_cost ? row.overhead_cost.toLocaleString() : '-' }}</span></template>
+          <template #cell-actual_cost="{ row }"><span class="text-strong">¥{{ row.actual_cost ? row.actual_cost.toLocaleString() : '-' }}</span></template>
+          <template #cell-standard_cost="{ row }"><span>¥{{ row.standard_cost ? row.standard_cost.toLocaleString() : '-' }}</span></template>
+          <template #cell-variance="{ row }"><span :class="getVarianceClass(row)">¥{{ row.variance !== null ? row.variance.toLocaleString() : '-' }}</span></template>
+          <template #cell-variance_rate="{ row }"><span :class="getVarianceClass(row)">{{ row.variance_rate !== null ? row.variance_rate.toFixed(1) + '%' : '-' }}</span></template>
+          <template #cell-actions="{ row }">
+            <div class="flex items-center gap-1">
+              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
+                <Icon name="eye" size="sm" />
+                <span class="text-xs">查看</span>
+              </button>
+              <button v-if="canEdit" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="openCalculateDialog(row)">
+                <Icon name="calculator" size="sm" />
+                <span class="text-xs">计算</span>
+              </button>
+              <button v-if="canEdit" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-yellow-50 hover:text-yellow-600 dark:hover:bg-yellow-900/20 dark:hover:text-yellow-400" @click="handleEdit(row)">
+                <Icon name="edit" size="sm" />
+                <span class="text-xs">调整</span>
+              </button>
+            </div>
+          </template>
+          <template #empty>
+            <EmptyState description="暂无成本数据" />
+          </template>
+        </DataTable>
+      </template>
+
+      <template #pagination>
+        <Pagination
+          v-if="total > 0"
+          v-model:page="currentPage"
+          v-model:page-size="pageSize"
+          :total="total"
+          layout="total, sizes, prev, pager, next"
+          @update:page-size="handleSizeChange"
+          @update:page="handlePageChange"
+        />
+      </template>
+    </TablePageLayout>
+
+    <BaseDialog :show="detailDialogVisible" title="成本详情" width="extra-wide" @close="detailDialogVisible = false">
       <div v-if="currentCost">
         <div class="descriptions-grid mb-4" style="--col: 2">
           <div class="description-item"><div class="description-label">施工单号</div><div class="description-value">{{ (currentCost as any).work_order_number }}</div></div>
@@ -80,37 +106,48 @@
           </div>
         </div>
       </div>
-      <template #footer><button class="btn" @click="detailDialogVisible = false">关闭</button></template>
+      <template #footer><button class="btn btn-secondary" @click="detailDialogVisible = false">关闭</button></template>
     </BaseDialog>
 
-    <BaseDialog :show="adjustDialogVisible" title="成本调整" width="normal">
-      <div class="space-y-4">
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">材料成本</label>
-          <InputNumber v-model="form.material_cost" :min="0" :precision="2" class="flex-1" />
+    <BaseDialog :show="adjustDialogVisible" title="成本调整" width="normal" @close="adjustDialogVisible = false">
+      <form class="space-y-5" id="adjust-form" @submit.prevent="handleSaveAdjust">
+        <div>
+          <label class="input-label mb-1.5 block">材料成本</label>
+          <InputNumber v-model="form.material_cost" :min="0" :precision="2" class="w-full" />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">人工成本</label>
-          <InputNumber v-model="form.labor_cost" :min="0" :precision="2" class="flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">人工成本</label>
+          <InputNumber v-model="form.labor_cost" :min="0" :precision="2" class="w-full" />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">设备成本</label>
-          <InputNumber v-model="form.equipment_cost" :min="0" :precision="2" class="flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">设备成本</label>
+          <InputNumber v-model="form.equipment_cost" :min="0" :precision="2" class="w-full" />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">制造费用</label>
-          <InputNumber v-model="form.overhead_cost" :min="0" :precision="2" class="flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">制造费用</label>
+          <InputNumber v-model="form.overhead_cost" :min="0" :precision="2" class="w-full" />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">调整原因</label>
-          <TextArea v-model="form.adjust_reason" :rows="3" placeholder="请输入调整原因" class="flex-1" />
+        <div>
+          <TextArea v-model="form.adjust_reason" label="调整原因" :rows="3" placeholder="请输入调整原因" class="w-full" />
         </div>
-      </div>
+      </form>
       <template #footer>
-        <button class="btn" @click="adjustDialogVisible = false">取消</button>
-        <button class="btn btn-primary" :disabled="submitting" @click="handleSaveAdjust">保存</button>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-secondary" @click="adjustDialogVisible = false" type="button">取消</button>
+          <button class="btn btn-primary" form="adjust-form" type="submit" :disabled="submitting">保存</button>
+        </div>
       </template>
     </BaseDialog>
+
+    <ConfirmDialog
+      :show="showCalculateDialogFlag"
+      title="确认计算"
+      message="确认重新计算该订单成本？"
+      confirm-text="确认"
+      cancel-text="取消"
+      @confirm="handleCalculate"
+      @cancel="showCalculateDialogFlag = false"
+    />
   </div>
 </template>
 
@@ -122,7 +159,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import CostStats from './components/CostStats.vue'
-import { InputNumber, TextArea, CrudPageLayout, DataTable, EmptyState } from '@/components/common'
+import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 
 const userStore = useUserStore()
@@ -133,6 +170,9 @@ const currentCost = ref(null)
 const stats = ref({})
 const detailDialogVisible = ref(false)
 const adjustDialogVisible = ref(false)
+
+const showCalculateDialogFlag = ref(false)
+const targetCostForCalculate = ref<any>(null)
 
 const FORM_INITIAL: Record<string, any> = { id: undefined, material_cost: undefined, labor_cost: undefined, equipment_cost: undefined, overhead_cost: undefined, adjust_reason: '' }
 const form = reactive({ ...FORM_INITIAL })
@@ -168,24 +208,30 @@ const canEdit = computed(() => userStore.hasPermission('workorder.change_product
 
 const fetchStats = async () => {
   statsLoading.value = true
-  try { const response: any = await productionCostAPI.getStats({}); stats.value = response || {} } catch (error: any) { stats.value = {} } finally { statsLoading.value = false }
+  try { const response: any = await productionCostAPI.getStats({}); stats.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || response || {}) } catch (error: any) { stats.value = {} } finally { statsLoading.value = false }
 }
 
 const handleStats = () => { /* TODO: 跳转到统计页面 */ }
 
 const handleView = async (row: any) => {
-  try { const response: any = await productionCostAPI.getDetail(row.id); currentCost.value = response; detailDialogVisible.value = true } catch (error: any) { ErrorHandler.showMessage(error, '获取成本详情失败') }
+  try { const response: any = await productionCostAPI.getDetail(row.id); currentCost.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || response || {}); detailDialogVisible.value = true } catch (error: any) { ErrorHandler.showMessage(error, '获取成本详情失败') }
 }
 
-const handleCalculate = async (row: any) => {
+const openCalculateDialog = (row: any) => {
+  targetCostForCalculate.value = row
+  showCalculateDialogFlag.value = true
+}
+
+const handleCalculate = async () => {
+  const row = targetCostForCalculate.value
+  showCalculateDialogFlag.value = false
+  if (!row) return
   try {
-    const confirmed = await ErrorHandler.confirm('确认重新计算该订单成本？')
-    if (!confirmed) return
     await productionCostAPI.calculateTotal(row.id)
     ElMessage.success('计算成功')
     loadData()
     fetchStats()
-  } catch (error: any) { if (error !== 'cancel') ErrorHandler.showMessage(error, '计算失败') }
+  } catch (error: any) { ErrorHandler.showMessage(error, '计算失败') }
 }
 
 const handleEdit = (row: any) => {

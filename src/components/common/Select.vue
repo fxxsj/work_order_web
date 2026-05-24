@@ -1,107 +1,121 @@
 <template>
-  <div class="relative" ref="containerRef">
-    <button
-      ref="triggerRef"
-      type="button"
-      @click="toggle"
-      :disabled="disabled"
-      :aria-expanded="isOpen"
-      :aria-haspopup="true"
-      aria-label="Select option"
-      :class="[
-        'select-trigger',
-        isOpen && 'select-trigger-open',
-        error && 'select-trigger-error',
-        disabled && 'select-trigger-disabled'
-      ]"
-      @keydown.down.prevent="onTriggerKeyDown"
-      @keydown.up.prevent="onTriggerKeyDown"
-    >
-      <span class="select-value">
-        <slot name="selected" :option="selectedOption">
-          {{ selectedLabel }}
-        </slot>
-      </span>
-      <span class="select-icon">
-        <Icon
-          name="chevronDown"
-          size="md"
-          :class="['transition-transform duration-200', isOpen && 'rotate-180']"
-        />
-      </span>
-    </button>
+  <div class="w-full">
+    <label v-if="label" :for="id" class="input-label mb-1.5 block">
+      {{ label }}
+      <span v-if="required" class="text-red-500">*</span>
+    </label>
+    <div class="relative" ref="containerRef">
+      <button
+        :id="id"
+        ref="triggerRef"
+        type="button"
+        @click="toggle"
+        :disabled="disabled"
+        :aria-expanded="isOpen"
+        :aria-haspopup="true"
+        :aria-invalid="hasError"
+        :aria-label="label || 'Select option'"
+        :class="[
+          'select-trigger',
+          isOpen && 'select-trigger-open',
+          hasError && 'select-trigger-error',
+          disabled && 'select-trigger-disabled'
+        ]"
+        @keydown.down.prevent="onTriggerKeyDown"
+        @keydown.up.prevent="onTriggerKeyDown"
+      >
+        <span class="select-value">
+          <slot name="selected" :option="selectedOption">
+            {{ selectedLabel }}
+          </slot>
+        </span>
+        <span class="select-icon">
+          <Icon
+            name="chevronDown"
+            size="md"
+            :class="['transition-transform duration-200', isOpen && 'rotate-180']"
+          />
+        </span>
+      </button>
 
-    <!-- Teleport dropdown to body to escape stacking context -->
-    <Teleport to="body">
-      <Transition name="select-dropdown">
-        <div
-          v-if="isOpen"
-          ref="dropdownRef"
-          class="select-dropdown-portal"
-          :class="[instanceId]"
-          :style="dropdownStyle"
-          role="listbox"
-          @click.stop
-          @mousedown.stop
-          @keydown="onDropdownKeyDown"
-        >
-          <!-- Search input -->
-          <div v-if="isSearchable" class="select-search">
-            <Icon name="search" size="sm" class="text-gray-400" />
-            <input
-              ref="searchInputRef"
-              v-model="searchQuery"
-              type="text"
-              :placeholder="searchPlaceholderText"
-              class="select-search-input"
-              @click.stop
-            />
-          </div>
-
-          <!-- Options list -->
-          <div class="select-options" ref="optionsListRef">
-            <div
-              v-for="(option, index) in filteredOptions"
-              :key="`${typeof getOptionValue(option)}:${String(getOptionValue(option) ?? '')}`"
-              role="option"
-              :aria-selected="isSelected(option)"
-              :aria-disabled="isOptionDisabled(option)"
-              @click.stop="!isOptionDisabled(option) && selectOption(option)"
-              @mouseenter="handleOptionMouseEnter(option, index)"
-              :class="[
-                'select-option',
-                isGroupHeaderOption(option) && 'select-option-group',
-                isSelected(option) && 'select-option-selected',
-                isOptionDisabled(option) && !isGroupHeaderOption(option) && 'select-option-disabled',
-                focusedIndex === index && !isGroupHeaderOption(option) && 'select-option-focused'
-              ]"
-            >
-              <slot name="option" :option="option" :selected="isSelected(option)">
-                <Icon
-                  v-if="option._creatable"
-                  name="search"
-                  size="sm"
-                  class="flex-shrink-0 text-gray-400"
-                />
-                <span class="select-option-label" :class="option._creatable && 'italic text-gray-500 dark:text-dark-300'">{{ getOptionLabel(option) }}</span>
-                <Icon
-                  v-if="isSelected(option)"
-                  name="check"
-                  size="sm"
-                  class="text-primary-500"
-                  :stroke-width="2"
-                />
-              </slot>
+      <!-- Teleport dropdown to body to escape stacking context -->
+      <Teleport to="body">
+        <Transition name="select-dropdown">
+          <div
+            v-if="isOpen"
+            ref="dropdownRef"
+            class="select-dropdown-portal"
+            :class="[instanceId]"
+            :style="dropdownStyle"
+            role="listbox"
+            @click.stop
+            @mousedown.stop
+            @keydown="onDropdownKeyDown"
+          >
+            <!-- Search input -->
+            <div v-if="isSearchable" class="select-search">
+              <Icon name="search" size="sm" class="text-gray-400" />
+              <input
+                ref="searchInputRef"
+                v-model="searchQuery"
+                type="text"
+                :placeholder="searchPlaceholderText"
+                class="select-search-input"
+                @click.stop
+              />
             </div>
 
-            <!-- Empty state -->
-            <div v-if="filteredOptions.length === 0" class="select-empty">
-              {{ emptyTextDisplay }}
+            <!-- Options list -->
+            <div class="select-options" ref="optionsListRef">
+              <div
+                v-for="(option, index) in filteredOptions"
+                :key="`${typeof getOptionValue(option)}:${String(getOptionValue(option) ?? '')}`"
+                role="option"
+                :aria-selected="isSelected(option)"
+                :aria-disabled="isOptionDisabled(option)"
+                @click.stop="!isOptionDisabled(option) && selectOption(option)"
+                @mouseenter="handleOptionMouseEnter(option, index)"
+                :class="[
+                  'select-option',
+                  isGroupHeaderOption(option) && 'select-option-group',
+                  isSelected(option) && 'select-option-selected',
+                  isOptionDisabled(option) && !isGroupHeaderOption(option) && 'select-option-disabled',
+                  focusedIndex === index && !isGroupHeaderOption(option) && 'select-option-focused'
+                ]"
+              >
+                <slot name="option" :option="option" :selected="isSelected(option)">
+                  <Icon
+                    v-if="option._creatable"
+                    name="search"
+                    size="sm"
+                    class="flex-shrink-0 text-gray-400"
+                  />
+                  <span class="select-option-label" :class="option._creatable && 'italic text-gray-500 dark:text-dark-300'">{{ getOptionLabel(option) }}</span>
+                  <Icon
+                    v-if="isSelected(option)"
+                    name="check"
+                    size="sm"
+                    class="text-primary-500"
+                    :stroke-width="2"
+                  />
+                </slot>
+              </div>
+
+              <!-- Empty state -->
+              <div v-if="filteredOptions.length === 0" class="select-empty">
+                {{ emptyTextDisplay }}
+              </div>
             </div>
           </div>
-        </div>
-      </Transition>
-    </Teleport>
+        </Transition>
+      </Teleport>
+    </div>
+    <p v-if="errorMessage" class="input-error-text mt-1.5">
+      {{ errorMessage }}
+    </p>
+    <p v-else-if="hint" class="input-hint mt-1.5">
+      {{ hint }}
+    </p>
   </div>
 </template>
 
@@ -124,7 +138,11 @@ interface Props {
   options: SelectOption[] | Array<Record<string, unknown>>
   placeholder?: string
   disabled?: boolean
-  error?: boolean
+  error?: boolean | string
+  label?: string
+  hint?: string
+  id?: string
+  required?: boolean
   searchable?: boolean | 'auto'
   searchPlaceholder?: string
   emptyText?: string
@@ -143,6 +161,9 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   error: false,
+  label: '',
+  hint: '',
+  required: false,
   searchable: 'auto',
   creatable: false,
   creatablePrefix: '搜索',
@@ -168,6 +189,8 @@ const triggerRect = ref<DOMRect | null>(null)
 const placeholderText = computed(() => props.placeholder ?? '请选择')
 const searchPlaceholderText = computed(() => props.searchPlaceholder ?? '搜索...')
 const emptyTextDisplay = computed(() => props.emptyText ?? '无选项')
+const hasError = computed(() => !!props.error)
+const errorMessage = computed(() => typeof props.error === 'string' ? props.error : '')
 
 const isSearchable = computed(() => {
   if (props.searchable === 'auto') return props.options.length > 5

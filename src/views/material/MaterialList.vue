@@ -1,96 +1,178 @@
 <template>
-  <CrudPageLayout
+  <TablePageLayout
     title="物料管理"
     :loading="loading"
-    :total="total"
-    :current-page="currentPage"
-    :page-size="pageSize"
-    @size-change="handleSizeChange"
-    @current-change="handlePageChange"
   >
-    <template #search>
-      <SearchInput
-        v-model="searchText"
-        class="w-full sm:w-72"
-        placeholder="搜索物料名称、编码"
-        @search="handleSearch"
-        @clear="handleSearch"
-      />
+    <template #filters>
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <SearchInput
+            v-model="searchText"
+            class="w-full sm:w-72"
+            placeholder="搜索物料名称、编码"
+            @search="handleSearch"
+            @clear="handleSearch"
+          />
+        </div>
+      </div>
     </template>
 
     <template #actions>
-      <button v-if="canCreate" class="btn btn-primary" @click="showCreateDialog">
-        <Icon name="plus" size="sm" />
-        新建物料
-      </button>
+      <div class="flex justify-end gap-3">
+        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
+          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        </button>
+        <button v-if="canCreate" class="btn btn-primary" @click="showCreateDialog">
+          <Icon name="plus" size="md" class="mr-2" />
+          新建物料
+        </button>
+      </div>
     </template>
 
-    <DataTable
-      :columns="columns"
-      :data="tableData"
-      :loading="loading"
-      :row-key="(row: any) => row.id"
-      @sort="handleSort"
-    >
-      <template #cell-unit_price="{ value }">
-        <span class="text-right">¥{{ value }}</span>
-      </template>
+    <template #table>
+      <DataTable
+        :columns="columns"
+        :data="tableData"
+        :loading="loading"
+        :row-key="(row: any) => row.id"
+        @sort="handleSort"
+      >
+        <template #cell-unit_price="{ value }">
+          <span class="text-right">¥{{ value }}</span>
+        </template>
 
-      <template #cell-actions="{ row }">
-        <div class="flex items-center gap-2">
-          <button v-if="canEdit" class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="handleEdit(row)">编辑</button>
-          <button v-if="canDelete" class="btn btn-ghost btn-sm text-danger-600 dark:text-danger-400" @click="handleDelete(row)">删除</button>
-        </div>
-      </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center gap-1">
+            <button
+              v-if="canEdit"
+              @click="handleEdit(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+            >
+              <Icon name="edit" size="sm" />
+              <span class="text-xs">编辑</span>
+            </button>
+            <button
+              v-if="canDelete"
+              @click="confirmDelete(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            >
+              <Icon name="trash" size="sm" />
+              <span class="text-xs">删除</span>
+            </button>
+          </div>
+        </template>
 
-      <template #empty>
-        <EmptyState
-          :description="hasFilters ? '未找到匹配的物料' : '暂无物料数据'"
-          :action-text="canCreate && !hasFilters ? '创建第一个物料' : undefined"
-          @action="showCreateDialog"
-        />
-      </template>
-    </DataTable>
-  </CrudPageLayout>
+        <template #empty>
+          <EmptyState
+            :description="hasFilters ? '未找到匹配的物料' : '暂无物料数据'"
+            :action-text="canCreate && !hasFilters ? '创建第一个物料' : undefined"
+            @action="showCreateDialog"
+          />
+        </template>
+      </DataTable>
+    </template>
 
-  <FormDialog
-    ref="formDialogRef"
-    v-model="dialogVisible"
-    :title="formTitle"
-    width="600px"
-    :form-data="form"
-    :rules="rules"
-    label-width="110px"
-    :loading="formLoading"
-    @submit="handleSubmit"
-    @cancel="resetForm"
+    <template #pagination>
+      <Pagination
+        v-if="total > 0"
+        :total="total"
+        :page="currentPage"
+        :page-size="pageSize"
+        @update:page="handlePageChange"
+        @update:page-size="handleSizeChange"
+      />
+    </template>
+  </TablePageLayout>
+
+  <BaseDialog
+    :show="showCreateModal || showEditModal"
+    :title="showEditModal ? '编辑物料' : '新建物料'"
+    width="normal"
+    @close="closeModals"
   >
-    <Input v-model="form.code" label="物料编码" required placeholder="请输入物料编码" :disabled="dialogType === 'edit'" />
-    <Input v-model="form.name" label="物料名称" required placeholder="请输入物料名称" />
-    <Input v-model="form.specification" label="规格" placeholder="请输入规格" />
-    <Input v-model="form.unit" label="单位" required placeholder="如：个、张、本" />
-    <Input v-model="form.unit_price" label="单价" type="number" placeholder="0.00" />
-    <Input v-model="form.stock_quantity" label="库存数量" type="number" placeholder="0" />
-    <Input v-model="form.min_stock_quantity" label="最小库存" type="number" placeholder="0" />
-    <Input v-model="form.lead_time_days" label="采购周期（天）" type="number" placeholder="7" />
-    <Toggle v-model="form.need_cutting" label="需要开料" />
-    <Select
-      v-model="form.default_supplier"
-      label="默认供应商"
-      placeholder="请选择供应商"
-      :options="supplierOptions"
-      filterable
-      clearable
-    />
-    <TextArea v-model="form.notes" label="备注" placeholder="请输入备注" :rows="3" />
-  </FormDialog>
+    <form id="entity-form" @submit.prevent="handleSubmit" class="space-y-5">
+      <div>
+        <Input v-model="form.code" label="物料编码" required placeholder="请输入物料编码" :disabled="showEditModal" />
+      </div>
+      <div>
+        <Input v-model="form.name" label="物料名称" required placeholder="请输入物料名称" />
+      </div>
+      <div>
+        <Input v-model="form.specification" label="规格" placeholder="请输入规格" />
+      </div>
+      <div>
+        <Input v-model="form.unit" label="单位" required placeholder="如：个、张、本" />
+      </div>
+      <InputNumber
+        v-model="form.unit_price"
+        label="单价"
+        :min="0"
+        :step="0.01"
+        :precision="2"
+      />
+      <InputNumber
+        v-model="form.stock_quantity"
+        label="库存数量"
+        :min="0"
+      />
+      <InputNumber
+        v-model="form.min_stock_quantity"
+        label="最小库存"
+        :min="0"
+      />
+      <InputNumber
+        v-model="form.lead_time_days"
+        label="采购周期（天）"
+        :min="0"
+      />
+      <Toggle
+        v-model="form.need_cutting"
+        label="需要开料"
+      />
+      <Select
+        v-model="form.default_supplier"
+        label="默认供应商"
+        placeholder="请选择供应商"
+        :options="supplierOptions"
+        filterable
+        clearable
+      />
+      
+      <div>
+        <TextArea v-model="form.notes" label="备注" placeholder="请输入备注" :rows="3" />
+      </div>
+    </form>
+
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <button @click="closeModals" type="button" class="btn btn-secondary">取消</button>
+        <button form="entity-form" type="submit" :disabled="submitting" class="btn btn-primary">
+          <Icon v-if="submitting" name="refresh" size="sm" class="-ml-1 mr-2 animate-spin" />
+          {{ submitting ? '保存中...' : (showEditModal ? '更新' : '创建') }}
+        </button>
+      </div>
+    </template>
+  </BaseDialog>
+
+  <ConfirmDialog
+    :show="showDeleteDialog"
+    title="删除确认"
+    :message="`确定要删除物料「${selectedRow?.name}」吗？此操作不可撤销。`"
+    confirm-text="删除"
+    cancel-text="取消"
+    :danger="true"
+    :loading="deleting"
+    loading-text="删除中..."
+    @confirm="handleDelete"
+    @cancel="cancelDelete"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { materialAPI, supplierAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { CrudPageLayout, DataTable, EmptyState, SearchInput, FormDialog, Input, Select, TextArea, Toggle, Icon } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, BaseDialog, ConfirmDialog, Pagination, Input, InputNumber, Select, TextArea, Toggle, Icon } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -107,59 +189,97 @@ const columns: Column[] = [
 
 const {
   searchText, tableData, loading, total, currentPage, pageSize,
-  loadData, handleSearch, handleSearchDebounced, handlePageChange, handleSizeChange, hasFilters
+  loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters
 } = useCrudList(materialAPI, 'getList', { errorContext: '加载物料数据失败' })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('material')
-const crud = useCRUD(materialAPI, { onSuccess: () => { dialogVisible.value = false; loadData() } })
+const crud = useCRUD(materialAPI, { onSuccess: () => { closeModals(); loadData() } })
 
-const dialogVisible = ref(false)
-const dialogType = ref('create')
-const formLoading = ref(false)
-const currentRow = ref<any>(null)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const showDeleteDialog = ref(false)
+const submitting = ref(false)
+const deleting = ref(false)
+const selectedRow = ref<any>(null)
 const supplierList = ref<any[]>([])
-const formDialogRef = ref<any>(null)
 
 const formInitialValues = { code: '', name: '', specification: '', unit: '个', unit_price: 0, stock_quantity: 0, min_stock_quantity: 0, lead_time_days: 7, need_cutting: false, default_supplier: null, notes: '' }
 const form = reactive({ ...formInitialValues })
-const rules = {
-  code: [{ required: true, message: '请输入物料编码', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入物料名称', trigger: 'blur' }],
-  unit: [{ required: true, message: '请输入单位', trigger: 'blur' }]
-}
-const formTitle = computed(() => dialogType.value === 'edit' ? '编辑物料' : '新建物料')
 
 const supplierOptions = computed(() =>
   supplierList.value.map((s: any) => ({ value: s.id, label: `${s.code} - ${s.name}` }))
 )
 
 const loadSuppliers = async () => {
-  try { const response: any = await supplierAPI.getList({ page_size: 1000, status: 'active' }); supplierList.value = response?.results || [] } catch (error: any) { ErrorHandler.handle(error, 'MaterialList.loadSuppliers') }
+  try { 
+    const response: any = await supplierAPI.getList({ page_size: 1000, status: 'active' })
+    const list = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
+    supplierList.value = list
+  } catch (error: any) { 
+    ErrorHandler.handle(error, 'MaterialList.loadSuppliers') 
+  }
 }
 
-const showCreateDialog = () => { resetForm(); dialogVisible.value = true; dialogType.value = 'create'; currentRow.value = null }
+const showCreateDialog = () => { 
+  resetForm(); 
+  showCreateModal.value = true; 
+  selectedRow.value = null 
+}
+
+const closeModals = () => {
+  showCreateModal.value = false;
+  showEditModal.value = false;
+}
+
 const resetForm = () => { Object.assign(form, formInitialValues) }
 
 const handleEdit = (row: any) => {
-  dialogType.value = 'edit'; currentRow.value = row
+  showEditModal.value = true; 
+  selectedRow.value = row
   Object.assign(form, { code: row.code || '', name: row.name || '', specification: row.specification || '', unit: row.unit || '个', unit_price: Number(row.unit_price || 0), stock_quantity: Number(row.stock_quantity || 0), min_stock_quantity: Number(row.min_stock_quantity || 0), lead_time_days: Number(row.lead_time_days ?? 7), need_cutting: !!row.need_cutting, default_supplier: row.default_supplier || null, notes: row.notes || '' })
-  dialogVisible.value = true
 }
 
 const handleSubmit = async () => {
-  const valid = await formDialogRef.value.validate().catch(() => false)
-  if (!valid) return
-  formLoading.value = true
-  if (dialogType.value === 'edit') { await crud.update(currentRow.value.id, form, '保存成功') } else { await crud.create(form, '创建成功') }
-  formLoading.value = false
+  if (!form.code || !form.name || !form.unit) {
+    ErrorHandler.showMessage('请填写必填项', '验证失败')
+    return
+  }
+
+  submitting.value = true
+  try {
+    if (showEditModal.value) { 
+      await crud.update(selectedRow.value.id, form, '保存成功') 
+    } else { 
+      await crud.create(form, '创建成功') 
+    }
+  } finally {
+    submitting.value = false
+  }
 }
 
-const handleDelete = async (row: any) => {
+const confirmDelete = (row: any) => {
+  selectedRow.value = row;
+  showDeleteDialog.value = true;
+}
+
+const cancelDelete = () => {
+  if (deleting.value) return
+  showDeleteDialog.value = false
+  selectedRow.value = null
+}
+
+const handleDelete = async () => {
+  if (!selectedRow.value) return;
+  deleting.value = true
   try {
-    const confirmed = await ErrorHandler.confirm(`确定要删除物料"${row.name}"吗？此操作不可撤销。`)
-    if (!confirmed) return
-    await crud.remove(row.id, '删除成功')
-  } catch (error: any) { ErrorHandler.showMessage(error, '删除') }
+    await crud.remove(selectedRow.value.id, '删除成功')
+    showDeleteDialog.value = false;
+    selectedRow.value = null
+  } catch (error: any) { 
+    ErrorHandler.showMessage(error, '删除') 
+  } finally {
+    deleting.value = false
+  }
 }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {

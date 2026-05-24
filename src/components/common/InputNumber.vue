@@ -1,34 +1,51 @@
 <template>
-  <div class="relative inline-flex items-center">
-    <button
-      type="button"
-      class="input-number-btn input-number-btn-minus"
-      :disabled="disabled || isAtMin"
-      @click="decrement"
-      @mousedown.prevent
-    >
-      <Icon name="minus" size="sm" />
-    </button>
-    <input
-      type="text"
-      inputmode="decimal"
-      :value="displayValue"
-      :disabled="disabled"
-      class="input-number-input"
-      :class="{ 'cursor-not-allowed opacity-60': disabled }"
-      @change="handleChange"
-      @focus="handleFocus"
-      @blur="handleBlur"
-    />
-    <button
-      type="button"
-      class="input-number-btn input-number-btn-plus"
-      :disabled="disabled || isAtMax"
-      @click="increment"
-      @mousedown.prevent
-    >
-      <Icon name="plus" size="sm" />
-    </button>
+  <div class="w-full">
+    <label v-if="label" :for="id" class="input-label mb-1.5 block">
+      {{ label }}
+      <span v-if="required" class="text-red-500">*</span>
+    </label>
+    <div class="relative inline-flex items-center">
+      <button
+        type="button"
+        class="input-number-btn input-number-btn-minus"
+        :disabled="disabled || isAtMin"
+        @click="decrement"
+        @mousedown.prevent
+      >
+        <Icon name="minus" size="sm" />
+      </button>
+      <input
+        :id="id"
+        type="text"
+        inputmode="decimal"
+        :value="displayValue"
+        :disabled="disabled"
+        :required="required"
+        class="input-number-input"
+        :class="[
+          disabled ? 'cursor-not-allowed opacity-60' : '',
+          error ? 'input-error ring-2 ring-red-500/20' : ''
+        ]"
+        @change="handleChange"
+        @focus="handleFocus"
+        @blur="handleBlur"
+      />
+      <button
+        type="button"
+        class="input-number-btn input-number-btn-plus"
+        :disabled="disabled || isAtMax"
+        @click="increment"
+        @mousedown.prevent
+      >
+        <Icon name="plus" size="sm" />
+      </button>
+    </div>
+    <p v-if="error" class="input-error-text mt-1.5">
+      {{ error }}
+    </p>
+    <p v-else-if="hint" class="input-hint mt-1.5">
+      {{ hint }}
+    </p>
   </div>
 </template>
 
@@ -42,7 +59,12 @@ const props = defineProps({
   max: { type: Number, default: Infinity },
   step: { type: Number, default: 1 },
   disabled: { type: Boolean, default: false },
-  precision: { type: Number, default: 0 }
+  precision: { type: Number, default: 0 },
+  label: { type: String, default: '' },
+  hint: { type: String, default: '' },
+  error: { type: String, default: '' },
+  id: { type: String, default: undefined },
+  required: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:modelValue', 'change', 'blur', 'focus'])

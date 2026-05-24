@@ -2,55 +2,91 @@
   <div class="space-y-6">
     <PaymentStats :stats="stats" :loading="statsLoading" />
 
-    <CrudPageLayout
-      title="收款管理"
-      :loading="loading"
-      :total="total"
-      :current-page="currentPage"
-      :page-size="pageSize"
-      @size-change="handleSizeChange"
-      @current-change="handlePageChange"
-    >
-      <template #search>
-        <Select v-model="filters.customer" :options="customerOptions" class="w-40" placeholder="选择客户" clearable filterable @change="handleSearch" />
-        <Select v-model="filters.payment_method" :options="paymentMethodOptions" class="w-36" placeholder="付款方式" clearable @change="handleSearch" />
-        <input type="date" v-model="filters.start_date" class="input w-36" placeholder="开始日期" @change="handleSearch" />
-        <input type="date" v-model="filters.end_date" class="input w-36" placeholder="结束日期" @change="handleSearch" />
+    <TablePageLayout>
+      <template #filters>
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <Select v-model="filters.customer" :options="customerOptions" class="w-40" placeholder="选择客户" clearable filterable @change="handleSearch" />
+            <Select v-model="filters.payment_method" :options="paymentMethodOptions" class="w-36" placeholder="付款方式" clearable @change="handleSearch" />
+            <input type="date" v-model="filters.start_date" class="input w-36" placeholder="开始日期" @change="handleSearch" />
+            <input type="date" v-model="filters.end_date" class="input w-36" placeholder="结束日期" @change="handleSearch" />
+          </div>
+        </div>
       </template>
       <template #actions>
-        <button class="btn" :disabled="loading" @click="loadData">刷新</button>
-        <button class="btn btn-primary" v-if="canCreate" @click="handleCreate">新增收款</button>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-secondary" :disabled="loading" @click="loadData" title="刷新">
+            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          </button>
+          <button class="btn btn-primary" v-if="canCreate" @click="handleCreate">
+            <Icon name="plus" size="md" class="mr-2" />
+            新增收款
+          </button>
+        </div>
       </template>
 
-      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
-        <template #cell-payment_number="{ row }"><span>{{ row.payment_number }}</span></template>
-        <template #cell-customer_name="{ row }"><span>{{ row.customer_name }}</span></template>
-        <template #cell-payment_date="{ row }"><span>{{ row.payment_date }}</span></template>
-        <template #cell-payment_method_display="{ row }"><span>{{ row.payment_method_display }}</span></template>
-        <template #cell-amount="{ row }"><span>¥{{ row.amount ? row.amount.toLocaleString() : '-' }}</span></template>
-        <template #cell-applied_amount="{ row }"><span>¥{{ row.applied_amount ? row.applied_amount.toLocaleString() : '0' }}</span></template>
-        <template #cell-remaining_amount="{ row }"><span :class="getRemainingClass(row)">¥{{ row.remaining_amount ? row.remaining_amount.toLocaleString() : row.amount.toLocaleString() }}</span></template>
-        <template #cell-bank_account="{ row }"><span class="truncate max-w-xs">{{ row.bank_account }}</span></template>
-        <template #cell-notes="{ row }"><span class="truncate max-w-xs">{{ row.notes }}</span></template>
-        <template #cell-actions="{ row }">
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" @click="handleView(row)">查看</button>
-            <button class="btn btn-ghost btn-sm" v-if="canEdit" @click="handleEdit(row)">编辑</button>
-            <button class="btn btn-ghost btn-sm text-danger" v-if="canDelete" @click="handleDelete(row)">删除</button>
-          </div>
-        </template>
-        <template #empty>
-          <EmptyState description="暂无收款数据">
-            <template #action>
-              <button class="btn btn-primary" v-if="hasFilters" @click="handleReset">重置筛选</button>
-              <button class="btn btn-primary" v-else-if="canCreate" @click="handleCreate">创建第一笔收款</button>
-            </template>
-          </EmptyState>
-        </template>
-      </DataTable>
-    </CrudPageLayout>
+      <template #table>
+        <DataTable :columns="columns" :data="tableData" :loading="loading" :row-key="(row: any) => row.id">
+          <template #cell-payment_number="{ row }"><span>{{ row.payment_number }}</span></template>
+          <template #cell-customer_name="{ row }"><span>{{ row.customer_name }}</span></template>
+          <template #cell-payment_date="{ row }"><span>{{ row.payment_date }}</span></template>
+          <template #cell-payment_method_display="{ row }"><span>{{ row.payment_method_display }}</span></template>
+          <template #cell-amount="{ row }"><span>¥{{ row.amount ? row.amount.toLocaleString() : '-' }}</span></template>
+          <template #cell-applied_amount="{ row }"><span>¥{{ row.applied_amount ? row.applied_amount.toLocaleString() : '0' }}</span></template>
+          <template #cell-remaining_amount="{ row }"><span :class="getRemainingClass(row)">¥{{ row.remaining_amount ? row.remaining_amount.toLocaleString() : row.amount.toLocaleString() }}</span></template>
+          <template #cell-bank_account="{ row }"><span class="truncate max-w-xs">{{ row.bank_account }}</span></template>
+          <template #cell-notes="{ row }"><span class="truncate max-w-xs">{{ row.notes }}</span></template>
+          <template #cell-actions="{ row }">
+            <div class="flex items-center gap-1">
+              <button
+                @click="handleView(row)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+              >
+                <Icon name="eye" size="sm" />
+                <span class="text-xs">查看</span>
+              </button>
+              <button
+                v-if="canEdit"
+                @click="handleEdit(row)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+              >
+                <Icon name="edit" size="sm" />
+                <span class="text-xs">编辑</span>
+              </button>
+              <button
+                v-if="canDelete"
+                @click="confirmDelete(row)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              >
+                <Icon name="trash" size="sm" />
+                <span class="text-xs">删除</span>
+              </button>
+            </div>
+          </template>
+          <template #empty>
+            <EmptyState description="暂无收款数据">
+              <template #action>
+                <button class="btn btn-primary" v-if="hasFilters" @click="handleReset">重置筛选</button>
+                <button class="btn btn-primary" v-else-if="canCreate" @click="handleCreate">创建第一笔收款</button>
+              </template>
+            </EmptyState>
+          </template>
+        </DataTable>
+      </template>
 
-    <BaseDialog :show="detailDialogVisible" title="收款详情" width="normal">
+      <template #pagination>
+        <Pagination
+          v-if="total > 0"
+          :page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          @update:page="handlePageChange"
+          @update:page-size="handleSizeChange"
+        />
+      </template>
+    </TablePageLayout>
+
+    <BaseDialog :show="detailDialogVisible" title="收款详情" width="normal" @close="detailDialogVisible = false">
       <div v-if="currentPayment" class="descriptions-grid" style="--col: 2">
         <div class="description-item"><div class="description-label">收款单号</div><div class="description-value">{{ (currentPayment as any).payment_number }}</div></div>
         <div class="description-item"><div class="description-label">客户名称</div><div class="description-value">{{ (currentPayment as any).customer_name }}</div></div>
@@ -67,33 +103,61 @@
         <div class="description-item"><div class="description-label">创建时间</div><div class="description-value">{{ (currentPayment as any).created_at }}</div></div>
         <div class="description-item"><div class="description-label">创建人</div><div class="description-value">{{ (currentPayment as any).recorded_by_name || '-' }}</div></div>
       </div>
-      <template #footer><button class="btn" @click="detailDialogVisible = false">关闭</button></template>
+      <template #footer><button class="btn btn-secondary" @click="detailDialogVisible = false">关闭</button></template>
     </BaseDialog>
 
-    <BaseDialog :show="formDialogVisible" :title="isEdit ? '编辑收款' : '新增收款'" width="normal">
-      <div class="space-y-4">
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">客户</label>
-          <Select v-model="form.customer" :options="customerOptions" placeholder="请选择客户" filterable class="flex-1" />
+    <BaseDialog :show="showCreateModal || showEditModal" :title="showEditModal ? '编辑收款' : '新增收款'" width="normal" @close="closeModals">
+      <form id="payment-form" @submit.prevent="handleSave" class="space-y-5">
+        <div>
+          <label class="input-label mb-1.5 block">客户</label>
+          <Select v-model="form.customer" :options="customerOptions" placeholder="请选择客户" filterable class="w-full" />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">收款日期</label>
-          <input type="date" v-model="form.payment_date" class="input flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">收款日期</label>
+          <input type="date" v-model="form.payment_date" class="input w-full" required />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">付款方式</label>
-          <Select v-model="form.payment_method" :options="paymentMethodOptions" placeholder="请选择付款方式" class="flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">付款方式</label>
+          <Select v-model="form.payment_method" :options="paymentMethodOptions" placeholder="请选择付款方式" class="w-full" />
         </div>
-        <InputNumber v-model="form.amount" label="收款金额" :min="0" :precision="2" class="w-full" />
-        <Input v-model="form.bank_account" label="银行账户" placeholder="请输入银行账户" class="w-full" />
-        <Input v-model="form.transaction_number" label="交易流水号" placeholder="请输入交易流水号" class="w-full" />
-        <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注" class="w-full" />
-      </div>
+        <div>
+          <label class="input-label mb-1.5 block">收款金额</label>
+          <InputNumber v-model="form.amount" :min="0" :precision="2" class="w-full" />
+        </div>
+        <div>
+          <Input v-model="form.bank_account" label="银行账户" placeholder="请输入银行账户" class="w-full" />
+        </div>
+        <div>
+          <Input v-model="form.transaction_number" label="交易流水号" placeholder="请输入交易流水号" class="w-full" />
+        </div>
+        <div>
+          <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注" class="w-full" />
+        </div>
+      </form>
       <template #footer>
-        <button class="btn" @click="formDialogVisible = false">取消</button>
-        <button class="btn btn-primary" :disabled="submitting" @click="handleSave">保存</button>
+        <div class="flex justify-end gap-3">
+          <button type="button" class="btn btn-secondary" @click="closeModals">取消</button>
+          <button form="payment-form" type="submit" class="btn btn-primary" :disabled="submitting">
+            <svg v-if="submitting" class="-ml-1 mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ submitting ? '保存中...' : (showEditModal ? '更新' : '保存') }}
+          </button>
+        </div>
       </template>
     </BaseDialog>
+
+    <ConfirmDialog
+      :show="showDeleteDialog"
+      title="删除确认"
+      :message="`确定要删除收款记录「${selectedRowForDelete?.payment_number}」吗？此操作不可撤销。`"
+      confirm-text="删除"
+      cancel-text="取消"
+      :danger="true"
+      @confirm="handleDelete"
+      @cancel="showDeleteDialog = false"
+    />
   </div>
 </template>
 
@@ -105,7 +169,7 @@ import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import PaymentStats from './components/PaymentStats.vue'
-import { Select, Input, TextArea, InputNumber, CrudPageLayout, DataTable, EmptyState } from '@/components/common'
+import { Select, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, ConfirmDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('payment')
@@ -115,9 +179,13 @@ const submitting = ref(false)
 const customerList = ref<any[]>([])
 const currentPayment = ref(null)
 const stats = ref({})
+
+// Modals state
 const detailDialogVisible = ref(false)
-const formDialogVisible = ref(false)
-const isEdit = ref(false)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const showDeleteDialog = ref(false)
+const selectedRowForDelete = ref<any>(null)
 
 const FORM_INITIAL: Record<string, any> = { id: undefined, customer: undefined, payment_date: '', payment_method: '', amount: undefined, bank_account: '', transaction_number: '', notes: '' }
 const form = reactive({ ...FORM_INITIAL })
@@ -186,7 +254,8 @@ const fetchStats = async () => {
 const fetchCustomers = async () => {
   try {
     const response: any = await customerAPI.getList({ page_size: 1000 })
-    customerList.value = response?.results || []
+    const list = Array.isArray(response) ? response : (response?.results || response?.data || [])
+    customerList.value = list
   } catch (error: any) {}
 }
 
@@ -194,24 +263,38 @@ const handleView = async (row: any) => {
   try { currentPayment.value = row; detailDialogVisible.value = true } catch (error: any) { ErrorHandler.showMessage(error, '获取收款详情失败') }
 }
 
-const handleCreate = () => { if (!canCreate.value) return; isEdit.value = false; Object.assign(form, FORM_INITIAL); formDialogVisible.value = true }
+const closeModals = () => {
+  showCreateModal.value = false
+  showEditModal.value = false
+}
+
+const handleCreate = () => { 
+  if (!canCreate.value) return
+  Object.assign(form, FORM_INITIAL)
+  showCreateModal.value = true
+}
 
 const handleEdit = (row: any) => {
   if (!canEdit.value) return
-  isEdit.value = true
   Object.assign(form, { id: row.id, customer: row.customer, payment_date: row.payment_date, payment_method: row.payment_method, amount: row.amount, bank_account: row.bank_account || '', transaction_number: row.transaction_number || '', notes: row.notes || '' })
-  formDialogVisible.value = true
+  showEditModal.value = true
 }
 
-const handleDelete = async (row: any) => {
+const confirmDelete = (row: any) => {
+  selectedRowForDelete.value = row
+  showDeleteDialog.value = true
+}
+
+const handleDelete = async () => {
   try {
-    const confirmed = await ErrorHandler.confirm(`确定要删除收款记录"${row.payment_number}"吗？`)
-    if (!confirmed) return
+    const row = selectedRowForDelete.value
+    if (!row) return
     await paymentAPI.delete(row.id)
     ElMessage.success('删除成功')
+    showDeleteDialog.value = false
     loadData()
     fetchStats()
-  } catch (error: any) { if (error !== 'cancel') ErrorHandler.showMessage(error, '删除失败') }
+  } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
 }
 
 const handleSave = async () => {
@@ -222,12 +305,18 @@ const handleSave = async () => {
   submitting.value = true
   try {
     const data = { ...form }
-    if (data.id) { delete (data as any).id; await paymentAPI.update(form.id!, data); ElMessage.success('更新成功') }
-    else { await paymentAPI.create(data); ElMessage.success('创建成功') }
-    formDialogVisible.value = false
+    if (data.id) { 
+      delete (data as any).id
+      await paymentAPI.update(form.id!, data)
+      ElMessage.success('更新成功') 
+    } else { 
+      await paymentAPI.create(data)
+      ElMessage.success('创建成功') 
+    }
+    closeModals()
     loadData()
     fetchStats()
-  } catch (error: any) { ErrorHandler.showMessage(error, isEdit.value ? '更新失败' : '创建失败') } finally { submitting.value = false }
+  } catch (error: any) { ErrorHandler.showMessage(error, showEditModal.value ? '更新失败' : '创建失败') } finally { submitting.value = false }
 }
 
 const getRemainingClass = (row: any) => {

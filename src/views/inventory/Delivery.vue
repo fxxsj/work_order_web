@@ -2,80 +2,136 @@
   <div class="space-y-6">
     <DeliveryStats :stats="stats" :loading="statsLoading" />
 
-    <CrudPageLayout
-      title="发货管理"
-      :loading="loading"
-      :total="total"
-      :current-page="currentPage"
-      :page-size="pageSize"
-      @size-change="handleSizeChange"
-      @current-change="handlePageChange"
-    >
-      <template #search>
-        <Select v-model="filters.customer" :options="customerOptions" class="w-40" placeholder="选择客户" clearable filterable @change="handleSearch" />
-        <Select v-model="filters.status" :options="statusOptions" class="w-36" placeholder="发货状态" clearable @change="handleSearch" />
-        <SearchInput v-model="filters.tracking_number" placeholder="搜索物流单号" @search="handleSearchDebounced" @clear="handleSearch" />
+    <TablePageLayout>
+      <template #filters>
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <Select v-model="filters.customer" :options="customerOptions" class="w-40" placeholder="选择客户" clearable filterable @change="handleSearch" />
+            <Select v-model="filters.status" :options="statusOptions" class="w-36" placeholder="发货状态" clearable @change="handleSearch" />
+            <SearchInput v-model="filters.tracking_number" placeholder="搜索物流单号" class="w-full sm:w-64" @search="handleSearchDebounced" @clear="handleSearch" />
+          </div>
+        </div>
       </template>
       <template #actions>
-        <button class="btn" :disabled="loading" @click="loadData">刷新</button>
-        <button class="btn btn-primary" v-if="canCreate" @click="handleCreate">新建发货单</button>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-secondary" :disabled="loading" @click="loadData" title="刷新">
+            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          </button>
+          <button class="btn btn-primary" v-if="canCreate" @click="handleCreate">
+            <Icon name="plus" size="md" class="mr-2" />
+            新建发货单
+          </button>
+        </div>
       </template>
 
-      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
-        <template #cell-order_number="{ row }">
-          <span>{{ row.order_number }}</span>
-        </template>
-        <template #cell-customer_name="{ row }">
-          <span>{{ row.customer_name }}</span>
-        </template>
-        <template #cell-sales_order_number="{ row }">
-          <span>{{ row.sales_order_number }}</span>
-        </template>
-        <template #cell-receiver_name="{ row }">
-          <span>{{ row.receiver_name }}</span>
-        </template>
-        <template #cell-receiver_phone="{ row }">
-          <span>{{ row.receiver_phone }}</span>
-        </template>
-        <template #cell-delivery_address="{ row }">
-          <span class="truncate max-w-xs">{{ row.delivery_address }}</span>
-        </template>
-        <template #cell-logistics_company="{ row }">
-          <span>{{ row.logistics_company }}</span>
-        </template>
-        <template #cell-tracking_number="{ row }">
-          <a v-if="row.tracking_number" :href="getTrackingUrl(row)" target="_blank" class="text-primary hover:underline">{{ row.tracking_number }}</a>
-          <span v-else>-</span>
-        </template>
-        <template #cell-delivery_date="{ row }">
-          <span>{{ row.delivery_date }}</span>
-        </template>
-        <template #cell-status="{ row }">
-          <StatusTag :status="row.status" category="delivery" :label="row.status_display" />
-        </template>
-        <template #cell-actions="{ row }">
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" @click="handleView(row)">查看</button>
-            <button class="btn btn-ghost btn-sm" v-if="canEdit && row.status === 'pending'" @click="handleEdit(row)">编辑</button>
-            <button class="btn btn-ghost btn-sm" v-if="canEdit && row.status === 'pending'" style="color: #E6A23C;" @click="handleShip(row)">发货</button>
-            <button class="btn btn-ghost btn-sm" v-if="canEdit && (row.status === 'shipped' || row.status === 'in_transit')" style="color: #67C23A;" @click="handleReceive(row)">签收</button>
-            <button class="btn btn-ghost btn-sm" v-if="canDelete && row.status === 'pending'" style="color: #F56C6C;" @click="handleDelete(row)">删除</button>
-          </div>
-        </template>
-        <template #empty>
-          <EmptyState description="暂无发货单数据">
-            <template #action>
-              <button class="btn btn-primary" v-if="hasFilters" @click="handleReset">重置筛选</button>
-              <button class="btn btn-primary" v-else-if="canCreate" @click="handleCreate">创建第一个发货单</button>
-            </template>
-          </EmptyState>
-        </template>
-      </DataTable>
-    </CrudPageLayout>
+      <template #table>
+        <DataTable :columns="columns" :data="tableData" :loading="loading" :row-key="(row: any) => row.id">
+          <template #cell-order_number="{ row }">
+            <span>{{ row.order_number }}</span>
+          </template>
+          <template #cell-customer_name="{ row }">
+            <span>{{ row.customer_name }}</span>
+          </template>
+          <template #cell-sales_order_number="{ row }">
+            <span>{{ row.sales_order_number }}</span>
+          </template>
+          <template #cell-receiver_name="{ row }">
+            <span>{{ row.receiver_name }}</span>
+          </template>
+          <template #cell-receiver_phone="{ row }">
+            <span>{{ row.receiver_phone }}</span>
+          </template>
+          <template #cell-delivery_address="{ row }">
+            <span class="truncate max-w-xs block">{{ row.delivery_address }}</span>
+          </template>
+          <template #cell-logistics_company="{ row }">
+            <span>{{ row.logistics_company }}</span>
+          </template>
+          <template #cell-tracking_number="{ row }">
+            <a v-if="row.tracking_number" :href="getTrackingUrl(row)" target="_blank" class="text-primary hover:underline">{{ row.tracking_number }}</a>
+            <span v-else>-</span>
+          </template>
+          <template #cell-delivery_date="{ row }">
+            <span>{{ row.delivery_date }}</span>
+          </template>
+          <template #cell-status="{ row }">
+            <StatusTag :status="row.status" category="delivery" :label="row.status_display" />
+          </template>
+          <template #cell-actions="{ row }">
+            <div class="flex items-center gap-1">
+              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
+                <Icon name="eye" size="sm" />
+                <span class="text-xs">查看</span>
+              </button>
+              <button v-if="canEdit && row.status === 'pending'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleEdit(row)">
+                <Icon name="edit" size="sm" />
+                <span class="text-xs">编辑</span>
+              </button>
+              <button v-if="canEdit && row.status === 'pending'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20 dark:hover:text-orange-400" @click="confirmShip(row)">
+                <Icon name="truck" size="sm" />
+                <span class="text-xs">发货</span>
+              </button>
+              <button v-if="canEdit && (row.status === 'shipped' || row.status === 'in_transit')" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400" @click="handleReceive(row)">
+                <Icon name="check" size="sm" />
+                <span class="text-xs">签收</span>
+              </button>
+              <button v-if="canDelete && row.status === 'pending'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400" @click="confirmDelete(row)">
+                <Icon name="trash" size="sm" />
+                <span class="text-xs">删除</span>
+              </button>
+            </div>
+          </template>
+          <template #empty>
+            <EmptyState description="暂无发货单数据">
+              <template #action>
+                <button class="btn btn-primary" v-if="hasFilters" @click="handleReset">重置筛选</button>
+                <button class="btn btn-primary" v-else-if="canCreate" @click="handleCreate">创建第一个发货单</button>
+              </template>
+            </EmptyState>
+          </template>
+        </DataTable>
+      </template>
+
+      <template #pagination>
+        <Pagination
+          v-if="total > 0"
+          :page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          @update:page="handlePageChange"
+          @update:page-size="handleSizeChange"
+        />
+      </template>
+    </TablePageLayout>
 
     <DeliveryDetailDialog v-model:visible="detailDialogVisible" :data="currentDelivery" />
     <DeliveryReceiveDialog v-model:visible="receiveDialogVisible" :delivery="currentDelivery" :loading="receiving" @confirm="handleConfirmReceive" />
-    <DeliveryFormDialog v-model:visible="formDialogVisible" :is-edit="isEdit" :submitting="submitting" :form="form" :customer-list="customerList" :sales-order-list="salesOrderList" :product-list="productList" @submit="handleSubmit" @sales-order-change="handleSalesOrderChange" @customer-change="handleCustomerChange" />
+    <DeliveryFormDialog v-model:visible="formDialogVisible" :is-edit="showEditModal" :submitting="submitting" :form="form" :customer-list="customerList" :sales-order-list="salesOrderList" :product-list="productList" @submit="handleSubmit" @sales-order-change="handleSalesOrderChange" @customer-change="handleCustomerChange" />
+
+    <ConfirmDialog
+      :show="showShipDialog"
+      title="发货确认"
+      :message="`确定要将发货单「${selectedRowAction?.order_number}」状态更新为发货吗？`"
+      confirm-text="确认发货"
+      cancel-text="取消"
+      :loading="shipping"
+      loading-text="发货中..."
+      @confirm="handleShip"
+      @cancel="cancelShip"
+    />
+
+    <ConfirmDialog
+      :show="showDeleteDialog"
+      title="删除确认"
+      :message="`确定要删除发货单「${selectedRowAction?.order_number}」吗？此操作不可撤销。`"
+      confirm-text="删除"
+      cancel-text="取消"
+      :danger="true"
+      :loading="deleting"
+      loading-text="删除中..."
+      @confirm="handleDelete"
+      @cancel="cancelDelete"
+    />
   </div>
 </template>
 
@@ -86,7 +142,7 @@ import { deliveryOrderAPI, salesOrderAPI, productAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, Icon, CrudPageLayout, DataTable, EmptyState, SearchInput } from '@/components/common'
+import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import DeliveryStats from './components/DeliveryStats.vue'
 import DeliveryDetailDialog from './components/DeliveryDetailDialog.vue'
@@ -98,15 +154,29 @@ const { canCreate, canEdit, canDelete } = useCrudPermission('deliveryorder')
 const statsLoading = ref(false)
 const submitting = ref(false)
 const receiving = ref(false)
+const shipping = ref(false)
+const deleting = ref(false)
 const customerList = ref<any[]>([])
 const salesOrderList = ref<any[]>([])
 const productList = ref<any[]>([])
 const currentDelivery = ref<any>(null)
 const stats = ref({})
+
+// Dialog states
 const detailDialogVisible = ref(false)
-const formDialogVisible = ref(false)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
 const receiveDialogVisible = ref(false)
-const isEdit = ref(false)
+const showDeleteDialog = ref(false)
+const showShipDialog = ref(false)
+const selectedRowAction = ref<any>(null)
+
+const formDialogVisible = computed({
+  get: () => showCreateModal.value || showEditModal.value,
+  set: (visible: boolean) => {
+    if (!visible) closeFormDialog()
+  }
+})
 
 const customerOptions = computed(() => customerList.value.map((c: any) => ({ value: c.id, label: c.name })))
 const statusOptions = [
@@ -117,7 +187,8 @@ const statusOptions = [
   { value: 'rejected', label: '拒收' },
   { value: 'returned', label: '已退货' }
 ]
-const form = reactive({ id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, package_count: 1, package_weight: '', notes: '', items_data: [] })
+const getFormInitialValues = () => ({ id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, package_count: 1, package_weight: '', notes: '', items_data: [] })
+const form = reactive(getFormInitialValues())
 
 const columns: Column[] = [
   { key: 'order_number', label: '发货单号', width: 144 },
@@ -130,7 +201,7 @@ const columns: Column[] = [
   { key: 'tracking_number', label: '物流单号', width: 144 },
   { key: 'delivery_date', label: '发货日期', width: 112 },
   { key: 'status', label: '状态', width: 96 },
-  { key: 'actions', label: '操作', width: 192, fixed: 'right' }
+  { key: 'actions', label: '操作', width: 200, fixed: 'right' }
 ]
 
 const buildDeliveryParams = (params: any) => {
@@ -159,45 +230,157 @@ const {
 })
 
 const handleReset = () => resetFilters()
+const resetForm = () => Object.assign(form, getFormInitialValues())
 
-const fetchStats = async () => { statsLoading.value = true; try { const response: any = await deliveryOrderAPI.getStats(); stats.value = response || {} } catch (error: any) { stats.value = {} } finally { statsLoading.value = false } }
-const fetchCustomers = async () => { try { const response: any = await customerAPI.getList({ page_size: 1000 }); customerList.value = response?.results || [] } catch (error: any) {} }
-const fetchSalesOrders = async () => { try { const response: any = await salesOrderAPI.getList({ page_size: 1000 }); salesOrderList.value = response?.results || [] } catch (error: any) {} }
-const fetchProducts = async () => { try { const response: any = await productAPI.getList({ page_size: 1000 }); productList.value = response?.results || [] } catch (error: any) {} }
+const fetchStats = async () => { 
+  statsLoading.value = true
+  try { 
+    const response: any = await deliveryOrderAPI.getStats()
+    stats.value = response || {} 
+  } catch (error: any) { 
+    stats.value = {} 
+  } finally { 
+    statsLoading.value = false 
+  } 
+}
+
+const fetchCustomers = async () => { 
+  try { 
+    const response: any = await customerAPI.getList({ page_size: 1000 })
+    customerList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
+  } catch (error: any) {} 
+}
+
+const fetchSalesOrders = async () => { 
+  try { 
+    const response: any = await salesOrderAPI.getList({ page_size: 1000 })
+    salesOrderList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
+  } catch (error: any) {} 
+}
+
+const fetchProducts = async () => { 
+  try { 
+    const response: any = await productAPI.getList({ page_size: 1000 })
+    productList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
+  } catch (error: any) {} 
+}
 
 const handleView = (row: any) => { currentDelivery.value = row; detailDialogVisible.value = true }
-const handleCreate = () => { if (!canCreate.value) return; isEdit.value = false; Object.assign(form, { id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, package_count: 1, package_weight: '', notes: '', items_data: [] }); formDialogVisible.value = true }
-const handleEdit = (row: any) => { if (!canEdit.value) return; isEdit.value = true; currentDelivery.value = row; formDialogVisible.value = true }
+const handleCreate = () => {
+  if (!canCreate.value) return
+  currentDelivery.value = null
+  showEditModal.value = false
+  resetForm()
+  showCreateModal.value = true
+}
+const handleEdit = (row: any) => {
+  if (!canEdit.value) return
+  currentDelivery.value = row
+  showCreateModal.value = false
+  showEditModal.value = true
+}
 
-const handleShip = async (row: any) => {
+const closeFormDialog = () => {
+  showCreateModal.value = false
+  showEditModal.value = false
+  currentDelivery.value = null
+  resetForm()
+}
+
+const confirmShip = (row: any) => {
+  selectedRowAction.value = row
+  showShipDialog.value = true
+}
+
+const handleShip = async () => {
+  const row = selectedRowAction.value
+  if (!row) return
+  shipping.value = true
   try {
-    const confirmed = await ErrorHandler.confirm('确认发货？')
-    if (!confirmed) return
     await deliveryOrderAPI.ship(row.id)
     ElMessage.success('发货成功')
+    showShipDialog.value = false
+    selectedRowAction.value = null
     loadData()
     fetchStats()
-  } catch (error: any) { if (error !== 'cancel') ErrorHandler.showMessage(error, '发货失败') }
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '发货失败')
+  } finally {
+    shipping.value = false
+  }
+}
+
+const cancelShip = () => {
+  if (shipping.value) return
+  showShipDialog.value = false
+  selectedRowAction.value = null
 }
 
 const handleReceive = async (row: any) => { currentDelivery.value = row; receiveDialogVisible.value = true }
 
 const handleConfirmReceive = async (data: any) => {
   receiving.value = true
-  try { await deliveryOrderAPI.receive(currentDelivery.value.id, data); ElMessage.success('签收成功'); receiveDialogVisible.value = false; loadData(); fetchStats() } catch (error: any) { ErrorHandler.showMessage(error, '签收失败') } finally { receiving.value = false }
+  try { 
+    await deliveryOrderAPI.receive(currentDelivery.value.id, data)
+    ElMessage.success('签收成功')
+    receiveDialogVisible.value = false
+    loadData()
+    fetchStats() 
+  } catch (error: any) { 
+    ErrorHandler.showMessage(error, '签收失败') 
+  } finally { 
+    receiving.value = false 
+  }
 }
 
-const handleDelete = async (row: any) => {
+const confirmDelete = (row: any) => {
+  selectedRowAction.value = row
+  showDeleteDialog.value = true
+}
+
+const handleDelete = async () => {
+  const row = selectedRowAction.value
+  if (!row) return
+  deleting.value = true
   try {
-    const confirmed = await ErrorHandler.confirm(`确定要删除发货单"${row.order_number}"吗？`)
-    if (!confirmed) return
     await deliveryOrderAPI.delete(row.id)
     ElMessage.success('删除成功')
+    showDeleteDialog.value = false
+    selectedRowAction.value = null
     loadData()
-  } catch (error: any) { if (error !== 'cancel') ErrorHandler.showMessage(error, '删除失败') }
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '删除失败')
+  } finally {
+    deleting.value = false
+  }
 }
 
-const handleSubmit = async (data: any) => { submitting.value = true; try { if (isEdit.value) { await deliveryOrderAPI.update(currentDelivery.value.id, data); ElMessage.success('更新成功') } else { await deliveryOrderAPI.create(data); ElMessage.success('创建成功') } formDialogVisible.value = false; loadData(); fetchStats() } catch (error: any) { ErrorHandler.showMessage(error, isEdit.value ? '更新失败' : '创建失败') } finally { submitting.value = false } }
+const cancelDelete = () => {
+  if (deleting.value) return
+  showDeleteDialog.value = false
+  selectedRowAction.value = null
+}
+
+const handleSubmit = async (data: any) => { 
+  submitting.value = true
+  try { 
+    if (showEditModal.value) { 
+      await deliveryOrderAPI.update(currentDelivery.value.id, data)
+      ElMessage.success('更新成功') 
+    } else { 
+      await deliveryOrderAPI.create(data)
+      ElMessage.success('创建成功') 
+    } 
+    closeFormDialog()
+    loadData()
+    fetchStats() 
+  } catch (error: any) { 
+    ErrorHandler.showMessage(error, showEditModal.value ? '更新失败' : '创建失败') 
+  } finally { 
+    submitting.value = false 
+  } 
+}
+
 const handleSalesOrderChange = (orderId: any) => { /* TODO */ }
 const handleCustomerChange = (customerId: any) => { /* TODO */ }
 

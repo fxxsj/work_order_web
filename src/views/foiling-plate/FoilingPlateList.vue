@@ -1,83 +1,157 @@
 <template>
-  <CrudPageLayout
-    title="烫金版管理"
-    :loading="loading"
-    :total="total"
-    :current-page="currentPage"
-    :page-size="pageSize"
-    @size-change="handleSizeChange"
-    @current-change="handlePageChange"
-  >
-    <template #search>
-      <SearchInput
-        v-model="searchText"
-        class="w-full sm:w-72"
-        placeholder="搜索烫金版编码、名称、尺寸、材质"
-        @search="handleSearch"
-        @clear="handleSearch"
-      />
+  <TablePageLayout>
+    <template #filters>
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <SearchInput
+            v-model="searchText"
+            class="w-full sm:w-64"
+            placeholder="搜索烫金版编码、名称、尺寸、材质"
+            @search="handleSearch"
+            @clear="handleSearch"
+          />
+        </div>
+      </div>
     </template>
 
     <template #actions>
-      <button v-if="canCreate" class="btn btn-primary" @click="showCreateDialog">
-        <Icon name="plus" size="sm" />
-        新建烫金版
-      </button>
+      <div class="flex justify-end gap-3">
+        <button
+          @click="loadData"
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
+        >
+          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        </button>
+        <button
+          v-if="canCreate"
+          @click="showCreateDialog"
+          class="btn btn-primary"
+        >
+          <Icon name="plus" size="md" class="mr-2" />
+          新建烫金版
+        </button>
+      </div>
     </template>
 
-    <DataTable
-      :columns="columns"
-      :data="tableData"
-      :loading="loading"
-      :row-key="(row: any) => row.id"
-      @sort="handleSort"
-    >
-      <template #cell-foiling_type="{ value }">
-        <Tag :type="value === 'gold' ? 'warning' : 'info'">{{ value === 'gold' ? '烫金' : '烫银' }}</Tag>
-      </template>
-
-      <template #cell-confirmed="{ value }">
-        <Tag :type="value ? 'success' : 'info'">{{ value ? '已确认' : '待确认' }}</Tag>
-      </template>
-
-      <template #cell-products="{ row }">
-        <template v-if="row.products && row.products.length > 0">
-          <Tag v-for="product in row.products" :key="product.id" class="mr-1 mb-1">{{ product.product_name }} ({{ product.quantity }}个)</Tag>
+    <template #table>
+      <DataTable
+        :columns="columns"
+        :data="tableData"
+        :loading="loading"
+        :row-key="(row: any) => row.id"
+        @sort="handleSort"
+      >
+        <template #cell-foiling_type="{ value }">
+          <Tag :type="value === 'gold' ? 'warning' : 'info'">{{ value === 'gold' ? '烫金' : '烫银' }}</Tag>
         </template>
-        <span v-else class="text-gray-400 dark:text-dark-400">-</span>
-      </template>
 
-      <template #cell-created_at="{ value }">
-        {{ formatDateTime(value) }}
-      </template>
+        <template #cell-confirmed="{ value }">
+          <Tag :type="value ? 'success' : 'info'">{{ value ? '已确认' : '待确认' }}</Tag>
+        </template>
 
-      <template #cell-actions="{ row }">
-        <div class="flex items-center gap-2">
-          <button v-if="!row.confirmed && canEdit" class="btn btn-ghost btn-sm text-success-600 dark:text-success-400" @click="handleConfirmPlate(row)">确认</button>
-          <button v-if="canEdit" class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="handleEdit(row)">编辑</button>
-          <button v-if="canDelete" class="btn btn-ghost btn-sm text-danger-600 dark:text-danger-400" @click="handleDelete(row)">删除</button>
-        </div>
-      </template>
+        <template #cell-products="{ row }">
+          <template v-if="row.products && row.products.length > 0">
+            <Tag v-for="product in row.products" :key="product.id" class="mr-1 mb-1">{{ product.product_name }} ({{ product.quantity }}个)</Tag>
+          </template>
+          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+        </template>
 
-      <template #empty>
-        <EmptyState
-          :description="hasFilters ? '未找到匹配的烫金版' : '暂无烫金版数据'"
-          :action-text="hasFilters ? '重置筛选' : (canCreate && !hasFilters ? '创建第一个烫金版' : undefined)"
-          @action="hasFilters ? handleReset() : showCreateDialog()"
-        />
-      </template>
-    </DataTable>
-  </CrudPageLayout>
+        <template #cell-created_at="{ value }">
+          {{ formatDateTime(value) }}
+        </template>
 
-  <foiling-plate-form-dialog v-model="dialogVisible" :dialog-type="dialogType" :foiling-plate="currentFoilingPlate" :loading="formLoading" :product-list="productList" @confirm="handleFormConfirm" />
+        <template #cell-actions="{ row }">
+          <div class="flex items-center gap-1">
+            <button
+              v-if="!row.confirmed && canEdit"
+              @click="confirmPlate(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400"
+            >
+              <Icon name="check" size="sm" />
+              <span class="text-xs">确认</span>
+            </button>
+            <button
+              v-if="canEdit"
+              @click="handleEdit(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+            >
+              <Icon name="edit" size="sm" />
+              <span class="text-xs">编辑</span>
+            </button>
+            <button
+              v-if="canDelete"
+              @click="confirmDelete(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            >
+              <Icon name="trash" size="sm" />
+              <span class="text-xs">删除</span>
+            </button>
+          </div>
+        </template>
+
+        <template #empty>
+          <EmptyState
+            :description="hasFilters ? '未找到匹配的烫金版' : '暂无烫金版数据'"
+            :action-text="hasFilters ? '重置筛选' : (canCreate && !hasFilters ? '创建第一个烫金版' : undefined)"
+            @action="hasFilters ? handleReset() : showCreateDialog()"
+          />
+        </template>
+      </DataTable>
+    </template>
+
+    <template #pagination>
+      <Pagination
+        v-if="total > 0"
+        :page="currentPage"
+        :page-size="pageSize"
+        :total="total"
+        @update:page="handlePageChange"
+        @update:page-size="handleSizeChange"
+      />
+    </template>
+  </TablePageLayout>
+
+  <FoilingPlateFormDialog
+    v-model:visible="dialogVisible"
+    :dialog-type="dialogType"
+    :foiling-plate="currentFoilingPlate"
+    :loading="formLoading"
+    :product-list="productList"
+    @confirm="handleFormConfirm"
+  />
+
+  <!-- Delete Confirmation -->
+  <ConfirmDialog
+    :show="showDeleteDialog"
+    title="删除确认"
+    :message="`确定要删除烫金版「${selectedRow?.name}」吗？此操作不可撤销。`"
+    confirm-text="删除"
+    cancel-text="取消"
+    :danger="true"
+    @confirm="handleDelete"
+    @cancel="showDeleteDialog = false"
+  />
+
+  <!-- Confirm Plate -->
+  <ConfirmDialog
+    :show="showConfirmDialog"
+    title="确认烫金版"
+    :message="`确定要确认烫金版「${selectedRow?.name}」吗？确认后关键字段将不可修改。`"
+    confirm-text="确认"
+    cancel-text="取消"
+    @confirm="handleConfirmPlate"
+    @cancel="showConfirmDialog = false"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from '@/utils/message'
 import { foilingPlateAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { CrudPageLayout, DataTable, EmptyState, SearchInput, Icon } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Icon, Tag, ConfirmDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -99,7 +173,7 @@ const columns: Column[] = [
 
 const {
   searchText, tableData, loading, total, currentPage, pageSize, hasFilters,
-  loadData, handleSearch, handleSearchDebounced, handlePageChange, handleSizeChange, resetFilters
+  loadData, handleSearch, handlePageChange, handleSizeChange, resetFilters
 } = useCrudList(foilingPlateAPI, 'getList', { errorContext: '加载烫金版数据失败' })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('foilingplate')
@@ -110,6 +184,9 @@ const dialogType = ref('create')
 const formLoading = ref(false)
 const currentFoilingPlate = ref<any>(null)
 const productList = ref<any[]>([])
+const selectedRow = ref<any>(null)
+const showDeleteDialog = ref(false)
+const showConfirmDialog = ref(false)
 
 const loadProductList = async () => {
   try { const response: any = await productAPI.getList({ is_active: true, page_size: 100 }); productList.value = response?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载产品列表失败') }
@@ -121,12 +198,23 @@ const handleEdit = async (row: any) => {
   try { const detail: any = await foilingPlateAPI.getDetail(row.id); currentFoilingPlate.value = detail; dialogType.value = 'edit'; dialogVisible.value = true } catch (error: any) { ErrorHandler.showMessage(error, '加载烫金版详情失败') }
 }
 
-const handleDelete = async (row: any) => {
-  try { const confirmed = await ErrorHandler.confirm(`确定要删除烫金版"${row.name}"吗？此操作不可撤销。`); if (!confirmed) return; await crud.remove(row.id, '删除成功') } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
+const confirmDelete = (row: any) => { selectedRow.value = row; showDeleteDialog.value = true }
+const confirmPlate = (row: any) => { selectedRow.value = row; showConfirmDialog.value = true }
+
+const handleDelete = async () => {
+  try {
+    await crud.remove(selectedRow.value.id, '删除成功')
+    showDeleteDialog.value = false
+  } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
 }
 
-const handleConfirmPlate = async (row: any) => {
-  try { const confirmed = await ErrorHandler.confirm(`确定要确认烫金版"${row.name}"吗？确认后关键字段将不可修改。`); if (!confirmed) return; await foilingPlateAPI.confirm(row.id); ElMessage.success('确认成功'); await loadData() } catch (error: any) { ErrorHandler.showMessage(error, '确认失败') }
+const handleConfirmPlate = async () => {
+  try {
+    await foilingPlateAPI.confirm(selectedRow.value.id)
+    ElMessage.success('确认成功')
+    showConfirmDialog.value = false
+    await loadData()
+  } catch (error: any) { ErrorHandler.showMessage(error, '确认失败') }
 }
 
 const handleFormConfirm = async (payload: any) => {

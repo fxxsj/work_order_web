@@ -2,53 +2,81 @@
   <div class="space-y-6">
     <InvoiceStats :stats="stats" :loading="statsLoading" />
 
-    <CrudPageLayout
-      title="发票管理"
-      :loading="loading"
-      :total="total"
-      :current-page="currentPage"
-      :page-size="pageSize"
-      @size-change="handleSizeChange"
-      @current-change="handlePageChange"
-    >
-      <template #search>
-        <Select v-model="filters.customer" :options="customerOptions" class="w-40" placeholder="选择客户" clearable filterable @change="handleSearch" />
-        <Select v-model="filters.status" :options="statusOptions" class="w-36" placeholder="发票状态" clearable @change="handleSearch" />
-        <SearchInput v-model="filters.invoice_number" placeholder="搜索发票号码" @search="handleSearch" @clear="handleSearch" />
-      </template>
-      <template #actions>
-        <button class="btn" :disabled="loading" @click="loadData">刷新</button>
-        <button class="btn btn-primary" v-if="canCreate" @click="handleCreate">新建发票</button>
-      </template>
-
-      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
-        <template #cell-invoice_number="{ row }"><span>{{ row.invoice_number }}</span></template>
-        <template #cell-invoice_type_display="{ row }"><span>{{ row.invoice_type_display }}</span></template>
-        <template #cell-customer_name="{ row }"><span>{{ row.customer_name }}</span></template>
-        <template #cell-amount="{ row }"><span>¥{{ row.amount ? row.amount.toLocaleString() : '-' }}</span></template>
-        <template #cell-tax_amount="{ row }"><span>¥{{ row.tax_amount ? row.tax_amount.toLocaleString() : '-' }}</span></template>
-        <template #cell-total_amount="{ row }"><span>¥{{ row.total_amount ? row.total_amount.toLocaleString() : '-' }}</span></template>
-        <template #cell-issue_date="{ row }"><span>{{ row.issue_date }}</span></template>
-        <template #cell-status="{ row }"><StatusTag :status="row.status" category="invoice" :label="row.status_display" /></template>
-        <template #cell-actions="{ row }">
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" @click="handleView(row)">查看</button>
-            <button class="btn btn-ghost btn-sm" v-if="canEdit && row.status === 'draft'" @click="handleEdit(row)">编辑</button>
-            <button class="btn btn-ghost btn-sm text-warning" v-if="canEdit && row.status === 'draft'" @click="handleSubmit(row)">提交</button>
+    <TablePageLayout>
+      <template #filters>
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <Select v-model="filters.customer" :options="customerOptions" class="w-40" placeholder="选择客户" clearable filterable @change="handleSearch" />
+            <Select v-model="filters.status" :options="statusOptions" class="w-36" placeholder="发票状态" clearable @change="handleSearch" />
+            <SearchInput v-model="filters.invoice_number" placeholder="搜索发票号码" @search="handleSearch" @clear="handleSearch" />
           </div>
-        </template>
-        <template #empty>
-          <EmptyState description="暂无发票数据">
-            <template #action>
-              <button class="btn btn-primary" v-if="hasFilters" @click="handleReset">重置筛选</button>
-              <button class="btn btn-primary" v-else-if="canCreate" @click="handleCreate">创建第一个发票</button>
-            </template>
-          </EmptyState>
-        </template>
-      </DataTable>
-    </CrudPageLayout>
+        </div>
+      </template>
 
-    <BaseDialog :show="detailDialogVisible" title="发票详情" width="wide">
+      <template #actions>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-secondary" :disabled="loading" @click="loadData">
+            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+            刷新
+          </button>
+          <button class="btn btn-primary" v-if="canCreate" @click="handleCreate">
+            <Icon name="plus" size="md" class="mr-2" />
+            新建发票
+          </button>
+        </div>
+      </template>
+
+      <template #table>
+        <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
+          <template #cell-invoice_number="{ row }"><span>{{ row.invoice_number }}</span></template>
+          <template #cell-invoice_type_display="{ row }"><span>{{ row.invoice_type_display }}</span></template>
+          <template #cell-customer_name="{ row }"><span>{{ row.customer_name }}</span></template>
+          <template #cell-amount="{ row }"><span>¥{{ row.amount ? row.amount.toLocaleString() : '-' }}</span></template>
+          <template #cell-tax_amount="{ row }"><span>¥{{ row.tax_amount ? row.tax_amount.toLocaleString() : '-' }}</span></template>
+          <template #cell-total_amount="{ row }"><span>¥{{ row.total_amount ? row.total_amount.toLocaleString() : '-' }}</span></template>
+          <template #cell-issue_date="{ row }"><span>{{ row.issue_date }}</span></template>
+          <template #cell-status="{ row }"><StatusTag :status="row.status" category="invoice" :label="row.status_display" /></template>
+          <template #cell-actions="{ row }">
+            <div class="flex items-center gap-1">
+              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
+                <Icon name="eye" size="sm" />
+                <span class="text-xs">查看</span>
+              </button>
+              <button v-if="canEdit && row.status === 'draft'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleEdit(row)">
+                <Icon name="edit" size="sm" />
+                <span class="text-xs">编辑</span>
+              </button>
+              <button v-if="canEdit && row.status === 'draft'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-yellow-50 hover:text-yellow-600 dark:hover:bg-yellow-900/20 dark:hover:text-yellow-400" @click="openSubmitDialog(row)">
+                <Icon name="upload" size="sm" />
+                <span class="text-xs">提交</span>
+              </button>
+            </div>
+          </template>
+          <template #empty>
+            <EmptyState description="暂无发票数据">
+              <template #action>
+                <button class="btn btn-primary" v-if="hasFilters" @click="handleReset">重置筛选</button>
+                <button class="btn btn-primary" v-else-if="canCreate" @click="handleCreate">创建第一个发票</button>
+              </template>
+            </EmptyState>
+          </template>
+        </DataTable>
+      </template>
+
+      <template #pagination>
+        <Pagination
+          v-if="total > 0"
+          v-model:page="currentPage"
+          v-model:page-size="pageSize"
+          :total="total"
+          layout="total, sizes, prev, pager, next"
+          @update:page-size="handleSizeChange"
+          @update:page="handlePageChange"
+        />
+      </template>
+    </TablePageLayout>
+
+    <BaseDialog :show="detailDialogVisible" title="发票详情" width="wide" @close="detailDialogVisible = false">
       <div v-if="currentInvoice" class="descriptions-grid" style="--col: 2">
         <div class="description-item"><div class="description-label">发票号码</div><div class="description-value">{{ (currentInvoice as any).invoice_number }}</div></div>
         <div class="description-item"><div class="description-label">发票类型</div><div class="description-value">{{ (currentInvoice as any).invoice_type_display }}</div></div>
@@ -63,33 +91,53 @@
         <div class="description-item col-span-2"><div class="description-label">备注</div><div class="description-value">{{ (currentInvoice as any).notes || '-' }}</div></div>
       </div>
       <template #footer>
-        <button class="btn" @click="detailDialogVisible = false">关闭</button>
+        <button class="btn btn-secondary" @click="detailDialogVisible = false">关闭</button>
       </template>
     </BaseDialog>
 
-    <BaseDialog :show="formDialogVisible" :title="isEdit ? '编辑发票' : '新建发票'" width="normal">
-      <div class="space-y-4">
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">客户</label>
-          <Select v-model="form.customer" :options="customerOptions" placeholder="请选择客户" filterable class="flex-1" />
+    <BaseDialog :show="formDialogVisible" :title="isEdit ? '编辑发票' : '新建发票'" width="normal" @close="formDialogVisible = false">
+      <form class="space-y-5" id="invoice-form" @submit.prevent="handleSave">
+        <div>
+          <label class="input-label mb-1.5 block">客户</label>
+          <Select v-model="form.customer" :options="customerOptions" placeholder="请选择客户" filterable class="w-full" />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">发票类型</label>
-          <Select v-model="form.invoice_type" :options="invoiceTypeOptions" placeholder="请选择发票类型" class="flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">发票类型</label>
+          <Select v-model="form.invoice_type" :options="invoiceTypeOptions" placeholder="请选择发票类型" class="w-full" />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">开票日期</label>
-          <input type="date" v-model="form.issue_date" class="input flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">开票日期</label>
+          <input type="date" v-model="form.issue_date" class="input w-full" />
         </div>
-        <InputNumber v-model="form.amount" label="金额(不含税)" :min="0" :precision="2" class="w-full" />
-        <InputNumber v-model="form.tax_rate" label="税率" :min="0" :max="100" class="w-full" />
-        <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注" class="w-full" />
-      </div>
+        <div>
+          <label class="input-label mb-1.5 block">金额(不含税)</label>
+          <InputNumber v-model="form.amount" :min="0" :precision="2" class="w-full" />
+        </div>
+        <div>
+          <label class="input-label mb-1.5 block">税率</label>
+          <InputNumber v-model="form.tax_rate" :min="0" :max="100" class="w-full" />
+        </div>
+        <div>
+          <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注" class="w-full" />
+        </div>
+      </form>
       <template #footer>
-        <button class="btn" @click="formDialogVisible = false">取消</button>
-        <button class="btn btn-primary" :disabled="submitting" @click="handleSave">保存</button>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-secondary" @click="formDialogVisible = false" type="button">取消</button>
+          <button class="btn btn-primary" form="invoice-form" type="submit" :disabled="submitting">保存</button>
+        </div>
       </template>
     </BaseDialog>
+
+    <ConfirmDialog
+      :show="showSubmitDialogFlag"
+      title="确认提交"
+      message="确认提交该发票？"
+      confirm-text="确认"
+      cancel-text="取消"
+      @confirm="handleSubmit"
+      @cancel="showSubmitDialogFlag = false"
+    />
   </div>
 </template>
 
@@ -100,7 +148,7 @@ import { invoiceAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, SearchInput, Icon, Input, TextArea, InputNumber, CrudPageLayout, DataTable, EmptyState } from '@/components/common'
+import { StatusTag, Select, SearchInput, Icon, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import InvoiceStats from './components/InvoiceStats.vue'
 
@@ -112,6 +160,9 @@ const stats = ref({})
 const detailDialogVisible = ref(false)
 const formDialogVisible = ref(false)
 const isEdit = ref(false)
+
+const showSubmitDialogFlag = ref(false)
+const targetInvoiceForSubmit = ref<any>(null)
 
 const FORM_INITIAL: Record<string, any> = {
   id: undefined,
@@ -137,7 +188,6 @@ const columns: Column[] = [
   { key: 'actions', label: '操作', width: 176, fixed: 'right' }
 ]
 
-// Computed options for native Select
 const customerOptions = computed(() => customerList.value.map((c: any) => ({ value: c.id, label: c.name })))
 const invoiceTypeOptions = [
   { value: 'vat_special', label: '增值税专用发票' },
@@ -186,7 +236,7 @@ const fetchStats = async () => {
   statsLoading.value = true
   try {
     const response: any = await invoiceAPI.getSummary()
-    const payload = response?.data || response
+    const payload = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || response || {})
     const summary = payload?.summary || {}
     const byStatus = payload?.by_status || []
 
@@ -194,7 +244,7 @@ const fetchStats = async () => {
     let receivedAmount = 0
     try {
       const listResponse: any = await invoiceAPI.getList({ page_size: 1000 })
-      const list = listResponse?.results || []
+      const list = Array.isArray(listResponse) ? listResponse : (listResponse?.results || listResponse?.data || listResponse || [])
       pendingAmount = list.filter((i: any) => i.status === 'issued' || i.status === 'sent').reduce((sum: any, i: any) => sum + (i.total_amount || 0), 0)
       receivedAmount = list.filter((i: any) => i.status === 'received').reduce((sum: any, i: any) => sum + (i.total_amount || 0), 0)
     } catch (e: any) {}
@@ -215,14 +265,14 @@ const fetchStats = async () => {
 const fetchCustomers = async () => {
   try {
     const response: any = await customerAPI.getList({ page_size: 1000 })
-    customerList.value = response?.results || []
+    customerList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
   } catch (error: any) {}
 }
 
 const handleView = async (row: any) => {
   try {
     const response: any = await invoiceAPI.getDetail(row.id)
-    currentInvoice.value = response
+    currentInvoice.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || response || {})
     detailDialogVisible.value = true
   } catch (error: any) {
     ErrorHandler.showMessage(error, '获取发票详情失败')
@@ -251,18 +301,22 @@ const handleEdit = (row: any) => {
   formDialogVisible.value = true
 }
 
-const handleSubmit = async (row: any) => {
+const openSubmitDialog = (row: any) => {
+  targetInvoiceForSubmit.value = row
+  showSubmitDialogFlag.value = true
+}
+
+const handleSubmit = async () => {
+  const row = targetInvoiceForSubmit.value
+  showSubmitDialogFlag.value = false
+  if (!row) return
   try {
-    const confirmed = await ErrorHandler.confirm('确认提交该发票？')
-    if (!confirmed) return
     await invoiceAPI.submit(row.id)
     ElMessage.success('提交成功')
     loadData()
     fetchStats()
   } catch (error: any) {
-    if (error !== 'cancel') {
-      ErrorHandler.showMessage(error, '提交失败')
-    }
+    ErrorHandler.showMessage(error, '提交失败')
   }
 }
 

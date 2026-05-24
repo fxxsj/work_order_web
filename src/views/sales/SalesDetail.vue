@@ -127,6 +127,17 @@
         </template>
       </div>
     </div>
+    <ConfirmDialog
+      :show="showConvertDialog"
+      title="转换施工单"
+      :message="`确定要将订单「${detailData.order_number}」转换为施工单？`"
+      confirm-text="转换"
+      cancel-text="取消"
+      :loading="converting"
+      loading-text="转换中..."
+      @confirm="confirmConvert"
+      @cancel="cancelConvert"
+    />
   </div>
 </template>
 
@@ -136,7 +147,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from '@/utils/message'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
-import { StatusTag } from '@/components/common'
+import { ConfirmDialog, StatusTag } from '@/components/common'
 import { formatDate } from '@/utils/filter'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -147,6 +158,8 @@ const userStore = useUserStore()
 const loading = ref(false)
 const detailData = reactive<any>({})
 const operationHistory = ref<any[]>([])
+const showConvertDialog = ref(false)
+const converting = ref(false)
 
 const canEdit = computed(() => userStore.hasPermission('workorder.change_salesorder'))
 const canConvert = computed(() => userStore.hasPermission('workorder.add_workorder'))
@@ -163,14 +176,26 @@ const loadData = async () => {
 const goBack = () => { router.push('/sales') }
 const handleEdit = () => { router.push(`/sales/${route.params.id}/edit`) }
 
-const handleConvert = async () => {
+const handleConvert = () => {
+  showConvertDialog.value = true
+}
+
+const cancelConvert = () => {
+  showConvertDialog.value = false
+}
+
+const confirmConvert = async () => {
+  converting.value = true
   try {
-    const confirmed = await ErrorHandler.confirm(`确定要将订单"${detailData.order_number}"转换为施工单？`)
-    if (!confirmed) return
     const response: any = await salesOrderAPI.convertToWorkOrder(String(route.params.id))
     ElMessage.success('转换成功')
+    cancelConvert()
     router.push(`/workorders/${response.work_order_id || response.id}`)
-  } catch (error: any) { if (error !== 'cancel') ErrorHandler.showMessage(error, '转换失败') }
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '转换失败')
+  } finally {
+    converting.value = false
+  }
 }
 
 const handleSubmit = async () => { try { await salesOrderAPI.submit(String(route.params.id)); ElMessage.success('提交成功'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '提交失败') } }

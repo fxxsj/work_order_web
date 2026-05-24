@@ -44,9 +44,11 @@
 
 | 页面 | 复杂度 | 表单字段 | 特殊组件 | 备注 |
 |------|--------|----------|----------|------|
-| `ProcessList.vue` | 低 | code, name, description, standard_duration, sort_order, is_active | 无 | 最简单，可作为首个 |
-| `FoilingPlateList.vue` | 低 | 参照 DieList | FoilingPlateFormDialog | 需要内联表单 |
-| `EmbossingPlateList.vue` | 低 | 参照 DieList | EmbossingPlateFormDialog | 需要内联表单 |
+| `ProcessList.vue` | 低 | code, name, description, standard_duration, sort_order, is_active | 无 | ✅ 已完成 |
+| `FoilingPlateList.vue` | 中 | code, name, foiling_type, size, material, thickness, products[] | FoilingPlateFormDialog → PlateFormDialog → BaseDialog | ✅ 已完成 |
+| `EmbossingPlateList.vue` | 中 | code, name, size, material, thickness, products[] | EmbossingPlateFormDialog → PlateFormDialog → BaseDialog | ✅ 已完成 |
+
+**说明**：采用务实方案，保留现有 FormDialog 组件（内部已使用 BaseDialog），仅迁移列表页布局为 `TablePageLayout`，将 `ErrorHandler.confirm` 替换为 `ConfirmDialog`，升级操作按钮为图标+文字样式。
 
 ### 第二批：中等复杂度页面
 
@@ -111,26 +113,9 @@
 |------|----------|------|
 | `CustomerList.vue` | 2026-05-23 | 参考实现 |
 | `SupplierList.vue` | 2026-05-23 | 首批完成 |
-
----
-
-## 第一批详细任务：ProcessList.vue
-
-**当前状态**：使用 `CrudPageLayout + FormDialog`
-
-**目标状态**：
-- `TablePageLayout` 布局
-- `BaseDialog` 内联表单
-- `ConfirmDialog` 删除确认
-- 图标+文字行内操作
-
-**表单字段**：
-- `code` (string, required)
-- `name` (string, required)
-- `description` (string)
-- `standard_duration` (number)
-- `sort_order` (number)
-- `is_active` (boolean)
+| `ProcessList.vue` | 2026-05-23 | 首批完成 |
+| `FoilingPlateList.vue` | 2026-05-23 | 第二批完成 |
+| `EmbossingPlateList.vue` | 2026-05-23 | 第二批完成 |
 
 ---
 

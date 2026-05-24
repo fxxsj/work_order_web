@@ -1,82 +1,141 @@
 <template>
-  <CrudPageLayout
+  <TablePageLayout
     title="产品组管理"
     :loading="loading"
-    :total="total"
-    :current-page="currentPage"
-    :page-size="pageSize"
-    @size-change="handleSizeChange"
-    @current-change="handlePageChange"
   >
-    <template #search>
-      <SearchInput
-        v-model="searchText"
-        class="w-full sm:w-72"
-        placeholder="搜索产品组编码、名称"
-        @search="handleSearch"
-        @clear="handleSearch"
-      />
+    <template #filters>
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <SearchInput
+            v-model="searchText"
+            class="w-full sm:w-72"
+            placeholder="搜索产品组编码、名称"
+            @search="handleSearch"
+            @clear="handleSearch"
+          />
+        </div>
+      </div>
     </template>
 
     <template #actions>
-      <button v-if="canCreate" class="btn btn-primary" @click="handleAdd">
-        <Icon name="plus" size="sm" />
-        新增产品组
-      </button>
+      <div class="flex justify-end gap-3">
+        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
+          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        </button>
+        <button v-if="canCreate" class="btn btn-primary" @click="handleAdd">
+          <Icon name="plus" size="md" class="mr-2" />
+          新增产品组
+        </button>
+      </div>
     </template>
 
-    <DataTable
-      :columns="columns"
-      :data="tableData"
-      :loading="loading"
-      :row-key="(row: any) => row.id"
-      @sort="handleSort"
-    >
-      <template #cell-is_active="{ value }">
-        <Tag :type="value ? 'success' : 'info'" size="small">{{ value ? '启用' : '禁用' }}</Tag>
-      </template>
+    <template #table>
+      <DataTable
+        :columns="columns"
+        :data="tableData"
+        :loading="loading"
+        :row-key="(row: any) => row.id"
+        @sort="handleSort"
+      >
+        <template #cell-is_active="{ value }">
+          <Tag :type="value ? 'success' : 'info'" size="small">{{ value ? '启用' : '禁用' }}</Tag>
+        </template>
 
-      <template #cell-actions="{ row }">
-        <div class="flex items-center gap-2">
-          <button v-if="canEdit" class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="handleEdit(row)">编辑</button>
-          <button v-if="canDelete" class="btn btn-danger btn-sm" @click="handleDelete(row)">删除</button>
-        </div>
-      </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center gap-1">
+            <button
+              v-if="canEdit"
+              @click="handleEdit(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+            >
+              <Icon name="edit" size="sm" />
+              <span class="text-xs">编辑</span>
+            </button>
+            <button
+              v-if="canDelete"
+              @click="confirmDelete(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            >
+              <Icon name="trash" size="sm" />
+              <span class="text-xs">删除</span>
+            </button>
+          </div>
+        </template>
 
-      <template #empty>
-        <EmptyState
-          :description="hasFilters ? '未找到匹配的产品组' : '暂无产品组数据'"
-          :action-text="canCreate && !hasFilters ? '创建第一个产品组' : undefined"
-          @action="handleAdd"
-        />
-      </template>
-    </DataTable>
-  </CrudPageLayout>
+        <template #empty>
+          <EmptyState
+            :description="hasFilters ? '未找到匹配的产品组' : '暂无产品组数据'"
+            :action-text="canCreate && !hasFilters ? '创建第一个产品组' : undefined"
+            @action="handleAdd"
+          />
+        </template>
+      </DataTable>
+    </template>
 
-  <FormDialog
-    ref="formDialogRef"
-    v-model="dialogVisible"
-    :title="dialogTitle"
-    width="800px"
-    :form-data="form"
-    :rules="rules"
-    label-width="120px"
-    :loading="formLoading"
-    @submit="handleSubmit"
-    @cancel="handleDialogClose"
+    <template #pagination>
+      <Pagination
+        v-if="total > 0"
+        :total="total"
+        :page="currentPage"
+        :page-size="pageSize"
+        @update:page="handlePageChange"
+        @update:page-size="handleSizeChange"
+      />
+    </template>
+  </TablePageLayout>
+
+  <BaseDialog
+    :show="showCreateModal || showEditModal"
+    :title="showEditModal ? '编辑产品组' : '新增产品组'"
+    width="normal"
+    @close="closeModals"
   >
-    <Input v-model="form.code" label="编码" required placeholder="请输入编码" />
-    <Input v-model="form.name" label="名称" required placeholder="请输入名称" />
-    <TextArea v-model="form.description" label="描述" placeholder="请输入描述" :rows="3" />
-    <Toggle v-model="form.is_active" label="状态" />
-  </FormDialog>
+    <form id="entity-form" @submit.prevent="handleSubmit" class="space-y-5">
+      <div>
+        <Input v-model="form.code" label="编码" required placeholder="请输入编码" />
+      </div>
+      <div>
+        <Input v-model="form.name" label="名称" required placeholder="请输入名称" />
+      </div>
+      <div>
+        <TextArea v-model="form.description" label="描述" placeholder="请输入描述" :rows="3" />
+      </div>
+      <Toggle
+        v-model="form.is_active"
+        label="状态"
+      />
+    </form>
+
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <button @click="closeModals" type="button" class="btn btn-secondary">取消</button>
+        <button form="entity-form" type="submit" :disabled="submitting" class="btn btn-primary">
+          <Icon v-if="submitting" name="refresh" size="sm" class="-ml-1 mr-2 animate-spin" />
+          {{ submitting ? '保存中...' : (showEditModal ? '更新' : '创建') }}
+        </button>
+      </div>
+    </template>
+  </BaseDialog>
+
+  <ConfirmDialog
+    :show="showDeleteDialog"
+    title="删除确认"
+    :message="`确定要删除产品组「${currentRow?.name}」吗？此操作不可撤销。`"
+    confirm-text="删除"
+    cancel-text="取消"
+    :danger="true"
+    :loading="deleting"
+    loading-text="删除中..."
+    @confirm="handleDelete"
+    @cancel="cancelDelete"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
-import { productGroupAPI, productAPI } from '@/api/modules'
+import { ref, reactive, onMounted } from 'vue'
+import { productGroupAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { CrudPageLayout, DataTable, EmptyState, SearchInput, FormDialog, Input, TextArea, Toggle, Icon, Tag } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, BaseDialog, ConfirmDialog, Pagination, Input, TextArea, Toggle, Icon, Tag } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -90,62 +149,93 @@ const columns: Column[] = [
 
 const {
   searchText, tableData, loading, total, currentPage, pageSize,
-  loadData, handleSearch, handleSearchDebounced, handlePageChange, handleSizeChange, hasFilters
+  loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters
 } = useCrudList(productGroupAPI, 'getList', { errorContext: '加载产品组数据失败' })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('productgroup')
-const crud = useCRUD(productGroupAPI, { onSuccess: () => { dialogVisible.value = false; loadData() } })
+const crud = useCRUD(productGroupAPI, { onSuccess: () => { closeModals(); loadData() } })
 
-const dialogVisible = ref(false)
-const dialogType = ref('create')
-const dialogTitle = ref('新增产品组')
-const formLoading = ref(false)
-const currentRow = ref(null)
-const formDialogRef = ref<any>(null)
-const productList = ref<any[]>([])
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const showDeleteDialog = ref(false)
+const submitting = ref(false)
+const deleting = ref(false)
+const currentRow = ref<any>(null)
 
-const getFormInitialValues = () => ({ id: null, code: '', name: '', description: '', is_active: true, items: [{ product: null, item_name: '', sort_order: 0 }] })
+const getFormInitialValues = () => ({ id: null, code: '', name: '', description: '', is_active: true })
 const form = reactive(getFormInitialValues())
-const rules = { code: [{ required: true, message: '请输入编码', trigger: 'blur' }], name: [{ required: true, message: '请输入名称', trigger: 'blur' }] }
 
-const loadProductList = async () => {
-  try { const response: any = await productAPI.getList({ page_size: 1000 }); productList.value = response?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载产品列表') }
+const handleAdd = () => { 
+  currentRow.value = null; 
+  Object.assign(form, getFormInitialValues()); 
+  showCreateModal.value = true 
 }
 
-const handleAdd = () => { dialogType.value = 'create'; dialogTitle.value = '新增产品组'; currentRow.value = null; Object.assign(form, getFormInitialValues()); dialogVisible.value = true }
-
 const handleEdit = async (row: any) => {
-  dialogType.value = 'edit'; dialogTitle.value = '编辑产品组'; currentRow.value = row
+  currentRow.value = row
   try {
     const detail: any = await productGroupAPI.getDetail(row.id)
     Object.assign(form, {
-      id: detail.id, code: detail.code, name: detail.name, description: detail.description || '', is_active: detail.is_active,
-      items: detail.items && detail.items.length > 0 ? detail.items.map((item: any) => ({ id: item.id, product: item.product, item_name: item.item_name, sort_order: item.sort_order })) : [{ product: null, item_name: '', sort_order: 0 }]
+      id: detail.id, code: detail.code, name: detail.name, description: detail.description || '', is_active: detail.is_active
     })
-    dialogVisible.value = true
-  } catch (error: any) { ErrorHandler.showMessage(error, '加载详情') }
+    showEditModal.value = true
+  } catch (error: any) { 
+    ErrorHandler.showMessage(error, '加载详情') 
+  }
 }
 
-const handleDelete = async (row: any) => {
-  const confirmed = await ErrorHandler.confirm(`确定要删除产品组"${row.name}"吗？此操作不可撤销。`)
-  if (!confirmed) return
-  await crud.remove(row.id, '删除成功')
+const closeModals = () => {
+  showCreateModal.value = false;
+  showEditModal.value = false;
 }
 
 const handleSubmit = async () => {
-  const valid = await formDialogRef.value.validate().catch(() => false)
-  if (!valid) return
-  formLoading.value = true
-  const data = { code: form.code, name: form.name, description: form.description, is_active: form.is_active }
-  if (form.id) { await crud.update(form.id, data, '更新成功') } else { await crud.create(data, '创建成功') }
-  formLoading.value = false
+  if (!form.code || !form.name) {
+    ErrorHandler.showMessage('请填写必填项', '验证失败')
+    return
+  }
+  
+  submitting.value = true
+  try {
+    const data = { code: form.code, name: form.name, description: form.description, is_active: form.is_active }
+    if (form.id) { 
+      await crud.update(form.id, data, '更新成功') 
+    } else { 
+      await crud.create(data, '创建成功') 
+    }
+  } finally {
+    submitting.value = false
+  }
 }
 
-const handleDialogClose = () => { formDialogRef.value?.resetFields(); Object.assign(form, getFormInitialValues()) }
+const confirmDelete = (row: any) => {
+  currentRow.value = row;
+  showDeleteDialog.value = true;
+}
+
+const cancelDelete = () => {
+  if (deleting.value) return
+  showDeleteDialog.value = false
+  currentRow.value = null
+}
+
+const handleDelete = async () => {
+  if (!currentRow.value) return;
+  deleting.value = true
+  try {
+    await crud.remove(currentRow.value.id, '删除成功')
+    showDeleteDialog.value = false;
+    currentRow.value = null
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '删除')
+  } finally {
+    deleting.value = false
+  }
+}
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
   console.log('sort', key, order)
 }
 
-onMounted(() => { loadData(); loadProductList() })
+onMounted(() => { loadData() })
 </script>

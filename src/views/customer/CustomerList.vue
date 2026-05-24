@@ -134,9 +134,9 @@
         <Input v-model="formData.email" label="邮箱" placeholder="请输入邮箱" type="email" />
       </div>
       <div>
+        <label class="input-label mb-1.5 block">业务员</label>
         <Select
           v-model="formData.salesperson"
-          label="业务员"
           placeholder="请选择业务员"
           :options="salespersonOptions"
           filterable

@@ -1,86 +1,135 @@
 <template>
-  <CrudPageLayout
+  <TablePageLayout
     title="采购订单"
     :loading="loading"
-    :total="total"
-    :current-page="currentPage"
-    :page-size="pageSize"
-    @size-change="handleSizeChange"
-    @current-change="handlePageChange"
   >
-    <template #search>
-      <SearchInput v-model="searchText" placeholder="搜索采购单号" @search="handleSearch" />
-      <SearchInput v-model="filters.supplier_name" placeholder="供应商名称" @search="handleSearch" />
-      <Select v-model="filters.status" :options="statusOptions" class="w-40" placeholder="状态" clearable @change="handleSearch" />
-      <button class="btn" @click="resetFilters">重置</button>
-    </template>
-    <template #actions>
-      <button class="btn btn-primary" v-if="canCreate" @click="showCreateDialog">新增采购单</button>
-      <button class="btn" @click="showLowStockDialog">库存预警</button>
-    </template>
-
-    <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
-      <template #cell-order_number="{ row }">
-        <span>{{ row.order_number }}</span>
-      </template>
-      <template #cell-supplier_name="{ row }">
-        <span>{{ row.supplier_name }}</span>
-      </template>
-      <template #cell-status="{ row }">
-        <StatusTag :status="row.status" category="purchaseOrder" :label="row.status_display" />
-      </template>
-      <template #cell-work_order_number="{ row }">
-        <span v-if="row.work_order_number" class="work-order-link" @click="navigateToWorkOrder(row.work_order_number)">
-          {{ row.work_order_number }}<Icon name="arrowRight" class="link-icon" />
-        </span>
-        <span v-else>-</span>
-      </template>
-      <template #cell-items_count="{ row }">
-        <span>{{ row.items_count }}</span>
-      </template>
-      <template #cell-total_amount="{ row }">
-        <span>¥{{ row.total_amount ? row.total_amount.toLocaleString() : '-' }}</span>
-      </template>
-      <template #cell-order_date="{ row }">
-        <span>{{ row.order_date }}</span>
-      </template>
-      <template #cell-expected_date="{ row }">
-        <span>{{ row.expected_date }}</span>
-      </template>
-      <template #cell-received_date="{ row }">
-        <span>{{ row.received_date || '-' }}</span>
-      </template>
-      <template #cell-actions="{ row }">
-        <div class="flex gap-2">
-          <button class="btn btn-ghost btn-sm" @click="handleView(row)">查看</button>
-          <button class="btn btn-ghost btn-sm" v-if="row.status === 'draft' && canEdit" @click="showEditDialog(row)">编辑</button>
-          <select v-if="hasStatusActions(row)" class="select btn btn-ghost btn-sm" @change="(e) => handleStatusAction((e.target as HTMLSelectElement)?.value || '', row)">
-            <option value="">更多</option>
-            <option v-if="row.status === 'draft'" value="submit">提交</option>
-            <option v-if="row.status === 'submitted'" value="approve">批准</option>
-            <option v-if="row.status === 'submitted'" value="reject">拒绝</option>
-            <option v-if="row.status === 'approved'" value="placeOrder">下单</option>
-            <option v-if="row.status === 'ordered'" value="receive">收货</option>
-            <option v-if="row.status === 'ordered'" value="inspection">质检</option>
-            <option v-if="['draft', 'submitted', 'approved'].includes(row.status)" value="cancel">取消</option>
-          </select>
+    <template #filters>
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <SearchInput v-model="searchText" class="w-full sm:w-64" placeholder="搜索采购单号" @search="handleSearch" @clear="handleSearch" />
+          <SearchInput v-model="filters.supplier_name" class="w-full sm:w-64" placeholder="供应商名称" @search="handleSearch" @clear="handleSearch" />
+          <Select v-model="filters.status" :options="statusOptions" class="w-40" placeholder="状态" clearable @change="handleSearch" />
+          <button class="btn btn-secondary" @click="resetFilters">重置</button>
         </div>
-      </template>
-      <template #empty>
-        <EmptyState description="暂无采购单数据">
-          <template #action>
-            <button class="btn btn-primary" v-if="canCreate" @click="showCreateDialog">创建第一个采购单</button>
-          </template>
-        </EmptyState>
-      </template>
-    </DataTable>
+      </div>
+    </template>
+    
+    <template #actions>
+      <div class="flex justify-end gap-3">
+        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
+          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        </button>
+        <button class="btn btn-secondary" @click="showLowStockDialog">
+          <Icon name="bell" size="md" class="mr-2" />
+          库存预警
+        </button>
+        <button v-if="canCreate" class="btn btn-primary" @click="showCreateDialog">
+          <Icon name="plus" size="md" class="mr-2" />
+          新增采购单
+        </button>
+      </div>
+    </template>
 
-    <PurchaseFormDialog v-model:visible="dialogVisible" :form-data="form" :is-edit="isEditMode" @confirm="handleFormConfirm" @close="resetForm" />
+    <template #table>
+      <DataTable 
+        :columns="columns" 
+        :data="tableData" 
+        :loading="loading" 
+        :row-key="(row: any) => row.id"
+      >
+        <template #cell-order_number="{ row }">
+          <span class="font-medium text-gray-900 dark:text-gray-100">{{ row.order_number }}</span>
+        </template>
+        
+        <template #cell-status="{ row }">
+          <StatusTag :status="row.status" category="purchaseOrder" :label="row.status_display" />
+        </template>
+        
+        <template #cell-work_order_number="{ row }">
+          <span v-if="row.work_order_number" class="cursor-pointer text-primary-600 hover:underline dark:text-primary-400" @click="navigateToWorkOrder(row.work_order_number)">
+            {{ row.work_order_number }}<Icon name="arrowRight" size="sm" class="ml-0.5 inline" />
+          </span>
+          <span v-else class="text-gray-400">-</span>
+        </template>
+        
+        <template #cell-total_amount="{ row }">
+          <span class="text-right">¥{{ row.total_amount ? row.total_amount.toLocaleString() : '-' }}</span>
+        </template>
+        
+        <template #cell-received_date="{ row }">
+          <span :class="row.received_date ? '' : 'text-gray-400'">{{ row.received_date || '-' }}</span>
+        </template>
+        
+        <template #cell-actions="{ row }">
+          <div class="flex items-center gap-1">
+            <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
+              <Icon name="eye" size="sm" />
+              <span class="text-xs">查看</span>
+            </button>
+            <button v-if="row.status === 'draft' && canEdit" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="showEditDialog(row)">
+              <Icon name="edit" size="sm" />
+              <span class="text-xs">编辑</span>
+            </button>
+            <select v-if="hasStatusActions(row)" class="ml-1 rounded border-gray-300 bg-transparent py-1 pl-2 pr-6 text-xs text-gray-600 outline-none hover:bg-gray-50 dark:border-dark-600 dark:text-gray-400 dark:hover:bg-dark-700" @change="(e) => { handleStatusAction((e.target as HTMLSelectElement)?.value || '', row); (e.target as HTMLSelectElement).value = ''; }">
+              <option value="" disabled selected>更多</option>
+              <option v-if="row.status === 'draft'" value="submit">提交</option>
+              <option v-if="row.status === 'submitted'" value="approve">批准</option>
+              <option v-if="row.status === 'submitted'" value="reject">拒绝</option>
+              <option v-if="row.status === 'approved'" value="placeOrder">下单</option>
+              <option v-if="row.status === 'ordered'" value="receive">收货</option>
+              <option v-if="row.status === 'ordered'" value="inspection">质检</option>
+              <option v-if="['draft', 'submitted', 'approved'].includes(row.status)" value="cancel">取消</option>
+            </select>
+          </div>
+        </template>
+        
+        <template #empty>
+          <EmptyState 
+            :description="hasFilters ? '未找到匹配的采购单' : '暂无采购单数据'"
+            :action-text="canCreate && !hasFilters ? '创建第一个采购单' : undefined"
+            @action="showCreateDialog" 
+          />
+        </template>
+      </DataTable>
+    </template>
+
+    <template #pagination>
+      <Pagination
+        v-if="total > 0"
+        :total="total"
+        :page="currentPage"
+        :page-size="pageSize"
+        @update:page="handlePageChange"
+        @update:page-size="handleSizeChange"
+      />
+    </template>
+
+    <PurchaseFormDialog
+      v-model:visible="formDialogVisible"
+      :form-data="form"
+      :is-edit="showEditModal"
+      :submitting="submitting"
+      @confirm="handleFormConfirm"
+      @close="closeFormDialog"
+    />
     <PurchaseDetailDialog v-model:visible="detailDialogVisible" :purchase-id="currentPurchaseId" :detail-data="currentDetailData" @view-work-order="navigateToWorkOrder" />
     <LowStockAlertDialog v-model:visible="lowStockDialogVisible" @create-purchase="handleCreateFromLowStock" />
     <ReceiveDialog v-model:visible="receiveDialogVisible" :purchase-order="currentPurchaseOrder" @success="handleReceiveSuccess" />
     <InspectionDialog v-model:visible="inspectionDialogVisible" :purchase-order-id="currentPurchaseId" @updated="loadData" />
-  </CrudPageLayout>
+    
+    <ConfirmDialog
+      :show="showCancelDialog"
+      title="取消确认"
+      :message="'确定要取消该采购单吗？'"
+      confirm-text="确定"
+      cancel-text="取消"
+      :danger="true"
+      :loading="canceling"
+      loading-text="取消中..."
+      @confirm="executeCancel"
+      @cancel="cancelCancelDialog"
+    />
+  </TablePageLayout>
 </template>
 
 <script setup lang="ts">
@@ -90,33 +139,45 @@ import { ElMessage } from '@/utils/message'
 import { purchaseOrderAPI, workOrderAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, Icon, CrudPageLayout, DataTable, EmptyState, SearchInput } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, Icon, StatusTag, Pagination, ConfirmDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { PurchaseFormDialog, PurchaseDetailDialog, LowStockAlertDialog, ReceiveDialog, InspectionDialog } from './components'
 
-const dialogVisible = ref(false)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const submitting = ref(false)
 const detailDialogVisible = ref(false)
 const router = useRouter()
 const lowStockDialogVisible = ref(false)
 const receiveDialogVisible = ref(false)
 const inspectionDialogVisible = ref(false)
-const isEditMode = ref(false)
 const currentPurchaseId = ref<any>(null)
 const currentPurchaseOrder = ref<any>(null)
 const currentDetailData = ref<any>(null)
 const form = reactive({ supplier: null as any, work_order_number: '', notes: '', items: [] as any[] })
 
+const showCancelDialog = ref(false)
+const canceling = ref(false)
+const rowToCancel = ref<any>(null)
+
+const formDialogVisible = computed({
+  get: () => showCreateModal.value || showEditModal.value,
+  set: (visible: boolean) => {
+    if (!visible) closeFormDialog()
+  }
+})
+
 const columns: Column[] = [
-  { key: 'order_number', label: '采购单号', width: 144 },
-  { key: 'supplier_name', label: '供应商', width: 176 },
-  { key: 'status', label: '状态', width: 96 },
-  { key: 'work_order_number', label: '关联施工单', width: 144 },
-  { key: 'items_count', label: '明细数量', width: 96, align: 'center' },
-  { key: 'total_amount', label: '总金额', width: 112, align: 'right' },
-  { key: 'order_date', label: '下单日期', width: 112 },
-  { key: 'expected_date', label: '预计到货', width: 112 },
-  { key: 'received_date', label: '实际到货', width: 112 },
-  { key: 'actions', label: '操作', width: 176, fixed: 'right' }
+  { key: 'order_number', label: '采购单号', sortable: true, class: 'w-36' },
+  { key: 'supplier_name', label: '供应商', sortable: true, class: 'w-44' },
+  { key: 'status', label: '状态', sortable: true, class: 'w-24 text-center' },
+  { key: 'work_order_number', label: '关联施工单', sortable: true, class: 'w-36' },
+  { key: 'items_count', label: '明细数量', sortable: false, class: 'w-24 text-center' },
+  { key: 'total_amount', label: '总金额', sortable: true, class: 'w-28 text-right' },
+  { key: 'order_date', label: '下单日期', sortable: true, class: 'w-28 text-center' },
+  { key: 'expected_date', label: '预计到货', sortable: true, class: 'w-28 text-center' },
+  { key: 'received_date', label: '实际到货', sortable: true, class: 'w-28 text-center' },
+  { key: 'actions', label: '操作', sortable: false, class: 'w-44' }
 ]
 
 const statusOptions = [
@@ -140,21 +201,72 @@ const {
   handleSearch,
   handlePageChange,
   handleSizeChange,
-  resetFilters
+  resetFilters,
+  hasFilters
 } = useCrudList(purchaseOrderAPI, 'getList', {
   initialFilters: { supplier_name: '', status: '' }
 })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('purchaseorder')
 
-const showCreateDialog = () => { if (!canCreate.value) return; isEditMode.value = false; Object.assign(form, { supplier: null, work_order_number: '', notes: '', items: [] }); dialogVisible.value = true }
-const showEditDialog = (row: any) => { if (!canEdit.value) return; isEditMode.value = true; currentPurchaseId.value = row.id; purchaseOrderAPI.getDetail(row.id).then((res: any) => { Object.assign(form, { supplier: (res as any).supplier, work_order_number: (res as any).work_order_number, notes: (res as any).notes, items: res.items || [] }); dialogVisible.value = true }).catch(e => ErrorHandler.showMessage(e, '加载详情')) }
-const handleView = (row: any) => { currentPurchaseId.value = row.id; detailDialogVisible.value = true; purchaseOrderAPI.getDetail(row.id).then((res: any) => { currentDetailData.value = res }).catch(() => { currentDetailData.value = null }) }
+const showCreateDialog = () => { 
+  if (!canCreate.value) return; 
+  showEditModal.value = false;
+  currentPurchaseId.value = null;
+  Object.assign(form, { supplier: null, work_order_number: '', notes: '', items: [] }); 
+  showCreateModal.value = true 
+}
 
-const handleFormConfirm = async (data: any) => { try { if (isEditMode.value) { await purchaseOrderAPI.update(currentPurchaseId.value, data); ElMessage.success('更新成功') } else { await purchaseOrderAPI.create(data); ElMessage.success('创建成功') } dialogVisible.value = false; loadData() } catch (error: any) { ErrorHandler.showMessage(error, isEditMode.value ? '更新失败' : '创建失败') } }
+const showEditDialog = (row: any) => { 
+  if (!canEdit.value) return; 
+  currentPurchaseId.value = row.id; 
+  purchaseOrderAPI.getDetail(row.id).then((res: any) => { 
+    Object.assign(form, { supplier: (res as any).supplier, work_order_number: (res as any).work_order_number, notes: (res as any).notes, items: res.items || [] }); 
+    showCreateModal.value = false;
+    showEditModal.value = true 
+  }).catch(e => ErrorHandler.showMessage(e, '加载详情')) 
+}
+
+const handleView = (row: any) => { 
+  currentPurchaseId.value = row.id; 
+  detailDialogVisible.value = true; 
+  purchaseOrderAPI.getDetail(row.id).then((res: any) => { 
+    currentDetailData.value = res 
+  }).catch(() => { 
+    currentDetailData.value = null 
+  }) 
+}
+
+const handleFormConfirm = async (data: any) => { 
+  submitting.value = true
+  try { 
+    if (showEditModal.value) { 
+      await purchaseOrderAPI.update(currentPurchaseId.value, data); 
+      ElMessage.success('更新成功') 
+    } else { 
+      await purchaseOrderAPI.create(data); 
+      ElMessage.success('创建成功') 
+    } 
+    closeFormDialog(); 
+    loadData() 
+  } catch (error: any) { 
+    ErrorHandler.showMessage(error, showEditModal.value ? '更新失败' : '创建失败') 
+  } finally {
+    submitting.value = false
+  } 
+}
+
 const resetForm = () => { Object.assign(form, { supplier: null, work_order_number: '', notes: '', items: [] }) }
 
+const closeFormDialog = () => {
+  showCreateModal.value = false
+  showEditModal.value = false
+  currentPurchaseId.value = null
+  resetForm()
+}
+
 const hasStatusActions = (row: any) => ['draft', 'submitted', 'approved', 'ordered'].includes(row.status)
+
 const handleStatusAction = async (cmd: any, row: any) => {
   if (!cmd) return
   try {
@@ -165,16 +277,37 @@ const handleStatusAction = async (cmd: any, row: any) => {
       case 'placeOrder': await purchaseOrderAPI.placeOrder(row.id); ElMessage.success('下单成功'); break
       case 'receive': currentPurchaseOrder.value = row; receiveDialogVisible.value = true; return
       case 'inspection': currentPurchaseId.value = row.id; inspectionDialogVisible.value = true; return
-      case 'cancel': {
-        const confirmed = await ErrorHandler.confirm('确定要取消该采购单吗？')
-        if (!confirmed) return
-        await purchaseOrderAPI.cancel(row.id)
-        ElMessage.success('取消成功')
-        break
-      }
+      case 'cancel': 
+        rowToCancel.value = row;
+        showCancelDialog.value = true;
+        return
     }
     loadData()
-  } catch (error: any) { if (error !== 'cancel') ErrorHandler.showMessage(error, '操作失败') }
+  } catch (error: any) { 
+    ErrorHandler.showMessage(error, '操作失败') 
+  }
+}
+
+const executeCancel = async () => {
+  if (!rowToCancel.value) return;
+  canceling.value = true
+  try {
+    await purchaseOrderAPI.cancel(rowToCancel.value.id)
+    ElMessage.success('取消成功')
+    showCancelDialog.value = false;
+    rowToCancel.value = null
+    loadData()
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '操作失败')
+  } finally {
+    canceling.value = false
+  }
+}
+
+const cancelCancelDialog = () => {
+  if (canceling.value) return
+  showCancelDialog.value = false
+  rowToCancel.value = null
 }
 
 const handleReceiveSuccess = () => { receiveDialogVisible.value = false; loadData() }
@@ -183,7 +316,8 @@ const showLowStockDialog = () => { lowStockDialogVisible.value = true }
 
 const navigateToWorkOrder = (workOrderNumber: any) => {
   workOrderAPI.getList({ search: workOrderNumber, approval_status: '' }).then(res => {
-    const matched = (res as any).find((wo: any) => wo.order_number === workOrderNumber)
+    const list = Array.isArray(res) ? res : ((res as any)?.results || (res as any)?.data || [])
+    const matched = list.find((wo: any) => wo.order_number === workOrderNumber)
     if (matched) {
       router.push(`/workorders/${matched.id}`)
     } else {
@@ -194,37 +328,3 @@ const navigateToWorkOrder = (workOrderNumber: any) => {
 
 onMounted(() => { loadData() })
 </script>
-
-<style scoped lang="scss">
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); margin-bottom: var(--ui-section-gap); }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.purchase-filter-control { width: min(100%, 220px); }
-.table-scroll { overflow-x: auto; }
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section,
-  .filter-group,
-  .action-group,
-  .purchase-filter-control {
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .filter-group,
-  .action-group {
-    flex-direction: column;
-  }
-
-  .work-order-link {
-    color: var(--el-color-primary);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    &:hover { text-decoration: underline; }
-    .link-icon { font-size: 12px; }
-  }
-}
-</style>

@@ -1,59 +1,61 @@
 <template>
-  <CrudPageLayout
-      title="施工单管理"
-      :loading="loading"
-      :total="total"
-      :current-page="currentPage"
-      :page-size="pageSize"
-      @size-change="handleSizeChange"
-      @current-change="handlePageChange"
-    >
-      <template #search>
-        <SearchInput
-          v-model="filters.search"
-          class="w-full sm:w-72"
-          placeholder="搜索施工单号、产品名称、客户"
-          @search="handleSearch"
-          @clear="handleSearch"
-        />
-        <Select
-          v-model="filters.status"
-          :options="statusOptions"
-          placeholder="状态"
-          clearable
-          class="w-36"
-          @change="handleSearchDebounced"
-        />
-        <Select
-          v-model="filters.priority"
-          :options="priorityOptions"
-          placeholder="优先级"
-          clearable
-          class="w-36"
-          @change="handleSearchDebounced"
-        />
-        <Select
-          v-if="isSalesperson"
-          v-model="filters.approval_status"
-          :options="approvalStatusOptions"
-          placeholder="审核状态"
-          clearable
-          class="w-36"
-          @change="handleSearchDebounced"
-        />
-      </template>
-      <template #actions>
-        <button class="btn rounded-full h-10 w-10 p-0" title="重置筛选" @click="handleReset">
-          <Icon name="refresh" class="h-4 w-4" />
+  <TablePageLayout>
+    <template #filters>
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <SearchInput
+            v-model="filters.search"
+            class="w-full sm:w-72"
+            placeholder="搜索施工单号、产品名称、客户"
+            @search="handleSearch"
+            @clear="handleSearch"
+          />
+          <Select
+            v-model="filters.status"
+            :options="statusOptions"
+            placeholder="状态"
+            clearable
+            class="w-36"
+            @change="handleSearchDebounced"
+          />
+          <Select
+            v-model="filters.priority"
+            :options="priorityOptions"
+            placeholder="优先级"
+            clearable
+            class="w-36"
+            @change="handleSearchDebounced"
+          />
+          <Select
+            v-if="isSalesperson"
+            v-model="filters.approval_status"
+            :options="approvalStatusOptions"
+            placeholder="审核状态"
+            clearable
+            class="w-36"
+            @change="handleSearchDebounced"
+          />
+        </div>
+      </div>
+    </template>
+    <template #actions>
+      <div class="flex justify-end gap-3 items-center">
+        <button class="btn btn-secondary" title="重置筛选" @click="handleReset">
+          <Icon name="refresh" size="md" class="mr-1" />
+          重置
         </button>
-        <button class="btn btn-success" v-if="canExport" :disabled="exporting" @click="handleExport">
-          导出Excel
+        <button class="btn btn-success" v-if="canExport" :disabled="exporting" @click="handleExport" title="导出Excel">
+          <Icon name="download" size="md" :class="exporting ? 'animate-spin' : ''" class="mr-1" />
+          导出
         </button>
-        <button class="btn btn-primary" @click="handleCreate">
-          新建施工单
+        <button class="btn btn-primary" @click="handleCreate" title="新建施工单">
+          <Icon name="plus" size="md" class="mr-1" />
+          新建
         </button>
-      </template>
+      </div>
+    </template>
 
+    <template #table>
       <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id" @row-click="handleRowClick">
         <template #cell-order_number="{ row }"><span>{{ row.order_number }}</span></template>
         <template #cell-customer_name="{ row }"><span>{{ row.customer_name }}</span></template>
@@ -67,17 +69,49 @@
         <template #cell-delivery_date="{ row }"><span :style="getDeliveryDateStyle(row.delivery_date, row.status)">{{ formatDate(row.delivery_date) }}</span></template>
         <template #cell-manager_name="{ row }"><span>{{ row.manager_name }}</span></template>
         <template #cell-actions="{ row }">
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" @click.stop="handleView(row)">查看</button>
-            <button class="btn btn-ghost btn-sm" v-if="canEdit" @click.stop="handleEdit(row)">编辑</button>
-            <button class="btn btn-ghost btn-sm text-danger" v-if="canDelete" @click.stop="handleDelete(row)">删除</button>
+          <div class="flex items-center gap-1">
+            <button
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+              @click.stop="handleView(row)"
+            >
+              <Icon name="eye" size="sm" />
+              <span class="text-xs">查看</span>
+            </button>
+            <button
+              v-if="canEdit"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+              @click.stop="handleEdit(row)"
+            >
+              <Icon name="edit" size="sm" />
+              <span class="text-xs">编辑</span>
+            </button>
+            <button
+              v-if="canDelete"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              @click.stop="handleDelete(row)"
+            >
+              <Icon name="trash" size="sm" />
+              <span class="text-xs">删除</span>
+            </button>
           </div>
         </template>
         <template #empty>
           <EmptyState description="暂无施工单数据" />
         </template>
       </DataTable>
-    </CrudPageLayout>
+    </template>
+
+    <template #pagination>
+      <Pagination
+        v-if="total > 0"
+        :page="currentPage"
+        :page-size="pageSize"
+        :total="total"
+        @update:page="handlePageChange"
+        @update:page-size="handleSizeChange"
+      />
+    </template>
+  </TablePageLayout>
 
   <ConfirmDialog
     :show="editConfirmVisible"
@@ -87,6 +121,17 @@
     cancel-text="取消"
     @confirm="handleEditConfirm"
     @cancel="handleEditCancel"
+  />
+
+  <ConfirmDialog
+    :show="deleteConfirmVisible"
+    title="删除确认"
+    :message="`确定要删除施工单 ${rowToDelete?.order_number} 吗？`"
+    confirm-text="删除"
+    cancel-text="取消"
+    :danger="true"
+    @confirm="handleConfirmDelete"
+    @cancel="deleteConfirmVisible = false"
   />
 </template>
 
@@ -99,8 +144,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
-import SkeletonLoader from '@/components/SkeletonLoader.vue'
-import { StatusTag, SearchInput, Select, Icon, Pagination, ProgressBar, CrudPageLayout, DataTable, EmptyState, ConfirmDialog } from '@/components/common'
+import { StatusTag, SearchInput, Select, Icon, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { WorkOrderStatusChoices, PriorityChoices, ApprovalStatusChoices } from '@/constants'
 import { formatDate } from '@/utils/filter'
@@ -113,6 +157,8 @@ const exporting = ref(false)
 const ordering = ref('-created_at')
 const editConfirmVisible = ref(false)
 const pendingEditRow = ref<any>(null)
+const deleteConfirmVisible = ref(false)
+const rowToDelete = ref<any>(null)
 
 const buildWorkOrderParams = (params: any) => ({ ordering: ordering.value, ...params })
 
@@ -162,7 +208,6 @@ const columns: Column[] = [
   { key: 'actions', label: '操作', width: 176, fixed: 'right' }
 ]
 
-// Computed options for native Select components
 const statusOptions = computed(() => WorkOrderStatusChoices.map((c: any) => ({ value: c.value, label: c.label })))
 const priorityOptions = computed(() => PriorityChoices.map((c: any) => ({ value: c.value, label: c.label })))
 const approvalStatusOptions = computed(() => ApprovalStatusChoices.map((c: any) => ({ value: c.value, label: c.label })))
@@ -211,13 +256,20 @@ const handleRowClick = (row: any) => {
   handleView(row)
 }
 
-const handleDelete = async (row: any) => {
+const handleDelete = (row: any) => {
+  rowToDelete.value = row
+  deleteConfirmVisible.value = true
+}
+
+const handleConfirmDelete = async () => {
+  if (!rowToDelete.value) return
   try {
-    const confirmed = await ErrorHandler.confirm(`确定要删除施工单 ${row.order_number} 吗？`)
-    if (!confirmed) return
-    await crud.remove(row.id, '删除成功')
+    await crud.remove(rowToDelete.value.id, '删除成功')
   } catch (error: any) {
-    if (error !== 'cancel') ErrorHandler.showMessage(error, '删除施工单')
+    ErrorHandler.showMessage(error, '删除施工单')
+  } finally {
+    deleteConfirmVisible.value = false
+    rowToDelete.value = null
   }
 }
 

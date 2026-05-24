@@ -1,44 +1,65 @@
 # 页面布局与交互对齐指导标准
 
 ## 背景
-为统一项目内的页面交互体验和代码结构，并向 `sub2api` 项目的 UI/UX 标准对齐，我们制定了本指南。以 `CustomerList.vue` 的重构过程为例，本指南详细说明了如何将原有的基于 `CrudPageLayout` 的页面重构为基于 `TablePageLayout` 的新模式。
+为统一项目内的页面交互体验和代码结构，并向 `sub2api` 项目的 UI/UX 标准对齐，我们制定了本指南。以 `CustomerList.vue` 和 `DepartmentList.vue` 的重构过程为例，本指南详细说明了如何将原有的基于 `CrudPageLayout` 和原生表格/表单的页面重构为基于 `TablePageLayout`、`DataTable` 及规范表单布局的新模式。
 
 ---
 
-## 核心变更点
+## 核心变更点与强制规范
 
-1. **外层布局**：从内置了标题和分页的 `CrudPageLayout`，切换为更灵活的基于插槽的 `TablePageLayout`。
-2. **表单弹窗**：从高度封装的 `FormDialog` 切换为更加原生的 `BaseDialog` 配合 `<form>` 元素，以便于处理更复杂的验证和自定义底部操作。
-3. **确认操作**：从命令式的 `ErrorHandler.confirm()` 切换为声明式的 `ConfirmDialog` 视图组件，以提升代码的响应性和视图结构的一致性。
-4. **操作按钮**：
+1. **外层布局**：强制使用 `TablePageLayout`，并严格遵守其 `#filters`、`#actions`、`#table`、`#pagination` 四个插槽划分。
+2. **数据表格**：列表页主表、带筛选/分页/排序的数据表、需要桌面滚动与移动端卡片适配的数据表，**强制使用 `<DataTable>` 组件**。所有的列定义必须通过 `columns` prop 传入，且通过 `#cell-[key]` 插槽实现自定义渲染，以确保全站表格样式（如头部吸顶、骨架屏、空状态）的完全一致。
+3. **表单排版设计**：新建/编辑表单**强制采用纵向堆叠布局 (`space-y-5`)**，直接使用基础组件（如 `Input`, `Select`, `InputNumber`）自带的 `label` 和 `hint` 属性。**禁止**手动使用 flex/grid 将 label 与输入框横向排列。
+4. **表单弹窗组件**：简单 CRUD 新页面使用 `BaseDialog` 配合原生 HTML `<form>` 元素，表单底部操作区域放置在 `#footer` 插槽中。历史复杂业务弹窗可暂时保留业务 `FormDialog` 包装，但不得继续新增通用 `FormDialog` 依赖。
+5. **确认操作**：从命令式的 `ErrorHandler.confirm()` 切换为声明式的 `ConfirmDialog` 视图组件，以提升代码的响应性和视图结构的一致性。
+6. **操作按钮**：
    - 顶部操作栏按钮增加图标，并在加载时显示 `loading` 动画。
-   - 表格行内的操作按钮改用“图标+文字”的纵向排列模式，增加 hover 反馈。
-5. **状态管理**：显式声明并管理各种弹窗状态 (`showCreateModal`, `showEditModal`, `showDeleteDialog`, `submitting`)，取代原本通过单个 `dialogVisible` 与 `dialogType` 组合的方式。
+   - 表格行内的操作按钮改用“图标+文字”的纵向排列模式（`flex-col items-center gap-0.5`），增加 hover 反馈。
+7. **状态管理**：显式声明并独立管理各种弹窗状态 (`showCreateModal`, `showEditModal`, `showDeleteDialog`, `submitting`)，杜绝使用字符串类型 (`dialogType = 'create'`) 共享同一个布尔值控制显示。
+
+---
+
+## 组件归属与例外边界
+
+### 布局组件归属
+
+当前项目的 `TablePageLayout` 暂时仍从 `@/components/common` 导出，以避免一次性改动大量页面 import。新代码应继续通过 barrel 导入：
+
+```ts
+import { TablePageLayout, DataTable, Pagination } from '@/components/common'
+```
+
+后续如迁移到 `components/layout`，必须保留 `components/common/index.ts` 的兼容导出，避免破坏现有页面。
+
+### 原生 table 的允许场景
+
+以下场景可以继续使用原生 `<table>`，但需要保持局部样式自洽：
+
+- 打印模板，例如 `WorkOrderPrint.vue`。
+- 详情弹窗中的只读明细、嵌套小表、成本拆解等非主列表内容。
+- 仪表盘局部摘要表，且没有分页、排序、横向滚动、移动端卡片适配需求。
+- 已经封装为虚拟滚动专用组件的底层实现，例如 `DataTable.vue`、`VirtualTable.vue`。
+
+以下场景不允许继续使用原生 `<table>`：
+
+- 路由级列表页主表。
+- 有分页、筛选、排序、批量操作、行内操作的数据列表。
+- 需要移动端自动转卡片的数据表。
+
+### FormDialog 去留
+
+- `BaseDialog + form` 是简单 CRUD 的 preferred 模式。
+- `FormDialog` 是 legacy 模式，只允许在迁移前的历史页面中保留。
+- 业务弹窗组件可以继续包装 `BaseDialog`，但必须显式声明 props/emits，不从内部直接修改父级状态。
 
 ---
 
 ## 重构步骤详解
 
-### 1. 替换页面布局组件
+### 1. 替换页面布局与引入 DataTable
 
-将原有的 `CrudPageLayout` 替换为 `TablePageLayout`，并调整内部的插槽结构。
+**禁止使用原生的 table，所有列表必须使用 DataTable 承载。**
 
-**修改前：**
-```vue
-<CrudPageLayout title="客户管理">
-  <template #search>
-    <SearchInput ... />
-  </template>
-  <template #actions>
-    <button class="btn btn-primary" @click="showCreateDialog">新建</button>
-  </template>
-  
-  <!-- DataTable 直接放在 default 插槽 -->
-  <DataTable ... />
-</CrudPageLayout>
-```
-
-**修改后：**
 ```vue
 <TablePageLayout>
   <!-- 1. 搜索与筛选区域：插槽名称变为 #filters -->
@@ -63,9 +84,18 @@
     </div>
   </template>
 
-  <!-- 3. 表格内容：必须放在 #table 插槽中 -->
+  <!-- 3. 表格内容：必须使用 DataTable -->
   <template #table>
-    <DataTable ...>
+    <DataTable
+      :columns="columns"
+      :data="tableData"
+      :loading="loading"
+      :row-key="(row) => row.id"
+    >
+      <template #cell-name="{ value }">
+        <span class="font-medium text-gray-900">{{ value }}</span>
+      </template>
+      
       <template #empty>
         <EmptyState ... />
       </template>
@@ -74,38 +104,27 @@
 
   <!-- 4. 分页器：必须放在 #pagination 插槽中 -->
   <template #pagination>
-    <Pagination
-      v-if="total > 0"
-      :page="currentPage"
-      :page-size="pageSize"
-      :total="total"
-      @update:page="handlePageChange"
-      @update:page-size="handleSizeChange"
-    />
+    <Pagination ... />
   </template>
 </TablePageLayout>
 ```
 
-### 2. 改造表单弹窗
+### 2. 改造表单弹窗与对其表单布局
 
-移除对 `FormDialog` 组件的依赖，使用 `BaseDialog` 搭配原生 HTML `<form>`。这样可以直接利用浏览器自带的 validation 或更灵活的按需定制。
+表单必须采用**单列垂直排版**，彻底移除原先的 `flex items-start label-w-28` 水平结构。利用组件自带的 `label` 和 `hint` 属性，保持代码极其简洁。
 
-**修改前：**
+**修改前 (错误的做法)：**
 ```vue
-<FormDialog
-  v-model="dialogVisible"
-  :title="formTitle"
-  :form-data="form"
-  :rules="rules"
-  :loading="formLoading"
-  @submit="handleSubmit"
-  @cancel="resetForm"
->
-  <!-- 表单项 -->
-</FormDialog>
+<div class="flex items-start gap-3">
+  <label class="w-28 text-sm">部门编码</label>
+  <div class="flex-1">
+    <Input v-model="form.code" />
+    <div class="text-xs">建议使用英文小写</div>
+  </div>
+</div>
 ```
 
-**修改后：**
+**修改后 (正确的标准做法)：**
 ```vue
 <BaseDialog
   :show="showCreateModal || showEditModal"
@@ -113,12 +132,30 @@
   width="normal"
   @close="closeModals"
 >
-  <!-- 原生 form 接管提交动作 (阻止默认提交) -->
+  <!-- 原生 form 接管提交动作，class="space-y-5" 提供统一下边距 -->
   <form id="entity-form" @submit.prevent="handleSubmit" class="space-y-5">
+    
+    <!-- 推荐：直接使用自带属性 (适用于 Input, TextArea) -->
     <div>
-      <Input v-model="formData.name" label="名称" required />
+      <Input 
+        v-model="formData.code" 
+        label="部门编码" 
+        hint="建议使用英文小写"
+        required 
+      />
     </div>
-    <!-- 其它表单项 -->
+
+    <!-- 注意：Select, InputNumber, CheckboxGroup, Toggle 等组件目前自身不支持 label/hint 属性！ 
+         必须使用如下标准 DOM 结构手动组合包裹！ -->
+    <div>
+      <label class="input-label mb-1.5 block">上级部门</label>
+      <Select 
+        v-model="formData.parent" 
+        :options="options"
+      />
+      <div class="input-hint mt-1.5 text-xs text-gray-400">选择上级部门可建立层级</div>
+    </div>
+
   </form>
   
   <!-- 自定义底部操作栏 -->
@@ -126,7 +163,6 @@
     <div class="flex justify-end gap-3">
       <button @click="closeModals" type="button" class="btn btn-secondary">取消</button>
       <button form="entity-form" type="submit" :disabled="submitting" class="btn btn-primary">
-        <!-- 提交中的 SVG 动画 -->
         <svg v-if="submitting" class="-ml-1 mr-2 h-4 w-4 animate-spin" ...></svg>
         {{ submitting ? '保存中...' : (showEditModal ? '更新' : '创建') }}
       </button>
@@ -139,16 +175,6 @@
 
 使用声明式的 `ConfirmDialog` 替代原先的 JS 弹窗。
 
-**修改前：**
-```ts
-const handleDelete = async (row) => {
-  const confirmed = await ErrorHandler.confirm(`确定要删除"${row.name}"吗？`)
-  if (!confirmed) return
-  // 执行删除...
-}
-```
-
-**修改后：**
 ```vue
 <!-- 模板部分 -->
 <ConfirmDialog
@@ -162,26 +188,10 @@ const handleDelete = async (row) => {
   @cancel="showDeleteDialog = false"
 />
 ```
-```ts
-// 脚本部分
-const confirmDelete = (row: any) => {
-  selectedRow.value = row
-  showDeleteDialog.value = true
-}
-
-const handleDelete = async () => {
-  try {
-    await crud.remove(selectedRow.value.id, '删除成功')
-    showDeleteDialog.value = false
-  } catch (error: any) {
-    ErrorHandler.showMessage(error, '删除失败')
-  }
-}
-```
 
 ### 4. 规范表格行内操作按钮
 
-为了更友好的 UI 和一致性，所有表格最后一列的“操作”按钮，应统一使用“图标上方、文字下方”的布局设计，并附带平滑的过渡反馈。
+为了更友好的 UI 和一致性，所有表格最后一列的“操作”按钮，应统一使用“图标上方、文字下方”的布局设计。
 
 ```vue
 <template #cell-actions="{ row }">
@@ -209,50 +219,14 @@ const handleDelete = async () => {
 </template>
 ```
 
-### 5. 脚本层状态管理优化
+### 5. 健壮的 API 响应处理（避坑提示）
 
-去除基于字符串判断类型的模式 (如 `dialogType.value = 'create'`)，通过分离布尔值显式管理状态。
-
-```ts
-// --- 明确的状态 ---
-const showCreateModal = ref(false)
-const showEditModal = ref(false)
-const showDeleteDialog = ref(false)
-const submitting = ref(false)
-const selectedRow = ref<any>(null)
-
-// --- 统一表单数据与重置 ---
-const formInitialValues = { name: '', ... }
-const formData = reactive({ ...formInitialValues })
-
-const closeModals = () => {
-  showCreateModal.value = false
-  showEditModal.value = false
-  Object.assign(formData, formInitialValues) // 关闭时自动重置
-}
-
-const editRow = (row: any) => {
-  selectedRow.value = row
-  Object.assign(formData, { ...row }) // 数据回显
-  showEditModal.value = true
-}
-```
-
-### 6. 健壮的 API 响应处理（避坑提示）
-
-在渲染选项列表时，API 返回格式可能是 `[{...}]`、`{ data: [...] }` 或 `{ results: [...] }`。为了避免诸如 `.map is not a function` 的错误，请务必进行防御性解包：
+在渲染选项列表时，API 返回格式可能是 `[{...}]`、`{ data: [...] }` 或 `{ results: [...] }`。为了避免错误，请务必进行防御性解包：
 
 ```ts
-const loadOptions = async () => {
-  try {
-    const response: any = await someAPI.getList()
-    // 防御性解包处理分页和非分页的响应结果
-    const list = Array.isArray(response) ? response : (response?.results || response?.data || [])
-    optionsList.value = list
-  } catch (error: any) {
-    ErrorHandler.showMessage(error, '加载选项失败')
-  }
-}
+const response: any = await someAPI.getList()
+const list = Array.isArray(response) ? response : (response?.results || response?.data || [])
+optionsList.value = list
 ```
 
 ---
@@ -260,5 +234,5 @@ const loadOptions = async () => {
 ## 结论
 按照本标准执行迁移与重构，可以为项目带来：
 - **更高的扩展性**：基于插槽与原生的处理，降低了组件库自身的强绑定副作用。
-- **卓越的用户体验**：丰富的动画过渡和布局使页面显得更现代。
-- **可读性更好的代码**：明确的状态定义取代了隐式的组件黑盒。
+- **卓越的用户体验**：丰富的动画过渡、骨架屏 (`DataTable`) 和布局使页面显得更现代。
+- **一致性**：所有的表格与表单展示将具有完全相同的视觉结构，用户无需重新适应新的操作区域。

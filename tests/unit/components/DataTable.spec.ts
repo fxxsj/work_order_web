@@ -3,7 +3,34 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ref, computed } from 'vue'
+import { nextTick, ref, computed } from 'vue'
+import { mount } from '@vue/test-utils'
+import DataTable from '@/components/common/DataTable.vue'
+
+const setDesktopViewport = (matches: boolean) => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(query => ({
+      matches,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  })
+}
+
+beforeEach(() => {
+  setDesktopViewport(true)
+  vi.stubGlobal('ResizeObserver', class {
+    observe = vi.fn()
+    unobserve = vi.fn()
+    disconnect = vi.fn()
+  })
+})
 
 // Since DataTable is a Vue component, we'll test its props validation and helpers
 describe('DataTable', () => {
@@ -281,6 +308,98 @@ describe('DataTable', () => {
       }, 0)
 
       expect(totalMinWidth).toBe(500)
+    })
+  })
+
+  describe('组件渲染契约', () => {
+    const columns = [
+      { key: 'name', label: '名称', sortable: true },
+      { key: 'status', label: '状态' },
+      { key: 'actions', label: '操作' }
+    ]
+
+    const rows = [
+      { id: 1, name: '纸盒', status: 'active' },
+      { id: 2, name: '吊牌', status: 'inactive' }
+    ]
+
+    it('应该渲染桌面空状态插槽', () => {
+      const wrapper = mount(DataTable, {
+        props: {
+          columns,
+          data: []
+        },
+        slots: {
+          empty: '<div data-test="empty">没有匹配数据</div>'
+        },
+      })
+
+      expect(wrapper.text()).toContain('名称')
+      expect(wrapper.text()).toContain('没有匹配数据')
+    })
+
+    it('loading 时应该渲染骨架屏且不渲染数据行', () => {
+      const wrapper = mount(DataTable, {
+        props: {
+          columns,
+          data: rows,
+          loading: true
+        },
+      })
+
+      expect(wrapper.findAll('.animate-pulse').length).toBeGreaterThan(0)
+      expect(wrapper.text()).not.toContain('纸盒')
+    })
+
+    it('服务端排序模式应该触发 sort 事件', async () => {
+      const wrapper = mount(DataTable, {
+        props: {
+          columns,
+          data: rows,
+          serverSideSort: true
+        },
+      })
+
+      await wrapper.find('th').trigger('click')
+
+      expect(wrapper.emitted('sort')?.[0]).toEqual(['name', 'asc'])
+    })
+
+    it('移动端应该渲染卡片字段与 actions 插槽', async () => {
+      setDesktopViewport(false)
+      const wrapper = mount(DataTable, {
+        props: {
+          columns,
+          data: rows,
+          rowKey: 'id'
+        },
+        slots: {
+          'cell-status': '<template #default="{ value }"><span>状态：{{ value }}</span></template>',
+          'cell-actions': '<template #default="{ row }"><button>编辑 {{ row.name }}</button></template>',
+        },
+      })
+
+      await nextTick()
+
+      expect(wrapper.text()).toContain('名称')
+      expect(wrapper.text()).toContain('纸盒')
+      expect(wrapper.text()).toContain('状态：active')
+      expect(wrapper.text()).toContain('编辑 纸盒')
+      expect(wrapper.findAll('table')).toHaveLength(0)
+    })
+
+    it('移动端 loading 应该渲染卡片骨架', () => {
+      setDesktopViewport(false)
+      const wrapper = mount(DataTable, {
+        props: {
+          columns,
+          data: rows,
+          loading: true
+        },
+      })
+
+      expect(wrapper.findAll('.animate-pulse').length).toBeGreaterThan(0)
+      expect(wrapper.text()).not.toContain('纸盒')
     })
   })
 })

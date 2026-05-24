@@ -1,16 +1,28 @@
 <template>
-  <div class="flex flex-wrap gap-3">
-    <slot>
-      <Checkbox
-        v-for="option in options"
-        :key="getOptionValue(option)"
-        :model-value="modelValue"
-        :value="getOptionValue(option)"
-        :label="getOptionLabel(option)"
-        :disabled="isOptionDisabled(option)"
-        @change="handleChange(getOptionValue(option), $event)"
-      />
-    </slot>
+  <div class="w-full">
+    <div v-if="label" class="input-label mb-1.5 block">
+      {{ label }}
+      <span v-if="required" class="text-red-500">*</span>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <slot>
+        <Checkbox
+          v-for="option in options"
+          :key="getOptionValue(option)"
+          :model-value="isOptionSelected(option)"
+          :value="getOptionValue(option)"
+          :label="getOptionLabel(option)"
+          :disabled="disabled || isOptionDisabled(option)"
+          @change="handleChange(getOptionValue(option), $event)"
+        />
+      </slot>
+    </div>
+    <p v-if="error" class="input-error-text mt-1.5">
+      {{ error }}
+    </p>
+    <p v-else-if="hint" class="input-hint mt-1.5">
+      {{ hint }}
+    </p>
   </div>
 </template>
 
@@ -20,7 +32,11 @@ import Checkbox from './Checkbox.vue'
 const props = defineProps({
   modelValue: { type: Array as any, default: () => [] },
   options: { type: Array as any, default: () => [] },
-  disabled: { type: Boolean, default: false }
+  disabled: { type: Boolean, default: false },
+  label: { type: String, default: '' },
+  hint: { type: String, default: '' },
+  error: { type: String, default: '' },
+  required: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
@@ -38,6 +54,10 @@ function getOptionLabel(option: any) {
 function isOptionDisabled(option: any) {
   if (typeof option === 'object' && option !== null) return !!option.disabled
   return false
+}
+
+function isOptionSelected(option: any) {
+  return props.modelValue.includes(getOptionValue(option))
 }
 
 function handleChange(optionValue: any, checked: any) {

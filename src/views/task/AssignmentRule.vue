@@ -65,12 +65,24 @@
         <button class="btn btn-primary" :disabled="submitting" @click="handleSubmit">确定</button>
       </template>
     </BaseDialog>
+    <ConfirmDialog
+      :show="showDeleteDialog"
+      title="删除确认"
+      message="确定要删除此规则？"
+      confirm-text="删除"
+      cancel-text="取消"
+      danger
+      :loading="deleting"
+      loading-text="删除中..."
+      @confirm="confirmRemoveDepartment"
+      @cancel="cancelRemoveDepartment"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Icon, SearchInput, TextArea, Select, InputNumber, Toggle } from '@/components/common'
+import { Icon, SearchInput, TextArea, Select, InputNumber, Toggle, ConfirmDialog } from '@/components/common'
 import { ElMessage } from '@/utils/message'
 import { assignmentRuleAPI, processAPI, departmentAPI, dispatchConfigAPI } from '@/api/modules'
 import { useCrudPermission } from '@/composables'
@@ -94,6 +106,9 @@ const dialogTitle = ref('新建分派规则')
 const submitting = ref(false)
 const isEdit = ref(false)
 const currentRuleId = ref(null)
+const showDeleteDialog = ref(false)
+const deleting = ref(false)
+const pendingDeleteRuleId = ref<any>(null)
 
 const form = reactive({ process: null, department: null, priority: 1, conditions: '', is_active: true })
 
@@ -143,14 +158,29 @@ const handleToggleActive = async (payload: any) => { const { id, is_active } = p
 
 const handleAddDepartment = (data: any) => { showDialog(data) }
 const handleEditDepartment = (data: any) => { showDialog(data, data.id) }
-const handleRemoveDepartment = async (id: any) => {
+const handleRemoveDepartment = (id: any) => {
+  pendingDeleteRuleId.value = id
+  showDeleteDialog.value = true
+}
+
+const cancelRemoveDepartment = () => {
+  showDeleteDialog.value = false
+  pendingDeleteRuleId.value = null
+}
+
+const confirmRemoveDepartment = async () => {
+  if (!pendingDeleteRuleId.value) return
+  deleting.value = true
   try {
-    const confirmed = await ErrorHandler.confirm('确定要删除此规则？')
-    if (!confirmed) return
-    await assignmentRuleAPI.delete(id)
+    await assignmentRuleAPI.delete(pendingDeleteRuleId.value)
     ElMessage.success('删除成功')
+    cancelRemoveDepartment()
     if (selectedProcess.value) loadDepartmentRules(selectedProcess.value.id)
-  } catch (error: any) { if (error !== 'cancel') ErrorHandler.showMessage(error, '删除失败') }
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '删除失败')
+  } finally {
+    deleting.value = false
+  }
 }
 
 const showDialog = (data: any = null, ruleId: any = null) => {

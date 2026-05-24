@@ -2,85 +2,101 @@
   <div class="space-y-6">
     <StockStats :stats="stats" :loading="statsLoading" />
 
-    <CrudPageLayout
-      title="库存管理"
-      :loading="loading"
-      :total="total"
-      :current-page="currentPage"
-      :page-size="pageSize"
-      @size-change="handleSizeChange"
-      @current-change="handlePageChange"
-    >
-      <template #search>
-        <Select v-model="filters.status" :options="statusOptions" class="w-full sm:w-40" placeholder="库存状态" clearable @change="handleSearch" />
+    <TablePageLayout>
+      <template #filters>
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <Select v-model="filters.status" :options="statusOptions" class="w-full sm:w-40" placeholder="库存状态" clearable @change="handleSearch" />
+          </div>
+        </div>
       </template>
       <template #actions>
-        <button class="btn btn-secondary btn-sm" :disabled="loading" @click="loadData">
-          <Icon name="refresh" class="h-4 w-4" />
-          刷新
-        </button>
-        <button class="btn btn-warning btn-sm" @click="handleLowStock">
-          <Icon name="exclamationTriangle" class="h-4 w-4" />
-          库存预警
-        </button>
-        <button class="btn btn-danger btn-sm" @click="handleExpired">
-          <Icon name="clock" class="h-4 w-4" />
-          过期库存
-        </button>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-secondary" :disabled="loading" @click="loadData" title="刷新">
+            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          </button>
+          <button class="btn btn-warning" @click="handleLowStock">
+            <Icon name="exclamationTriangle" size="md" class="mr-2" />
+            库存预警
+          </button>
+          <button class="btn btn-danger" @click="handleExpired">
+            <Icon name="clock" size="md" class="mr-2" />
+            过期库存
+          </button>
+        </div>
       </template>
 
-      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
-        <template #cell-product_name="{ row }">
-          <span>{{ row.product_name }}</span>
-        </template>
-        <template #cell-batch_no="{ row }">
-          <span>{{ row.batch_no }}</span>
-        </template>
-        <template #cell-quantity="{ row }">
-          <span :class="getQuantityClass(row)">{{ row.quantity }}</span>
-        </template>
-        <template #cell-reserved_quantity="{ row }">
-          <span>{{ row.reserved_quantity }}</span>
-        </template>
-        <template #cell-available_quantity="{ row }">
-          <span>{{ row.available_quantity }}</span>
-        </template>
-        <template #cell-min_stock_level="{ row }">
-          <span>{{ row.min_stock_level }}</span>
-        </template>
-        <template #cell-location="{ row }">
-          <span>{{ row.location }}</span>
-        </template>
-        <template #cell-production_date="{ row }">
-          <span>{{ row.production_date }}</span>
-        </template>
-        <template #cell-expiry_date="{ row }">
-          <span :class="getExpiryClass(row)">{{ row.expiry_date || '-' }}</span>
-        </template>
-        <template #cell-days_until_expiry="{ row }">
-          <Tag v-if="row.days_until_expiry !== null" :type="getExpiryTagType(row.days_until_expiry)">{{ row.days_until_expiry > 0 ? `${row.days_until_expiry}天` : `已过期${Math.abs(row.days_until_expiry)}天` }}</Tag>
-          <span v-else>-</span>
-        </template>
-        <template #cell-status="{ row }">
-          <StatusTag :status="row.status" category="stock" :label="row.status_display" />
-        </template>
-        <template #cell-actions="{ row }">
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="handleView(row)">查看</button>
-            <button v-if="canEdit" class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="handleAdjust(row)">调整</button>
-          </div>
-        </template>
-        <template #empty>
-          <EmptyState
-            :description="hasFilters ? '未找到匹配的库存' : '暂无库存数据'"
-            :action-text="hasFilters ? '重置筛选' : undefined"
-            @action="handleReset"
-          />
-        </template>
-      </DataTable>
-    </CrudPageLayout>
+      <template #table>
+        <DataTable :columns="columns" :data="tableData" :loading="loading" :row-key="(row: any) => row.id">
+          <template #cell-product_name="{ row }">
+            <span class="truncate max-w-xs block">{{ row.product_name }}</span>
+          </template>
+          <template #cell-batch_no="{ row }">
+            <span>{{ row.batch_no }}</span>
+          </template>
+          <template #cell-quantity="{ row }">
+            <span :class="getQuantityClass(row)">{{ row.quantity }}</span>
+          </template>
+          <template #cell-reserved_quantity="{ row }">
+            <span>{{ row.reserved_quantity }}</span>
+          </template>
+          <template #cell-available_quantity="{ row }">
+            <span>{{ row.available_quantity }}</span>
+          </template>
+          <template #cell-min_stock_level="{ row }">
+            <span>{{ row.min_stock_level }}</span>
+          </template>
+          <template #cell-location="{ row }">
+            <span>{{ row.location }}</span>
+          </template>
+          <template #cell-production_date="{ row }">
+            <span>{{ row.production_date }}</span>
+          </template>
+          <template #cell-expiry_date="{ row }">
+            <span :class="getExpiryClass(row)">{{ row.expiry_date || '-' }}</span>
+          </template>
+          <template #cell-days_until_expiry="{ row }">
+            <Tag v-if="row.days_until_expiry !== null" :type="getExpiryTagType(row.days_until_expiry)">{{ row.days_until_expiry > 0 ? `${row.days_until_expiry}天` : `已过期${Math.abs(row.days_until_expiry)}天` }}</Tag>
+            <span v-else>-</span>
+          </template>
+          <template #cell-status="{ row }">
+            <StatusTag :status="row.status" category="stock" :label="row.status_display" />
+          </template>
+          <template #cell-actions="{ row }">
+            <div class="flex items-center gap-1">
+              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
+                <Icon name="eye" size="sm" />
+                <span class="text-xs">查看</span>
+              </button>
+              <button v-if="canEdit" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleAdjust(row)">
+                <Icon name="edit" size="sm" />
+                <span class="text-xs">调整</span>
+              </button>
+            </div>
+          </template>
+          <template #empty>
+            <EmptyState
+              :description="hasFilters ? '未找到匹配的库存' : '暂无库存数据'"
+              :action-text="hasFilters ? '重置筛选' : undefined"
+              @action="handleReset"
+            />
+          </template>
+        </DataTable>
+      </template>
 
-    <BaseDialog :show="detailDialogVisible" title="库存详情" width="wide">
+      <template #pagination>
+        <Pagination
+          v-if="total > 0"
+          :page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          @update:page="handlePageChange"
+          @update:page-size="handleSizeChange"
+        />
+      </template>
+    </TablePageLayout>
+
+    <BaseDialog :show="detailDialogVisible" title="库存详情" width="wide" @close="detailDialogVisible = false">
       <div v-if="currentStock" class="descriptions-grid" style="--col: 2">
         <div class="description-item"><div class="description-label">产品名称</div><div class="description-value">{{ (currentStock as any).product_name }}</div></div>
         <div class="description-item"><div class="description-label">批次号</div><div class="description-value">{{ (currentStock as any).batch_no }}</div></div>
@@ -104,7 +120,7 @@
       </template>
     </BaseDialog>
 
-    <BaseDialog :show="lowStockDialogVisible" title="库存预警" width="extra-wide">
+    <BaseDialog :show="lowStockDialogVisible" title="库存预警" width="extra-wide" @close="lowStockDialogVisible = false">
       <EmptyState v-if="!loadingLowStock && lowStockList.length === 0" description="暂无低库存预警" />
       <div v-else class="overflow-x-auto">
         <table class="w-full border-collapse">
@@ -132,7 +148,7 @@
       </div>
     </BaseDialog>
 
-    <BaseDialog :show="expiredDialogVisible" title="过期库存" width="extra-wide">
+    <BaseDialog :show="expiredDialogVisible" title="过期库存" width="extra-wide" @close="expiredDialogVisible = false">
       <EmptyState v-if="!loadingExpired && expiredList.length === 0" description="暂无过期库存" />
       <div v-else class="overflow-x-auto">
         <table class="w-full border-collapse">
@@ -160,21 +176,21 @@
       </div>
     </BaseDialog>
 
-    <BaseDialog :show="adjustDialogVisible" title="库存调整" width="normal">
-      <div class="space-y-4">
-        <div class="flex items-center gap-3">
-          <label class="w-28 text-sm text-gray-600 dark:text-gray-400">调整数量</label>
-          <InputNumber v-model="adjustForm.adjustment" :step="1" class="flex-1" />
+    <BaseDialog :show="adjustDialogVisible" title="库存调整" width="normal" @close="adjustDialogVisible = false">
+      <form id="adjust-form" @submit.prevent="handleSaveAdjust" class="space-y-5">
+        <div>
+          <label class="input-label mb-1.5 block">调整数量</label>
+          <InputNumber v-model="adjustForm.adjustment" :step="1" class="w-full" />
         </div>
-        <div class="flex items-start gap-3">
-          <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">调整原因</label>
-          <TextArea v-model="adjustForm.reason" :rows="3" class="flex-1" />
+        <div>
+          <label class="input-label mb-1.5 block">调整原因</label>
+          <TextArea v-model="adjustForm.reason" :rows="3" class="w-full" />
         </div>
-      </div>
+      </form>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button class="btn btn-secondary" @click="adjustDialogVisible = false">取消</button>
-          <button class="btn btn-primary" @click="handleSaveAdjust">保存</button>
+          <button type="button" class="btn btn-secondary" @click="adjustDialogVisible = false">取消</button>
+          <button form="adjust-form" type="submit" class="btn btn-primary">保存</button>
         </div>
       </template>
     </BaseDialog>
@@ -189,7 +205,7 @@ import { productStockAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, EmptyState, Pagination, InputNumber, TextArea, Select, CrudPageLayout, DataTable, Tag, BaseDialog } from '@/components/common'
+import { StatusTag, EmptyState, Pagination, InputNumber, TextArea, Select, TablePageLayout, DataTable, Tag, BaseDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import StockStats from './components/StockStats.vue'
 
@@ -206,7 +222,6 @@ const loadingLowStock = ref(false)
 const loadingExpired = ref(false)
 const lowStockList = ref<any[]>([])
 const expiredList = ref<any[]>([])
-const formRef = ref(null)
 const currentAdjustId = ref<string | number | null>(null)
 const adjustForm = reactive({ adjustment: 0, reason: '' })
 
@@ -255,7 +270,14 @@ const handleReset = () => resetFilters()
 
 const fetchStats = async () => {
   statsLoading.value = true
-  try { const response: any = await productStockAPI.getSummary(); stats.value = response || {} } catch (error: any) { stats.value = {} } finally { statsLoading.value = false }
+  try { 
+    const response: any = await productStockAPI.getSummary()
+    stats.value = response || {} 
+  } catch (error: any) { 
+    stats.value = {} 
+  } finally { 
+    statsLoading.value = false 
+  }
 }
 
 const handleView = async (row: any) => { currentStock.value = row; detailDialogVisible.value = true }
@@ -263,17 +285,40 @@ const handleView = async (row: any) => { currentStock.value = row; detailDialogV
 const handleAdjust = (row: any) => { currentAdjustId.value = row.id; adjustForm.adjustment = 0; adjustForm.reason = ''; adjustDialogVisible.value = true }
 
 const handleSaveAdjust = async () => {
-  try { await productStockAPI.adjust(currentAdjustId.value as string | number, adjustForm); ElMessage.success('调整成功'); adjustDialogVisible.value = false; loadData() } catch (error: any) { ErrorHandler.showMessage(error, '调整失败') }
+  try { 
+    await productStockAPI.adjust(currentAdjustId.value as string | number, adjustForm)
+    ElMessage.success('调整成功')
+    adjustDialogVisible.value = false
+    loadData() 
+  } catch (error: any) { 
+    ErrorHandler.showMessage(error, '调整失败') 
+  }
 }
 
 const handleLowStock = async () => {
-  lowStockDialogVisible.value = true; loadingLowStock.value = true
-  try { const response: any = await productStockAPI.getLowStock(); lowStockList.value = response?.results || [] } catch (error: any) { lowStockList.value = [] } finally { loadingLowStock.value = false }
+  lowStockDialogVisible.value = true
+  loadingLowStock.value = true
+  try { 
+    const response: any = await productStockAPI.getLowStock()
+    lowStockList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
+  } catch (error: any) { 
+    lowStockList.value = [] 
+  } finally { 
+    loadingLowStock.value = false 
+  }
 }
 
 const handleExpired = async () => {
-  expiredDialogVisible.value = true; loadingExpired.value = true
-  try { const response: any = await productStockAPI.getExpired(); expiredList.value = response?.results || [] } catch (error: any) { expiredList.value = [] } finally { loadingExpired.value = false }
+  expiredDialogVisible.value = true
+  loadingExpired.value = true
+  try { 
+    const response: any = await productStockAPI.getExpired()
+    expiredList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
+  } catch (error: any) { 
+    expiredList.value = [] 
+  } finally { 
+    loadingExpired.value = false 
+  }
 }
 
 const getQuantityClass = (row: any) => row.quantity <= row.min_stock_level ? 'font-bold text-danger-600 dark:text-danger-400' : ''

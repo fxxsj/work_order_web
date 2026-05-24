@@ -2,87 +2,123 @@
   <div class="space-y-6">
     <QualityStats :stats="stats" :loading="statsLoading" />
 
-    <CrudPageLayout
-      title="质检管理"
-      :loading="loading"
-      :total="total"
-      :current-page="currentPage"
-      :page-size="pageSize"
-      @size-change="handleSizeChange"
-      @current-change="handlePageChange"
-    >
-      <template #search>
-        <SearchInput v-model="filters.inspection_number" placeholder="搜索检验单号" @search="handleSearchDebounced" @clear="handleSearch" />
-        <Select v-model="filters.inspection_type" :options="inspectionTypeOptions" class="w-36" placeholder="检验类型" clearable @change="handleSearch" />
-        <Select v-model="filters.result" :options="resultOptions" class="w-36" placeholder="检验结果" clearable @change="handleSearch" />
+    <TablePageLayout>
+      <template #filters>
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <SearchInput v-model="filters.inspection_number" placeholder="搜索检验单号" class="w-full sm:w-64" @search="handleSearchDebounced" @clear="handleSearch" />
+            <Select v-model="filters.inspection_type" :options="inspectionTypeOptions" class="w-36" placeholder="检验类型" clearable @change="handleSearch" />
+            <Select v-model="filters.result" :options="resultOptions" class="w-36" placeholder="检验结果" clearable @change="handleSearch" />
+          </div>
+        </div>
       </template>
       <template #actions>
-        <button class="btn" :disabled="loading" @click="loadData">刷新</button>
-        <button class="btn btn-primary" v-if="canCreate" @click="handleCreate">新建质检</button>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-secondary" :disabled="loading" @click="loadData" title="刷新">
+            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          </button>
+          <button class="btn btn-primary" v-if="canCreate" @click="handleCreate">
+            <Icon name="plus" size="md" class="mr-2" />
+            新建质检
+          </button>
+        </div>
       </template>
 
-      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id">
-        <template #cell-inspection_number="{ row }">
-          <span>{{ row.inspection_number }}</span>
-        </template>
-        <template #cell-inspection_type_display="{ row }">
-          <span>{{ row.inspection_type_display }}</span>
-        </template>
-        <template #cell-product_name="{ row }">
-          <span class="truncate max-w-xs">{{ row.product_name }}</span>
-        </template>
-        <template #cell-batch_no="{ row }">
-          <span>{{ row.batch_no }}</span>
-        </template>
-        <template #cell-quantity="{ row }">
-          <span>{{ row.quantity }}</span>
-        </template>
-        <template #cell-qualified_quantity="{ row }">
-          <span>{{ row.qualified_quantity || '-' }}</span>
-        </template>
-        <template #cell-defective_quantity="{ row }">
-          <span :class="row.defective_quantity > 0 ? 'text-danger' : ''">{{ row.defective_quantity || '-' }}</span>
-        </template>
-        <template #cell-result="{ row }">
-          <StatusTag :status="row.result" category="inspection" :label="row.result_display" />
-        </template>
-        <template #cell-inspector_name="{ row }">
-          <span>{{ row.inspector_name }}</span>
-        </template>
-        <template #cell-inspection_date="{ row }">
-          <span>{{ row.inspection_date }}</span>
-        </template>
-        <template #cell-actions="{ row }">
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" @click="handleView(row)">查看</button>
-            <button class="btn btn-ghost btn-sm" v-if="canEdit && row.result === 'pending'" @click="handleInspect(row)">检验</button>
-            <button class="btn btn-ghost btn-sm" v-if="canDelete && row.result === 'pending'" style="color: #F56C6C;" @click="handleDelete(row)">删除</button>
-          </div>
-        </template>
-        <template #empty>
-          <EmptyState description="暂无质检数据">
-            <template #action>
-              <button class="btn btn-primary" v-if="hasFilters" @click="handleReset">重置筛选</button>
-              <button class="btn btn-primary" v-else-if="canCreate" @click="handleCreate">创建第一个质检</button>
-            </template>
-          </EmptyState>
-        </template>
-      </DataTable>
-    </CrudPageLayout>
+      <template #table>
+        <DataTable :columns="columns" :data="tableData" :loading="loading" :row-key="(row: any) => row.id">
+          <template #cell-inspection_number="{ row }">
+            <span>{{ row.inspection_number }}</span>
+          </template>
+          <template #cell-inspection_type_display="{ row }">
+            <span>{{ row.inspection_type_display }}</span>
+          </template>
+          <template #cell-product_name="{ row }">
+            <span class="truncate max-w-xs block">{{ row.product_name }}</span>
+          </template>
+          <template #cell-batch_no="{ row }">
+            <span>{{ row.batch_no }}</span>
+          </template>
+          <template #cell-quantity="{ row }">
+            <span>{{ row.quantity }}</span>
+          </template>
+          <template #cell-qualified_quantity="{ row }">
+            <span>{{ row.qualified_quantity || '-' }}</span>
+          </template>
+          <template #cell-defective_quantity="{ row }">
+            <span :class="row.defective_quantity > 0 ? 'text-danger' : ''">{{ row.defective_quantity || '-' }}</span>
+          </template>
+          <template #cell-result="{ row }">
+            <StatusTag :status="row.result" category="inspection" :label="row.result_display" />
+          </template>
+          <template #cell-inspector_name="{ row }">
+            <span>{{ row.inspector_name }}</span>
+          </template>
+          <template #cell-inspection_date="{ row }">
+            <span>{{ row.inspection_date }}</span>
+          </template>
+          <template #cell-actions="{ row }">
+            <div class="flex items-center gap-1">
+              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
+                <Icon name="eye" size="sm" />
+                <span class="text-xs">查看</span>
+              </button>
+              <button v-if="canEdit && row.result === 'pending'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400" @click="handleInspect(row)">
+                <Icon name="clipboard" size="sm" />
+                <span class="text-xs">检验</span>
+              </button>
+              <button v-if="canDelete && row.result === 'pending'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400" @click="confirmDelete(row)">
+                <Icon name="trash" size="sm" />
+                <span class="text-xs">删除</span>
+              </button>
+            </div>
+          </template>
+          <template #empty>
+            <EmptyState description="暂无质检数据">
+              <template #action>
+                <button class="btn btn-primary" v-if="hasFilters" @click="handleReset">重置筛选</button>
+                <button class="btn btn-primary" v-else-if="canCreate" @click="handleCreate">创建第一个质检</button>
+              </template>
+            </EmptyState>
+          </template>
+        </DataTable>
+      </template>
+
+      <template #pagination>
+        <Pagination
+          v-if="total > 0"
+          :page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          @update:page="handlePageChange"
+          @update:page-size="handleSizeChange"
+        />
+      </template>
+    </TablePageLayout>
 
     <QualityDetailDialog v-model:visible="detailDialogVisible" :data="currentQuality" />
     <QualityInspectDialog v-model:visible="inspectDialogVisible" :quality="currentQuality" :loading="inspecting" @confirm="handleConfirmInspect" />
     <QualityFormDialog v-model:visible="formDialogVisible" :is-edit="false" :submitting="submitting" :form="form" :product-list="productList" @submit="handleSubmit" />
+
+    <ConfirmDialog
+      :show="showDeleteDialog"
+      title="删除确认"
+      :message="`确定要删除检验单「${selectedRowAction?.inspection_number}」吗？此操作不可撤销。`"
+      confirm-text="删除"
+      cancel-text="取消"
+      :danger="true"
+      @confirm="handleDelete"
+      @cancel="showDeleteDialog = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from '@/utils/message'
 import { qualityInspectionAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, Icon, CrudPageLayout, DataTable, EmptyState, SearchInput } from '@/components/common'
+import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import QualityStats from './components/QualityStats.vue'
 import QualityDetailDialog from './components/QualityDetailDialog.vue'
@@ -97,9 +133,13 @@ const inspecting = ref(false)
 const productList = ref<any[]>([])
 const currentQuality = ref<any>(null)
 const stats = ref({})
+
 const detailDialogVisible = ref(false)
 const inspectDialogVisible = ref(false)
 const formDialogVisible = ref(false)
+const showDeleteDialog = ref(false)
+const selectedRowAction = ref<any>(null)
+
 const form = reactive({ id: null, product: null, batch_no: '', quantity: 0, inspection_type: 'final', notes: '' })
 
 const columns: Column[] = [
@@ -156,24 +196,74 @@ const {
 
 const handleReset = () => resetFilters()
 
-const fetchStats = async () => { statsLoading.value = true; try { const response: any = await qualityInspectionAPI.getStats(); stats.value = response || {} } catch (error: any) { stats.value = {} } finally { statsLoading.value = false } }
-const fetchProducts = async () => { try { const response: any = await productAPI.getList({ page_size: 1000 }); productList.value = response?.results || [] } catch (error: any) {} }
+const fetchStats = async () => { 
+  statsLoading.value = true
+  try { 
+    const response: any = await qualityInspectionAPI.getStats()
+    stats.value = response || {} 
+  } catch (error: any) { 
+    stats.value = {} 
+  } finally { 
+    statsLoading.value = false 
+  } 
+}
+
+const fetchProducts = async () => { 
+  try { 
+    const response: any = await productAPI.getList({ page_size: 1000 })
+    productList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
+  } catch (error: any) {} 
+}
 
 const handleView = (row: any) => { currentQuality.value = row; detailDialogVisible.value = true }
 const handleCreate = () => { if (!canCreate.value) return; Object.assign(form, { id: null, product: null, batch_no: '', quantity: 0, inspection_type: 'final', notes: '' }); formDialogVisible.value = true }
 const handleInspect = (row: any) => { currentQuality.value = row; inspectDialogVisible.value = true }
-const handleDelete = async (row: any) => {
+
+const confirmDelete = (row: any) => {
+  if (!canDelete.value) return
+  selectedRowAction.value = row
+  showDeleteDialog.value = true
+}
+
+const handleDelete = async () => {
   try {
-    if (!canDelete.value) return
-    const confirmed = await ErrorHandler.confirm(`确定要删除检验单"${row.inspection_number}"吗？`)
-    if (!confirmed) return
+    const row = selectedRowAction.value
+    if (!row) return
     await qualityInspectionAPI.delete(row.id)
     ElMessage.success('删除成功')
+    showDeleteDialog.value = false
     loadData()
-  } catch (error: any) { if (error !== 'cancel') ErrorHandler.showMessage(error, '删除失败') }
+  } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
 }
-const handleConfirmInspect = async (data: any) => { inspecting.value = true; try { await qualityInspectionAPI.inspect(currentQuality.value.id, data); ElMessage.success('检验完成'); inspectDialogVisible.value = false; loadData(); fetchStats() } catch (error: any) { ErrorHandler.showMessage(error, '检验失败') } finally { inspecting.value = false } }
-const handleSubmit = async (data: any) => { submitting.value = true; try { await qualityInspectionAPI.create(data); ElMessage.success('创建成功'); formDialogVisible.value = false; loadData() } catch (error: any) { ErrorHandler.showMessage(error, '创建失败') } finally { submitting.value = false } }
+
+const handleConfirmInspect = async (data: any) => { 
+  inspecting.value = true
+  try { 
+    await qualityInspectionAPI.inspect(currentQuality.value.id, data)
+    ElMessage.success('检验完成')
+    inspectDialogVisible.value = false
+    loadData()
+    fetchStats() 
+  } catch (error: any) { 
+    ErrorHandler.showMessage(error, '检验失败') 
+  } finally { 
+    inspecting.value = false 
+  } 
+}
+
+const handleSubmit = async (data: any) => { 
+  submitting.value = true
+  try { 
+    await qualityInspectionAPI.create(data)
+    ElMessage.success('创建成功')
+    formDialogVisible.value = false
+    loadData() 
+  } catch (error: any) { 
+    ErrorHandler.showMessage(error, '创建失败') 
+  } finally { 
+    submitting.value = false 
+  } 
+}
 
 onMounted(() => { loadData(); fetchStats(); fetchProducts() })
 </script>

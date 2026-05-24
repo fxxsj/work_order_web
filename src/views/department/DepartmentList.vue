@@ -1,68 +1,115 @@
 <template>
-  <div class="card">
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <SearchInput
-        v-model="searchText"
-        class="w-full sm:w-72"
-        placeholder="搜索部门名称、编码"
-        @search="handleSearch"
-        @clear="handleSearch"
-      />
-      <button v-if="canCreate" class="btn btn-primary" @click="showCreateDialog">
-        <Icon name="plus" size="sm" />
-        新建部门
-      </button>
-    </div>
+  <TablePageLayout>
+    <template #filters>
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <SearchInput
+            v-model="searchText"
+            class="w-full sm:w-72"
+            placeholder="搜索部门名称、编码"
+            @search="handleSearch"
+            @clear="handleSearch"
+          />
+        </div>
+      </div>
+    </template>
 
-    <EmptyState
-      v-if="!loading && tableData.length === 0"
-      :description="hasFilters ? '未找到匹配的部门' : '暂无部门数据'"
-      :action-text="canCreate && !hasFilters ? '新建部门' : undefined"
-      @action="showCreateDialog"
-    />
+    <template #actions>
+      <div class="flex justify-end gap-3">
+        <button
+          @click="loadData"
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
+        >
+          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        </button>
+        <button v-if="canCreate" class="btn btn-primary" @click="openCreateModal">
+          <Icon name="plus" size="md" class="mr-2" />
+          新建部门
+        </button>
+      </div>
+    </template>
 
-    <div v-else class="overflow-x-auto">
-      <table class="w-full border-collapse">
-        <thead>
-          <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-            <th class="px-4 py-3 w-36">部门编码</th>
-            <th class="px-4 py-3 w-44">部门名称</th>
-            <th class="px-4 py-3 w-28">上级部门</th>
-            <th class="px-4 py-3 w-24 text-center">子部门</th>
-            <th class="px-4 py-3 min-w-48">工序</th>
-            <th class="px-4 py-3 w-20 text-center">排序</th>
-            <th class="px-4 py-3 w-24">状态</th>
-            <th class="px-4 py-3 w-44">创建时间</th>
-            <th class="px-4 py-3 w-32">操作</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-          <tr v-for="row in tableData" :key="row.id" :class="getRowClassName({ row })">
-            <td class="px-4 py-3">{{ row.code }}</td>
-            <td class="px-4 py-3"><span :class="row.parent ? 'text-primary-600' : ''">{{ row.name }}</span></td>
-            <td class="px-4 py-3"><span :class="row.parent_name ? 'text-primary-600' : 'text-gray-400 dark:text-dark-400'">{{ row.parent_name || '-' }}</span></td>
-            <td class="px-4 py-3 text-center"><Tag v-if="row.children_count > 0" type="info" size="small">{{ row.children_count }}个</Tag><span v-else class="text-gray-400 dark:text-dark-400">-</span></td>
-            <td class="px-4 py-3">
-              <template v-if="!row.process_names || row.process_names.length === 0"><span class="text-gray-400 dark:text-dark-400">-</span></template>
-              <template v-else>
-                <Tag v-for="processName in getDisplayedProcesses(row)" :key="processName" size="small" class="mr-1 mb-1">{{ processName }}</Tag>
-                <Tag v-if="shouldShowMoreButton(row)" size="small" class="mr-1 mb-1 cursor-pointer" @click="toggleProcessExpansion(row)">{{ getMoreButtonText(row) }}</Tag>
-              </template>
-            </td>
-            <td class="px-4 py-3 text-center">{{ row.sort_order }}</td>
-            <td class="px-4 py-3"><Tag :type="row.is_active ? 'success' : 'info'">{{ row.is_active ? '启用' : '禁用' }}</Tag></td>
-            <td class="px-4 py-3">{{ formatDateTime(row.created_at) }}</td>
-            <td class="px-4 py-3">
-              <button v-if="canEdit" class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="handleEdit(row)">编辑</button>
-              <button v-if="canDelete" class="btn btn-ghost btn-sm text-danger-600 dark:text-danger-400" @click="handleDelete(row)">删除</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <template #table>
+      <DataTable
+        :columns="columns"
+        :data="tableData"
+        :loading="loading"
+        :row-key="(row: any) => row.id"
+        @sort="handleSort"
+      >
+        <template #cell-code="{ value }">
+          <span class="text-sm font-medium">{{ value }}</span>
+        </template>
+        
+        <template #cell-name="{ value, row }">
+          <span :class="row.parent ? 'text-primary-600' : 'text-gray-900 dark:text-gray-100'">{{ value }}</span>
+        </template>
+        
+        <template #cell-parent_name="{ value }">
+          <span :class="value ? 'text-primary-600' : 'text-gray-400 dark:text-dark-400'">{{ value || '-' }}</span>
+        </template>
+        
+        <template #cell-children_count="{ value }">
+          <Tag v-if="value > 0" type="info" size="small">{{ value }}个</Tag>
+          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+        </template>
+        
+        <template #cell-process_names="{ row }">
+          <template v-if="!row.process_names || row.process_names.length === 0">
+            <span class="text-gray-400 dark:text-dark-400">-</span>
+          </template>
+          <template v-else>
+            <div class="flex flex-wrap gap-1">
+              <Tag v-for="processName in getDisplayedProcesses(row)" :key="processName" size="small">{{ processName }}</Tag>
+              <Tag v-if="shouldShowMoreButton(row)" size="small" class="cursor-pointer hover:bg-gray-200 dark:hover:bg-dark-600" @click="toggleProcessExpansion(row)">{{ getMoreButtonText(row) }}</Tag>
+            </div>
+          </template>
+        </template>
+        
+        <template #cell-is_active="{ value }">
+          <Tag :type="value ? 'success' : 'info'">{{ value ? '启用' : '禁用' }}</Tag>
+        </template>
+        
+        <template #cell-created_at="{ value }">
+          <span class="text-sm text-gray-500 dark:text-dark-400">{{ formatDateTime(value) }}</span>
+        </template>
+        
+        <template #cell-actions="{ row }">
+          <div class="flex items-center gap-1">
+            <button
+              v-if="canEdit"
+              @click="handleEdit(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+            >
+              <Icon name="edit" size="sm" />
+              <span class="text-xs">编辑</span>
+            </button>
+            <button
+              v-if="canDelete"
+              @click="confirmDelete(row)"
+              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            >
+              <Icon name="trash" size="sm" />
+              <span class="text-xs">删除</span>
+            </button>
+          </div>
+        </template>
 
-    <div v-if="total > 0" class="mt-6 flex justify-end">
+        <template #empty>
+          <EmptyState
+            :description="hasFilters ? '未找到匹配的部门' : '暂无部门数据'"
+            :action-text="canCreate && !hasFilters ? '新建部门' : undefined"
+            @action="openCreateModal"
+          />
+        </template>
+      </DataTable>
+    </template>
+
+    <template #pagination>
       <Pagination
+        v-if="total > 0"
         v-model:page="currentPage"
         v-model:page-size="pageSize"
         :total="total"
@@ -70,62 +117,115 @@
         @update:page-size="handleSizeChange"
         @update:page="handlePageChange"
       />
-    </div>
-  </div>
+    </template>
+  </TablePageLayout>
 
-  <FormDialog ref="formDialogRef" v-model="dialogVisible" :title="dialogTitle" width="500px" :form-data="form" :rules="rules" :loading="dialogLoading" @submit="handleSubmit" @cancel="customResetForm"
+  <BaseDialog
+    :show="showCreateModal || showEditModal"
+    :title="showEditModal ? '编辑部门' : '新建部门'"
+    width="normal"
+    @close="closeModals"
   >
-    <div class="space-y-4">
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">部门编码</label>
-        <div class="flex-1">
-          <Input v-model="form.code" placeholder="请输入部门编码（英文，如：prepress）" :disabled="isEditMode" class="w-full" />
-          <div class="text-xs text-gray-400 mt-1">建议使用英文小写，如：prepress、printing、surface等</div>
-        </div>
+    <form id="department-form" @submit.prevent="handleSubmit" class="space-y-5">
+      <div>
+        <Input 
+          v-model="formData.code" 
+          label="部门编码" 
+          placeholder="请输入部门编码（英文，如：prepress）" 
+          :disabled="showEditModal" 
+          required 
+          hint="建议使用英文小写，如：prepress、printing、surface等"
+        />
       </div>
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">部门名称</label>
-        <div class="flex-1">
-          <Input v-model="form.name" placeholder="请输入部门名称（中文）" class="w-full" />
-        </div>
+      <div>
+        <Input 
+          v-model="formData.name" 
+          label="部门名称" 
+          placeholder="请输入部门名称（中文）" 
+          required 
+        />
       </div>
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">上级部门</label>
-        <div class="flex-1">
-          <Select v-model="form.parent" :options="availableParentOptions" placeholder="请选择上级部门（可选）" clearable filterable class="w-full" :disabled="isEditMode && form.children_count > 0" />
-          <div class="text-xs text-gray-400 mt-1">选择上级部门可建立部门层级关系（如：生产部 > 裁切车间）</div>
-        </div>
+      <Select
+        v-model="formData.parent"
+        label="上级部门"
+        hint="选择上级部门可建立部门层级关系（如：生产部 > 裁切车间）"
+        :options="availableParentOptions"
+        placeholder="请选择上级部门（可选）"
+        clearable
+        filterable
+        :disabled="showEditModal && formData.children_count > 0"
+      />
+      <InputNumber
+        v-model="formData.sort_order"
+        label="排序"
+        hint="数字越小越靠前显示"
+        :min="0"
+      />
+      <CheckboxGroup
+        v-model="formData.processes"
+        label="工序"
+        :options="processOptions"
+        class="w-full"
+      />
+      <Toggle
+        v-model="formData.is_active"
+        label="是否启用"
+      />
+    </form>
+    
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <button @click="closeModals" type="button" class="btn btn-secondary">
+          取消
+        </button>
+        <button
+          form="department-form"
+          type="submit"
+          :disabled="submitting"
+          class="btn btn-primary"
+        >
+          <Icon v-if="submitting" name="refresh" size="sm" class="-ml-1 mr-2 animate-spin" />
+          {{ submitting ? '保存中...' : showEditModal ? '更新' : '创建' }}
+        </button>
       </div>
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">排序</label>
-        <div class="flex-1">
-          <InputNumber v-model="form.sort_order" :min="0" class="w-full" />
-          <div class="text-xs text-gray-400 mt-1">数字越小越靠前显示</div>
-        </div>
-      </div>
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">工序</label>
-        <div class="flex-1">
-          <CheckboxGroup v-model="form.processes" :options="processOptions" class="w-full" />
-        </div>
-      </div>
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">是否启用</label>
-        <div class="flex-1 pt-1">
-          <Toggle v-model="form.is_active" />
-        </div>
-      </div>
-    </div>
-  </FormDialog>
+    </template>
+  </BaseDialog>
+
+  <!-- Delete Confirmation Dialog -->
+  <ConfirmDialog
+    :show="showDeleteDialog"
+    title="删除部门"
+    :message="`确定要删除部门「${selectedRow?.name}」吗？此操作不可撤销。`"
+    confirm-text="删除"
+    cancel-text="取消"
+    :danger="true"
+    :loading="deleting"
+    loading-text="删除中..."
+    @confirm="handleDelete"
+    @cancel="cancelDelete"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { departmentAPI, processAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { FormDialog, EmptyState, Pagination, SearchInput, Icon, Input, Select, InputNumber, CheckboxGroup, Toggle } from '@/components/common'
+import { TablePageLayout, DataTable, BaseDialog, ConfirmDialog, EmptyState, Pagination, SearchInput, Icon, Input, Select, InputNumber, CheckboxGroup, Toggle, Tag } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
+
+const columns: Column[] = [
+  { key: 'code', label: '部门编码', sortable: true },
+  { key: 'name', label: '部门名称', sortable: true },
+  { key: 'parent_name', label: '上级部门', sortable: true },
+  { key: 'children_count', label: '子部门', sortable: false },
+  { key: 'process_names', label: '工序', sortable: false },
+  { key: 'sort_order', label: '排序', sortable: true },
+  { key: 'is_active', label: '状态', sortable: true },
+  { key: 'created_at', label: '创建时间', sortable: true },
+  { key: 'actions', label: '操作', sortable: false, class: 'w-32' }
+]
 
 const {
   searchText, tableData, loading, total, currentPage, pageSize,
@@ -133,28 +233,30 @@ const {
 } = useCrudList(departmentAPI, 'getList', { errorContext: '加载部门数据失败' })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('department')
-const crud = useCRUD(departmentAPI, { onSuccess: () => { dialogVisible.value = false; loadData(); loadAllDepartments() } })
+const crud = useCRUD(departmentAPI, { onSuccess: () => { closeModals(); loadData(); loadAllDepartments() } })
 
-const dialogVisible = ref(false)
-const dialogType = ref('create')
-const dialogTitle = ref('新建部门')
-const dialogLoading = ref(false)
-const currentRow = ref<any>(null)
-const formDialogRef = ref<any>(null)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const showDeleteDialog = ref(false)
+const submitting = ref(false)
+const deleting = ref(false)
+const selectedRow = ref<any>(null)
 
 const allProcesses = ref<any[]>([])
 const allDepartments = ref<any[]>([])
 const expandedProcesses = ref({})
 
-const formInitialValues = { code: '', name: '', parent: null, sort_order: 0, is_active: true, processes: [], children_count: 0 }
-const form = reactive({ ...formInitialValues })
-const rules = {
-  code: [{ required: true, message: '请输入部门编码', trigger: 'blur' }, { pattern: /^[a-z0-9_]+$/, message: '部门编码只能包含小写字母、数字和下划线', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入部门名称', trigger: 'blur' }]
-}
-const isEditMode = computed(() => dialogType.value === 'edit')
+const formInitialValues = { code: '', name: '', parent: null as any, sort_order: 0, is_active: true, processes: [], children_count: 0 }
+const formData = reactive({ ...formInitialValues })
+
 const availableParents = computed(() => {
-  if (isEditMode.value && currentRow.value) { return allDepartments.value.filter((dept: any) => { if (dept.id === currentRow.value.id) return false; if (dept.level >= 2) return false; return true }) }
+  if (showEditModal.value && selectedRow.value) { 
+    return allDepartments.value.filter((dept: any) => { 
+      if (dept.id === selectedRow.value.id) return false; 
+      if (dept.level >= 2) return false; 
+      return true 
+    }) 
+  }
   return allDepartments.value.filter((dept: any) => dept.level < 2)
 })
 
@@ -171,43 +273,108 @@ const loadAllProcesses = async () => {
     let allProcessesArr: any[] = []; let page = 1; let hasMore = true
     while (hasMore) {
       const response: any = await processAPI.getList({ is_active: true, page_size: 100, page: page })
-      if (response.results && response.results.length > 0) { allProcessesArr = allProcessesArr.concat(response.results); hasMore = response.next !== null && response.next !== undefined; page++ } else { hasMore = false }
+      // Defensive unpacking
+      const results = Array.isArray(response) ? response : (response?.results || response?.data || [])
+      
+      if (results && results.length > 0) { 
+        allProcessesArr = allProcessesArr.concat(results); 
+        hasMore = response.next !== null && response.next !== undefined; 
+        page++ 
+      } else { 
+        hasMore = false 
+      }
     }
     allProcesses.value = allProcessesArr
   } catch (error: any) { ErrorHandler.showMessage(error, '加载工序列表'); allProcesses.value = [] }
 }
 
 const loadAllDepartments = async () => {
-  try { const response: any = await departmentAPI.getAll(); allDepartments.value = response?.data || response || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载部门列表'); allDepartments.value = [] }
+  try { 
+    const response: any = await departmentAPI.getAll(); 
+    allDepartments.value = Array.isArray(response) ? response : (response?.data || response?.results || []) 
+  } catch (error: any) { 
+    ErrorHandler.showMessage(error, '加载部门列表'); 
+    allDepartments.value = [] 
+  }
 }
 
-const showCreateDialog = () => { dialogType.value = 'create'; dialogTitle.value = '新建部门'; currentRow.value = null; customResetForm(); dialogVisible.value = true }
+const closeModals = () => {
+  showCreateModal.value = false
+  showEditModal.value = false
+  Object.assign(formData, formInitialValues)
+}
+
+const openCreateModal = () => {
+  selectedRow.value = null
+  Object.assign(formData, formInitialValues)
+  showCreateModal.value = true
+}
 
 const handleEdit = (row: any) => {
-  dialogType.value = 'edit'; dialogTitle.value = '编辑部门'; currentRow.value = row
-  Object.assign(form, { code: row.code, name: row.name, parent: row.parent || null, sort_order: row.sort_order, is_active: row.is_active, processes: row.processes || [], children_count: row.children_count || 0 })
-  dialogVisible.value = true
-  nextTick(() => { formDialogRef.value?.clearValidate() })
+  selectedRow.value = row
+  Object.assign(formData, { 
+    code: row.code, 
+    name: row.name, 
+    parent: row.parent || null, 
+    sort_order: row.sort_order, 
+    is_active: row.is_active, 
+    processes: row.processes || [], 
+    children_count: row.children_count || 0 
+  })
+  showEditModal.value = true
 }
 
-const customResetForm = () => { Object.assign(form, formInitialValues); currentRow.value = null; nextTick(() => { formDialogRef.value?.clearValidate() }) }
+const confirmDelete = (row: any) => {
+  selectedRow.value = row
+  showDeleteDialog.value = true
+}
 
-const handleDelete = async (row: any) => {
-  const confirmed = await ErrorHandler.confirm(`确定要删除部门「${row.name}」吗？`, '确认删除')
-  if (!confirmed) return
-  await crud.remove(row.id, '删除成功')
-  loadAllDepartments()
+const cancelDelete = () => {
+  if (deleting.value) return
+  showDeleteDialog.value = false
+  selectedRow.value = null
+}
+
+const handleDelete = async () => {
+  if (!selectedRow.value) return
+  deleting.value = true
+  try {
+    await crud.remove(selectedRow.value.id, '删除成功')
+    showDeleteDialog.value = false
+    selectedRow.value = null
+    loadAllDepartments()
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '删除失败')
+  } finally {
+    deleting.value = false
+  }
+}
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  console.log('sort', key, order)
+  // TODO: 实现服务端排序
 }
 
 const handleSubmit = async () => {
-  const valid = await formDialogRef.value.validate().catch(() => false)
-  if (!valid) return
-  dialogLoading.value = true
-  if (isEditMode.value) { await crud.update(currentRow.value.id, form, '保存成功') } else { await crud.create(form, '创建成功') }
-  dialogLoading.value = false
+  // 简易验证
+  if (!formData.code || !formData.name) return
+  if (!/^[a-z0-9_]+$/.test(formData.code)) {
+    ErrorHandler.showMessage('部门编码只能包含小写字母、数字和下划线', '验证失败')
+    return
+  }
+
+  submitting.value = true
+  try {
+    if (showEditModal.value) { 
+      await crud.update(selectedRow.value.id, formData, '保存成功') 
+    } else { 
+      await crud.create(formData, '创建成功') 
+    }
+  } finally {
+    submitting.value = false
+  }
 }
 
-const getRowClassName = (payload: any) => { const { row } = payload; return row.parent ? 'child-department-row' : '' }
 const getDisplayedProcesses = (row: any) => {
   if (!row.process_names || row.process_names.length === 0) return []
   const isExpanded = (expandedProcesses.value as any)[row.id]
@@ -225,18 +392,3 @@ const toggleProcessExpansion = (row: any) => { (expandedProcesses.value as any)[
 
 onMounted(() => { loadAllProcesses(); loadAllDepartments(); loadData() })
 </script>
-
-<style scoped>
-:deep(.child-department-row) {
-  background-color: rgb(249 250 251);
-}
-:deep(.child-department-row:hover) {
-  background-color: rgb(240 253 250);
-}
-.dark :deep(.child-department-row) {
-  background-color: rgb(30 41 59);
-}
-.dark :deep(.child-department-row:hover) {
-  background-color: rgb(51 65 85);
-}
-</style>

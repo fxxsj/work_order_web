@@ -45,7 +45,9 @@
     </div>
     <template #footer>
       <button class="btn" @click="dialogVisible = false">取消</button>
-      <button class="btn btn-primary" :disabled="loading" @click="handleSubmit">确定</button>
+      <button class="btn btn-primary" :disabled="submitting || loading" @click="handleSubmit">
+        {{ submitting || loading ? '提交中...' : '确定' }}
+      </button>
     </template>
   </BaseDialog>
 </template>
@@ -59,7 +61,8 @@ import ErrorHandler from '@/utils/errorHandler'
 const props = defineProps({
   visible: { type: Boolean, default: false },
   formData: { type: Object, default: () => ({}) },
-  isEdit: { type: Boolean, default: false }
+  isEdit: { type: Boolean, default: false },
+  submitting: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['confirm', 'close', 'update:visible'])
