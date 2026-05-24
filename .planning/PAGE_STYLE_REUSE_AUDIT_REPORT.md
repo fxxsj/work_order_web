@@ -7,6 +7,17 @@
 
 ## 0. 本轮推进记录
 
+### ✅ SummaryTable 六轮推进已全部完成（2026-05-24）
+
+| 轮次 | 日期 | 内容 | 状态 |
+|------|------|------|------|
+| 第一轮 | 2026-05-24 | SummaryTable 首轮：新增组件 + 替换 RecentWorkOrders/MyTasks | ✅ 完成 |
+| 第二轮 | 2026-05-24 | SummaryTable 第二轮：BusinessAnalysis/PendingPlateList | ✅ 完成 |
+| 第三轮 | 2026-05-24 | SummaryTable 第三轮：Stats.vue 操作员统计表 | ✅ 完成 |
+| 第四轮 | 2026-05-24 | SummaryTable 第四轮：SupervisorDashboard 统计表+统计卡 | ✅ 完成 |
+| 第五轮 | 2026-05-24 | SummaryTable 第五轮：Cost.vue 成本构成表 | ✅ 完成 |
+| 第六轮 | 2026-05-24 | SummaryTable 第六轮：工单详情四个子表 | ✅ 完成 |
+
 ### 2026-05-24：SummaryTable 首轮
 
 已完成：
