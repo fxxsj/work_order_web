@@ -1,12 +1,32 @@
 <template>
-  <BaseDialog :show="localVisible" title="发货单详情" width="extra-wide" @close="handleClose; localVisible = false;">
-    <DescriptionGrid v-if="data" :columns="2">
-      <DescriptionItem label="发货单号">{{ data.order_number }}</DescriptionItem>
-      <DescriptionItem label="客户名称">{{ data.customer_name }}</DescriptionItem>
-      <DescriptionItem label="收货人">{{ data.receiver_name }}</DescriptionItem>
-      <DescriptionItem label="联系电话">{{ data.receiver_phone }}</DescriptionItem>
-      <DescriptionItem label="发货日期">{{ data.delivery_date || '-' }}</DescriptionItem>
-      <DescriptionItem label="物流公司">{{ data.logistics_company || '-' }}</DescriptionItem>
+  <BaseDialog
+    :show="localVisible"
+    title="发货单详情"
+    width="extra-wide"
+    @close="handleClose; localVisible = false;"
+  >
+    <DescriptionGrid
+      v-if="data"
+      :columns="2"
+    >
+      <DescriptionItem label="发货单号">
+        {{ data.order_number }}
+      </DescriptionItem>
+      <DescriptionItem label="客户名称">
+        {{ data.customer_name }}
+      </DescriptionItem>
+      <DescriptionItem label="收货人">
+        {{ data.receiver_name }}
+      </DescriptionItem>
+      <DescriptionItem label="联系电话">
+        {{ data.receiver_phone }}
+      </DescriptionItem>
+      <DescriptionItem label="发货日期">
+        {{ data.delivery_date || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="物流公司">
+        {{ data.logistics_company || '-' }}
+      </DescriptionItem>
       <DescriptionItem label="物流单号">
         <a
           v-if="data.tracking_number"
@@ -19,11 +39,27 @@
         <span v-else>-</span>
       </DescriptionItem>
       <DescriptionItem label="状态">
-        <StatusTag :status="data.status" category="delivery" :label="data.status_display" />
+        <StatusTag
+          :status="data.status"
+          category="delivery"
+          :label="data.status_display"
+        />
       </DescriptionItem>
-      <DescriptionItem label="送货地址" :span="2">{{ data.delivery_address }}</DescriptionItem>
+      <DescriptionItem
+        label="送货地址"
+        :span="2"
+      >
+        {{ data.delivery_address }}
+      </DescriptionItem>
     </DescriptionGrid>
-    <template #footer><button class="btn" @click="handleClose">关闭</button></template>
+    <template #footer>
+      <button
+        class="btn"
+        @click="handleClose"
+      >
+        关闭
+      </button>
+    </template>
   </BaseDialog>
 </template>
 

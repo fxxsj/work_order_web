@@ -1,5 +1,10 @@
 <template>
-  <BaseDialog :show="dialogVisible" title="添加物料" width="narrow" @close="handleClose; dialogVisible = false;">
+  <BaseDialog
+    :show="dialogVisible"
+    title="添加物料"
+    width="narrow"
+    @close="handleClose; dialogVisible = false;"
+  >
     <div class="space-y-4">
       <Select
         v-model="form.material_id"
@@ -8,11 +13,27 @@
         placeholder="请选择物料"
         searchable
       />
-      <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注（可选）" />
+      <TextArea
+        v-model="form.notes"
+        label="备注"
+        :rows="3"
+        placeholder="请输入备注（可选）"
+      />
     </div>
     <template #footer>
-      <button class="btn" @click="handleCancel">取消</button>
-      <button class="btn btn-primary" :disabled="loading" @click="handleSubmit">确定</button>
+      <button
+        class="btn"
+        @click="handleCancel"
+      >
+        取消
+      </button>
+      <button
+        class="btn btn-primary"
+        :disabled="loading"
+        @click="handleSubmit"
+      >
+        确定
+      </button>
     </template>
   </BaseDialog>
 </template>

@@ -1,20 +1,79 @@
 <template>
-  <div class="dashboard-mobile">
-    <div class="mobile-header"><div class="header-title"><Icon name="home" /><span>工作台</span></div><div class="header-actions"><button class="btn btn-primary btn-sm" @click="createWorkOrder"><Icon name="plus" class="h-3 w-3" /> 新建</button></div></div>
-    <div class="quick-stats">
-      <div class="stat-card pending" @click="goToOrders('pending')"><div class="stat-icon"><Icon name="clock" /></div><div class="stat-content"><div class="stat-number">{{ statistics.pending_orders || 0 }}</div><div class="stat-label">待开始</div></div></div>
-      <div class="stat-card progress" @click="goToOrders('in_progress')"><div class="stat-icon"><Icon name="loading" /></div><div class="stat-content"><div class="stat-number">{{ statistics.in_progress_orders || 0 }}</div><div class="stat-label">进行中</div></div></div>
-      <div class="stat-card urgent" @click="goToUrgentPriority"><div class="stat-icon"><Icon name="exclamationTriangle" /></div><div class="stat-content"><div class="stat-number">{{ statistics.urgent_orders || 0 }}</div><div class="stat-label">紧急</div></div></div>
-      <div class="stat-card approval" @click="goToApprovals"><div class="stat-icon"><Icon name="checkCircle" /></div><div class="stat-content"><div class="stat-number">{{ statistics.pending_approval || 0 }}</div><div class="stat-label">待审核</div></div></div>
+  <div class="page-container space-y-[var(--ui-section-gap)]">
+    <div class="flex flex-col items-stretch gap-[var(--ui-control-gap)] rounded-xl bg-info-500 p-[var(--ui-control-gap)] text-white md:flex-row md:items-center md:justify-between">
+      <div class="flex items-center gap-2 text-lg font-bold">
+        <Icon name="home" /><span>工作台</span>
+      </div>
+      <div class="header-actions">
+        <button
+          class="btn btn-primary btn-sm w-full md:w-auto"
+          @click="createWorkOrder"
+        >
+          <Icon
+            name="plus"
+            class="h-3 w-3"
+          /> 新建
+        </button>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-[var(--ui-control-gap)] md:grid-cols-4">
+      <div
+        class="flex cursor-pointer flex-col rounded-xl bg-gradient-to-br from-gray-500 to-gray-400 p-[var(--ui-control-gap)] text-white min-h-[var(--ui-touch-target-min)]"
+        @click="goToOrders('pending')"
+      >
+        <div class="text-2xl mb-2">
+          <Icon name="clock" />
+        </div>
+        <div class="text-2xl font-bold">{{ statistics.pending_orders || 0 }}</div>
+        <div class="text-xs opacity-90">待开始</div>
+      </div>
+      <div
+        class="flex cursor-pointer flex-col rounded-xl bg-gradient-to-br from-warning-500 to-warning-300 p-[var(--ui-control-gap)] text-white min-h-[var(--ui-touch-target-min)]"
+        @click="goToOrders('in_progress')"
+      >
+        <div class="text-2xl mb-2">
+          <Icon name="loading" />
+        </div>
+        <div class="text-2xl font-bold">{{ statistics.in_progress_orders || 0 }}</div>
+        <div class="text-xs opacity-90">进行中</div>
+      </div>
+      <div
+        class="flex cursor-pointer flex-col rounded-xl bg-gradient-to-br from-danger-500 to-danger-300 p-[var(--ui-control-gap)] text-white min-h-[var(--ui-touch-target-min)]"
+        @click="goToUrgentPriority"
+      >
+        <div class="text-2xl mb-2">
+          <Icon name="exclamationTriangle" />
+        </div>
+        <div class="text-2xl font-bold">{{ statistics.urgent_orders || 0 }}</div>
+        <div class="text-xs opacity-90">紧急</div>
+      </div>
+      <div
+        class="flex cursor-pointer flex-col rounded-xl bg-gradient-to-br from-info-500 to-info-300 p-[var(--ui-control-gap)] text-white min-h-[var(--ui-touch-target-min)]"
+        @click="goToApprovals"
+      >
+        <div class="text-2xl mb-2">
+          <Icon name="checkCircle" />
+        </div>
+        <div class="text-2xl font-bold">{{ statistics.pending_approval || 0 }}</div>
+        <div class="text-xs opacity-90">待审核</div>
+      </div>
     </div>
     <div class="card">
       <div class="card-header flex items-center justify-between">
         <span>最近的施工单</span>
       </div>
       <div class="card-body">
-        <SummaryTable :columns="columns" :data="recentOrders">
+        <SummaryTable
+          :columns="columns"
+          :data="recentOrders"
+        >
           <template #cell-status="{ row }">
-            <StatusTag :status="row.status" :label="row.status_display" category="workOrder" size="small" />
+            <StatusTag
+              :status="row.status"
+              :label="row.status_display"
+              category="workOrder"
+              size="small"
+            />
           </template>
         </SummaryTable>
       </div>
@@ -52,36 +111,3 @@ const goToOrders = (status: any) => router.push({ path: '/workorders', query: st
 const goToUrgentPriority = () => router.push({ path: '/workorders', query: { priority: 'urgent' } })
 const goToApprovals = () => router.push('/workorders?approval_status=pending')
 </script>
-
-<style lang="scss">
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.dashboard-mobile { padding: var(--ui-page-padding); }
-.mobile-header { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-control-gap); padding: var(--ui-control-gap); background: #409EFF; color: #fff; border-radius: var(--ui-radius-card); margin-bottom: var(--ui-section-gap); }
-.header-title { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: bold; }
-.quick-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--ui-control-gap); }
-.stat-card { border-radius: var(--ui-radius-card); padding: var(--ui-control-gap); cursor: pointer; color: #fff; min-height: var(--ui-touch-target-min); }
-.stat-card.pending { background: linear-gradient(135deg, #909399, #C0C4CC); }
-.stat-card.progress { background: linear-gradient(135deg, #E6A23C, #F5C76C); }
-.stat-card.urgent { background: linear-gradient(135deg, #F56C6C, #F89898); }
-.stat-card.approval { background: linear-gradient(135deg, #409EFF, #66B1FF); }
-.stat-icon { font-size: 24px; margin-bottom: 8px; }
-.stat-number { font-size: 24px; font-weight: bold; }
-.stat-label { font-size: 12px; opacity: 0.9; }
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .mobile-header,
-  .header-actions button {
-    width: 100%;
-  }
-
-  .mobile-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .quick-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-</style>

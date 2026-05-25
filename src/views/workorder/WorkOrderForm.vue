@@ -1,83 +1,271 @@
 <template>
-  <div class="pb-20 max-w-4xl mx-auto">
-    <!-- Header -->
-    <div class="mb-6">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEdit ? '编辑施工单' : '新建施工单' }}</h2>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        {{ isEdit ? '编辑模式：修改施工单详情。' : '新建模式：填写基本信息并添加产品。' }}
-      </p>
-    </div>
+  <div>
+    <div class="card">
+      <div class="card-body space-y-4">
+        <!-- Section: Basic Info -->
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- Sales Order Selector -->
+          <Select
+            v-model="form.sales_order_id"
+            :options="salesOrderOptions"
+            label="客户订单"
+            placeholder="请选择客户订单（可选）"
+            clearable
+            searchable
+            @change="handleSalesOrderChange"
+          />
+          <!-- Customer Selector with Quick Create -->
+          <CustomerSelector
+            v-model="form.customer_id"
+            required
+            @create="showQuickCustomerCreate = true"
+          />
+        </div>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- Status -->
+          <Select
+            v-model="form.status"
+            :options="statusOptions"
+            label="状态"
+          />
+          <!-- Priority -->
+          <Select
+            v-model="form.priority"
+            :options="priorityOptions"
+            label="优先级"
+          />
+        </div>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- Order Date -->
+          <Input
+            v-model="form.order_date"
+            type="date"
+            label="下单日期"
+          />
+          <!-- Delivery Date -->
+          <Input
+            v-model="form.delivery_date"
+            type="date"
+            label="交货日期"
+            required
+          />
+        </div>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- Production Quantity -->
+          <InputNumber
+            v-model="form.production_quantity"
+            :min="1"
+            label="生产数量"
+            class="w-full"
+          />
+          <!-- Defective Quantity (edit mode) -->
+          <InputNumber
+            v-if="isEdit"
+            v-model="form.defective_quantity"
+            :min="0"
+            label="预损数量"
+            class="w-full"
+          />
+        </div>
+        <!-- Actual Delivery Date (edit mode only) -->
+        <div
+          v-if="isEdit"
+          class="grid grid-cols-1 gap-4 md:grid-cols-2"
+        >
+          <Input
+            v-model="form.actual_delivery_date"
+            type="date"
+            label="实际交货日期"
+          />
+        </div>
+        <!-- Notes -->
+        <div class="grid grid-cols-1 gap-4">
+          <TextArea
+            v-model="form.notes"
+            label="备注"
+            :rows="3"
+            placeholder="请输入备注"
+          />
+        </div>
 
-    <!-- Main Content -->
-    <div class="space-y-6">
-      <!-- Section 1: Basic Info -->
-      <section class="card shadow-sm ring-1 ring-gray-900/5 dark:ring-white/10 p-0 overflow-hidden">
-        <div class="bg-gray-50 dark:bg-dark-800/50 border-b border-gray-200 dark:border-dark-700 px-6 py-4">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">1</span>
-            基本信息
-          </h3>
-        </div>
-        <div class="p-6 space-y-5">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <CustomerSelector v-model="form.customer" label="客户" required />
-            <Select v-model="form.priority" label="优先级" :options="priorityOptions" />
+        <!-- Section: Products -->
+        <div>
+          <SectionDivider title="产品明细" />
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              选择产品并维护生产数量
+            </div>
+            <div class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-dark-700 dark:bg-dark-900 dark:text-gray-300">
+              <span>总生产数量</span>
+              <span class="text-base font-bold text-primary-600 dark:text-primary-400">{{ calculatedTotalQuantity }}</span>
+            </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Input v-model="form.order_date" type="date" label="下单日期" required />
-            <Input v-model="form.delivery_date" type="date" label="交货日期" required />
-          </div>
-        </div>
-      </section>
-
-      <!-- Section 2: Products -->
-      <section class="card shadow-sm ring-1 ring-gray-900/5 dark:ring-white/10 p-0 overflow-hidden">
-        <div class="bg-gray-50 dark:bg-dark-800/50 border-b border-gray-200 dark:border-dark-700 px-6 py-4 flex justify-between items-center">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">2</span>
-            产品明细
-          </h3>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-900 shadow-sm border border-gray-200 dark:border-dark-700 px-3 py-1 rounded-full">
-            总生产数量: <span class="text-primary-600 font-bold text-base ml-1">{{ calculatedTotalQuantity }}</span>
-          </div>
-        </div>
-        <div class="p-6">
           <ProductListEditor
             :items="form.products"
             @change="handleProductsChange"
             @add="handleAddProduct"
             @remove="handleRemoveProduct"
+            @create="showQuickProductCreate = true"
           />
         </div>
-      </section>
 
-      <!-- Section 3: Notes -->
-      <section class="card shadow-sm ring-1 ring-gray-900/5 dark:ring-white/10 p-0 overflow-hidden">
-        <div class="bg-gray-50 dark:bg-dark-800/50 border-b border-gray-200 dark:border-dark-700 px-6 py-4">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">3</span>
-            附加信息
-          </h3>
+        <!-- Section: Process Configuration -->
+        <div>
+          <SectionDivider title="工序配置" />
+          <ProcessSelector
+            v-model="form.process_ids"
+            :show-hint="true"
+          />
         </div>
-        <div class="p-6">
-          <TextArea v-model="form.notes" label="备注说明" :rows="4" placeholder="输入关于此施工单的特殊要求、工艺注意事项或包装要求..." />
-        </div>
-      </section>
-    </div>
 
-    <!-- Sticky Bottom Action Bar -->
-    <div class="fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-dark-900/80 backdrop-blur-md border-t border-gray-200 dark:border-dark-700 p-4 shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.05)] transition-all duration-300">
-      <div class="max-w-4xl mx-auto flex justify-end gap-3">
-        <button class="btn btn-secondary px-6 shadow-sm" @click="handleCancel">取消</button>
-        <button class="btn btn-primary px-8 shadow-sm" :disabled="saving" @click="handleSave">
-          <span v-if="saving" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-2" />
+        <!-- Section: Materials -->
+        <div>
+          <SectionDivider title="物料清单" />
+          <MaterialListEditor
+            :items="form.materials"
+            :materials="materialList"
+            @change="handleMaterialsChange"
+            @add="handleAddMaterial"
+            @remove="handleRemoveMaterial"
+            @create="showQuickMaterialCreate = true"
+          />
+        </div>
+
+        <!-- Section: Prepress Resources -->
+        <div>
+          <SectionDivider title="印前资源" />
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Select
+              v-model="form.printing_type"
+              :options="printingTypeOptions"
+              label="印刷形式"
+              placeholder="请选择印刷形式"
+              clearable
+            />
+          </div>
+          <div
+            v-if="form.printing_type && form.printing_type !== 'none'"
+            class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2"
+          >
+            <MultiSelect
+              v-model="form.artwork_ids"
+              :options="artworkOptions"
+              label="图稿"
+              placeholder="选择图稿（可多选）"
+              :loading="artworkLoading"
+              :show-hint="true"
+            />
+            <div class="space-y-2">
+              <label class="input-label block text-sm text-gray-600 dark:text-gray-400">CMYK颜色</label>
+              <CheckboxGroup
+                v-model="form.printing_cmyk"
+                :options="cmykOptions"
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2">
+            <MultiSelect
+              v-model="form.die_ids"
+              :options="dieOptions"
+              label="刀模"
+              placeholder="选择刀模（可多选）"
+              :loading="dieLoading"
+              :show-hint="true"
+            />
+            <MultiSelect
+              v-model="form.foiling_plate_ids"
+              :options="foilingPlateOptions"
+              label="烫金版"
+              placeholder="选择烫金版（可多选）"
+              :loading="foilingPlateLoading"
+              :show-hint="true"
+            />
+          </div>
+          <div class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2">
+            <MultiSelect
+              v-model="form.embossing_plate_ids"
+              :options="embossingPlateOptions"
+              label="压凸版"
+              placeholder="选择压凸版（可多选）"
+              :loading="embossingPlateLoading"
+              :show-hint="true"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="card-footer flex flex-col gap-3 sm:flex-row sm:justify-end">
+        <button
+          class="btn btn-secondary"
+          @click="handleCancel"
+        >
+          <Icon
+            name="arrowLeft"
+            size="md"
+          />
+          取消
+        </button>
+        <button
+          class="btn btn-primary"
+          :disabled="saving"
+          @click="handleSave"
+        >
+          <span
+            v-if="saving"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-2"
+          />
+          <Icon
+            v-else
+            name="check"
+            size="md"
+          />
           保存
         </button>
-        <button v-if="isEdit" class="btn btn-success px-8 shadow-sm" :disabled="submitting" @click="handleSubmit">
-          <span v-if="submitting" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-2" />
+        <button
+          v-if="isEdit"
+          class="btn btn-success"
+          :disabled="submitting"
+          @click="handleSubmitForApproval"
+        >
+          <span
+            v-if="submitting"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-2"
+          />
+          <Icon
+            v-else
+            name="upload"
+            size="md"
+          />
           提交审核
         </button>
       </div>
+
+      <!-- Submit Approval Dialog -->
+      <ConfirmDialog
+        :show="showSubmitApprovalDialog"
+        title="保存成功"
+        message="是否立即提交审核？"
+        confirm-text="立即提交"
+        cancel-text="稍后处理"
+        :loading="submitting"
+        @confirm="confirmSubmitApproval"
+        @cancel="cancelSubmitApproval"
+      />
+
+      <!-- Quick Create Dialogs -->
+      <QuickCustomerCreateDialog
+        v-model="showQuickCustomerCreate"
+        @created="handleCustomerCreated"
+      />
+      <QuickProductCreateDialog
+        v-model="showQuickProductCreate"
+        @created="handleProductCreated"
+      />
+      <QuickMaterialCreateDialog
+        v-model="showQuickMaterialCreate"
+        @created="handleMaterialCreated"
+      />
     </div>
   </div>
 </template>
@@ -85,76 +273,326 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { TextArea, Input, Select } from '@/components/common'
-import { ElMessage } from '@/utils/message'
-import { workOrderAPI } from '@/api/modules'
+import { Icon, Input, TextArea, InputNumber, Select, CheckboxGroup, SectionDivider } from '@/components/common'
+import { useUIStore } from '@/stores/ui'
+import { workOrderAPI, customerAPI, productAPI, materialAPI, artworkAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
-import CustomerSelector from './components/CustomerSelector.vue'
-import ProductListEditor from './components/ProductListEditor.vue'
+
+import { CustomerSelector, ProductListEditor, ProcessSelector, MaterialListEditor, MultiSelect } from '@/components/workorder'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import QuickCustomerCreateDialog from './components/QuickCustomerCreateDialog.vue'
+import QuickProductCreateDialog from './components/QuickProductCreateDialog.vue'
+import QuickMaterialCreateDialog from './components/QuickMaterialCreateDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
+
 const id = computed(() => route.params.id as string | undefined)
 const isEdit = computed(() => !!id.value && id.value !== 'create')
 
 const saving = ref(false)
 const submitting = ref(false)
+const showSubmitApprovalDialog = ref(false)
+const showQuickCustomerCreate = ref(false)
+const showQuickProductCreate = ref(false)
+const showQuickMaterialCreate = ref(false)
 
+// Lists for dropdown options
+const salesOrderList = ref<any[]>([])
+const customerList = ref<any[]>([])
+const productList = ref<any[]>([])
+const materialList = ref<any[]>([])
+const artworkList = ref<any[]>([])
+const dieList = ref<any[]>([])
+const foilingPlateList = ref<any[]>([])
+const embossingPlateList = ref<any[]>([])
+
+// Loading states
+const artworkLoading = ref(false)
+const dieLoading = ref(false)
+const foilingPlateLoading = ref(false)
+const embossingPlateLoading = ref(false)
+
+// Options
 const priorityOptions = [
   { value: 'low', label: '低' },
-  { value: 'normal', label: '正常' },
+  { value: 'normal', label: '普通' },
   { value: 'high', label: '高' },
-  { value: 'urgent', label: '加急' }
+  { value: 'urgent', label: '紧急' }
 ]
 
+const statusOptions = [
+  { value: 'pending', label: '待开始' },
+  { value: 'in_progress', label: '进行中' },
+  { value: 'paused', label: '已暂停' },
+  { value: 'completed', label: '已完成' },
+  { value: 'cancelled', label: '已取消' }
+]
+
+const printingTypeOptions = [
+  { value: 'none', label: '不需要印刷' },
+  { value: 'front', label: '正面印刷' },
+  { value: 'back', label: '背面印刷' },
+  { value: 'self_reverse', label: '自反印刷' },
+  { value: 'reverse_gripper', label: '反咬口印刷' },
+  { value: 'register', label: '套版印刷' }
+]
+
+const cmykOptions = [
+  { value: 'C', label: 'C' },
+  { value: 'M', label: 'M' },
+  { value: 'Y', label: 'Y' },
+  { value: 'K', label: 'K' }
+]
+
+// Computed options for selectors
+const salesOrderOptions = computed(() =>
+  salesOrderList.value.map((so: any) => ({
+    value: so.id,
+    label: `${so.order_number || ''} - ${so.customer_name || ''}`.trim()
+  }))
+)
+
+const artworkOptions = computed(() =>
+  artworkList.value.map((a: any) => ({
+    value: a.id,
+    label: a.code ? `${a.code} - ${a.name}` : a.name
+  }))
+)
+
+const dieOptions = computed(() =>
+  dieList.value.map((d: any) => ({
+    value: d.id,
+    label: d.code ? `${d.name} (${d.code})` : d.name
+  }))
+)
+
+const foilingPlateOptions = computed(() =>
+  foilingPlateList.value.map((f: any) => ({
+    value: f.id,
+    label: f.code ? `${f.name} (${f.code})` : f.name
+  }))
+)
+
+const embossingPlateOptions = computed(() =>
+  embossingPlateList.value.map((e: any) => ({
+    value: e.id,
+    label: e.code ? `${e.name} (${e.code})` : e.name
+  }))
+)
+
+// Form data
 const form = reactive({
-  customer: null as any,
-  order_date: new Date().toISOString().split('T')[0],
-  delivery_date: '',
-  production_quantity: 0,
-  notes: '',
+  sales_order_id: undefined as number | undefined,
+  customer_id: undefined as number | undefined,
+  status: 'pending',
   priority: 'normal',
-  products: [] as any[]
+  order_date: '',
+  delivery_date: '',
+  production_quantity: 1,
+  defective_quantity: 0,
+  actual_delivery_date: '',
+  notes: '',
+  products: [] as any[],
+  process_ids: [] as number[],
+  materials: [] as any[],
+  printing_type: 'none',
+  printing_cmyk: [] as string[],
+  artwork_ids: [] as number[],
+  die_ids: [] as number[],
+  foiling_plate_ids: [] as number[],
+  embossing_plate_ids: [] as number[]
 })
 
-// Automatically calculate total production quantity based on product list
+// Track created work order ID for submit approval
+let createdWorkOrderId: number | null = null
+
+// Calculate total quantity
 const calculatedTotalQuantity = computed(() => {
   return form.products.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
 })
 
+// Auto-fill production quantity when products change
 watch(calculatedTotalQuantity, (newTotal) => {
-  form.production_quantity = newTotal > 0 ? newTotal : 1
-})
-
-onMounted(async () => {
-  if (isEdit.value && id.value) {
-    try {
-      const res: any = await workOrderAPI.getDetail(id.value)
-      Object.assign(form, {
-        ...res,
-        // Ensure date fields are properly formatted for input[type="date"] (YYYY-MM-DD)
-        order_date: res.order_date ? res.order_date.split('T')[0] : '',
-        delivery_date: res.delivery_date ? res.delivery_date.split('T')[0] : '',
-        customer: res.customer?.id || res.customer, // customer could be expanded object or ID
-      })
-      // API returns products as an array of objects
-      if (res.products && Array.isArray(res.products)) {
-         form.products = res.products.map((p: any) => ({
-           product: p.product?.id || p.product,
-           quantity: p.quantity || 1,
-           unit: p.unit || '件'
-         }))
-      } else {
-        handleAddProduct()
-      }
-    } catch (e: any) {
-      ElMessage.error('加载详情失败')
-    }
-  } else {
-    // For new work order, add one empty product row by default
-    handleAddProduct()
+  if (newTotal > 0) {
+    form.production_quantity = newTotal
   }
 })
+
+// Load initial data
+onMounted(async () => {
+  await Promise.all([
+    loadSalesOrders(),
+    loadCustomers(),
+    loadProducts(),
+    loadMaterials(),
+    loadArtworks(),
+    loadDies(),
+    loadFoilingPlates(),
+    loadEmbossingPlates()
+  ])
+
+  if (isEdit.value && id.value) {
+    await loadDetail(id.value)
+  } else {
+    // Default dates for new work order
+    form.order_date = new Date().toISOString().split('T')[0]
+    handleAddProduct()
+    handleAddMaterial()
+  }
+})
+
+const loadSalesOrders = async () => {
+  try {
+    const res: any = await workOrderAPI.getSalesOrderCandidates()
+    salesOrderList.value = res?.results || res || []
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  }
+}
+
+const loadCustomers = async () => {
+  try {
+    const res: any = await customerAPI.getList({ page_size: 1000 })
+    customerList.value = res?.results || res || []
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  }
+}
+
+const loadProducts = async () => {
+  try {
+    const res: any = await productAPI.getList({ page_size: 1000 })
+    productList.value = res?.results || res || []
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  }
+}
+
+const loadMaterials = async () => {
+  try {
+    const res: any = await materialAPI.getList({ page_size: 1000 })
+    materialList.value = res?.results || res || []
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  }
+}
+
+const loadArtworks = async () => {
+  artworkLoading.value = true
+  try {
+    const res: any = await artworkAPI.getList({ page_size: 1000 })
+    artworkList.value = res?.results || res || []
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  } finally {
+    artworkLoading.value = false
+  }
+}
+
+const loadDies = async () => {
+  dieLoading.value = true
+  try {
+    const res: any = await dieAPI.getList({ page_size: 1000 })
+    dieList.value = res?.results || res || []
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  } finally {
+    dieLoading.value = false
+  }
+}
+
+const loadFoilingPlates = async () => {
+  foilingPlateLoading.value = true
+  try {
+    const res: any = await foilingPlateAPI.getList({ page_size: 1000 })
+    foilingPlateList.value = res?.results || res || []
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  } finally {
+    foilingPlateLoading.value = false
+  }
+}
+
+const loadEmbossingPlates = async () => {
+  embossingPlateLoading.value = true
+  try {
+    const res: any = await embossingPlateAPI.getList({ page_size: 1000 })
+    embossingPlateList.value = res?.results || res || []
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  } finally {
+    embossingPlateLoading.value = false
+  }
+}
+
+const loadDetail = async (workOrderId: string) => {
+  try {
+    const res: any = await workOrderAPI.getDetail(workOrderId)
+    Object.assign(form, {
+      sales_order_id: res.sales_order_id || undefined,
+      customer_id: res.customer?.id || res.customer,
+      status: res.status || 'pending',
+      priority: res.priority || 'normal',
+      order_date: res.order_date ? res.order_date.split('T')[0] : '',
+      delivery_date: res.delivery_date ? res.delivery_date.split('T')[0] : '',
+      production_quantity: res.production_quantity || 1,
+      defective_quantity: res.defective_quantity || 0,
+      actual_delivery_date: res.actual_delivery_date ? res.actual_delivery_date.split('T')[0] : '',
+      notes: res.notes || '',
+      process_ids: res.process_ids || [],
+      printing_type: res.printing_type || 'none',
+      printing_cmyk: res.printing_cmyk || [],
+      artwork_ids: res.artwork_ids || [],
+      die_ids: res.die_ids || [],
+      foiling_plate_ids: res.foiling_plate_ids || [],
+      embossing_plate_ids: res.embossing_plate_ids || []
+    })
+
+    // Load products
+    if (res.products && Array.isArray(res.products)) {
+      form.products = res.products.map((p: any) => ({
+        product: p.product?.id || p.product,
+        quantity: p.quantity || 1,
+        unit: p.unit || '件'
+      }))
+    }
+
+    // Load materials
+    if (res.materials && Array.isArray(res.materials)) {
+      form.materials = res.materials.map((m: any) => ({
+        material: m.material?.id || m.material,
+        quantity: m.quantity || 1,
+        notes: m.notes || ''
+      }))
+    }
+  } catch {
+    useUIStore().showError('加载详情失败')
+  }
+}
+
+// Handlers
+const handleSalesOrderChange = (value: any) => {
+  if (!value) {
+    form.sales_order_id = undefined
+    return
+  }
+
+  const selected = salesOrderList.value.find((so: any) => so.id === value)
+  if (selected) {
+    form.sales_order_id = selected.id
+    // Auto-fill customer and dates from sales order
+    if (selected.customer_id) {
+      form.customer_id = selected.customer_id
+    }
+    if (selected.order_date) {
+      form.order_date = selected.order_date.split('T')[0]
+    }
+    if (selected.delivery_date) {
+      form.delivery_date = selected.delivery_date.split('T')[0]
+    }
+  }
+}
 
 const handleProductsChange = (newItems: any[]) => {
   form.products = newItems
@@ -168,69 +606,124 @@ const handleRemoveProduct = (index: number) => {
   form.products.splice(index, 1)
 }
 
+const handleMaterialsChange = (newItems: any[]) => {
+  form.materials = newItems
+}
+
+const handleAddMaterial = () => {
+  form.materials.push({ material: null, quantity: 1, notes: '' })
+}
+
+const handleRemoveMaterial = (index: number) => {
+  form.materials.splice(index, 1)
+}
+
+const handleCustomerCreated = (customer: any) => {
+  // Add to customer list and select it
+  customerList.value.push(customer)
+  form.customer_id = customer.id
+}
+
+const handleProductCreated = (product: any) => {
+  // Add to product list
+  productList.value.push(product)
+}
+
+const handleMaterialCreated = (material: any) => {
+  // Add to material list
+  materialList.value.push(material)
+}
+
+// Validation
 const validateForm = () => {
-  if (!form.customer) { ElMessage.warning('请选择客户'); return false }
-  if (!form.order_date) { ElMessage.warning('请选择下单日期'); return false }
-  if (!form.delivery_date) { ElMessage.warning('请选择交货日期'); return false }
-  
-  // 校验产品列表
-  if (form.products.length === 0) {
-    ElMessage.warning('请至少添加一个产品')
+  if (!form.customer_id) {
+    useUIStore().showWarning('请选择客户')
     return false
   }
-  
-  for (let i = 0; i < form.products.length; i++) {
-    const p = form.products[i]
-    if (!p.product) {
-      ElMessage.warning(`请在第 ${i + 1} 行选择产品`)
-      return false
-    }
-    if (!p.quantity || p.quantity < 1) {
-      ElMessage.warning(`第 ${i + 1} 行的产品数量必须大于0`)
-      return false
-    }
+  if (!form.delivery_date) {
+    useUIStore().showWarning('请选择交货日期')
+    return false
   }
-  
+
+  // Validate products
+  const validProducts = form.products.filter(p => p.product)
+  if (validProducts.length === 0) {
+    useUIStore().showWarning('请至少添加一个产品')
+    return false
+  }
+
   return true
 }
 
+// Format payload
 const formatPayload = () => {
-  // Deep clone to avoid mutating form state during processing
-  const payload = JSON.parse(JSON.stringify(form))
-  
-  // Format products_data for backend
-  payload.products_data = form.products.map(p => ({
-    product_id: typeof p.product === 'object' ? p.product.id : p.product,
-    quantity: p.quantity,
-    unit: p.unit
-  }))
-  
-  // The backend might expect customer ID rather than object
-  if (payload.customer && typeof payload.customer === 'object') {
-    payload.customer = payload.customer.id
+  const payload: any = {
+    customer: form.customer_id,
+    status: form.status,
+    priority: form.priority,
+    order_date: form.order_date || undefined,
+    delivery_date: form.delivery_date || undefined,
+    production_quantity: form.production_quantity,
+    defective_quantity: form.defective_quantity || 0,
+    actual_delivery_date: form.actual_delivery_date || undefined,
+    notes: form.notes || undefined,
+    process_ids: form.process_ids,
+    printing_type: form.printing_type || 'none',
+    printing_cmyk: form.printing_cmyk,
+    artwork_ids: form.artwork_ids,
+    die_ids: form.die_ids,
+    foiling_plate_ids: form.foiling_plate_ids,
+    embossing_plate_ids: form.embossing_plate_ids
   }
-  
-  // Remove raw products array to avoid conflict with backend's expected structure
-  delete payload.products
-  
+
+  if (form.sales_order_id) {
+    payload.sales_order_id = form.sales_order_id
+  }
+
+  // Format products
+  payload.products_data = form.products
+    .filter(p => p.product)
+    .map(p => ({
+      product_id: typeof p.product === 'object' ? p.product.id : p.product,
+      quantity: p.quantity,
+      unit: p.unit
+    }))
+
+  // Format materials
+  payload.materials_data = form.materials
+    .filter(m => m.material)
+    .map(m => ({
+      material_id: typeof m.material === 'object' ? m.material.id : m.material,
+      quantity: m.quantity,
+      notes: m.notes || undefined
+    }))
+
   return payload
 }
 
+// Save
 const handleSave = async () => {
   if (!validateForm()) return
-  
+
   saving.value = true
   try {
     const payload = formatPayload()
+
     if (isEdit.value) {
       await workOrderAPI.update(id.value!, payload)
-      ElMessage.success('施工单更新成功')
+      useUIStore().showSuccess('施工单更新成功')
       router.back()
     } else {
       const res: any = await workOrderAPI.create(payload)
-      ElMessage.success('施工单创建成功')
-      // Redirect to detail page to continue adding processes/materials or review
-      router.push(`/workorders/${res.id || res.data?.id}`)
+      createdWorkOrderId = res.id || res.data?.id
+      useUIStore().showSuccess('施工单创建成功')
+
+      // Show submit approval dialog for new work orders in draft/pending status
+      if (form.status === 'pending' || form.status === 'draft') {
+        showSubmitApprovalDialog.value = true
+      } else {
+        router.back()
+      }
     }
   } catch (e: any) {
     ErrorHandler.showMessage(e, '保存失败')
@@ -239,22 +732,22 @@ const handleSave = async () => {
   }
 }
 
-const handleSubmit = async () => {
+// Submit for approval (edit mode)
+const handleSubmitForApproval = async () => {
   if (!isEdit.value) {
-    ElMessage.warning('请先保存施工单')
+    useUIStore().showWarning('请先保存施工单')
     return
   }
-  if (!validateForm()) return
-  
+
   submitting.value = true
   try {
-    // First save the latest changes
+    // First save any changes
     const payload = formatPayload()
     await workOrderAPI.update(id.value!, payload)
-    
-    // Then submit
-    await workOrderAPI.submit(id.value!)
-    ElMessage.success('施工单已提交审核')
+
+    // Then submit for approval
+    await workOrderAPI.submitApproval(id.value!, {})
+    useUIStore().showSuccess('施工单已提交审核')
     router.push('/workorders')
   } catch (e: any) {
     ErrorHandler.showMessage(e, '提交失败')
@@ -263,16 +756,34 @@ const handleSubmit = async () => {
   }
 }
 
+// Confirm submit approval from dialog
+const confirmSubmitApproval = async () => {
+  if (!createdWorkOrderId) {
+    showSubmitApprovalDialog.value = false
+    router.back()
+    return
+  }
+
+  submitting.value = true
+  try {
+    await workOrderAPI.submitApproval(createdWorkOrderId, {})
+    useUIStore().showSuccess('已保存并提交审核')
+    showSubmitApprovalDialog.value = false
+    router.push('/workorders')
+  } catch (e: any) {
+    ErrorHandler.showMessage(e, '提交审核失败')
+    submitting.value = false
+  }
+}
+
+// Cancel submit approval
+const cancelSubmitApproval = () => {
+  showSubmitApprovalDialog.value = false
+  router.back()
+}
+
 const handleCancel = () => {
   router.back()
 }
 </script>
 
-<style scoped>
-/* Ensure smooth backdrop blur in supported browsers */
-@supports (backdrop-filter: blur(12px)) {
-  .backdrop-blur-md {
-    backdrop-filter: blur(12px);
-  }
-}
-</style>

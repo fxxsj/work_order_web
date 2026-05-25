@@ -1,15 +1,32 @@
 <template>
   <div class="mt-6 overflow-x-auto">
-    <SummaryTable :columns="columns" :data="tasks">
-      <template #cell-work_content="{ row }">{{ row.work_content || row.task_name || '-' }}</template>
-      <template #cell-operator="{ row }">{{ row.assigned_operator_name || row.operator_name || '-' }}</template>
+    <SummaryTable
+      :columns="columns"
+      :data="tasks"
+    >
+      <template #cell-work_content="{ row }">
+        {{ row.work_content || row.task_name || '-' }}
+      </template>
+      <template #cell-operator="{ row }">
+        {{ row.assigned_operator_name || row.operator_name || '-' }}
+      </template>
       <template #cell-status="{ row }">
-        <StatusTag :status="row.status" category="task" :label="row.status_display" size="small" />
+        <StatusTag
+          :status="row.status"
+          category="task"
+          :label="row.status_display"
+          size="small"
+        />
       </template>
       <template #cell-progress="{ row }">
-        <ProgressBar :percentage="calculateTaskProgress(row)" :color="getProgressColor(row)" />
+        <ProgressBar
+          :percentage="calculateTaskProgress(row)"
+          :color="getProgressColor(row)"
+        />
       </template>
-      <template #cell-quantity="{ row }">{{ row.quantity_completed || 0 }} / {{ row.production_quantity || 0 }}</template>
+      <template #cell-quantity="{ row }">
+        {{ row.quantity_completed || 0 }} / {{ row.production_quantity || 0 }}
+      </template>
     </SummaryTable>
   </div>
 </template>

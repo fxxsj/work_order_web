@@ -1,15 +1,24 @@
 <template>
   <div class="w-full">
-    <label v-if="label" :for="id" class="input-label mb-1.5 block">
+    <label
+      v-if="label"
+      :for="id"
+      class="input-label mb-1.5 block"
+    >
       {{ label }}
-      <span v-if="required" class="text-red-500">*</span>
+      <span
+        v-if="required"
+        class="text-red-500"
+      >*</span>
     </label>
-    <div class="relative" ref="containerRef">
+    <div
+      ref="containerRef"
+      class="relative"
+    >
       <button
         :id="id"
         ref="triggerRef"
         type="button"
-        @click="toggle"
         :disabled="disabled"
         :aria-expanded="isOpen"
         :aria-haspopup="true"
@@ -21,11 +30,15 @@
           hasError && 'select-trigger-error',
           disabled && 'select-trigger-disabled'
         ]"
+        @click="toggle"
         @keydown.down.prevent="onTriggerKeyDown"
         @keydown.up.prevent="onTriggerKeyDown"
       >
         <span class="select-value">
-          <slot name="selected" :option="selectedOption">
+          <slot
+            name="selected"
+            :option="selectedOption"
+          >
             {{ selectedLabel }}
           </slot>
         </span>
@@ -53,8 +66,15 @@
             @keydown="onDropdownKeyDown"
           >
             <!-- Search input -->
-            <div v-if="isSearchable" class="select-search">
-              <Icon name="search" size="sm" class="text-gray-400" />
+            <div
+              v-if="isSearchable"
+              class="select-search"
+            >
+              <Icon
+                name="search"
+                size="sm"
+                class="text-gray-400"
+              />
               <input
                 ref="searchInputRef"
                 v-model="searchQuery"
@@ -62,19 +82,20 @@
                 :placeholder="searchPlaceholderText"
                 class="select-search-input"
                 @click.stop
-              />
+              >
             </div>
 
             <!-- Options list -->
-            <div class="select-options" ref="optionsListRef">
+            <div
+              ref="optionsListRef"
+              class="select-options"
+            >
               <div
                 v-for="(option, index) in filteredOptions"
                 :key="`${typeof getOptionValue(option)}:${String(getOptionValue(option) ?? '')}`"
                 role="option"
                 :aria-selected="isSelected(option)"
                 :aria-disabled="isOptionDisabled(option)"
-                @click.stop="!isOptionDisabled(option) && selectOption(option)"
-                @mouseenter="handleOptionMouseEnter(option, index)"
                 :class="[
                   'select-option',
                   isGroupHeaderOption(option) && 'select-option-group',
@@ -82,15 +103,24 @@
                   isOptionDisabled(option) && !isGroupHeaderOption(option) && 'select-option-disabled',
                   focusedIndex === index && !isGroupHeaderOption(option) && 'select-option-focused'
                 ]"
+                @click.stop="!isOptionDisabled(option) && selectOption(option)"
+                @mouseenter="handleOptionMouseEnter(option, index)"
               >
-                <slot name="option" :option="option" :selected="isSelected(option)">
+                <slot
+                  name="option"
+                  :option="option"
+                  :selected="isSelected(option)"
+                >
                   <Icon
                     v-if="option._creatable"
                     name="search"
                     size="sm"
                     class="flex-shrink-0 text-gray-400"
                   />
-                  <span class="select-option-label" :class="option._creatable && 'italic text-gray-500 dark:text-dark-300'">{{ getOptionLabel(option) }}</span>
+                  <span
+                    class="select-option-label"
+                    :class="option._creatable && 'italic text-gray-500 dark:text-dark-300'"
+                  >{{ getOptionLabel(option) }}</span>
                   <Icon
                     v-if="isSelected(option)"
                     name="check"
@@ -102,7 +132,10 @@
               </div>
 
               <!-- Empty state -->
-              <div v-if="filteredOptions.length === 0" class="select-empty">
+              <div
+                v-if="filteredOptions.length === 0"
+                class="select-empty"
+              >
                 {{ emptyTextDisplay }}
               </div>
             </div>
@@ -110,10 +143,16 @@
         </Transition>
       </Teleport>
     </div>
-    <p v-if="errorMessage" class="input-error-text mt-1.5">
+    <p
+      v-if="errorMessage"
+      class="input-error-text mt-1.5"
+    >
       {{ errorMessage }}
     </p>
-    <p v-else-if="hint" class="input-hint mt-1.5">
+    <p
+      v-else-if="hint"
+      class="input-hint mt-1.5"
+    >
       {{ hint }}
     </p>
   </div>

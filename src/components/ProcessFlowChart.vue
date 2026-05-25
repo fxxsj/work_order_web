@@ -1,6 +1,9 @@
 <template>
   <div class="process-flow-chart">
-    <div v-if="processes && processes.length > 0" class="flow-container">
+    <div
+      v-if="processes && processes.length > 0"
+      class="flow-container"
+    >
       <div
         v-for="(process, index) in sortedProcesses"
         :key="process.id"
@@ -14,7 +17,7 @@
             'connector-completed': isProcessCompleted(processes[index - 1]),
             'connector-active': isProcessActive(processes[index - 1])
           }"
-        ></div>
+        />
 
         <!-- 工序节点 -->
         <div
@@ -36,20 +39,40 @@
               {{ process.process_name }}
             </div>
             <div class="node-status">
-              <StatusTag :status="process.status" category="process" :label="process.status_display" size="small" />
+              <StatusTag
+                :status="process.status"
+                category="process"
+                :label="process.status_display"
+                size="small"
+              />
             </div>
-            <div v-if="process.department_name" class="node-department">
-              <Icon name="building" class="h-4 w-4" />
+            <div
+              v-if="process.department_name"
+              class="node-department"
+            >
+              <Icon
+                name="building"
+                class="h-4 w-4"
+              />
               <span>{{ process.department_name }}</span>
             </div>
           </div>
-          <div class="node-arrow" v-if="index < sortedProcesses.length - 1">
-            <Icon name="arrowRight" class="h-4 w-4" />
+          <div
+            v-if="index < sortedProcesses.length - 1"
+            class="node-arrow"
+          >
+            <Icon
+              name="arrowRight"
+              class="h-4 w-4"
+            />
           </div>
         </div>
       </div>
     </div>
-    <EmptyState v-else title="暂无工序数据" />
+    <EmptyState
+      v-else
+      title="暂无工序数据"
+    />
   </div>
 </template>
 

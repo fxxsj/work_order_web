@@ -1,12 +1,32 @@
 <template>
-  <BaseDialog :show="dialogVisibleSync" :title="dialogTitle" width="wide" @close="handleClose; dialogVisibleSync = false;">
+  <BaseDialog
+    :show="dialogVisibleSync"
+    :title="dialogTitle"
+    width="wide"
+    @close="handleClose; dialogVisibleSync = false;"
+  >
     <div class="space-y-4">
-      <Input v-model="form.code" :label="codeLabel" :placeholder="codePlaceholder" :disabled="isConfirmed" />
-      <div class="-mt-2 text-xs text-gray-400">{{ codeHint }}</div>
-      <Input v-model="form.name" :label="nameLabel" :placeholder="namePlaceholder" :disabled="isConfirmed" />
+      <Input
+        v-model="form.code"
+        :label="codeLabel"
+        :placeholder="codePlaceholder"
+        :disabled="isConfirmed"
+      />
+      <div class="-mt-2 text-xs text-gray-400">
+        {{ codeHint }}
+      </div>
+      <Input
+        v-model="form.name"
+        :label="nameLabel"
+        :placeholder="namePlaceholder"
+        :disabled="isConfirmed"
+      />
 
       <!-- Extra type-specific fields slot -->
-      <template v-for="field in extraFields" :key="field.prop">
+      <template
+        v-for="field in extraFields"
+        :key="field.prop"
+      >
         <div class="flex items-start gap-3">
           <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">{{ field.label }}</label>
           <div class="flex-1">
@@ -20,31 +40,70 @@
             />
             <input
               v-else
-              type="text"
               v-model="form[field.prop]"
+              type="text"
               :placeholder="field.placeholder || ''"
               :disabled="isConfirmed"
               class="input w-full"
-            />
+            >
           </div>
         </div>
       </template>
 
       <!-- Extra fields hint slot (for custom hint text below extra fields) -->
-      <div v-if="$slots.extraHint" class="-mt-2.5 mb-2.5 pl-0">
-        <slot name="extraHint" :form="form" />
+      <div
+        v-if="$slots.extraHint"
+        class="-mt-2.5 mb-2.5 pl-0"
+      >
+        <slot
+          name="extraHint"
+          :form="form"
+        />
       </div>
 
       <div class="flex flex-wrap gap-5">
-        <div class="flex-1 min-w-[300px]"><Input v-model="form.size" label="尺寸" placeholder="如：420x594mm" :disabled="isConfirmed" /></div>
-        <div class="flex-1 min-w-[300px]"><Input v-model="form.material" label="材质" placeholder="如：木板、胶板" :disabled="isConfirmed" /></div>
+        <div class="flex-1 min-w-[300px]">
+          <Input
+            v-model="form.size"
+            label="尺寸"
+            placeholder="如：420x594mm"
+            :disabled="isConfirmed"
+          />
+        </div>
+        <div class="flex-1 min-w-[300px]">
+          <Input
+            v-model="form.material"
+            label="材质"
+            placeholder="如：木板、胶板"
+            :disabled="isConfirmed"
+          />
+        </div>
       </div>
-      <Input v-model="form.thickness" label="厚度" placeholder="如：3mm、5mm" :disabled="isConfirmed" />
+      <Input
+        v-model="form.thickness"
+        label="厚度"
+        placeholder="如：3mm、5mm"
+        :disabled="isConfirmed"
+      />
 
       <SectionDivider title="包含产品及数量" />
       <div class="space-y-2">
-        <button class="btn btn-primary btn-sm" :disabled="!canAddMoreProducts" @click="addProductItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加产品</button>
-        <div v-if="productListHint" class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{{ productListHint }}</div>
+        <button
+          class="btn btn-primary btn-sm"
+          :disabled="!canAddMoreProducts"
+          @click="addProductItem"
+        >
+          <Icon
+            name="plus"
+            class="mr-1 inline h-3 w-3"
+          />添加产品
+        </button>
+        <div
+          v-if="productListHint"
+          class="mt-1.5 text-xs text-gray-500 dark:text-gray-400"
+        >
+          {{ productListHint }}
+        </div>
         <LineItemsTable
           :columns="productColumns"
           :items="productItems"
@@ -52,18 +111,44 @@
           @delete="removeProductItem"
         >
           <template #cell-product="{ row }">
-            <Select v-model="row.product" :options="productOptions" placeholder="请选择产品" filterable class="w-full" />
+            <Select
+              v-model="row.product"
+              :options="productOptions"
+              placeholder="请选择产品"
+              filterable
+              class="w-full"
+            />
           </template>
           <template #cell-quantity="{ row }">
-            <InputNumber v-model="row.quantity" :min="1" class="w-full" />
+            <InputNumber
+              v-model="row.quantity"
+              :min="1"
+              class="w-full"
+            />
           </template>
         </LineItemsTable>
       </div>
-      <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注信息" />
+      <TextArea
+        v-model="form.notes"
+        label="备注"
+        :rows="3"
+        placeholder="请输入备注信息"
+      />
     </div>
     <template #footer>
-      <button class="btn" @click="handleCancel">取消</button>
-      <button class="btn btn-primary" :disabled="loading" @click="handleSubmit">确定</button>
+      <button
+        class="btn"
+        @click="handleCancel"
+      >
+        取消
+      </button>
+      <button
+        class="btn btn-primary"
+        :disabled="loading"
+        @click="handleSubmit"
+      >
+        确定
+      </button>
     </template>
   </BaseDialog>
 </template>

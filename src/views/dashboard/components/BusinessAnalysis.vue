@@ -5,9 +5,17 @@
         <span class="text-sm font-semibold text-gray-900 dark:text-white">客户统计（Top 10）</span>
       </div>
       <div class="card-body">
-        <SummaryTable :columns="columns" :data="businessAnalysis?.customer_statistics || []" row-key="customer">
+        <SummaryTable
+          :columns="columns"
+          :data="businessAnalysis?.customer_statistics || []"
+          row-key="customer"
+        >
           <template #cell-completion_rate="{ row }">
-            <ProgressBar :percentage="row.completion_rate || 0" :color="getProgressColor(row.completion_rate)" :stroke-width="8" />
+            <ProgressBar
+              :percentage="row.completion_rate || 0"
+              :color="getProgressColor(row.completion_rate)"
+              :stroke-width="8"
+            />
           </template>
         </SummaryTable>
       </div>
@@ -17,9 +25,17 @@
         <span class="text-sm font-semibold text-gray-900 dark:text-white">产品统计（Top 10）</span>
       </div>
       <div class="card-body">
-        <SummaryTable :columns="productColumns" :data="businessAnalysis?.product_statistics || []" row-key="product">
+        <SummaryTable
+          :columns="productColumns"
+          :data="businessAnalysis?.product_statistics || []"
+          row-key="product"
+        >
           <template #cell-completion_rate="{ row }">
-            <ProgressBar :percentage="row.completion_rate || 0" :color="getProgressColor(row.completion_rate)" :stroke-width="8" />
+            <ProgressBar
+              :percentage="row.completion_rate || 0"
+              :color="getProgressColor(row.completion_rate)"
+              :stroke-width="8"
+            />
           </template>
         </SummaryTable>
       </div>

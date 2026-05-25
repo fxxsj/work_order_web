@@ -1,5 +1,8 @@
 <template>
-  <TablePageLayout title="系统通知管理" :loading="loading">
+  <TablePageLayout
+    title="系统通知管理"
+    :loading="loading"
+  >
     <template #filters>
       <FilterRow>
         <SearchInput
@@ -22,11 +25,28 @@
     
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        <button
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
+          @click="loadData"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
-        <button v-if="canCreate" class="btn btn-primary" @click="showCreateDialog">
-          <Icon name="plus" size="md" class="mr-2" />
+        <button
+          v-if="canCreate"
+          class="btn btn-primary"
+          @click="showCreateDialog"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           发布系统通知
         </button>
       </div>
@@ -40,7 +60,9 @@
         :row-key="(row: any) => row.id"
       >
         <template #cell-type="{ value }">
-          <Tag :type="value === 'system' ? 'danger' : 'info'">{{ value === 'system' ? '系统广播' : '业务提醒' }}</Tag>
+          <Tag :type="value === 'system' ? 'danger' : 'info'">
+            {{ value === 'system' ? '系统广播' : '业务提醒' }}
+          </Tag>
         </template>
         <template #cell-actions="{ row }">
           <RowActions
@@ -75,8 +97,8 @@
 import { notificationAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, RowActions, FilterRow, Select, Tag } from '@/components/common'
-import type { Column } from '@/components/common/types'
-import { ElMessage } from '@/utils/message'
+import type { Column, RowAction } from '@/components/common/types'
+import { useUIStore } from '@/stores/ui'
 
 const columns: Column[] = [
   { key: 'title', label: '通知标题', sortable: true, class: 'w-64' },
@@ -100,8 +122,8 @@ const {
 // Notice: admin notification might use specific permission string
 const { canCreate, canEdit, canDelete } = useCrudPermission('systemnotificationsettings')
 
-const getRowActions = (row: any) => {
-  const actions = []
+const getRowActions = (row: any): RowAction[] => {
+  const actions: RowAction[] = []
   if (canDelete) {
     actions.push({ key: 'delete', label: '撤回', icon: 'trash', tone: 'danger' })
   }
@@ -109,12 +131,12 @@ const getRowActions = (row: any) => {
 }
 
 const showCreateDialog = () => {
-  ElMessage.info('发布系统通知弹窗开发中...')
+  useUIStore().showInfo('发布系统通知弹窗开发中...')
 }
 
 const handleRowAction = (action: string, row: any) => {
   if (action === 'delete') {
-    ElMessage.info('撤回通知功能开发中...')
+    useUIStore().showInfo('撤回通知功能开发中...')
   }
 }
 </script

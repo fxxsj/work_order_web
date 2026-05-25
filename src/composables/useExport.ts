@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { ElMessageBox } from '@/utils/messageBox'
+import { useUIStore } from '@/stores/ui'
 
 interface UseExportOptions {
   fileNamePrefix?: string
@@ -42,7 +42,7 @@ export function useExport(
       return true
     } catch (error: any) {
       console.error('Export failed:', error)
-      ElMessageBox.alert('导出失败', '错误', { type: 'error' })
+      useUIStore().showError('导出失败')
       return false
     } finally {
       exporting.value = false

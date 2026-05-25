@@ -1,5 +1,11 @@
 <template>
-  <StatsCards title="对账单统计" :items="statItems" :loading="loading" :span="8" layout="media" />
+  <StatsCards
+    title="对账单统计"
+    :items="statItems"
+    :loading="loading"
+    :span="8"
+    layout="media"
+  />
 </template>
 
 <script setup lang="ts">

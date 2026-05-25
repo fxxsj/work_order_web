@@ -26,27 +26,50 @@
               <div class="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0 truncate">
                 {{ task.work_content }}
               </div>
-              <StatusTag :status="task.task_type" category="taskType" :label="task.task_type_display" size="small" />
+              <StatusTag
+                :status="task.task_type"
+                category="taskType"
+                :label="task.task_type_display"
+                size="small"
+              />
             </div>
 
             <!-- Card Body -->
             <div class="mb-3 space-y-2">
               <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-400">
-                <Icon name="document" class="h-3 w-3" />
+                <Icon
+                  name="document"
+                  class="h-3 w-3"
+                />
                 <span>{{ task.work_order_number || '-' }}</span>
               </div>
-              <div v-if="task.assigned_department_name" class="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-400">
-                <Icon name="building" class="h-3 w-3" />
+              <div
+                v-if="task.assigned_department_name"
+                class="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-400"
+              >
+                <Icon
+                  name="building"
+                  class="h-3 w-3"
+                />
                 <span>{{ task.assigned_department_name }}</span>
               </div>
-              <div v-if="task.assigned_operator_name" class="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-400">
-                <Icon name="user" class="h-3 w-3" />
+              <div
+                v-if="task.assigned_operator_name"
+                class="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-400"
+              >
+                <Icon
+                  name="user"
+                  class="h-3 w-3"
+                />
                 <span>{{ task.assigned_operator_name }}</span>
               </div>
             </div>
 
             <!-- Progress -->
-            <div v-if="task.production_quantity > 0" class="mb-3">
+            <div
+              v-if="task.production_quantity > 0"
+              class="mb-3"
+            >
               <div class="flex justify-between text-xs text-gray-500 dark:text-dark-400 mb-1">
                 <span>进度: {{ getProgressPercentage(task) }}%</span>
                 <span>{{ task.quantity_completed || 0 }}/{{ task.production_quantity }}</span>
@@ -72,13 +95,19 @@
                 class="flex items-center gap-1 text-xs"
                 :class="isOverdue(task) ? 'text-danger-500' : 'text-gray-500 dark:text-dark-400'"
               >
-                <Icon name="clock" class="h-3 w-3" />
+                <Icon
+                  name="clock"
+                  class="h-3 w-3"
+                />
                 {{ formatDate(task.deadline) }}
               </span>
             </div>
           </div>
 
-          <EmptyState v-if="column.tasks.length === 0" title="暂无任务" />
+          <EmptyState
+            v-if="column.tasks.length === 0"
+            title="暂无任务"
+          />
         </div>
       </div>
     </div>

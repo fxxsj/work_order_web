@@ -1,6 +1,11 @@
 <template>
-  <DescriptionGrid :columns="1" class="mt-6">
-    <DescriptionItem label="备注">{{ notes || '-' }}</DescriptionItem>
+  <DescriptionGrid
+    :columns="1"
+    class="mt-6"
+  >
+    <DescriptionItem label="备注">
+      {{ notes || '-' }}
+    </DescriptionItem>
   </DescriptionGrid>
 </template>
 

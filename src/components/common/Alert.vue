@@ -11,13 +11,24 @@
       :class="iconColorClass"
     />
     <div class="flex-1">
-      <h4 v-if="title || $slots.title" class="text-sm font-semibold">
-        <slot name="title">{{ title }}</slot>
+      <h4
+        v-if="title || $slots.title"
+        class="text-sm font-semibold"
+      >
+        <slot name="title">
+          {{ title }}
+        </slot>
       </h4>
-      <p v-if="description" class="mt-1 text-sm opacity-90">
+      <p
+        v-if="description"
+        class="mt-1 text-sm opacity-90"
+      >
         {{ description }}
       </p>
-      <div v-if="$slots.default" :class="{ 'mt-2': title || description }">
+      <div
+        v-if="$slots.default"
+        :class="{ 'mt-2': title || description }"
+      >
         <slot />
       </div>
     </div>

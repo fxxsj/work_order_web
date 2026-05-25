@@ -1,13 +1,40 @@
 <template>
-  <BaseDialog :show="dialogVisible" title="签收确认" width="normal" @close="handleClose; dialogVisible = false;">
+  <BaseDialog
+    :show="dialogVisible"
+    title="签收确认"
+    width="normal"
+    @close="handleClose; dialogVisible = false;"
+  >
     <div class="space-y-4">
       <div class="flex items-start gap-3">
         <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">签收状态</label>
-        <RadioGroup v-model="form.received" :options="receivedOptions" />
+        <RadioGroup
+          v-model="form.received"
+          :options="receivedOptions"
+        />
       </div>
-      <TextArea v-if="form.received === 'rejected'" v-model="form.received_notes" label="拒收原因" :rows="3" placeholder="请输入拒收原因" class="w-full" />
+      <TextArea
+        v-if="form.received === 'rejected'"
+        v-model="form.received_notes"
+        label="拒收原因"
+        :rows="3"
+        placeholder="请输入拒收原因"
+        class="w-full"
+      />
     </div>
-    <template #footer><button class="btn" @click="handleClose">取消</button><button class="btn btn-primary" @click="handleSubmit">确认</button></template>
+    <template #footer>
+      <button
+        class="btn"
+        @click="handleClose"
+      >
+        取消
+      </button><button
+        class="btn btn-primary"
+        @click="handleSubmit"
+      >
+        确认
+      </button>
+    </template>
   </BaseDialog>
 </template>
 

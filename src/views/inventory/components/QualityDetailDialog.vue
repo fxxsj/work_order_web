@@ -1,14 +1,39 @@
 <template>
-  <BaseDialog :show="visible" title="质检详情" width="wide" @close="visible = false">
-    <DescriptionGrid v-if="data" :columns="2">
-      <DescriptionItem label="产品名称">{{ data.product_name }}</DescriptionItem>
-      <DescriptionItem label="检验结果">
-        <StatusTag :status="data.status" category="inspection" :label="data.status_display" />
+  <BaseDialog
+    :show="visible"
+    title="质检详情"
+    width="wide"
+    @close="visible = false"
+  >
+    <DescriptionGrid
+      v-if="data"
+      :columns="2"
+    >
+      <DescriptionItem label="产品名称">
+        {{ data.product_name }}
       </DescriptionItem>
-      <DescriptionItem label="合格数量">{{ data.passed_quantity || 0 }}</DescriptionItem>
-      <DescriptionItem label="不合格数量">{{ data.failed_quantity || 0 }}</DescriptionItem>
+      <DescriptionItem label="检验结果">
+        <StatusTag
+          :status="data.status"
+          category="inspection"
+          :label="data.status_display"
+        />
+      </DescriptionItem>
+      <DescriptionItem label="合格数量">
+        {{ data.passed_quantity || 0 }}
+      </DescriptionItem>
+      <DescriptionItem label="不合格数量">
+        {{ data.failed_quantity || 0 }}
+      </DescriptionItem>
     </DescriptionGrid>
-    <template #footer><button class="btn" @click="visible = false">关闭</button></template>
+    <template #footer>
+      <button
+        class="btn"
+        @click="visible = false"
+      >
+        关闭
+      </button>
+    </template>
   </BaseDialog>
 </template>
 

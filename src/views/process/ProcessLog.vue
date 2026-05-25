@@ -1,5 +1,8 @@
 <template>
-  <TablePageLayout title="工序日志" :loading="loading">
+  <TablePageLayout
+    title="工序日志"
+    :loading="loading"
+  >
     <template #filters>
       <FilterRow>
         <SearchInput
@@ -22,8 +25,17 @@
     
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        <button
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
+          @click="loadData"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
       </div>
     </template>
@@ -36,7 +48,9 @@
         :row-key="(row: any) => row.id"
       >
         <template #cell-action="{ value }">
-          <Tag :type="getActionTagType(value)">{{ getActionLabel(value) }}</Tag>
+          <Tag :type="getActionTagType(value)">
+            {{ getActionLabel(value) }}
+          </Tag>
         </template>
         <template #cell-details="{ value }">
           <span class="text-gray-500 text-sm truncate max-w-xs block">{{ value }}</span>

@@ -1,17 +1,46 @@
 <template>
-  <BaseDialog :show="visible" title="质检检验" width="normal" @close="visible = false">
+  <BaseDialog
+    :show="visible"
+    title="质检检验"
+    width="normal"
+    @close="visible = false"
+  >
     <div class="space-y-4">
       <div>
         <label class="input-label mb-1.5 block">合格数量</label>
-        <InputNumber v-model="form.passed_quantity" :min="0" class="w-full" />
+        <InputNumber
+          v-model="form.passed_quantity"
+          :min="0"
+          class="w-full"
+        />
       </div>
       <div>
         <label class="input-label mb-1.5 block">不合格数量</label>
-        <InputNumber v-model="form.failed_quantity" :min="0" class="w-full" />
+        <InputNumber
+          v-model="form.failed_quantity"
+          :min="0"
+          class="w-full"
+        />
       </div>
-      <TextArea v-model="form.notes" label="备注" :rows="3" />
+      <TextArea
+        v-model="form.notes"
+        label="备注"
+        :rows="3"
+      />
     </div>
-    <template #footer><button class="btn" @click="visible = false">取消</button><button class="btn btn-primary" @click="handleSubmit">提交</button></template>
+    <template #footer>
+      <button
+        class="btn"
+        @click="visible = false"
+      >
+        取消
+      </button><button
+        class="btn btn-primary"
+        @click="handleSubmit"
+      >
+        提交
+      </button>
+    </template>
   </BaseDialog>
 </template>
 

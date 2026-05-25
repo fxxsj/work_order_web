@@ -1,5 +1,8 @@
 <template>
-  <TablePageLayout title="入库单" :loading="loading">
+  <TablePageLayout
+    title="入库单"
+    :loading="loading"
+  >
     <template #filters>
       <FilterRow>
         <SearchInput
@@ -22,11 +25,28 @@
     
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        <button
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
+          @click="loadData"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
-        <button v-if="canCreate" class="btn btn-primary" @click="showCreateDialog">
-          <Icon name="plus" size="md" class="mr-2" />
+        <button
+          v-if="canCreate"
+          class="btn btn-primary"
+          @click="showCreateDialog"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新建入库单
         </button>
       </div>
@@ -40,7 +60,11 @@
         :row-key="(row: any) => row.id"
       >
         <template #cell-status="{ row }">
-          <StatusTag :status="row.status" category="stock" :label="row.status_display" />
+          <StatusTag
+            :status="row.status"
+            category="stock"
+            :label="row.status_display"
+          />
         </template>
         <template #cell-actions="{ row }">
           <RowActions
@@ -98,8 +122,8 @@ import { ref } from 'vue'
 import { stockInAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, ConfirmDialog, Pagination, RowActions, FilterRow, Select, StatusTag } from '@/components/common'
-import type { Column } from '@/components/common/types'
-import { ElMessage } from '@/utils/message'
+import type { Column, RowAction } from '@/components/common/types'
+import { useUIStore } from '@/stores/ui'
 import ErrorHandler from '@/utils/errorHandler'
 
 const columns: Column[] = [
@@ -130,8 +154,8 @@ const showSubmitDialog = ref(false)
 const showApproveDialog = ref(false)
 const currentStockIn = ref<any>(null)
 
-const getRowActions = (row: any) => {
-  const actions = []
+const getRowActions = (row: any): RowAction[] => {
+  const actions: RowAction[] = []
   if (canEdit) {
     actions.push({ key: 'edit', label: '编辑', icon: 'edit' })
   }
@@ -148,17 +172,17 @@ const getRowActions = (row: any) => {
 }
 
 const showCreateDialog = () => {
-  ElMessage.info('新建入库单表单正在开发中...')
+  useUIStore().showInfo('新建入库单表单正在开发中...')
 }
 
 const handleRowAction = (action: string, row: any) => {
   currentStockIn.value = row
   switch (action) {
     case 'edit':
-      ElMessage.info('编辑表单正在开发中...')
+      useUIStore().showInfo('编辑表单正在开发中...')
       break
     case 'delete':
-      ElMessage.info('删除功能正在对接中...')
+      useUIStore().showInfo('删除功能正在对接中...')
       break
     case 'submit':
       showSubmitDialog.value = true
@@ -173,7 +197,7 @@ const handleSubmit = async () => {
   if (!currentStockIn.value) return
   try {
     await stockInAPI.submit(currentStockIn.value.id)
-    ElMessage.success('提交成功')
+    useUIStore().showSuccess('提交成功')
     showSubmitDialog.value = false
     loadData()
   } catch (error) {
@@ -185,7 +209,7 @@ const handleApprove = async () => {
   if (!currentStockIn.value) return
   try {
     await stockInAPI.approve(currentStockIn.value.id)
-    ElMessage.success('审核成功')
+    useUIStore().showSuccess('审核成功')
     showApproveDialog.value = false
     loadData()
   } catch (error) {

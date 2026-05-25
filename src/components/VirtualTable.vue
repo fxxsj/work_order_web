@@ -2,34 +2,52 @@
   <div class="virtual-table-container">
     <div class="virtual-table-header">
       <table class="data-table w-full">
-        <thead><tr><slot name="columns"></slot></tr></thead>
+        <thead><tr><slot name="columns" /></tr></thead>
       </table>
     </div>
 
     <RecycleScroller
       v-if="displayData.length > 0"
+      v-slot="{ item, index }"
       class="virtual-table-body"
       :items="displayData"
       :item-size="itemSize"
       key-field="id"
       :buffer="buffer"
-      #default="{ item, index }"
     >
       <div :class="['virtual-table-row', rowClassName]">
-        <slot name="row" :item="item" :index="index">
-          <slot name="columns" :item="item" :index="index"></slot>
+        <slot
+          name="row"
+          :item="item"
+          :index="index"
+        >
+          <slot
+            name="columns"
+            :item="item"
+            :index="index"
+          />
         </slot>
       </div>
     </RecycleScroller>
 
-    <div v-else class="virtual-table-empty">
+    <div
+      v-else
+      class="virtual-table-empty"
+    >
       <slot name="empty">
         <EmptyState title="暂无数据" />
       </slot>
     </div>
 
-    <div v-if="showPagination" class="virtual-table-pagination">
-      <Pagination :total="total" :page="currentPage" :pageSize="pageSize" />
+    <div
+      v-if="showPagination"
+      class="virtual-table-pagination"
+    >
+      <Pagination
+        :total="total"
+        :page="currentPage"
+        :page-size="pageSize"
+      />
     </div>
   </div>
 </template>

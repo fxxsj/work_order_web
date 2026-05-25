@@ -1,12 +1,26 @@
 <template>
   <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-    <div v-for="(item, index) in plateItems" :key="index" class="card">
+    <div
+      v-for="(item, index) in plateItems"
+      :key="index"
+      class="card"
+    >
       <div class="card-header flex items-center justify-between">
         <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ item.title }}</span>
-        <button class="btn btn-primary btn-sm" @click="goTo(item.path)">全部</button>
+        <button
+          class="btn btn-primary btn-sm"
+          @click="goTo(item.path)"
+        >
+          全部
+        </button>
       </div>
       <div class="card-body">
-        <PendingPlateList :items="item.data" :confirming-item="confirmingItem" :type="item.type" @confirm="handleConfirm" />
+        <PendingPlateList
+          :items="item.data"
+          :confirming-item="confirmingItem"
+          :type="item.type"
+          @confirm="handleConfirm"
+        />
       </div>
     </div>
   </div>

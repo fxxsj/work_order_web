@@ -17,11 +17,28 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        <button
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
+          @click="loadData"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
-        <button v-if="canCreate && tableData.length > 0" class="btn btn-primary" @click="showCreateDialog">
-          <Icon name="plus" size="md" class="mr-2" />
+        <button
+          v-if="canCreate && tableData.length > 0"
+          class="btn btn-primary"
+          @click="showCreateDialog"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新建产品
         </button>
       </div>
@@ -36,13 +53,18 @@
         @sort="handleSort"
       >
         <template #cell-product_type="{ row }">
-          <Tag :type="row.product_type === 'single' ? '' : (row.product_type === 'group_main' ? 'warning' : 'info')" size="small">
+          <Tag
+            :type="row.product_type === 'single' ? '' : (row.product_type === 'group_main' ? 'warning' : 'info')"
+            size="small"
+          >
             {{ row.product_type_display || getProductTypeLabel(row.product_type) }}
           </Tag>
         </template>
 
         <template #cell-is_active="{ value }">
-          <Tag :type="value ? 'success' : 'info'">{{ value ? '启用' : '禁用' }}</Tag>
+          <Tag :type="value ? 'success' : 'info'">
+            {{ value ? '启用' : '禁用' }}
+          </Tag>
         </template>
 
         <template #cell-unit_price="{ value }">
@@ -83,13 +105,13 @@
 
   <product-form-dialog 
     :visible="showCreateModal || showEditModal"
-    @update:visible="(val: boolean) => { if(!val) closeModals() }"
-    :dialog-type="showEditModal ? 'edit' : 'create'" 
+    :dialog-type="showEditModal ? 'edit' : 'create'"
     :product="currentProduct" 
     :loading="formLoading" 
     :materials="materialList" 
     :processes="allProcesses" 
     :product-groups="productGroupList" 
+    @update:visible="(val: boolean) => { if(!val) closeModals() }" 
     @confirm="handleFormConfirm" 
   />
 
@@ -107,10 +129,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 import { productAPI, processAPI, materialAPI, productMaterialAPI, productGroupAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Tag, ConfirmDialog, Pagination, RowActions, FilterRow } from '@/components/common'
+import ProductFormDialog from './components/ProductFormDialog.vue'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
@@ -236,12 +259,12 @@ const handleFormConfirm = async (payload: any) => {
     if (showEditModal.value) { 
       await productAPI.update(currentProduct.value.id, formData); 
       productId = currentProduct.value.id; 
-      ElMessage.success('保存成功') 
+      useUIStore().showSuccess('保存成功') 
     }
     else { 
       const result: any = await productAPI.create(formData); 
       productId = result.id; 
-      ElMessage.success('创建成功') 
+      useUIStore().showSuccess('创建成功') 
     }
     await saveProductMaterials(productId, materialItems)
     closeModals()

@@ -1,28 +1,60 @@
 <template>
   <div>
     <div class="card">
-      <div class="mb-6 border-b border-gray-200 pb-4 dark:border-dark-700">
-        <span class="text-base font-bold">{{ isEdit ? '编辑销售订单' : '新建销售订单' }}</span>
-      </div>
-      <div class="space-y-4">
+      <div class="card-body space-y-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Select v-model="form.customer" :options="customerSelectOptions" label="客户" placeholder="请选择客户" searchable class="w-full" @change="handleCustomerChange" />
-          <Input v-model="form.order_date" type="date" label="订单日期" />
+          <Select
+            v-model="form.customer"
+            :options="customerSelectOptions"
+            label="客户"
+            placeholder="请选择客户"
+            searchable
+            class="w-full"
+            @change="handleCustomerChange"
+          />
+          <Input
+            v-model="form.order_date"
+            type="date"
+            label="订单日期"
+          />
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Input v-model="form.delivery_date" type="date" label="交货日期" />
-          <Input v-model="form.contact_person" label="联系人" placeholder="请输入联系人" />
+          <Input
+            v-model="form.delivery_date"
+            type="date"
+            label="交货日期"
+          />
+          <Input
+            v-model="form.contact_person"
+            label="联系人"
+            placeholder="请输入联系人"
+          />
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Input v-model="form.contact_phone" label="联系电话" placeholder="请输入联系电话" />
-          <TextArea v-model="form.shipping_address" label="送货地址" :rows="1" placeholder="请输入送货地址" />
+          <Input
+            v-model="form.contact_phone"
+            label="联系电话"
+            placeholder="请输入联系电话"
+          />
+          <TextArea
+            v-model="form.shipping_address"
+            label="送货地址"
+            :rows="1"
+            placeholder="请输入送货地址"
+          />
         </div>
 
-        <div class="my-6 border-t border-gray-200 pt-4 dark:border-dark-700">
-          <div class="mb-2 text-sm font-semibold text-gray-700 dark:text-dark-300">订单明细</div>
-        </div>
-        <div class="mb-6">
-          <button class="btn btn-primary btn-sm" @click="handleAddItem"><Icon name="plus" class="h-3 w-3" /> 添加产品</button>
+        <div>
+          <SectionDivider title="订单明细" />
+          <button
+            class="btn btn-primary btn-sm"
+            @click="handleAddItem"
+          >
+            <Icon
+              name="plus"
+              class="h-3 w-3"
+            /> 添加产品
+          </button>
           <div class="mt-3">
             <LineItemsTable
               :columns="lineItemColumns"
@@ -30,54 +62,109 @@
               @delete="handleRemoveItem"
             >
               <template #cell-product="{ row, index }">
-                <Select v-model="row.product" :options="productSelectOptions" placeholder="请选择产品" searchable class="w-full" @change="(val) => handleProductChange(val, index)" />
+                <Select
+                  v-model="row.product"
+                  :options="productSelectOptions"
+                  placeholder="请选择产品"
+                  searchable
+                  class="w-full"
+                  @change="(val) => handleProductChange(val, index)"
+                />
               </template>
               <template #cell-spec="{ row }">
                 {{ getProductSpec(row.product) }}
               </template>
               <template #cell-quantity="{ row }">
-                <InputNumber v-model="row.quantity" :min="1" class="w-full" />
+                <InputNumber
+                  v-model="row.quantity"
+                  :min="1"
+                  class="w-full"
+                />
               </template>
               <template #cell-unit="{ row }">
                 {{ getProductUnit(row.product) }}
               </template>
               <template #cell-unit_price="{ row }">
-                <InputNumber v-model="row.unit_price" :min="0" :precision="2" class="w-full" />
+                <InputNumber
+                  v-model="row.unit_price"
+                  :min="0"
+                  :precision="2"
+                  class="w-full"
+                />
               </template>
               <template #cell-amount="{ row }">
                 <span>¥{{ ((row.quantity || 0) * (row.unit_price || 0)).toLocaleString() }}</span>
               </template>
               <template #cell-notes="{ row }">
-                <Input v-model="row.notes" placeholder="备注" />
+                <Input
+                  v-model="row.notes"
+                  placeholder="备注"
+                />
               </template>
             </LineItemsTable>
           </div>
         </div>
 
-        <div class="my-6 border-t border-gray-200 pt-4 dark:border-dark-700">
-          <div class="mb-2 text-sm font-semibold text-gray-700 dark:text-dark-300">其他信息</div>
-        </div>
+        <SectionDivider title="其他信息" />
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           <div>
             <label class="input-label mb-1.5 block">税率</label>
-            <InputNumber v-model="form.tax_rate" :min="0" :max="100" class="w-full" />
+            <InputNumber
+              v-model="form.tax_rate"
+              :min="0"
+              :max="100"
+              class="w-full"
+            />
           </div>
           <div>
             <label class="input-label mb-1.5 block">折扣金额</label>
-            <InputNumber v-model="form.discount_amount" :min="0" :precision="2" class="w-full" />
+            <InputNumber
+              v-model="form.discount_amount"
+              :min="0"
+              :precision="2"
+              class="w-full"
+            />
           </div>
           <div>
             <label class="input-label mb-1.5 block">合计金额</label>
-            <div class="text-xl font-bold text-primary-600 leading-10">¥{{ totalAmount.toLocaleString() }}</div>
+            <div class="text-xl font-bold text-primary-600 leading-10">
+              ¥{{ totalAmount.toLocaleString() }}
+            </div>
           </div>
         </div>
-        <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注" />
+        <TextArea
+          v-model="form.notes"
+          label="备注"
+          :rows="3"
+          placeholder="请输入备注"
+        />
       </div>
 
-      <div class="mt-8 flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:justify-center dark:border-dark-700">
-        <button class="btn btn-secondary" @click="goBack">取消</button>
-        <button class="btn btn-primary" :disabled="submitting" @click="handleSubmit">
-          <span v-if="submitting" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle" />
+      <div class="card-footer flex flex-col gap-3 sm:flex-row sm:justify-end">
+        <button
+          class="btn btn-secondary"
+          @click="goBack"
+        >
+          <Icon
+            name="arrowLeft"
+            size="md"
+          />
+          取消
+        </button>
+        <button
+          class="btn btn-primary"
+          :disabled="submitting"
+          @click="handleSubmit"
+        >
+          <span
+            v-if="submitting"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle"
+          />
+          <Icon
+            v-else
+            name="check"
+            size="md"
+          />
           {{ isEdit ? '保存' : '创建' }}
         </button>
       </div>
@@ -88,10 +175,9 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Icon, Input, TextArea, InputNumber, Select, LineItemsTable } from '@/components/common'
-import { ElMessage } from '@/utils/message'
-import { salesOrderAPI, productAPI } from '@/api/modules'
-import { customerAPI } from '@/api/modules/customer'
+import { Icon, Input, TextArea, InputNumber, Select, LineItemsTable, SectionDivider } from '@/components/common'
+import { useUIStore } from '@/stores/ui'
+import { salesOrderAPI, productAPI, customerAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -147,20 +233,20 @@ const handleAddItem = () => { form.items.push({ product: null, quantity: 1, unit
 const handleRemoveItem = (index: any) => { if (form.items.length > 1) form.items.splice(index, 1) }
 const getProductSpec = (productId: any) => productOptions.value.find((p: any) => p.id === productId)?.specification || '-'
 const getProductUnit = (productId: any) => productOptions.value.find((p: any) => p.id === productId)?.unit || '-'
-const goBack = () => { router.push('/sales') }
+const goBack = () => { router.push('/sales-orders') }
 
 const handleSubmit = async () => {
-  if (!form.customer) { ElMessage.warning('请选择客户'); return }
-  if (!form.order_date) { ElMessage.warning('请选择订单日期'); return }
-  if (!form.delivery_date) { ElMessage.warning('请选择交货日期'); return }
-  if (!form.items.some((i: any) => i.product)) { ElMessage.warning('请至少选择一个产品'); return }
+  if (!form.customer) { useUIStore().showWarning('请选择客户'); return }
+  if (!form.order_date) { useUIStore().showWarning('请选择订单日期'); return }
+  if (!form.delivery_date) { useUIStore().showWarning('请选择交货日期'); return }
+  if (!form.items.some((i: any) => i.product)) { useUIStore().showWarning('请至少选择一个产品'); return }
 
   submitting.value = true
   try {
     const data = { ...form, items_data: form.items.filter((i: any) => i.product).map((i: any) => ({ product: i.product, quantity: i.quantity, unit_price: i.unit_price, notes: i.notes })) }
     delete (data as any).items
-    if (isEdit.value) { await salesOrderAPI.update(id.value!, data); ElMessage.success('保存成功') } else { await salesOrderAPI.create(data); ElMessage.success('创建成功') }
-    router.push('/sales')
+    if (isEdit.value) { await salesOrderAPI.update(id.value!, data); useUIStore().showSuccess('保存成功') } else { await salesOrderAPI.create(data); useUIStore().showSuccess('创建成功') }
+    router.push('/sales-orders')
   } catch (error: any) { ErrorHandler.showMessage(error, isEdit.value ? '保存失败' : '创建失败') } finally { submitting.value = false }
 }
 

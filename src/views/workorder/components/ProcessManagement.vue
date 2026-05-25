@@ -2,13 +2,32 @@
   <div class="card mt-6">
     <div class="mb-4 flex items-center justify-between border-b border-gray-200 pb-3 dark:border-dark-700">
       <span class="font-bold">工序信息</span>
-      <button v-if="editable" class="btn btn-primary btn-sm" @click="emit('add-process')"><Icon name="plus" class="h-3 w-3" /> 添加工序</button>
+      <button
+        v-if="editable"
+        class="btn btn-primary btn-sm"
+        @click="emit('add-process')"
+      >
+        <Icon
+          name="plus"
+          class="h-3 w-3"
+        /> 添加工序
+      </button>
     </div>
-    <div v-for="process in processes" :key="process.id" class="mb-3 border-l-4 bg-gray-50 p-4 dark:bg-dark-800" :style="{ borderLeftColor: getProcessColor(process.status) }">
+    <div
+      v-for="process in processes"
+      :key="process.id"
+      class="mb-3 border-l-4 bg-gray-50 p-4 dark:bg-dark-800"
+      :style="{ borderLeftColor: getProcessColor(process.status) }"
+    >
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div class="flex flex-wrap items-center gap-2">
           <span class="font-bold">{{ process.sequence }}. {{ process.process_name }}</span>
-          <StatusTag :status="process.status" category="process" :label="process.status_display" size="small" />
+          <StatusTag
+            :status="process.status"
+            category="process"
+            :label="process.status_display"
+            size="small"
+          />
         </div>
         <span class="text-sm">进度: {{ calculateProcessProgress(process) }}%</span>
       </div>
@@ -18,10 +37,22 @@
         <div><span class="text-sm text-gray-500">开始时间:</span> {{ formatDate(process.started_at) }}</div>
         <div><span class="text-sm text-gray-500">完成时间:</span> {{ formatDate(process.completed_at) }}</div>
       </div>
-      <div v-if="process.tasks?.length" class="mt-3">
-        <div class="mb-2 text-xs text-gray-400">任务 ({{ process.tasks.length }}):</div>
+      <div
+        v-if="process.tasks?.length"
+        class="mt-3"
+      >
+        <div class="mb-2 text-xs text-gray-400">
+          任务 ({{ process.tasks.length }}):
+        </div>
         <div class="flex flex-wrap gap-2">
-          <StatusTag v-for="task in process.tasks" :key="task.id" :status="task.status" category="task" :label="task.work_content" size="small" />
+          <StatusTag
+            v-for="task in process.tasks"
+            :key="task.id"
+            :status="task.status"
+            category="task"
+            :label="task.work_content"
+            size="small"
+          />
         </div>
       </div>
     </div>

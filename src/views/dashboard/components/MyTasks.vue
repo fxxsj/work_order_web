@@ -2,10 +2,18 @@
   <div class="card">
     <div class="card-header flex items-center justify-between">
       <span class="text-sm font-semibold text-gray-900 dark:text-white">我的待处理任务</span>
-      <button class="btn btn-primary btn-sm" @click="emit('view-all')">查看全部</button>
+      <button
+        class="btn btn-primary btn-sm"
+        @click="emit('view-all')"
+      >
+        查看全部
+      </button>
     </div>
     <div class="card-body">
-      <SummaryTable :columns="columns" :data="tasks">
+      <SummaryTable
+        :columns="columns"
+        :data="tasks"
+      >
         <template #cell-work_order="{ row }">
           <button
             v-if="row.work_order_process_info?.work_order?.id"
@@ -17,13 +25,26 @@
           <span v-else>-</span>
         </template>
         <template #cell-status="{ row }">
-          <StatusTag :status="row.status" :label="row.status_display" category="task" size="small" />
+          <StatusTag
+            :status="row.status"
+            :label="row.status_display"
+            category="task"
+            size="small"
+          />
         </template>
         <template #cell-progress="{ row }">
-          <ProgressBar :percentage="getProgress(row)" :color="getProgress(row) === 100 ? '#67C23A' : '#409EFF'" />
+          <ProgressBar
+            :percentage="getProgress(row)"
+            :color="getProgress(row) === 100 ? '#67C23A' : '#409EFF'"
+          />
         </template>
         <template #cell-actions>
-          <button class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="goTo('/tasks')">详情</button>
+          <button
+            class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400"
+            @click="goTo('/tasks')"
+          >
+            详情
+          </button>
         </template>
       </SummaryTable>
     </div>

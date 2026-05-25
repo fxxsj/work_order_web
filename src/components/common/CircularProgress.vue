@@ -1,6 +1,10 @@
 <template>
   <div class="inline-flex flex-col items-center">
-    <svg :width="size" :height="size" viewBox="0 0 100 100">
+    <svg
+      :width="size"
+      :height="size"
+      viewBox="0 0 100 100"
+    >
       <circle
         cx="50"
         cy="50"
@@ -23,7 +27,10 @@
         class="transition-all duration-500"
       />
     </svg>
-    <span v-if="showText" class="mt-1 text-xs text-gray-600 dark:text-gray-400">{{ Math.round(percentage || 0) }}%</span>
+    <span
+      v-if="showText"
+      class="mt-1 text-xs text-gray-600 dark:text-gray-400"
+    >{{ Math.round(percentage || 0) }}%</span>
   </div>
 </template>
 

@@ -1,66 +1,179 @@
 <template>
-  <BaseDialog :show="dialogVisible" :title="dialogTitle" width="wide" @close="handleClose; dialogVisible = false;">
+  <BaseDialog
+    :show="dialogVisible"
+    :title="dialogTitle"
+    width="wide"
+    @close="handleClose; dialogVisible = false;"
+  >
     <div class="space-y-4">
-      <Input v-model="form.base_code" label="图稿主编码" placeholder="留空则系统自动生成（格式：ART + yyyymm + 序号）" :disabled="isEditMode" />
-      <div class="-mt-2 text-xs text-gray-400">{{ isEditMode ? '主编码不可修改' : '留空则自动生成，格式：ART202412001' }}</div>
-      <div v-if="isEditMode" class="flex items-start gap-3">
+      <Input
+        v-model="form.base_code"
+        label="图稿主编码"
+        placeholder="留空则系统自动生成（格式：ART + yyyymm + 序号）"
+        :disabled="isEditMode"
+      />
+      <div class="-mt-2 text-xs text-gray-400">
+        {{ isEditMode ? '主编码不可修改' : '留空则自动生成，格式：ART202412001' }}
+      </div>
+      <div
+        v-if="isEditMode"
+        class="flex items-start gap-3"
+      >
         <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">版本号</label>
         <div class="flex-1">
-          <InputNumber v-model="form.version" :min="1" disabled class="w-full" />
-          <div class="mt-1 text-xs text-gray-400">完整编码：{{ form.base_code }}{{ form.version > 1 ? '-v' + form.version : '' }}</div>
+          <InputNumber
+            v-model="form.version"
+            :min="1"
+            disabled
+            class="w-full"
+          />
+          <div class="mt-1 text-xs text-gray-400">
+            完整编码：{{ form.base_code }}{{ form.version > 1 ? '-v' + form.version : '' }}
+          </div>
         </div>
       </div>
-      <Input v-model="form.name" label="图稿名称" placeholder="请输入图稿名称" />
+      <Input
+        v-model="form.name"
+        label="图稿名称"
+        placeholder="请输入图稿名称"
+      />
       <div class="flex items-start gap-3">
         <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">CMYK颜色</label>
-        <CheckboxGroup v-model="form.cmyk_colors" :options="cmykOptions" />
+        <CheckboxGroup
+          v-model="form.cmyk_colors"
+          :options="cmykOptions"
+        />
       </div>
       <div class="flex flex-col gap-2">
         <label class="input-label block">其他颜色</label>
-        <div v-for="(color, index) in form.other_colors" :key="index" class="mb-2 flex items-center gap-2">
-          <input v-model="form.other_colors[index]" placeholder="请输入颜色名称，如：528C、金色" class="input flex-1" />
-          <button class="btn btn-danger btn-sm btn-circle" @click="removeOtherColor(index)"><Icon name="trash" class="h-3 w-3" /></button>
+        <div
+          v-for="(color, index) in form.other_colors"
+          :key="index"
+          class="mb-2 flex items-center gap-2"
+        >
+          <input
+            v-model="form.other_colors[index]"
+            placeholder="请输入颜色名称，如：528C、金色"
+            class="input flex-1"
+          >
+          <button
+            class="btn btn-danger btn-sm btn-circle"
+            @click="removeOtherColor(index)"
+          >
+            <Icon
+              name="trash"
+              class="h-3 w-3"
+            />
+          </button>
         </div>
-        <button class="btn btn-primary btn-sm w-fit" @click="addOtherColor"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加颜色</button>
+        <button
+          class="btn btn-primary btn-sm w-fit"
+          @click="addOtherColor"
+        >
+          <Icon
+            name="plus"
+            class="mr-1 inline h-3 w-3"
+          />添加颜色
+        </button>
       </div>
-      <Input v-model="form.imposition_size" label="拼版尺寸" placeholder="如：420x594mm" />
+      <Input
+        v-model="form.imposition_size"
+        label="拼版尺寸"
+        placeholder="如：420x594mm"
+      />
       <div class="flex items-start gap-3">
         <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">关联刀模</label>
-        <Select v-model="form.dies" :options="dieOptions" multiple filterable placeholder="请选择刀模（可多选）" class="flex-1" />
+        <Select
+          v-model="form.dies"
+          :options="dieOptions"
+          multiple
+          filterable
+          placeholder="请选择刀模（可多选）"
+          class="flex-1"
+        />
       </div>
       <div class="flex items-start gap-3">
         <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">关联烫金版</label>
-        <Select v-model="form.foiling_plates" :options="foilingPlateOptions" multiple filterable placeholder="请选择烫金版（可多选）" class="flex-1" />
+        <Select
+          v-model="form.foiling_plates"
+          :options="foilingPlateOptions"
+          multiple
+          filterable
+          placeholder="请选择烫金版（可多选）"
+          class="flex-1"
+        />
       </div>
       <div class="flex items-start gap-3">
         <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">关联压凸版</label>
-        <Select v-model="form.embossing_plates" :options="embossingPlateOptions" multiple filterable placeholder="请选择压凸版（可多选）" class="flex-1" />
+        <Select
+          v-model="form.embossing_plates"
+          :options="embossingPlateOptions"
+          multiple
+          filterable
+          placeholder="请选择压凸版（可多选）"
+          class="flex-1"
+        />
       </div>
 
       <SectionDivider title="包含产品及拼版数量" />
       <div class="flex items-start gap-3">
         <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">产品列表</label>
         <div class="flex-1">
-          <button class="btn btn-primary btn-sm mb-3" @click="addProductItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加产品</button>
+          <button
+            class="btn btn-primary btn-sm mb-3"
+            @click="addProductItem"
+          >
+            <Icon
+              name="plus"
+              class="mr-1 inline h-3 w-3"
+            />添加产品
+          </button>
           <LineItemsTable
             :columns="productColumns"
             :items="productItems"
             @delete="removeProductItem"
           >
             <template #cell-product="{ row }">
-              <Select v-model="row.product" :options="productOptions" placeholder="请选择产品" filterable class="w-full" />
+              <Select
+                v-model="row.product"
+                :options="productOptions"
+                placeholder="请选择产品"
+                filterable
+                class="w-full"
+              />
             </template>
             <template #cell-imposition_quantity="{ row }">
-              <InputNumber v-model="row.imposition_quantity" :min="1" class="w-full" />
+              <InputNumber
+                v-model="row.imposition_quantity"
+                :min="1"
+                class="w-full"
+              />
             </template>
           </LineItemsTable>
         </div>
       </div>
-      <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注信息" class="w-full" />
+      <TextArea
+        v-model="form.notes"
+        label="备注"
+        :rows="3"
+        placeholder="请输入备注信息"
+        class="w-full"
+      />
     </div>
     <template #footer>
-      <button class="btn" @click="handleClose">取消</button>
-      <button class="btn btn-primary" :disabled="loading" @click="handleConfirm">确定</button>
+      <button
+        class="btn"
+        @click="handleClose"
+      >
+        取消
+      </button>
+      <button
+        class="btn btn-primary"
+        :disabled="loading"
+        @click="handleConfirm"
+      >
+        确定
+      </button>
     </template>
   </BaseDialog>
 </template>
@@ -69,7 +182,7 @@
 import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { Icon, Input, InputNumber, TextArea, CheckboxGroup, Select, SectionDivider, LineItemsTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -140,7 +253,7 @@ const addOtherColor = () => { form.other_colors.push('') }
 const removeOtherColor = (index: any) => { form.other_colors.splice(index, 1) }
 
 const handleConfirm = () => {
-  if (!form.name) { ElMessage.warning('请输入图稿名称'); return }
+  if (!form.name) { useUIStore().showWarning('请输入图稿名称'); return }
   const data: any = { ...form }
   if (!isEditMode.value && !data.base_code) delete (data as any).base_code
   if (!isEditMode.value) delete (data as any).version

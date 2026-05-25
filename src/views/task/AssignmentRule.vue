@@ -3,18 +3,68 @@
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
-          <SearchInput v-model="searchText" placeholder="搜索工序、部门" @search="handleSearch" @clear="handleSearch" />
-          <button v-if="canCreate" class="btn btn-primary btn-sm" @click="showDialog"><Icon name="plus" class="h-4 w-4" /> 新建分派规则</button>
+          <SearchInput
+            v-model="searchText"
+            placeholder="搜索工序、部门"
+            @search="handleSearch"
+            @clear="handleSearch"
+          />
+          <button
+            v-if="canCreate"
+            class="btn btn-primary btn-sm"
+            @click="showDialog"
+          >
+            <Icon
+              name="plus"
+              class="h-4 w-4"
+            /> 新建分派规则
+          </button>
         </div>
-        <div class="flex items-center gap-2"><span class="text-sm text-gray-500">启用自动分派：</span><Toggle v-model="globalDispatchEnabled" @change="handleGlobalToggle" /></div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-500">启用自动分派：</span><Toggle
+            v-model="globalDispatchEnabled"
+            @change="handleGlobalToggle"
+          />
+        </div>
       </div>
       <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div class="lg:col-span-1"><process-list :processes="processList" :selected-process="selectedProcess" :loading="processListLoading" @select="handleProcessSelect" /></div>
-        <div class="lg:col-span-2"><department-priority-panel :process="selectedProcess" :departments="departmentRules" :all-departments="departmentList" :loading="departmentRulesLoading" :can-edit="canEdit" :can-delete="canDelete" @update-priority="handlePriorityUpdate" @toggle-active="handleToggleActive" @add-department="handleAddDepartment" @edit-department="handleEditDepartment" @remove-department="handleRemoveDepartment" /></div>
+        <div class="lg:col-span-1">
+          <process-list
+            :processes="processList"
+            :selected-process="selectedProcess"
+            :loading="processListLoading"
+            @select="handleProcessSelect"
+          />
+        </div>
+        <div class="lg:col-span-2">
+          <department-priority-panel
+            :process="selectedProcess"
+            :departments="departmentRules"
+            :all-departments="departmentList"
+            :loading="departmentRulesLoading"
+            :can-edit="canEdit"
+            :can-delete="canDelete"
+            @update-priority="handlePriorityUpdate"
+            @toggle-active="handleToggleActive"
+            @add-department="handleAddDepartment"
+            @edit-department="handleEditDepartment"
+            @remove-department="handleRemoveDepartment"
+          />
+        </div>
       </div>
-      <Alert v-if="!globalDispatchEnabled" title="自动分派已禁用" type="warning" description="当前自动分派功能已禁用，仅显示预览信息。" :closable="false" show-icon class="mb-4" />
+      <Alert
+        v-if="!globalDispatchEnabled"
+        title="自动分派已禁用"
+        type="warning"
+        description="当前自动分派功能已禁用，仅显示预览信息。"
+        :closable="false"
+        show-icon
+        class="mb-4"
+      />
       <div>
-        <h4 class="mb-4 font-bold">分派预览</h4>
+        <h4 class="mb-4 font-bold">
+          分派预览
+        </h4>
         <DataTable
           :columns="columns"
           :data="previewData"
@@ -36,29 +86,69 @@
         </DataTable>
       </div>
     </div>
-    <BaseDialog :show="dialogVisible" :title="dialogTitle" width="narrow">
+    <BaseDialog
+      :show="dialogVisible"
+      :title="dialogTitle"
+      width="narrow"
+    >
       <div class="space-y-4">
         <div class="flex items-start gap-3">
           <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">工序</label>
-          <Select v-model="form.process" :options="processOptions" placeholder="请选择工序" filterable class="flex-1" />
+          <Select
+            v-model="form.process"
+            :options="processOptions"
+            placeholder="请选择工序"
+            filterable
+            class="flex-1"
+          />
         </div>
         <div class="flex items-start gap-3">
           <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">部门</label>
-          <Select v-model="form.department" :options="departmentOptions" placeholder="请选择部门" filterable class="flex-1" />
+          <Select
+            v-model="form.department"
+            :options="departmentOptions"
+            placeholder="请选择部门"
+            filterable
+            class="flex-1"
+          />
         </div>
         <div class="flex items-start gap-3">
           <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">优先级</label>
-          <InputNumber v-model="form.priority" :min="1" :max="100" class="flex-1" />
+          <InputNumber
+            v-model="form.priority"
+            :min="1"
+            :max="100"
+            class="flex-1"
+          />
         </div>
-        <TextArea v-model="form.conditions" label="条件" :rows="3" placeholder="JSON格式条件" class="w-full" />
+        <TextArea
+          v-model="form.conditions"
+          label="条件"
+          :rows="3"
+          placeholder="JSON格式条件"
+          class="w-full"
+        />
         <div class="flex items-start gap-3">
           <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">启用</label>
-          <div class="pt-1"><Toggle v-model="form.is_active" /></div>
+          <div class="pt-1">
+            <Toggle v-model="form.is_active" />
+          </div>
         </div>
       </div>
       <template #footer>
-        <button class="btn btn-secondary" @click="dialogVisible = false">取消</button>
-        <button class="btn btn-primary" :disabled="submitting" @click="handleSubmit">确定</button>
+        <button
+          class="btn btn-secondary"
+          @click="dialogVisible = false"
+        >
+          取消
+        </button>
+        <button
+          class="btn btn-primary"
+          :disabled="submitting"
+          @click="handleSubmit"
+        >
+          确定
+        </button>
       </template>
     </BaseDialog>
     <ConfirmDialog
@@ -80,7 +170,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Icon, SearchInput, TextArea, Select, InputNumber, Toggle, ConfirmDialog, DataTable, EmptyState, ProgressBar } from '@/components/common'
 import type { Column } from '@/components/common/types'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 import { assignmentRuleAPI, processAPI, departmentAPI, dispatchConfigAPI } from '@/api/modules'
 import { useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
@@ -142,15 +232,15 @@ const handleProcessSelect = (process: any) => { selectedProcess.value = process;
 const handleSearch = () => { /* TODO: 搜索过滤 */ }
 
 const handleGlobalToggle = async (enabled: any) => {
-  try { await dispatchConfigAPI.update({ is_enabled: enabled }); ElMessage.success(enabled ? '自动分派已启用' : '自动分派已禁用') } catch (error: any) { ErrorHandler.showMessage(error, '更新配置失败') }
+  try { await dispatchConfigAPI.update({ is_enabled: enabled }); useUIStore().showSuccess(enabled ? '自动分派已启用' : '自动分派已禁用') } catch (error: any) { ErrorHandler.showMessage(error, '更新配置失败') }
 }
 
 const handlePriorityUpdate = async (payload: any) => { const { id, priority } = payload;
-  try { await assignmentRuleAPI.updatePriority(id, { priority }); ElMessage.success('优先级已更新') } catch (error: any) { ErrorHandler.showMessage(error, '更新失败') }
+  try { await assignmentRuleAPI.updatePriority(id, { priority }); useUIStore().showSuccess('优先级已更新') } catch (error: any) { ErrorHandler.showMessage(error, '更新失败') }
 }
 
 const handleToggleActive = async (payload: any) => { const { id, is_active } = payload;
-  try { await assignmentRuleAPI.toggleActive(id, { is_active }); ElMessage.success(is_active ? '规则已启用' : '规则已禁用') } catch (error: any) { ErrorHandler.showMessage(error, '更新失败') }
+  try { await assignmentRuleAPI.toggleActive(id, { is_active }); useUIStore().showSuccess(is_active ? '规则已启用' : '规则已禁用') } catch (error: any) { ErrorHandler.showMessage(error, '更新失败') }
 }
 
 const handleAddDepartment = (data: any) => { showDialog(data) }
@@ -170,7 +260,7 @@ const confirmRemoveDepartment = async () => {
   deleting.value = true
   try {
     await assignmentRuleAPI.delete(pendingDeleteRuleId.value)
-    ElMessage.success('删除成功')
+    useUIStore().showSuccess('删除成功')
     cancelRemoveDepartment()
     if (selectedProcess.value) loadDepartmentRules(selectedProcess.value.id)
   } catch (error: any) {
@@ -187,11 +277,11 @@ const showDialog = (data: any = null, ruleId: any = null) => {
 }
 
 const handleSubmit = async () => {
-  if (!form.process) { ElMessage.warning('请选择工序'); return }
-  if (!form.department) { ElMessage.warning('请选择部门'); return }
+  if (!form.process) { useUIStore().showWarning('请选择工序'); return }
+  if (!form.department) { useUIStore().showWarning('请选择部门'); return }
   submitting.value = true
   try {
-    if (isEdit.value) { await assignmentRuleAPI.update(currentRuleId.value!, form); ElMessage.success('更新成功') } else { await assignmentRuleAPI.create(form); ElMessage.success('创建成功') }
+    if (isEdit.value) { await assignmentRuleAPI.update(currentRuleId.value!, form); useUIStore().showSuccess('更新成功') } else { await assignmentRuleAPI.create(form); useUIStore().showSuccess('创建成功') }
     dialogVisible.value = false
     if (selectedProcess.value) loadDepartmentRules(selectedProcess.value.id)
   } catch (error: any) { ErrorHandler.showMessage(error, isEdit.value ? '更新失败' : '创建失败') } finally { submitting.value = false }

@@ -1,7 +1,10 @@
 <template>
   <div>
     <div v-if="items.length > 0">
-      <SummaryTable :columns="columns" :data="visibleItems">
+      <SummaryTable
+        :columns="columns"
+        :data="visibleItems"
+      >
         <template #cell-actions="{ row }">
           <button
             class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400"
@@ -17,9 +20,17 @@
           </button>
         </template>
       </SummaryTable>
-      <div v-if="items.length > 5" class="mt-1 text-center text-xs text-gray-500 dark:text-dark-400">还有 {{ items.length - 5 }} 项...</div>
+      <div
+        v-if="items.length > 5"
+        class="mt-1 text-center text-xs text-gray-500 dark:text-dark-400"
+      >
+        还有 {{ items.length - 5 }} 项...
+      </div>
     </div>
-    <EmptyState v-else :title="`暂无待确认${typeLabel}`" />
+    <EmptyState
+      v-else
+      :title="`暂无待确认${typeLabel}`"
+    />
   </div>
 </template>
 

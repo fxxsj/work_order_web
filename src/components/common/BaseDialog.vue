@@ -11,29 +11,42 @@
         @click.self="handleClose"
       >
         <!-- Modal panel -->
-        <div ref="dialogRef" :class="['modal-content', widthClasses]" @click.stop>
+        <div
+          ref="dialogRef"
+          :class="['modal-content', widthClasses]"
+          @click.stop
+        >
           <!-- Header -->
           <div class="modal-header">
-            <h3 :id="dialogId" class="modal-title">
+            <h3
+              :id="dialogId"
+              class="modal-title"
+            >
               {{ title }}
             </h3>
             <button
-              @click="emit('close')"
               class="-mr-2 rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-dark-500 dark:hover:bg-dark-700 dark:hover:text-dark-300"
               aria-label="Close modal"
+              @click="emit('close')"
             >
-              <Icon name="x" size="md" />
+              <Icon
+                name="x"
+                size="md"
+              />
             </button>
           </div>
 
           <!-- Body -->
           <div class="modal-body">
-            <slot></slot>
+            <slot />
           </div>
 
           <!-- Footer -->
-          <div v-if="$slots.footer" class="modal-footer">
-            <slot name="footer"></slot>
+          <div
+            v-if="$slots.footer"
+            class="modal-footer"
+          >
+            <slot name="footer" />
           </div>
         </div>
       </div>

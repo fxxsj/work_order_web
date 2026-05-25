@@ -1,6 +1,9 @@
 <template>
   <div class="component-error">
-    <Icon name="exclamationTriangle" class="h-12 w-12 text-danger-500" />
+    <Icon
+      name="exclamationTriangle"
+      class="h-12 w-12 text-danger-500"
+    />
     <p class="error-text">
       {{ text }}
     </p>

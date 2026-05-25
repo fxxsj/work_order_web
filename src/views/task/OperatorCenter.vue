@@ -1,9 +1,20 @@
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">操作员任务中心</h1>
-      <button class="btn btn-secondary" @click="loadStats" :disabled="loading" title="刷新数据">
-        <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+        操作员任务中心
+      </h1>
+      <button
+        class="btn btn-secondary"
+        :disabled="loading"
+        title="刷新数据"
+        @click="loadStats"
+      >
+        <Icon
+          name="refresh"
+          size="md"
+          :class="loading ? 'animate-spin' : ''"
+        />
       </button>
     </div>
 
@@ -30,7 +41,9 @@
     <!-- 任务列表区域 -->
     <div class="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-100 dark:border-dark-700 overflow-hidden">
       <div class="border-b border-gray-100 dark:border-dark-700 px-6 py-4 flex items-center justify-between">
-        <h2 class="text-lg font-medium text-gray-900 dark:text-white">我的待办任务</h2>
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">
+          我的待办任务
+        </h2>
       </div>
       
       <div class="p-6">
@@ -39,21 +52,44 @@
           description="太棒了！您当前没有待处理的任务。"
           icon="checkCircle"
         />
-        <div v-else-if="loading && !tasks.length" class="flex justify-center py-12">
-          <Icon name="refresh" class="animate-spin text-gray-400" size="xl" />
+        <div
+          v-else-if="loading && !tasks.length"
+          class="flex justify-center py-12"
+        >
+          <Icon
+            name="refresh"
+            class="animate-spin text-gray-400"
+            size="xl"
+          />
         </div>
-        <div v-else class="space-y-4">
+        <div
+          v-else
+          class="space-y-4"
+        >
           <!-- 简单列表展示 -->
-          <div v-for="task in tasks" :key="task.id" class="p-4 border border-gray-200 dark:border-dark-600 rounded-lg hover:border-primary-300 transition-colors">
+          <div
+            v-for="task in tasks"
+            :key="task.id"
+            class="p-4 border border-gray-200 dark:border-dark-600 rounded-lg hover:border-primary-300 transition-colors"
+          >
             <div class="flex justify-between items-start">
               <div>
                 <div class="flex items-center gap-2 mb-1">
                   <span class="font-bold text-gray-900 dark:text-white">{{ task.work_order_number }}</span>
-                  <Tag type="primary" size="small">{{ task.process_name }}</Tag>
+                  <Tag
+                    type="primary"
+                    size="small"
+                  >
+                    {{ task.process_name }}
+                  </Tag>
                 </div>
-                <p class="text-sm text-gray-500 mt-1">计划完成时间: {{ task.planned_end_time || '未指定' }}</p>
+                <p class="text-sm text-gray-500 mt-1">
+                  计划完成时间: {{ task.planned_end_time || '未指定' }}
+                </p>
               </div>
-              <button class="btn btn-primary btn-sm">开始任务</button>
+              <button class="btn btn-primary btn-sm">
+                开始任务
+              </button>
             </div>
           </div>
         </div>
@@ -66,7 +102,7 @@
 import { ref, onMounted } from 'vue'
 import { workOrderTaskAPI } from '@/api/modules'
 import { EmptyState, Icon, Tag } from '@/components/common'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 
 const loading = ref(false)
 const stats = ref<any>({})
@@ -88,7 +124,7 @@ const loadStats = async () => {
       { id: 2, work_order_number: 'WO-20231015-02', process_name: '烫金', planned_end_time: '2023-10-16 12:00' }
     ]
   } catch (error) {
-    ElMessage.error('加载任务数据失败')
+    useUIStore().showError('加载任务数据失败')
   } finally {
     loading.value = false
   }

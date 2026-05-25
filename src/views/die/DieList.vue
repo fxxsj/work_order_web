@@ -14,12 +14,29 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button class="btn btn-secondary" :disabled="loading" @click="handleRefresh" title="刷新">
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        <button
+          class="btn btn-secondary"
+          :disabled="loading"
+          title="刷新"
+          @click="handleRefresh"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
           刷新
         </button>
-        <button v-if="canCreate" class="btn btn-primary" @click="handleCreate">
-          <Icon name="plus" size="md" class="mr-2" />
+        <button
+          v-if="canCreate"
+          class="btn btn-primary"
+          @click="handleCreate"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新建刀模
         </button>
       </div>
@@ -34,21 +51,49 @@
         @sort="handleSort"
       >
         <template #cell-die_type="{ row }">
-          <Tag :type="getDieTypeTagType(row.die_type)" size="small">{{ row.die_type_display || getDieTypeLabel(row.die_type) }}</Tag>
+          <Tag
+            :type="getDieTypeTagType(row.die_type)"
+            size="small"
+          >
+            {{ row.die_type_display || getDieTypeLabel(row.die_type) }}
+          </Tag>
         </template>
 
         <template #cell-confirmed="{ value }">
-          <Tag v-if="value" type="success" size="small">已确认</Tag>
-          <Tag v-else type="info" size="small">待确认</Tag>
+          <Tag
+            v-if="value"
+            type="success"
+            size="small"
+          >
+            已确认
+          </Tag>
+          <Tag
+            v-else
+            type="info"
+            size="small"
+          >
+            待确认
+          </Tag>
         </template>
 
         <template #cell-products="{ row }">
           <template v-if="row.products && row.products.length > 0">
-            <Tag v-for="product in row.products" :key="product.id" :type="product.relation_type === 'imposition' ? 'warning' : ''" class="mr-1 mb-1">
-              {{ product.product_name }} ({{ product.quantity }}拼)<span v-if="product.relation_type === 'imposition'" class="text-[10px]">拼</span>
+            <Tag
+              v-for="product in row.products"
+              :key="product.id"
+              :type="product.relation_type === 'imposition' ? 'warning' : ''"
+              class="mr-1 mb-1"
+            >
+              {{ product.product_name }} ({{ product.quantity }}拼)<span
+                v-if="product.relation_type === 'imposition'"
+                class="text-[10px]"
+              >拼</span>
             </Tag>
           </template>
-          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+          <span
+            v-else
+            class="text-gray-400 dark:text-dark-400"
+          >-</span>
         </template>
 
         <template #cell-created_at="{ value }">

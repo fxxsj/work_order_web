@@ -1,29 +1,79 @@
 <template>
   <TablePageLayout
-    title="销售订单"
+    title="客户订单"
     :loading="loading"
   >
     <template #filters>
       <FilterRow>
-        <SearchInput v-model="filters.search" class="w-full sm:w-64" placeholder="搜索订单号/客户名称" @search="handleSearch" @clear="handleSearch" />
-        <Select v-model="filters.status" :options="statusOptions" class="w-full sm:w-36" placeholder="订单状态" clearable @change="handleSearch" />
-        <Select v-model="filters.payment_status" :options="paymentStatusOptions" class="w-full sm:w-36" placeholder="付款状态" clearable @change="handleSearch" />
-        <button class="btn btn-secondary" @click="handleReset">重置</button>
+        <SearchInput
+          v-model="filters.search"
+          class="w-full sm:w-64"
+          placeholder="搜索订单号/客户名称"
+          @search="handleSearch"
+          @clear="handleSearch"
+        />
+        <Select
+          v-model="filters.status"
+          :options="statusOptions"
+          class="w-full sm:w-36"
+          placeholder="订单状态"
+          clearable
+          @change="handleSearch"
+        />
+        <Select
+          v-model="filters.payment_status"
+          :options="paymentStatusOptions"
+          class="w-full sm:w-36"
+          placeholder="付款状态"
+          clearable
+          @change="handleSearch"
+        />
+        <button
+          class="btn btn-secondary"
+          @click="handleReset"
+        >
+          重置
+        </button>
       </FilterRow>
     </template>
     
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        <button
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
+          @click="loadData"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
-        <button class="btn btn-secondary" :disabled="!canBatchConvert" @click="handleBatchConvertRequest">
-          <Icon name="list" size="md" class="mr-2" />
+        <button
+          class="btn btn-secondary"
+          :disabled="!canBatchConvert"
+          @click="handleBatchConvertRequest"
+        >
+          <Icon
+            name="list"
+            size="md"
+            class="mr-2"
+          />
           批量转换
         </button>
-        <button v-if="canCreate" class="btn btn-primary" @click="handleAdd">
-          <Icon name="plus" size="md" class="mr-2" />
-          新建销售订单
+        <button
+          v-if="canCreate"
+          class="btn btn-primary"
+          @click="handleAdd"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
+          新建客户订单
         </button>
       </div>
     </template>
@@ -36,11 +86,19 @@
         :row-key="(row: any) => row.id"
       >
         <template #cell-selection="{ row }">
-          <input type="checkbox" :checked="isSelected(row)" @change="toggleSelect(row)" class="rounded border-gray-300 text-primary-600 focus:ring-primary-600" />
+          <input
+            type="checkbox"
+            :checked="isSelected(row)"
+            class="rounded border-gray-300 text-primary-600 focus:ring-primary-600"
+            @change="toggleSelect(row)"
+          >
         </template>
         
         <template #cell-order_number="{ row }">
-          <span class="cursor-pointer font-medium text-primary-600 hover:underline dark:text-primary-400" @click="handleView(row)">
+          <span
+            class="cursor-pointer font-medium text-primary-600 hover:underline dark:text-primary-400"
+            @click="handleView(row)"
+          >
             {{ row.order_number }}
           </span>
         </template>
@@ -53,7 +111,11 @@
           <span :class="{ 'font-bold text-red-600 dark:text-red-400': isOverdue(row) }">
             {{ row.delivery_date }}
           </span>
-          <Icon v-if="isOverdue(row)" name="warning" class="ml-1 inline h-4 w-4 text-red-600" />
+          <Icon
+            v-if="isOverdue(row)"
+            name="warning"
+            class="ml-1 inline h-4 w-4 text-red-600"
+          />
         </template>
         
         <template #cell-total_amount="{ row }">
@@ -61,15 +123,28 @@
         </template>
         
         <template #cell-status="{ row }">
-          <StatusTag :status="row.status" category="salesOrder" effect="plain" />
+          <StatusTag
+            :status="row.status"
+            category="salesOrder"
+            effect="plain"
+          />
         </template>
         
         <template #cell-payment_status="{ row }">
-          <StatusTag :status="row.payment_status" category="payment" effect="plain" />
+          <StatusTag
+            :status="row.payment_status"
+            category="payment"
+            effect="plain"
+          />
         </template>
         
         <template #cell-items_count="{ row }">
-          <Tag size="small" type="info">{{ row.items_count || 0 }}</Tag>
+          <Tag
+            size="small"
+            type="info"
+          >
+            {{ row.items_count || 0 }}
+          </Tag>
         </template>
         
         <template #cell-actions="{ row }">
@@ -88,7 +163,7 @@
         
         <template #empty>
           <EmptyState
-            :description="hasFilters ? '未找到匹配的订单' : '暂无销售订单数据'"
+            :description="hasFilters ? '未找到匹配的订单' : '暂无客户订单数据'"
             :action-text="hasFilters ? '重置筛选' : undefined"
             @action="handleReset"
           />
@@ -99,8 +174,16 @@
     <template #pagination>
       <div class="flex items-center justify-between w-full">
         <div class="flex items-center gap-2 text-sm text-gray-500">
-          <label v-if="selectedRows.length > 0" class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" class="rounded border-gray-300 text-primary-600 focus:ring-primary-600" />
+          <label
+            v-if="selectedRows.length > 0"
+            class="flex items-center gap-2 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              :checked="allSelected"
+              class="rounded border-gray-300 text-primary-600 focus:ring-primary-600"
+              @change="toggleSelectAll"
+            >
             <span>已选择 {{ selectedRows.length }} 项</span>
           </label>
         </div>
@@ -144,7 +227,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
@@ -213,9 +296,9 @@ const toggleSelectAll = () => {
 
 const handleReset = () => { resetFilters() }
 
-const handleAdd = () => { router.push('/sales/create') }
-const handleView = (row: any) => { router.push(`/sales/${row.id}`) }
-const handleEdit = (row: any) => { router.push(`/sales/${row.id}/edit`) }
+const handleAdd = () => { router.push('/sales-orders/create') }
+const handleView = (row: any) => { router.push(`/sales-orders/${row.id}`) }
+const handleEdit = (row: any) => { router.push(`/sales-orders/${row.id}/edit`) }
 
 const canEdit = (row: any) => row.status === 'draft' && userStore.hasPermission('workorder.change_salesorder')
 const canConvert = (row: any) => ['approved', 'in_production'].includes(row.status) && userStore.hasPermission('workorder.add_workorder')
@@ -230,7 +313,7 @@ const executeConvert = async () => {
   try {
     converting.value = true
     const response: any = await salesOrderAPI.convertToWorkOrder(currentRow.value.id)
-    ElMessage.success('转换成功')
+    useUIStore().showSuccess('转换成功')
     showConvertDialog.value = false;
     router.push(`/workorders/${response.work_order_id || response.id}`)
   } catch (error: any) {
@@ -250,7 +333,7 @@ const executeBatchConvert = async () => {
     batchConverting.value = true
     const orderIds = selectedRows.value.map((r: any) => r.id)
     const response: any = await salesOrderAPI.batchConvertToWorkOrder(orderIds)
-    ElMessage.success(`成功转换 ${response.success_count} 个订单`)
+    useUIStore().showSuccess(`成功转换 ${response.success_count} 个订单`)
     showBatchConvertDialog.value = false;
     selectedRows.value = []
     loadData()
@@ -262,15 +345,15 @@ const executeBatchConvert = async () => {
 }
 
 const handleSubmit = async (row: any) => {
-  try { await salesOrderAPI.submit(row.id); ElMessage.success('提交成功'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '提交失败') }
+  try { await salesOrderAPI.submit(row.id); useUIStore().showSuccess('提交成功'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '提交失败') }
 }
 
 const handleApprove = async (row: any) => {
-  try { await salesOrderAPI.approve(row.id); ElMessage.success('审核通过'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '审核失败') }
+  try { await salesOrderAPI.approve(row.id); useUIStore().showSuccess('审核通过'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '审核失败') }
 }
 
 const handleReject = async (row: any) => {
-  try { await salesOrderAPI.reject(row.id); ElMessage.success('已拒绝'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '操作失败') }
+  try { await salesOrderAPI.reject(row.id); useUIStore().showSuccess('已拒绝'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '操作失败') }
 }
 
 const handleRowAction = (action: string, row: any) => {

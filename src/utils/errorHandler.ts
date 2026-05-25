@@ -2,8 +2,7 @@
  * 统一错误处理器
  * 提供统一的错误处理和消息显示
  */
-import { ElMessage } from '@/utils/message'
-import { ElMessageBox } from '@/utils/messageBox'
+import { useUIStore } from '@/stores/ui'
 import logger from '@/utils/logger'
 
 export interface TaskErrorOptions {
@@ -117,14 +116,15 @@ export class ErrorHandler {
       message += `\n\n当前操作人：${currentOwner}`
     }
 
-    ElMessageBox.confirm(message, '任务冲突', {
-      confirmButtonText: retry?.action_text || '刷新页面',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }).then(() => {
-      location.reload()
-    }).catch(() => {
-      // 用户取消
+    useUIStore().confirm({
+      title: '任务冲突',
+      message,
+      confirmText: retry?.action_text || '刷新页面',
+      cancelText: '取消'
+    }).then(confirmed => {
+      if (confirmed) {
+        location.reload()
+      }
     })
   }
 
@@ -157,23 +157,23 @@ export class ErrorHandler {
 
   static showMessage(error: unknown, context = ''): void {
     const { message } = this.handle(error, context)
-    ElMessage.error(message)
+    useUIStore().showError(message)
   }
 
   static showError(message: string): void {
-    ElMessage.error(message)
+    useUIStore().showError(message)
   }
 
   static showSuccess(message: string): void {
-    ElMessage.success(message)
+    useUIStore().showSuccess(message)
   }
 
   static showWarning(message: string): void {
-    ElMessage.warning(message)
+    useUIStore().showWarning(message)
   }
 
   static showInfo(message: string): void {
-    ElMessage.info(message)
+    useUIStore().showInfo(message)
   }
 
   static handleValidationError(error: unknown, formRef: { setFields: (fields: Record<string, unknown>) => void } | null = null): Record<string, string> {
@@ -203,15 +203,13 @@ export class ErrorHandler {
   }
 
   static confirm(message: string, title = '确认操作', options: Record<string, unknown> = {}): Promise<boolean> {
-    const defaultOptions = {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-
-    return ElMessageBox.confirm(message, title, { ...defaultOptions, ...options })
-      .then(() => true)
-      .catch(() => false)
+    return useUIStore().confirm({
+      title,
+      message,
+      confirmText: options.confirmText as string || options.confirmButtonText as string || '确定',
+      cancelText: options.cancelText as string || options.cancelButtonText as string || '取消',
+      danger: options.danger as boolean || options.type === 'error'
+    })
   }
 
   static async withConfirm<T>(asyncFn: () => Promise<T>, message: string, title = '确认操作'): Promise<T> {

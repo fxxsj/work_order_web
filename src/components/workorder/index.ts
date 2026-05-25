@@ -1,0 +1,12 @@
+// Work order domain components
+export { default as WorkOrderBasicInfo } from './WorkOrderBasicInfo.vue'
+export { default as WorkOrderHeaderActions } from './WorkOrderHeaderActions.vue'
+export { default as WorkOrderProducts } from './WorkOrderProducts.vue'
+export { default as WorkOrderMaterials } from './WorkOrderMaterials.vue'
+export { default as WorkOrderProcessTasks } from './WorkOrderProcessTasks.vue'
+export { default as CustomerSelector } from './CustomerSelector.vue'
+export { default as ProductListEditor } from './ProductListEditor.vue'
+export { default as ProductSelector } from './ProductSelector.vue'
+export { default as ProcessSelector } from './ProcessSelector.vue'
+export { default as MaterialListEditor } from './MaterialListEditor.vue'
+export { default as MultiSelect } from './MultiSelect.vue'

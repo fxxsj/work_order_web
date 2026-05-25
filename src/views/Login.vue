@@ -12,13 +12,22 @@
       </div>
 
       <!-- Login Form -->
-      <form @submit.prevent="handleLogin" class="space-y-5">
+      <form
+        class="space-y-5"
+        @submit.prevent="handleLogin"
+      >
         <!-- Username Input -->
         <div>
-          <label for="username" class="input-label">用户名</label>
+          <label
+            for="username"
+            class="input-label"
+          >用户名</label>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Icon name="user" class="h-5 w-5 text-gray-400 dark:text-dark-500" />
+              <Icon
+                name="user"
+                class="h-5 w-5 text-gray-400 dark:text-dark-500"
+              />
             </div>
             <input
               id="username"
@@ -30,17 +39,28 @@
               class="input pl-11"
               :class="{ 'input-error': errors.username }"
               placeholder="请输入用户名"
-            />
+            >
           </div>
-          <p v-if="errors.username" class="input-error-hint">{{ errors.username }}</p>
+          <p
+            v-if="errors.username"
+            class="input-error-hint"
+          >
+            {{ errors.username }}
+          </p>
         </div>
 
         <!-- Password Input -->
         <div>
-          <label for="password" class="input-label">密码</label>
+          <label
+            for="password"
+            class="input-label"
+          >密码</label>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Icon name="lock" class="h-5 w-5 text-gray-400 dark:text-dark-500" />
+              <Icon
+                name="lock"
+                class="h-5 w-5 text-gray-400 dark:text-dark-500"
+              />
             </div>
             <input
               id="password"
@@ -52,34 +72,39 @@
               class="input pl-11 pr-11"
               :class="{ 'input-error': errors.password }"
               placeholder="请输入密码"
-            />
+            >
             <button
               type="button"
-              @click="showPassword = !showPassword"
               :disabled="loading"
               class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-dark-300"
+              @click="showPassword = !showPassword"
             >
-              <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
+              <Icon
+                v-if="showPassword"
+                name="eyeOff"
+                class="h-5 w-5"
+              />
+              <Icon
+                v-else
+                name="eye"
+                class="h-5 w-5"
+              />
             </button>
           </div>
-          <p v-if="errors.password" class="input-error-hint">{{ errors.password }}</p>
+          <p
+            v-if="errors.password"
+            class="input-error-hint"
+          >
+            {{ errors.password }}
+          </p>
         </div>
 
         <!-- Error Alert -->
-        <div v-if="errorMessage" class="rounded-lg bg-danger-50 p-3 text-sm text-danger-600 dark:bg-danger-900/20 dark:text-danger-400">
+        <div
+          v-if="errorMessage"
+          class="rounded-lg bg-danger-50 p-3 text-sm text-danger-600 dark:bg-danger-900/20 dark:text-danger-400"
+        >
           {{ errorMessage }}
-        </div>
-
-        <!-- Success Alert -->
-        <div v-if="showSuccessAlert" class="rounded-lg bg-success-50 p-3 text-sm text-success-600 dark:bg-success-900/20 dark:text-success-400">
-          登录成功，正在跳转...
         </div>
 
         <!-- Submit Button -->
@@ -94,15 +119,28 @@
             fill="none"
             viewBox="0 0 24 24"
           >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
           </svg>
           {{ loading ? '登录中...' : '登录' }}
         </button>
 
         <!-- Tips -->
         <div class="rounded-lg bg-gray-50 p-4 text-xs text-gray-500 dark:bg-dark-800 dark:text-dark-400">
-          <p class="mb-1 font-medium text-gray-700 dark:text-dark-300">提示：首次使用请在后台创建管理员账号</p>
+          <p class="mb-1 font-medium text-gray-700 dark:text-dark-300">
+            提示：首次使用请在后台创建管理员账号
+          </p>
           <p>命令：python manage.py createsuperuser</p>
         </div>
       </form>
@@ -114,7 +152,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@/components/common'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 import { authAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { scheduleRefresh } from '@/api'
@@ -136,7 +174,6 @@ const errors = reactive({
 
 const loading = ref(false)
 const showPassword = ref(false)
-const showSuccessAlert = ref(false)
 const errorMessage = ref('')
 
 onMounted(async () => {
@@ -177,7 +214,6 @@ function validateForm() {
 
 const handleLogin = async () => {
   errorMessage.value = ''
-  showSuccessAlert.value = false
 
   if (!validateForm()) {
     return
@@ -196,12 +232,10 @@ const handleLogin = async () => {
         scheduleRefresh(payload.access_expires_at)
       }
 
-      showSuccessAlert.value = true
+      useUIStore().showSuccess('登录成功')
 
-      setTimeout(() => {
-        const redirect = (route.query.redirect as string) || '/'
-        router.push(redirect)
-      }, 800)
+      const redirect = (route.query.redirect as string) || '/'
+      await router.push(redirect)
     } else {
       throw new Error('登录失败，请重试')
     }
@@ -232,4 +266,3 @@ const handleLogin = async () => {
   }
 }
 </script>
-

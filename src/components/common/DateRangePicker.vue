@@ -7,7 +7,7 @@
       class="input"
       :placeholder="startPlaceholder"
       @input="handleStartChange"
-    />
+    >
     <span class="text-gray-400">{{ rangeSeparator }}</span>
     <input
       type="date"
@@ -16,7 +16,7 @@
       class="input"
       :placeholder="endPlaceholder"
       @input="handleEndChange"
-    />
+    >
   </div>
 </template>
 

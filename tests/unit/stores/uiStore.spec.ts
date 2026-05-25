@@ -72,6 +72,40 @@ describe('UI Store', () => {
     })
   })
 
+  describe('Confirm 确认框', () => {
+    it('confirm 应该打开确认状态并在确认时返回 true', async () => {
+      const store = useUIStore()
+      const promise = store.confirm({
+        title: '删除',
+        message: '确定删除吗？',
+        confirmText: '删除',
+        danger: true
+      })
+
+      expect(store.confirmState.show).toBe(true)
+      expect(store.confirmState.title).toBe('删除')
+      expect(store.confirmState.message).toBe('确定删除吗？')
+      expect(store.confirmState.confirmText).toBe('删除')
+      expect(store.confirmState.danger).toBe(true)
+
+      store.closeConfirm(true)
+      await expect(promise).resolves.toBe(true)
+      expect(store.confirmState.show).toBe(false)
+    })
+
+    it('新 confirm 应该取消上一个未完成确认', async () => {
+      const store = useUIStore()
+      const first = store.confirm({ message: '第一个确认' })
+      const second = store.confirm({ message: '第二个确认' })
+
+      await expect(first).resolves.toBe(false)
+      expect(store.confirmState.message).toBe('第二个确认')
+
+      store.closeConfirm(false)
+      await expect(second).resolves.toBe(false)
+    })
+  })
+
   describe('Loading 状态', () => {
     it('incLoading 应该增加引用计数', () => {
       const store = useUIStore()

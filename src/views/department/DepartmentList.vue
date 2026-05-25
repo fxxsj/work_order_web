@@ -15,15 +15,27 @@
     <template #actions>
       <div class="flex justify-end gap-3">
         <button
-          @click="loadData"
           :disabled="loading"
           class="btn btn-secondary"
           title="刷新"
+          @click="loadData"
         >
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
-        <button v-if="canCreate" class="btn btn-primary" @click="openCreateModal">
-          <Icon name="plus" size="md" class="mr-2" />
+        <button
+          v-if="canCreate"
+          class="btn btn-primary"
+          @click="openCreateModal"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新建部门
         </button>
       </div>
@@ -50,8 +62,17 @@
         </template>
         
         <template #cell-children_count="{ value }">
-          <Tag v-if="value > 0" type="info" size="small">{{ value }}个</Tag>
-          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+          <Tag
+            v-if="value > 0"
+            type="info"
+            size="small"
+          >
+            {{ value }}个
+          </Tag>
+          <span
+            v-else
+            class="text-gray-400 dark:text-dark-400"
+          >-</span>
         </template>
         
         <template #cell-process_names="{ row }">
@@ -60,14 +81,29 @@
           </template>
           <template v-else>
             <div class="flex flex-wrap gap-1">
-              <Tag v-for="processName in getDisplayedProcesses(row)" :key="processName" size="small">{{ processName }}</Tag>
-              <Tag v-if="shouldShowMoreButton(row)" size="small" class="cursor-pointer hover:bg-gray-200 dark:hover:bg-dark-600" @click="toggleProcessExpansion(row)">{{ getMoreButtonText(row) }}</Tag>
+              <Tag
+                v-for="processName in getDisplayedProcesses(row)"
+                :key="processName"
+                size="small"
+              >
+                {{ processName }}
+              </Tag>
+              <Tag
+                v-if="shouldShowMoreButton(row)"
+                size="small"
+                class="cursor-pointer hover:bg-gray-200 dark:hover:bg-dark-600"
+                @click="toggleProcessExpansion(row)"
+              >
+                {{ getMoreButtonText(row) }}
+              </Tag>
             </div>
           </template>
         </template>
         
         <template #cell-is_active="{ value }">
-          <Tag :type="value ? 'success' : 'info'">{{ value ? '启用' : '禁用' }}</Tag>
+          <Tag :type="value ? 'success' : 'info'">
+            {{ value ? '启用' : '禁用' }}
+          </Tag>
         </template>
         
         <template #cell-created_at="{ value }">
@@ -113,7 +149,11 @@
     width="normal"
     @close="closeModals"
   >
-    <form id="department-form" @submit.prevent="handleSubmit" class="space-y-5">
+    <form
+      id="department-form"
+      class="space-y-5"
+      @submit.prevent="handleSubmit"
+    >
       <div>
         <Input 
           v-model="formData.code" 
@@ -162,7 +202,11 @@
     
     <template #footer>
       <div class="flex justify-end gap-3">
-        <button @click="closeModals" type="button" class="btn btn-secondary">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          @click="closeModals"
+        >
           取消
         </button>
         <button
@@ -171,7 +215,12 @@
           :disabled="submitting"
           class="btn btn-primary"
         >
-          <Icon v-if="submitting" name="refresh" size="sm" class="-ml-1 mr-2 animate-spin" />
+          <Icon
+            v-if="submitting"
+            name="refresh"
+            size="sm"
+            class="-ml-1 mr-2 animate-spin"
+          />
           {{ submitting ? '保存中...' : showEditModal ? '更新' : '创建' }}
         </button>
       </div>

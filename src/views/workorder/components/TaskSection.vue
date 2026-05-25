@@ -1,13 +1,49 @@
 <template>
   <div class="p-3">
-    <LoadingSpinner v-if="loading" size="lg" class="mx-auto my-8 block" />
+    <LoadingSpinner
+      v-if="loading"
+      size="lg"
+      class="mx-auto my-8 block"
+    />
     <template v-else>
       <div class="mb-4 grid grid-cols-2 gap-4 md:grid-cols-5">
-        <div class="rounded-xl bg-blue-50 p-4 text-center dark:bg-blue-900/20"><div class="text-2xl font-bold text-blue-600">{{ taskStats.total }}</div><div class="text-xs text-gray-500">全部任务</div></div>
-        <div class="rounded-xl bg-gray-100 p-4 text-center dark:bg-dark-700"><div class="text-2xl font-bold text-gray-500">{{ taskStats.draft }}</div><div class="text-xs text-gray-500">草稿</div></div>
-        <div class="rounded-xl bg-yellow-50 p-4 text-center dark:bg-yellow-900/20"><div class="text-2xl font-bold text-yellow-600">{{ taskStats.pending }}</div><div class="text-xs text-gray-500">待处理</div></div>
-        <div class="rounded-xl bg-green-50 p-4 text-center dark:bg-green-900/20"><div class="text-2xl font-bold text-green-600">{{ taskStats.completed }}</div><div class="text-xs text-gray-500">已完成</div></div>
-        <div class="rounded-xl bg-primary-50 p-4 text-center dark:bg-primary-900/20"><CircularProgress :percentage="taskStats.progress || 0" :size="60" :stroke-width="8" /><div class="mt-1 text-xs text-gray-500">完成进度</div></div>
+        <div class="rounded-xl bg-blue-50 p-4 text-center dark:bg-blue-900/20">
+          <div class="text-2xl font-bold text-blue-600">
+            {{ taskStats.total }}
+          </div><div class="text-xs text-gray-500">
+            全部任务
+          </div>
+        </div>
+        <div class="rounded-xl bg-gray-100 p-4 text-center dark:bg-dark-700">
+          <div class="text-2xl font-bold text-gray-500">
+            {{ taskStats.draft }}
+          </div><div class="text-xs text-gray-500">
+            草稿
+          </div>
+        </div>
+        <div class="rounded-xl bg-yellow-50 p-4 text-center dark:bg-yellow-900/20">
+          <div class="text-2xl font-bold text-yellow-600">
+            {{ taskStats.pending }}
+          </div><div class="text-xs text-gray-500">
+            待处理
+          </div>
+        </div>
+        <div class="rounded-xl bg-green-50 p-4 text-center dark:bg-green-900/20">
+          <div class="text-2xl font-bold text-green-600">
+            {{ taskStats.completed }}
+          </div><div class="text-xs text-gray-500">
+            已完成
+          </div>
+        </div>
+        <div class="rounded-xl bg-primary-50 p-4 text-center dark:bg-primary-900/20">
+          <CircularProgress
+            :percentage="taskStats.progress || 0"
+            :size="60"
+            :stroke-width="8"
+          /><div class="mt-1 text-xs text-gray-500">
+            完成进度
+          </div>
+        </div>
       </div>
       <SummaryTable
         :columns="columns"
@@ -15,7 +51,12 @@
         row-key="id"
       >
         <template #cell-status="{ row }">
-          <StatusTag :status="row.status" category="task" :label="row.status_display" size="small" />
+          <StatusTag
+            :status="row.status"
+            category="task"
+            :label="row.status_display"
+            size="small"
+          />
         </template>
       </SummaryTable>
     </template>

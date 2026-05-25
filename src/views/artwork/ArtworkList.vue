@@ -14,12 +14,29 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button class="btn btn-secondary" @click="loadData" :disabled="loading" title="刷新">
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        <button
+          class="btn btn-secondary"
+          :disabled="loading"
+          title="刷新"
+          @click="loadData"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
           刷新
         </button>
-        <button v-if="canCreate" class="btn btn-primary" @click="openCreateModal">
-          <Icon name="plus" size="md" class="mr-2" />
+        <button
+          v-if="canCreate"
+          class="btn btn-primary"
+          @click="openCreateModal"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新建图稿
         </button>
       </div>
@@ -37,37 +54,95 @@
           {{ row.code || (row.base_code + (row.version > 1 ? '-v' + row.version : '')) }}
         </template>
         <template #cell-color_display="{ value }">
-          <Tag v-if="value && value !== '-'">{{ value }}</Tag>
-          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+          <Tag v-if="value && value !== '-'">
+            {{ value }}
+          </Tag>
+          <span
+            v-else
+            class="text-gray-400 dark:text-dark-400"
+          >-</span>
         </template>
         <template #cell-confirmed="{ row }">
-          <Tag :type="row.confirmed ? 'success' : 'info'" size="small">{{ row.confirmed ? '已确认' : '未确认' }}</Tag>
-          <div v-if="row.confirmed && row.confirmed_by_name" class="mt-1 text-xs text-gray-400">{{ row.confirmed_by_name }}</div>
-          <div v-if="row.confirmed && row.confirmed_at" class="text-xs text-gray-400">{{ formatDateTime(row.confirmed_at) }}</div>
+          <Tag
+            :type="row.confirmed ? 'success' : 'info'"
+            size="small"
+          >
+            {{ row.confirmed ? '已确认' : '未确认' }}
+          </Tag>
+          <div
+            v-if="row.confirmed && row.confirmed_by_name"
+            class="mt-1 text-xs text-gray-400"
+          >
+            {{ row.confirmed_by_name }}
+          </div>
+          <div
+            v-if="row.confirmed && row.confirmed_at"
+            class="text-xs text-gray-400"
+          >
+            {{ formatDateTime(row.confirmed_at) }}
+          </div>
         </template>
         <template #cell-die_codes="{ row }">
           <template v-if="row.die_codes && row.die_codes.length > 0">
-            <Tag v-for="(code, index) in row.die_codes" :key="index" class="mr-1 mb-1">{{ code }}<span v-if="row.die_names && row.die_names[index]"> - {{ row.die_names[index] }}</span></Tag>
+            <Tag
+              v-for="(code, index) in row.die_codes"
+              :key="index"
+              class="mr-1 mb-1"
+            >
+              {{ code }}<span v-if="row.die_names && row.die_names[index]"> - {{ row.die_names[index] }}</span>
+            </Tag>
           </template>
-          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+          <span
+            v-else
+            class="text-gray-400 dark:text-dark-400"
+          >-</span>
         </template>
         <template #cell-foiling_plate_codes="{ row }">
           <template v-if="row.foiling_plate_codes && row.foiling_plate_codes.length > 0">
-            <Tag v-for="(code, index) in row.foiling_plate_codes" :key="index" type="success" class="mr-1 mb-1">{{ code }}<span v-if="row.foiling_plate_names && row.foiling_plate_names[index]"> - {{ row.foiling_plate_names[index] }}</span></Tag>
+            <Tag
+              v-for="(code, index) in row.foiling_plate_codes"
+              :key="index"
+              type="success"
+              class="mr-1 mb-1"
+            >
+              {{ code }}<span v-if="row.foiling_plate_names && row.foiling_plate_names[index]"> - {{ row.foiling_plate_names[index] }}</span>
+            </Tag>
           </template>
-          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+          <span
+            v-else
+            class="text-gray-400 dark:text-dark-400"
+          >-</span>
         </template>
         <template #cell-embossing_plate_codes="{ row }">
           <template v-if="row.embossing_plate_codes && row.embossing_plate_codes.length > 0">
-            <Tag v-for="(code, index) in row.embossing_plate_codes" :key="index" type="warning" class="mr-1 mb-1">{{ code }}<span v-if="row.embossing_plate_names && row.embossing_plate_names[index]"> - {{ row.embossing_plate_names[index] }}</span></Tag>
+            <Tag
+              v-for="(code, index) in row.embossing_plate_codes"
+              :key="index"
+              type="warning"
+              class="mr-1 mb-1"
+            >
+              {{ code }}<span v-if="row.embossing_plate_names && row.embossing_plate_names[index]"> - {{ row.embossing_plate_names[index] }}</span>
+            </Tag>
           </template>
-          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+          <span
+            v-else
+            class="text-gray-400 dark:text-dark-400"
+          >-</span>
         </template>
         <template #cell-products="{ row }">
           <template v-if="row.products && row.products.length > 0">
-            <Tag v-for="product in row.products" :key="product.id" class="mr-1 mb-1">{{ product.product_name }} ({{ product.imposition_quantity }}拼)</Tag>
+            <Tag
+              v-for="product in row.products"
+              :key="product.id"
+              class="mr-1 mb-1"
+            >
+              {{ product.product_name }} ({{ product.imposition_quantity }}拼)
+            </Tag>
           </template>
-          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+          <span
+            v-else
+            class="text-gray-400 dark:text-dark-400"
+          >-</span>
         </template>
         <template #cell-created_at="{ value }">
           {{ formatDateTime(value) }}
@@ -157,7 +232,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 import { artworkAPI, productAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, ConfirmDialog, Tag, RowActions, FilterRow } from '@/components/common'
@@ -247,7 +322,7 @@ const handleConfirm = async () => {
   confirming.value = true
   try {
     await artworkAPI.confirm(row.id)
-    ElMessage.success('图稿已确认')
+    useUIStore().showSuccess('图稿已确认')
     showConfirmDialog.value = false
     targetArtworkForConfirm.value = null
     loadData()
@@ -277,7 +352,7 @@ const createNewVersion = async () => {
   creatingVersion.value = true
   try {
     await artworkAPI.createVersion(row.id)
-    ElMessage.success('新版本创建成功')
+    useUIStore().showSuccess('新版本创建成功')
     showCreateVersionDialog.value = false
     targetArtworkForVersion.value = null
     targetCodeForVersion.value = ''

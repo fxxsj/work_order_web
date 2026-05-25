@@ -6,7 +6,7 @@
       customClass
     ]"
     :style="style"
-  ></div>
+  />
 </template>
 
 <script setup lang="ts">

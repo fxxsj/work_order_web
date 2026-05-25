@@ -1,14 +1,28 @@
 <template>
-  <div v-if="!isDesktopViewport" class="space-y-3">
+  <div
+    v-if="!isDesktopViewport"
+    class="space-y-3"
+  >
     <template v-if="loading">
-      <div v-for="i in 5" :key="i" class="rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-700 dark:bg-dark-900">
+      <div
+        v-for="i in 5"
+        :key="i"
+        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-700 dark:bg-dark-900"
+      >
         <div class="space-y-3">
-          <div v-for="column in dataColumns" :key="column.key" class="flex justify-between">
-            <div class="h-4 w-20 animate-pulse rounded bg-gray-200 dark:bg-dark-700"></div>
-            <div class="h-4 w-32 animate-pulse rounded bg-gray-200 dark:bg-dark-700"></div>
+          <div
+            v-for="column in dataColumns"
+            :key="column.key"
+            class="flex justify-between"
+          >
+            <div class="h-4 w-20 animate-pulse rounded bg-gray-200 dark:bg-dark-700" />
+            <div class="h-4 w-32 animate-pulse rounded bg-gray-200 dark:bg-dark-700" />
           </div>
-          <div v-if="hasActionsColumn" class="border-t border-gray-200 pt-3 dark:border-dark-700">
-            <div class="h-8 w-full animate-pulse rounded bg-gray-200 dark:bg-dark-700"></div>
+          <div
+            v-if="hasActionsColumn"
+            class="border-t border-gray-200 pt-3 dark:border-dark-700"
+          >
+            <div class="h-8 w-full animate-pulse rounded bg-gray-200 dark:bg-dark-700" />
           </div>
         </div>
       </div>
@@ -47,13 +61,26 @@
               {{ column.label }}
             </span>
             <div class="text-right text-sm text-gray-900 dark:text-gray-100">
-              <slot :name="`cell-${column.key}`" :row="row" :value="row[column.key]" :expanded="actionsExpanded">
+              <slot
+                :name="`cell-${column.key}`"
+                :row="row"
+                :value="row[column.key]"
+                :expanded="actionsExpanded"
+              >
                 {{ column.formatter ? column.formatter(row[column.key], row) : row[column.key] }}
               </slot>
             </div>
           </div>
-          <div v-if="hasActionsColumn" class="border-t border-gray-200 pt-3 dark:border-dark-700">
-            <slot name="cell-actions" :row="row" :value="row['actions']" :expanded="actionsExpanded"></slot>
+          <div
+            v-if="hasActionsColumn"
+            class="border-t border-gray-200 pt-3 dark:border-dark-700"
+          >
+            <slot
+              name="cell-actions"
+              :row="row"
+              :value="row['actions']"
+              :expanded="actionsExpanded"
+            />
           </div>
         </div>
       </div>
@@ -93,7 +120,10 @@
             >
               <div class="flex items-center space-x-1">
                 <span>{{ column.label }}</span>
-                <span v-if="column.sortable" class="text-gray-400 dark:text-dark-500">
+                <span
+                  v-if="column.sortable"
+                  class="text-gray-400 dark:text-dark-500"
+                >
                   <svg
                     v-if="sortKey === column.key"
                     class="h-4 w-4"
@@ -107,7 +137,12 @@
                       clip-rule="evenodd"
                     />
                   </svg>
-                  <svg v-else class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    v-else
+                    class="h-4 w-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                     />
@@ -120,10 +155,18 @@
       </thead>
       <tbody class="table-body divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-900">
         <!-- Loading skeleton -->
-        <tr v-if="loading" v-for="i in 5" :key="i">
-          <td v-for="column in columns" :key="column.key" :class="['whitespace-nowrap py-4', getAdaptivePaddingClass()]">
+        <tr
+          v-for="i in 5"
+          v-if="loading"
+          :key="i"
+        >
+          <td
+            v-for="column in columns"
+            :key="column.key"
+            :class="['whitespace-nowrap py-4', getAdaptivePaddingClass()]"
+          >
             <div class="animate-pulse">
-              <div class="h-4 w-3/4 rounded bg-gray-200 dark:bg-dark-700"></div>
+              <div class="h-4 w-3/4 rounded bg-gray-200 dark:bg-dark-700" />
             </div>
           </td>
         </tr>
@@ -151,17 +194,21 @@
 
         <!-- Data rows (virtual scroll) -->
         <template v-else>
-          <tr v-if="virtualPaddingTop > 0" aria-hidden="true">
-            <td :colspan="columns.length"
-                :style="{ height: virtualPaddingTop + 'px', padding: 0, border: 'none' }">
-            </td>
+          <tr
+            v-if="virtualPaddingTop > 0"
+            aria-hidden="true"
+          >
+            <td
+              :colspan="columns.length"
+              :style="{ height: virtualPaddingTop + 'px', padding: 0, border: 'none' }"
+            />
           </tr>
           <tr
             v-for="virtualRow in virtualItems"
             :key="resolveRowKey(sortedData[virtualRow.index], virtualRow.index)"
+            :ref="measureElement"
             :data-row-id="resolveRowKey(sortedData[virtualRow.index], virtualRow.index)"
             :data-index="virtualRow.index"
-            :ref="measureElement"
             :class="[
               'hover:bg-gray-50 dark:hover:bg-dark-800',
               typeof props.rowClass === 'function'
@@ -179,20 +226,26 @@
                 column.class
               ]"
             >
-              <slot :name="`cell-${column.key}`"
-                    :row="sortedData[virtualRow.index]"
-                    :value="sortedData[virtualRow.index][column.key]"
-                    :expanded="actionsExpanded">
+              <slot
+                :name="`cell-${column.key}`"
+                :row="sortedData[virtualRow.index]"
+                :value="sortedData[virtualRow.index][column.key]"
+                :expanded="actionsExpanded"
+              >
                 {{ column.formatter
-                   ? column.formatter(sortedData[virtualRow.index][column.key], sortedData[virtualRow.index])
-                   : sortedData[virtualRow.index][column.key] }}
+                  ? column.formatter(sortedData[virtualRow.index][column.key], sortedData[virtualRow.index])
+                  : sortedData[virtualRow.index][column.key] }}
               </slot>
             </td>
           </tr>
-          <tr v-if="virtualPaddingBottom > 0" aria-hidden="true">
-            <td :colspan="columns.length"
-                :style="{ height: virtualPaddingBottom + 'px', padding: 0, border: 'none' }">
-            </td>
+          <tr
+            v-if="virtualPaddingBottom > 0"
+            aria-hidden="true"
+          >
+            <td
+              :colspan="columns.length"
+              :style="{ height: virtualPaddingBottom + 'px', padding: 0, border: 'none' }"
+            />
           </tr>
         </template>
       </tbody>

@@ -7,10 +7,17 @@
       :style="imageStyle"
       @load="handleLoad"
       @error="handleError"
-    />
-    <div v-if="showPlaceholder" class="lazy-placeholder" :style="placeholderStyle">
+    >
+    <div
+      v-if="showPlaceholder"
+      class="lazy-placeholder"
+      :style="placeholderStyle"
+    >
       <slot name="placeholder">
-        <Icon name="loading" class="h-6 w-6 animate-spin text-primary-500" />
+        <Icon
+          name="loading"
+          class="h-6 w-6 animate-spin text-primary-500"
+        />
       </slot>
     </div>
   </div>

@@ -1,5 +1,8 @@
 <template>
-  <TablePageLayout title="成本中心" :loading="loading">
+  <TablePageLayout
+    title="成本中心"
+    :loading="loading"
+  >
     <template #filters>
       <FilterRow>
         <SearchInput
@@ -22,11 +25,28 @@
     
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        <button
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
+          @click="loadData"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
-        <button v-if="canCreate" class="btn btn-primary" @click="showCreateDialog">
-          <Icon name="plus" size="md" class="mr-2" />
+        <button
+          v-if="canCreate"
+          class="btn btn-primary"
+          @click="showCreateDialog"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新建成本中心
         </button>
       </div>
@@ -40,7 +60,9 @@
         :row-key="(row: any) => row.id"
       >
         <template #cell-is_active="{ value }">
-          <Tag :type="value ? 'success' : 'info'">{{ value ? '启用' : '禁用' }}</Tag>
+          <Tag :type="value ? 'success' : 'info'">
+            {{ value ? '启用' : '禁用' }}
+          </Tag>
         </template>
         <template #cell-actions="{ row }">
           <RowActions
@@ -76,8 +98,8 @@ import { ref } from 'vue'
 import { costCenterAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, RowActions, FilterRow, Select, Tag } from '@/components/common'
-import type { Column } from '@/components/common/types'
-import { ElMessage } from '@/utils/message'
+import type { Column, RowAction } from '@/components/common/types'
+import { useUIStore } from '@/stores/ui'
 
 const columns: Column[] = [
   { key: 'code', label: '中心编码', sortable: true, class: 'w-32' },
@@ -96,8 +118,8 @@ const {
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('costcenter')
 
-const getRowActions = (row: any) => {
-  const actions = []
+const getRowActions = (row: any): RowAction[] => {
+  const actions: RowAction[] = []
   if (canEdit) {
     actions.push({ key: 'edit', label: '编辑', icon: 'edit' })
   }
@@ -108,14 +130,14 @@ const getRowActions = (row: any) => {
 }
 
 const showCreateDialog = () => {
-  ElMessage.info('新建成本中心表单开发中...')
+  useUIStore().showInfo('新建成本中心表单开发中...')
 }
 
 const handleRowAction = (action: string, row: any) => {
   if (action === 'edit') {
-    ElMessage.info('编辑成本中心表单开发中...')
+    useUIStore().showInfo('编辑成本中心表单开发中...')
   } else if (action === 'delete') {
-    ElMessage.info('删除成本中心对接中...')
+    useUIStore().showInfo('删除成本中心对接中...')
   }
 }
 </script>

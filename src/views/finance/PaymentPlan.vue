@@ -1,5 +1,8 @@
 <template>
-  <TablePageLayout title="收款计划" :loading="loading">
+  <TablePageLayout
+    title="收款计划"
+    :loading="loading"
+  >
     <template #filters>
       <FilterRow>
         <SearchInput
@@ -22,11 +25,28 @@
     
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        <button
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
+          @click="loadData"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
-        <button v-if="canCreate" class="btn btn-primary" @click="showCreateDialog">
-          <Icon name="plus" size="md" class="mr-2" />
+        <button
+          v-if="canCreate"
+          class="btn btn-primary"
+          @click="showCreateDialog"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新建收款计划
         </button>
       </div>
@@ -40,7 +60,11 @@
         :row-key="(row: any) => row.id"
       >
         <template #cell-status="{ row }">
-          <StatusTag :status="row.status" category="payment" :label="row.status_display" />
+          <StatusTag
+            :status="row.status"
+            category="payment"
+            :label="row.status_display"
+          />
         </template>
         <template #cell-amount="{ value }">
           <span class="text-right text-green-600 font-semibold">¥{{ value ? Number(value).toFixed(2) : '0.00' }}</span>
@@ -79,8 +103,8 @@ import { ref } from 'vue'
 import { paymentPlanAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, RowActions, FilterRow, Select, StatusTag } from '@/components/common'
-import type { Column } from '@/components/common/types'
-import { ElMessage } from '@/utils/message'
+import type { Column, RowAction } from '@/components/common/types'
+import { useUIStore } from '@/stores/ui'
 
 const columns: Column[] = [
   { key: 'plan_no', label: '计划编号', sortable: true, class: 'w-32' },
@@ -107,8 +131,8 @@ const {
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('paymentplan')
 
-const getRowActions = (row: any) => {
-  const actions = []
+const getRowActions = (row: any): RowAction[] => {
+  const actions: RowAction[] = []
   if (canEdit && row.status !== 'completed') {
     actions.push({ key: 'edit', label: '编辑', icon: 'edit' })
     actions.push({ key: 'receive', label: '登记收款', icon: 'dollar' })
@@ -120,16 +144,16 @@ const getRowActions = (row: any) => {
 }
 
 const showCreateDialog = () => {
-  ElMessage.info('新建收款计划表单开发中...')
+  useUIStore().showInfo('新建收款计划表单开发中...')
 }
 
 const handleRowAction = (action: string, row: any) => {
   if (action === 'edit') {
-    ElMessage.info('编辑收款计划表单开发中...')
+    useUIStore().showInfo('编辑收款计划表单开发中...')
   } else if (action === 'delete') {
-    ElMessage.info('删除收款计划对接中...')
+    useUIStore().showInfo('删除收款计划对接中...')
   } else if (action === 'receive') {
-    ElMessage.info('登记收款功能开发中...')
+    useUIStore().showInfo('登记收款功能开发中...')
   }
 }
 </script

@@ -1,31 +1,76 @@
 <template>
   <div class="space-y-6">
-    <QualityStats :stats="stats" :loading="statsLoading" />
+    <QualityStats
+      :stats="stats"
+      :loading="statsLoading"
+    />
 
     <TablePageLayout>
       <template #filters>
         <div class="flex flex-col gap-3">
           <div class="flex flex-wrap items-center gap-3">
-            <SearchInput v-model="filters.inspection_number" placeholder="搜索检验单号" class="w-full sm:w-64" @search="handleSearchDebounced" @clear="handleSearch" />
-            <Select v-model="filters.inspection_type" :options="inspectionTypeOptions" class="w-36" placeholder="检验类型" clearable @change="handleSearch" />
-            <Select v-model="filters.result" :options="resultOptions" class="w-36" placeholder="检验结果" clearable @change="handleSearch" />
+            <SearchInput
+              v-model="filters.inspection_number"
+              placeholder="搜索检验单号"
+              class="w-full sm:w-64"
+              @search="handleSearchDebounced"
+              @clear="handleSearch"
+            />
+            <Select
+              v-model="filters.inspection_type"
+              :options="inspectionTypeOptions"
+              class="w-36"
+              placeholder="检验类型"
+              clearable
+              @change="handleSearch"
+            />
+            <Select
+              v-model="filters.result"
+              :options="resultOptions"
+              class="w-36"
+              placeholder="检验结果"
+              clearable
+              @change="handleSearch"
+            />
           </div>
         </div>
       </template>
       <template #actions>
         <div class="flex justify-end gap-3">
-          <button class="btn btn-secondary" :disabled="loading" @click="loadData" title="刷新">
-            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          <button
+            class="btn btn-secondary"
+            :disabled="loading"
+            title="刷新"
+            @click="loadData"
+          >
+            <Icon
+              name="refresh"
+              size="md"
+              :class="loading ? 'animate-spin' : ''"
+            />
           </button>
-          <button class="btn btn-primary" v-if="canCreate" @click="handleCreate">
-            <Icon name="plus" size="md" class="mr-2" />
+          <button
+            v-if="canCreate"
+            class="btn btn-primary"
+            @click="handleCreate"
+          >
+            <Icon
+              name="plus"
+              size="md"
+              class="mr-2"
+            />
             新建质检
           </button>
         </div>
       </template>
 
       <template #table>
-        <DataTable :columns="columns" :data="tableData" :loading="loading" :row-key="(row: any) => row.id">
+        <DataTable
+          :columns="columns"
+          :data="tableData"
+          :loading="loading"
+          :row-key="(row: any) => row.id"
+        >
           <template #cell-inspection_number="{ row }">
             <span>{{ row.inspection_number }}</span>
           </template>
@@ -48,7 +93,11 @@
             <span :class="row.defective_quantity > 0 ? 'text-danger' : ''">{{ row.defective_quantity || '-' }}</span>
           </template>
           <template #cell-result="{ row }">
-            <StatusTag :status="row.result" category="inspection" :label="row.result_display" />
+            <StatusTag
+              :status="row.result"
+              category="inspection"
+              :label="row.result_display"
+            />
           </template>
           <template #cell-inspector_name="{ row }">
             <span>{{ row.inspector_name }}</span>
@@ -65,8 +114,20 @@
           <template #empty>
             <EmptyState description="暂无质检数据">
               <template #action>
-                <button class="btn btn-primary" v-if="hasFilters" @click="handleReset">重置筛选</button>
-                <button class="btn btn-primary" v-else-if="canCreate" @click="handleCreate">创建第一个质检</button>
+                <button
+                  v-if="hasFilters"
+                  class="btn btn-primary"
+                  @click="handleReset"
+                >
+                  重置筛选
+                </button>
+                <button
+                  v-else-if="canCreate"
+                  class="btn btn-primary"
+                  @click="handleCreate"
+                >
+                  创建第一个质检
+                </button>
               </template>
             </EmptyState>
           </template>
@@ -85,9 +146,24 @@
       </template>
     </TablePageLayout>
 
-    <QualityDetailDialog v-model:visible="detailDialogVisible" :data="currentQuality" />
-    <QualityInspectDialog v-model:visible="inspectDialogVisible" :quality="currentQuality" :loading="inspecting" @confirm="handleConfirmInspect" />
-    <QualityFormDialog v-model:visible="formDialogVisible" :is-edit="false" :submitting="submitting" :form="form" :product-list="productList" @submit="handleSubmit" />
+    <QualityDetailDialog
+      v-model:visible="detailDialogVisible"
+      :data="currentQuality"
+    />
+    <QualityInspectDialog
+      v-model:visible="inspectDialogVisible"
+      :quality="currentQuality"
+      :loading="inspecting"
+      @confirm="handleConfirmInspect"
+    />
+    <QualityFormDialog
+      v-model:visible="formDialogVisible"
+      :is-edit="false"
+      :submitting="submitting"
+      :form="form"
+      :product-list="productList"
+      @submit="handleSubmit"
+    />
 
     <ConfirmDialog
       :show="showDeleteDialog"
@@ -106,7 +182,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 import { qualityInspectionAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
@@ -224,7 +300,7 @@ const handleDelete = async () => {
     const row = selectedRowAction.value
     if (!row) return
     await qualityInspectionAPI.delete(row.id)
-    ElMessage.success('删除成功')
+    useUIStore().showSuccess('删除成功')
     showDeleteDialog.value = false
     loadData()
   } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
@@ -235,7 +311,7 @@ const handleConfirmInspect = async (data: any) => {
   inspecting.value = true
   try { 
     await qualityInspectionAPI.inspect(currentQuality.value.id, data)
-    ElMessage.success('检验完成')
+    useUIStore().showSuccess('检验完成')
     inspectDialogVisible.value = false
     loadData()
     fetchStats() 
@@ -250,7 +326,7 @@ const handleSubmit = async (data: any) => {
   submitting.value = true
   try { 
     await qualityInspectionAPI.create(data)
-    ElMessage.success('创建成功')
+    useUIStore().showSuccess('创建成功')
     formDialogVisible.value = false
     loadData() 
   } catch (error: any) { 

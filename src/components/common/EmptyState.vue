@@ -5,8 +5,18 @@
       class="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-100 dark:bg-dark-800"
     >
       <slot name="icon">
-        <component v-if="icon" :is="icon" class="empty-state-icon h-10 w-10" aria-hidden="true" />
-        <Icon v-else name="inbox" size="xl" class="empty-state-icon text-gray-400" />
+        <component
+          :is="icon"
+          v-if="icon"
+          class="empty-state-icon h-10 w-10"
+          aria-hidden="true"
+        />
+        <Icon
+          v-else
+          name="inbox"
+          size="xl"
+          class="empty-state-icon text-gray-400"
+        />
       </slot>
     </div>
 
@@ -21,16 +31,24 @@
     </p>
 
     <!-- Action -->
-    <div v-if="actionText || $slots.action" class="mt-6">
+    <div
+      v-if="actionText || $slots.action"
+      class="mt-6"
+    >
       <slot name="action">
         <component
           :is="actionTo ? 'RouterLink' : 'button'"
           v-if="actionText"
           :to="actionTo"
-          @click="!actionTo && $emit('action')"
           class="btn btn-primary"
+          @click="!actionTo && $emit('action')"
         >
-          <Icon v-if="actionIcon" name="plus" size="md" class="mr-2" />
+          <Icon
+            v-if="actionIcon"
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           {{ actionText }}
         </component>
       </slot>

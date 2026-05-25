@@ -7,8 +7,11 @@
       :value="value"
       class="radio"
       @change="handleChange"
-    />
-    <span v-if="label" class="text-sm text-gray-700 dark:text-gray-300">
+    >
+    <span
+      v-if="label"
+      class="text-sm text-gray-700 dark:text-gray-300"
+    >
       {{ label }}
     </span>
   </label>

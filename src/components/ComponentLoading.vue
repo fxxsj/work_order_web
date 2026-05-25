@@ -1,6 +1,9 @@
 <template>
   <div class="component-loading">
-    <Icon name="loading" class="h-8 w-8 animate-spin text-primary-500" />
+    <Icon
+      name="loading"
+      class="h-8 w-8 animate-spin text-primary-500"
+    />
     <p class="loading-text">
       {{ text }}
     </p>

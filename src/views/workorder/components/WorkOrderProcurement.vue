@@ -2,36 +2,80 @@
   <div class="mt-6">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3 font-bold">
       <span>采购信息</span>
-      <button v-if="hasPendingMaterials" class="btn btn-primary btn-sm" @click="emit('create-purchase')"><Icon name="plus" class="h-3 w-3" /> 创建采购单</button>
+      <button
+        v-if="hasPendingMaterials"
+        class="btn btn-primary btn-sm"
+        @click="emit('create-purchase')"
+      >
+        <Icon
+          name="plus"
+          class="h-3 w-3"
+        /> 创建采购单
+      </button>
     </div>
 
-    <div v-if="materials?.length" class="mb-6">
-      <div class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">物料采购状态</div>
-      <SummaryTable :columns="materialColumns" :data="materials" :row-key="materialRowKey">
+    <div
+      v-if="materials?.length"
+      class="mb-6"
+    >
+      <div class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
+        物料采购状态
+      </div>
+      <SummaryTable
+        :columns="materialColumns"
+        :data="materials"
+        :row-key="materialRowKey"
+      >
         <template #cell-material_name="{ row }">
           {{ row.material_name }} ({{ row.material_code }})
         </template>
         <template #cell-purchase_status="{ row }">
-          <StatusTag :status="row.purchase_status" category="materialPurchase" size="small" />
+          <StatusTag
+            :status="row.purchase_status"
+            category="materialPurchase"
+            size="small"
+          />
         </template>
       </SummaryTable>
     </div>
 
-    <div v-if="purchaseOrders?.length" class="mb-6">
-      <div class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">关联采购单</div>
-      <SummaryTable :columns="purchaseColumns" :data="purchaseOrders" row-key="id">
+    <div
+      v-if="purchaseOrders?.length"
+      class="mb-6"
+    >
+      <div class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
+        关联采购单
+      </div>
+      <SummaryTable
+        :columns="purchaseColumns"
+        :data="purchaseOrders"
+        row-key="id"
+      >
         <template #cell-order_number="{ row }">
-          <span class="cursor-pointer text-primary-600 hover:underline" @click="emit('view-purchase', row.id)">
-            {{ row.order_number || row.number }}<Icon name="arrowRight" class="ml-1 inline h-3 w-3" />
+          <span
+            class="cursor-pointer text-primary-600 hover:underline"
+            @click="emit('view-purchase', row.id)"
+          >
+            {{ row.order_number || row.number }}<Icon
+              name="arrowRight"
+              class="ml-1 inline h-3 w-3"
+            />
           </span>
         </template>
         <template #cell-status="{ row }">
-          <StatusTag :status="row.status" category="purchaseOrder" size="small" />
+          <StatusTag
+            :status="row.status"
+            category="purchaseOrder"
+            size="small"
+          />
         </template>
       </SummaryTable>
     </div>
 
-    <EmptyState v-if="!materials?.length && !purchaseOrders?.length" title="暂无采购信息" />
+    <EmptyState
+      v-if="!materials?.length && !purchaseOrders?.length"
+      title="暂无采购信息"
+    />
   </div>
 </template>
 

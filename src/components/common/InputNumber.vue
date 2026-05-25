@@ -1,8 +1,15 @@
 <template>
   <div class="w-full">
-    <label v-if="label" :for="id" class="input-label mb-1.5 block">
+    <label
+      v-if="label"
+      :for="id"
+      class="input-label mb-1.5 block"
+    >
       {{ label }}
-      <span v-if="required" class="text-red-500">*</span>
+      <span
+        v-if="required"
+        class="text-red-500"
+      >*</span>
     </label>
     <div class="relative inline-flex items-center">
       <button
@@ -12,7 +19,10 @@
         @click="decrement"
         @mousedown.prevent
       >
-        <Icon name="minus" size="sm" />
+        <Icon
+          name="minus"
+          size="sm"
+        />
       </button>
       <input
         :id="id"
@@ -29,7 +39,7 @@
         @change="handleChange"
         @focus="handleFocus"
         @blur="handleBlur"
-      />
+      >
       <button
         type="button"
         class="input-number-btn input-number-btn-plus"
@@ -37,13 +47,22 @@
         @click="increment"
         @mousedown.prevent
       >
-        <Icon name="plus" size="sm" />
+        <Icon
+          name="plus"
+          size="sm"
+        />
       </button>
     </div>
-    <p v-if="error" class="input-error-text mt-1.5">
+    <p
+      v-if="error"
+      class="input-error-text mt-1.5"
+    >
       {{ error }}
     </p>
-    <p v-else-if="hint" class="input-hint mt-1.5">
+    <p
+      v-else-if="hint"
+      class="input-hint mt-1.5"
+    >
       {{ hint }}
     </p>
   </div>

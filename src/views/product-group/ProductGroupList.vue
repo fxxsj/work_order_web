@@ -17,11 +17,28 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button @click="loadData" :disabled="loading" class="btn btn-secondary" title="刷新">
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+        <button
+          :disabled="loading"
+          class="btn btn-secondary"
+          title="刷新"
+          @click="loadData"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
-        <button v-if="canCreate" class="btn btn-primary" @click="handleAdd">
-          <Icon name="plus" size="md" class="mr-2" />
+        <button
+          v-if="canCreate"
+          class="btn btn-primary"
+          @click="handleAdd"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新增产品组
         </button>
       </div>
@@ -36,7 +53,12 @@
         @sort="handleSort"
       >
         <template #cell-is_active="{ value }">
-          <Tag :type="value ? 'success' : 'info'" size="small">{{ value ? '启用' : '禁用' }}</Tag>
+          <Tag
+            :type="value ? 'success' : 'info'"
+            size="small"
+          >
+            {{ value ? '启用' : '禁用' }}
+          </Tag>
         </template>
 
         <template #cell-actions="{ row }">
@@ -77,15 +99,34 @@
     width="normal"
     @close="closeModals"
   >
-    <form id="entity-form" @submit.prevent="handleSubmit" class="space-y-5">
+    <form
+      id="entity-form"
+      class="space-y-5"
+      @submit.prevent="handleSubmit"
+    >
       <div>
-        <Input v-model="form.code" label="编码" required placeholder="请输入编码" />
+        <Input
+          v-model="form.code"
+          label="编码"
+          required
+          placeholder="请输入编码"
+        />
       </div>
       <div>
-        <Input v-model="form.name" label="名称" required placeholder="请输入名称" />
+        <Input
+          v-model="form.name"
+          label="名称"
+          required
+          placeholder="请输入名称"
+        />
       </div>
       <div>
-        <TextArea v-model="form.description" label="描述" placeholder="请输入描述" :rows="3" />
+        <TextArea
+          v-model="form.description"
+          label="描述"
+          placeholder="请输入描述"
+          :rows="3"
+        />
       </div>
       <Toggle
         v-model="form.is_active"
@@ -95,9 +136,25 @@
 
     <template #footer>
       <div class="flex justify-end gap-3">
-        <button @click="closeModals" type="button" class="btn btn-secondary">取消</button>
-        <button form="entity-form" type="submit" :disabled="submitting" class="btn btn-primary">
-          <Icon v-if="submitting" name="refresh" size="sm" class="-ml-1 mr-2 animate-spin" />
+        <button
+          type="button"
+          class="btn btn-secondary"
+          @click="closeModals"
+        >
+          取消
+        </button>
+        <button
+          form="entity-form"
+          type="submit"
+          :disabled="submitting"
+          class="btn btn-primary"
+        >
+          <Icon
+            v-if="submitting"
+            name="refresh"
+            size="sm"
+            class="-ml-1 mr-2 animate-spin"
+          />
           {{ submitting ? '保存中...' : (showEditModal ? '更新' : '创建') }}
         </button>
       </div>

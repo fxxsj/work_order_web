@@ -1,5 +1,8 @@
 <template>
-  <div class="flex flex-wrap gap-3" :class="{ 'flex-col': vertical }">
+  <div
+    class="flex flex-wrap gap-3"
+    :class="{ 'flex-col': vertical }"
+  >
     <slot>
       <Radio
         v-for="option in options"

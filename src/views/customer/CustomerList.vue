@@ -15,19 +15,27 @@
     <template #actions>
       <div class="flex justify-end gap-3">
         <button
-          @click="loadData"
           :disabled="loading"
           class="btn btn-secondary"
           title="刷新"
+          @click="loadData"
         >
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
         <button
           v-if="canCreate"
-          @click="showCreateModal = true"
           class="btn btn-primary"
+          @click="showCreateModal = true"
         >
-          <Icon name="plus" size="md" class="mr-2" />
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新建客户
         </button>
       </div>
@@ -58,8 +66,14 @@
         </template>
 
         <template #cell-salesperson_name="{ value }">
-          <span v-if="value" class="text-sm text-gray-700 dark:text-gray-300">{{ value }}</span>
-          <span v-else class="text-sm text-gray-400 dark:text-dark-500">-</span>
+          <span
+            v-if="value"
+            class="text-sm text-gray-700 dark:text-gray-300"
+          >{{ value }}</span>
+          <span
+            v-else
+            class="text-sm text-gray-400 dark:text-dark-500"
+          >-</span>
         </template>
 
         <template #cell-created_at="{ value }">
@@ -105,18 +119,40 @@
     width="normal"
     @close="closeModals"
   >
-    <form id="customer-form" @submit.prevent="handleSubmit" class="space-y-5">
+    <form
+      id="customer-form"
+      class="space-y-5"
+      @submit.prevent="handleSubmit"
+    >
       <div>
-        <Input v-model="(formData as any).name" label="客户名称" required placeholder="请输入客户名称" />
+        <Input
+          v-model="(formData as any).name"
+          label="客户名称"
+          required
+          placeholder="请输入客户名称"
+        />
       </div>
       <div>
-        <Input v-model="formData.contact_person" label="联系人" placeholder="请输入联系人" />
+        <Input
+          v-model="formData.contact_person"
+          label="联系人"
+          placeholder="请输入联系人"
+        />
       </div>
       <div>
-        <Input v-model="formData.phone" label="联系电话" placeholder="请输入联系电话" />
+        <Input
+          v-model="formData.phone"
+          label="联系电话"
+          placeholder="请输入联系电话"
+        />
       </div>
       <div>
-        <Input v-model="formData.email" label="邮箱" placeholder="请输入邮箱" type="email" />
+        <Input
+          v-model="formData.email"
+          label="邮箱"
+          placeholder="请输入邮箱"
+          type="email"
+        />
       </div>
       <div>
         <label class="input-label mb-1.5 block">业务员</label>
@@ -129,15 +165,29 @@
         />
       </div>
       <div>
-        <TextArea v-model="formData.address" label="地址" placeholder="请输入地址" :rows="2" />
+        <TextArea
+          v-model="formData.address"
+          label="地址"
+          placeholder="请输入地址"
+          :rows="2"
+        />
       </div>
       <div>
-        <TextArea v-model="formData.notes" label="备注" placeholder="请输入备注" :rows="3" />
+        <TextArea
+          v-model="formData.notes"
+          label="备注"
+          placeholder="请输入备注"
+          :rows="3"
+        />
       </div>
     </form>
     <template #footer>
       <div class="flex justify-end gap-3">
-        <button @click="closeModals" type="button" class="btn btn-secondary">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          @click="closeModals"
+        >
           取消
         </button>
         <button
@@ -152,8 +202,19 @@
             fill="none"
             viewBox="0 0 24 24"
           >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
           </svg>
           {{ submitting ? '保存中...' : showEditModal ? '更新' : '创建' }}
         </button>
@@ -176,8 +237,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { customerAPI } from '@/api/modules/customer'
-import { authAPI } from '@/api/modules'
+import { customerAPI, authAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Icon, BaseDialog, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'

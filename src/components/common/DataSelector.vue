@@ -13,7 +13,10 @@
     @focus="handleFocus"
   >
     <template #option="{ option }">
-      <slot name="option" :option="option">
+      <slot
+        name="option"
+        :option="option"
+      >
         {{ option[props.labelKey] }}
       </slot>
     </template>

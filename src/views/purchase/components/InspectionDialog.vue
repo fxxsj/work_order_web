@@ -1,8 +1,19 @@
 <template>
-  <BaseDialog :show="dialogVisible" title="质检确认" width="wide" @close="handleClose; dialogVisible = false;">
-    <div class="relative" :class="{ 'opacity-50 pointer-events-none': loading }">
-      <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-10">
-        <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
+  <BaseDialog
+    :show="dialogVisible"
+    title="质检确认"
+    width="wide"
+    @close="handleClose; dialogVisible = false;"
+  >
+    <div
+      class="relative"
+      :class="{ 'opacity-50 pointer-events-none': loading }"
+    >
+      <div
+        v-if="loading"
+        class="absolute inset-0 flex items-center justify-center z-10"
+      >
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
       </div>
       <SummaryTable
         :columns="columns"
@@ -11,7 +22,12 @@
         row-key="id"
       >
         <template #cell-inspection_status="{ row }">
-          <StatusTag :status="row.inspection_status" category="inspection" :label="row.inspection_status_display" size="small" />
+          <StatusTag
+            :status="row.inspection_status"
+            category="inspection"
+            :label="row.inspection_status_display"
+            size="small"
+          />
         </template>
         <template #cell-actions="{ row }">
           <RowActions
@@ -21,7 +37,19 @@
         </template>
       </SummaryTable>
     </div>
-    <template #footer><button class="btn" @click="handleClose">取消</button><button class="btn btn-primary" @click="handleSubmit">确认</button></template>
+    <template #footer>
+      <button
+        class="btn"
+        @click="handleClose"
+      >
+        取消
+      </button><button
+        class="btn btn-primary"
+        @click="handleSubmit"
+      >
+        确认
+      </button>
+    </template>
   </BaseDialog>
 </template>
 

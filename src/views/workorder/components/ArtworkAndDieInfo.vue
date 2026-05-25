@@ -1,11 +1,34 @@
 <template>
   <div>
-    <EmptyState v-if="!items || items.length === 0" :title="emptyText" />
+    <EmptyState
+      v-if="!items || items.length === 0"
+      :title="emptyText"
+    />
     <template v-if="!items || items.length === 0">
-      <button v-if="!disabled" class="btn btn-primary btn-sm mt-3" @click="handleAdd"><Icon name="plus" class="h-3 w-3" /> {{ addButtonText }}</button>
+      <button
+        v-if="!disabled"
+        class="btn btn-primary btn-sm mt-3"
+        @click="handleAdd"
+      >
+        <Icon
+          name="plus"
+          class="h-3 w-3"
+        /> {{ addButtonText }}
+      </button>
     </template>
     <div v-else>
-      <div class="mb-3 flex items-center justify-between"><span class="font-bold">{{ title }}（{{ items.length }}）</span><button v-if="!disabled" class="btn btn-primary btn-sm" @click="handleAdd"><Icon name="plus" class="h-3 w-3" /> 添加</button></div>
+      <div class="mb-3 flex items-center justify-between">
+        <span class="font-bold">{{ title }}（{{ items.length }}）</span><button
+          v-if="!disabled"
+          class="btn btn-primary btn-sm"
+          @click="handleAdd"
+        >
+          <Icon
+            name="plus"
+            class="h-3 w-3"
+          /> 添加
+        </button>
+      </div>
       <LineItemsTable
         :columns="columns"
         :items="items"
@@ -13,7 +36,12 @@
         @delete="handleRemove"
       >
         <template #cell-confirmed="{ row }">
-          <Tag :type="row.confirmed ? 'success' : 'warning'" size="small">{{ row.confirmed ? '已确认' : '待确认' }}</Tag>
+          <Tag
+            :type="row.confirmed ? 'success' : 'warning'"
+            size="small"
+          >
+            {{ row.confirmed ? '已确认' : '待确认' }}
+          </Tag>
         </template>
       </LineItemsTable>
     </div>

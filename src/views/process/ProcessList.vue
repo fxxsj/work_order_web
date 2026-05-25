@@ -15,19 +15,27 @@
     <template #actions>
       <div class="flex justify-end gap-3">
         <button
-          @click="loadData"
           :disabled="loading"
           class="btn btn-secondary"
           title="刷新"
+          @click="loadData"
         >
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
         <button
           v-if="canCreate"
-          @click="showCreateModal = true"
           class="btn btn-primary"
+          @click="showCreateModal = true"
         >
-          <Icon name="plus" size="md" class="mr-2" />
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新建工序
         </button>
       </div>
@@ -42,7 +50,9 @@
         @sort="handleSort"
       >
         <template #cell-is_active="{ value }">
-          <Tag :type="value ? 'success' : 'info'">{{ value ? '启用' : '禁用' }}</Tag>
+          <Tag :type="value ? 'success' : 'info'">
+            {{ value ? '启用' : '禁用' }}
+          </Tag>
         </template>
 
         <template #cell-actions="{ row }">
@@ -84,29 +94,66 @@
     width="normal"
     @close="closeModals"
   >
-    <form id="process-form" @submit.prevent="handleSubmit" class="space-y-5">
+    <form
+      id="process-form"
+      class="space-y-5"
+      @submit.prevent="handleSubmit"
+    >
       <div>
-        <Input v-model="formData.code" label="工序编码" required placeholder="请输入工序编码" :disabled="showEditModal" />
+        <Input
+          v-model="formData.code"
+          label="工序编码"
+          required
+          placeholder="请输入工序编码"
+          :disabled="showEditModal"
+        />
       </div>
       <div>
-        <Input v-model="formData.name" label="工序名称" required placeholder="请输入工序名称" />
+        <Input
+          v-model="formData.name"
+          label="工序名称"
+          required
+          placeholder="请输入工序名称"
+        />
       </div>
       <div>
-        <TextArea v-model="formData.description" label="工序描述" placeholder="请输入工序描述" :rows="3" />
+        <TextArea
+          v-model="formData.description"
+          label="工序描述"
+          placeholder="请输入工序描述"
+          :rows="3"
+        />
       </div>
       <div>
-        <Input v-model="formData.standard_duration" label="标准工时(小时)" type="number" placeholder="0" />
+        <Input
+          v-model="formData.standard_duration"
+          label="标准工时(小时)"
+          type="number"
+          placeholder="0"
+        />
       </div>
       <div>
-        <Input v-model="formData.sort_order" label="排序" type="number" placeholder="0" />
+        <Input
+          v-model="formData.sort_order"
+          label="排序"
+          type="number"
+          placeholder="0"
+        />
       </div>
       <div>
-        <Toggle v-model="formData.is_active" label="是否启用" />
+        <Toggle
+          v-model="formData.is_active"
+          label="是否启用"
+        />
       </div>
     </form>
     <template #footer>
       <div class="flex justify-end gap-3">
-        <button @click="closeModals" type="button" class="btn btn-secondary">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          @click="closeModals"
+        >
           取消
         </button>
         <button
@@ -121,8 +168,19 @@
             fill="none"
             viewBox="0 0 24 24"
           >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
           </svg>
           {{ submitting ? '保存中...' : showEditModal ? '更新' : '创建' }}
         </button>

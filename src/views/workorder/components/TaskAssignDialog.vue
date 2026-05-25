@@ -1,7 +1,16 @@
 <template>
-  <BaseDialog :show="dialogVisible" title="调整任务分派" width="normal" @close="handleClose; dialogVisible = false;">
+  <BaseDialog
+    :show="dialogVisible"
+    title="调整任务分派"
+    width="normal"
+    @close="handleClose; dialogVisible = false;"
+  >
     <div class="space-y-4">
-      <Input :model-value="task?.work_content" label="任务内容" disabled />
+      <Input
+        :model-value="task?.work_content"
+        label="任务内容"
+        disabled
+      />
       <Select
         v-model="form.assigned_department"
         label="分派部门"
@@ -17,11 +26,27 @@
         placeholder="请选择操作员"
         searchable
       />
-      <TextArea v-model="form.reason" label="调整原因" :rows="2" placeholder="请输入调整原因（可选）" />
+      <TextArea
+        v-model="form.reason"
+        label="调整原因"
+        :rows="2"
+        placeholder="请输入调整原因（可选）"
+      />
     </div>
     <template #footer>
-      <button class="btn" @click="handleClose">取消</button>
-      <button class="btn btn-primary" :disabled="loading" @click="handleSubmit">确定</button>
+      <button
+        class="btn"
+        @click="handleClose"
+      >
+        取消
+      </button>
+      <button
+        class="btn btn-primary"
+        :disabled="loading"
+        @click="handleSubmit"
+      >
+        确定
+      </button>
     </template>
   </BaseDialog>
 </template>

@@ -1,8 +1,15 @@
 <template>
   <div class="w-full">
-    <label v-if="label" :for="id" class="input-label mb-1.5 block">
+    <label
+      v-if="label"
+      :for="id"
+      class="input-label mb-1.5 block"
+    >
       {{ label }}
-      <span v-if="required" class="text-red-500">*</span>
+      <span
+        v-if="required"
+        class="text-red-500"
+      >*</span>
     </label>
     <div class="relative">
       <!-- Prefix Icon Slot -->
@@ -10,7 +17,7 @@
         v-if="$slots.prefix"
         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 dark:text-dark-400"
       >
-        <slot name="prefix"></slot>
+        <slot name="prefix" />
       </div>
 
       <input
@@ -35,21 +42,27 @@
         @blur="$emit('blur', $event)"
         @focus="$emit('focus', $event)"
         @keyup.enter="$emit('enter', $event)"
-      />
+      >
 
       <!-- Suffix Slot (e.g. Password Toggle or Clear Button) -->
       <div
         v-if="$slots.suffix"
         class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 dark:text-dark-400"
       >
-        <slot name="suffix"></slot>
+        <slot name="suffix" />
       </div>
     </div>
     <!-- Hint / Error Text -->
-    <p v-if="error" class="input-error-text mt-1.5">
+    <p
+      v-if="error"
+      class="input-error-text mt-1.5"
+    >
       {{ error }}
     </p>
-    <p v-else-if="hint" class="input-hint mt-1.5">
+    <p
+      v-else-if="hint"
+      class="input-hint mt-1.5"
+    >
       {{ hint }}
     </p>
   </div>

@@ -15,6 +15,9 @@ export default defineConfig({
       dirs: [
         'src/components/common',
         'src/components/dispatch',
+        'src/components/workorder',
+        'src/components/task',
+        'src/components/inventory',
         'src/components',
       ],
       extensions: ['vue'],

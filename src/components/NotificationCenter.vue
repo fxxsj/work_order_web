@@ -2,19 +2,22 @@
   <div class="relative">
     <!-- 铃铛按钮 -->
     <button
-      @click="openModal"
       class="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 transition-all hover:bg-gray-100 hover:scale-105 dark:text-gray-400 dark:hover:bg-dark-800"
       :class="{ 'text-blue-600 dark:text-blue-400': unreadCount > 0 }"
       :aria-label="'通知'"
+      @click="openModal"
     >
-      <Icon name="bell" size="md" />
+      <Icon
+        name="bell"
+        size="md"
+      />
       <!-- 未读红点 -->
       <span
         v-if="unreadCount > 0"
         class="absolute right-1 top-1 flex h-2 w-2"
       >
-        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
-        <span class="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+        <span class="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
       </span>
     </button>
 
@@ -36,13 +39,19 @@
                 <div>
                   <div class="flex items-center gap-2">
                     <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
-                      <Icon name="bell" size="sm" />
+                      <Icon
+                        name="bell"
+                        size="sm"
+                      />
                     </div>
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                       通知
                     </h2>
                   </div>
-                  <p v-if="unreadCount > 0" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  <p
+                    v-if="unreadCount > 0"
+                    class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+                  >
                     <span class="font-medium text-blue-600 dark:text-blue-400">{{ unreadCount }}</span>
                     条未读
                   </p>
@@ -50,31 +59,37 @@
                 <div class="flex items-center gap-2">
                   <button
                     v-if="hasUnread"
-                    @click="markAllAsRead"
                     class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:shadow-xl disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+                    @click="markAllAsRead"
                   >
                     全部已读
                   </button>
                   <button
-                    @click="closeModal"
                     class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/50 text-gray-500 backdrop-blur-sm transition-all hover:bg-white hover:text-gray-700 dark:bg-dark-700/50 dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-gray-300"
                     aria-label="关闭"
+                    @click="closeModal"
                   >
-                    <Icon name="x" size="sm" />
+                    <Icon
+                      name="x"
+                      size="sm"
+                    />
                   </button>
                 </div>
               </div>
               <!-- Decorative gradient -->
-              <div class="absolute right-0 top-0 h-full w-48 bg-gradient-to-l from-indigo-100/20 to-transparent dark:from-indigo-900/10"></div>
+              <div class="absolute right-0 top-0 h-full w-48 bg-gradient-to-l from-indigo-100/20 to-transparent dark:from-indigo-900/10" />
             </div>
 
             <!-- Body -->
             <div class="max-h-[65vh] overflow-y-auto">
               <!-- Loading -->
-              <div v-if="loading" class="flex items-center justify-center py-16">
+              <div
+                v-if="loading"
+                class="flex items-center justify-center py-16"
+              >
                 <div class="relative">
-                  <div class="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-dark-600 dark:border-t-blue-400"></div>
-                  <div class="absolute inset-0 h-12 w-12 animate-pulse rounded-full border-4 border-blue-400/30"></div>
+                  <div class="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-dark-600 dark:border-t-blue-400" />
+                  <div class="absolute inset-0 h-12 w-12 animate-pulse rounded-full border-4 border-blue-400/30" />
                 </div>
               </div>
 
@@ -95,15 +110,22 @@
                       class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
                     >
                       <!-- Pulse ring -->
-                      <span class="absolute inline-flex h-full w-full animate-ping rounded-xl bg-blue-400 opacity-75"></span>
+                      <span class="absolute inline-flex h-full w-full animate-ping rounded-xl bg-blue-400 opacity-75" />
                       <!-- Icon -->
-                      <Icon :name="getNotificationIcon(notification.type)" size="sm" class="relative z-10" />
+                      <Icon
+                        :name="getNotificationIcon(notification.type)"
+                        size="sm"
+                        class="relative z-10"
+                      />
                     </div>
                     <div
                       v-else
                       class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-dark-700 dark:text-gray-600"
                     >
-                      <Icon :name="getNotificationIcon(notification.type)" size="sm" />
+                      <Icon
+                        :name="getNotificationIcon(notification.type)"
+                        size="sm"
+                      />
                     </div>
                   </div>
 
@@ -122,8 +144,8 @@
                           class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                         >
                           <span class="relative flex h-1.5 w-1.5">
-                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75"></span>
-                            <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-600"></span>
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
+                            <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-600" />
                           </span>
                           未读
                         </span>
@@ -139,7 +161,11 @@
                         stroke="currentColor"
                         stroke-width="2"
                       >
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -148,24 +174,43 @@
                   <div
                     v-if="!notification.is_read"
                     class="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-blue-500 to-indigo-600"
-                  ></div>
+                  />
                 </div>
               </div>
 
               <!-- Empty State -->
-              <div v-else class="flex flex-col items-center justify-center py-16">
+              <div
+                v-else
+                class="flex flex-col items-center justify-center py-16"
+              >
                 <div class="relative mb-4">
                   <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-700 dark:to-dark-600">
-                    <Icon name="inbox" size="xl" class="text-gray-400 dark:text-gray-500" />
+                    <Icon
+                      name="inbox"
+                      size="xl"
+                      class="text-gray-400 dark:text-gray-500"
+                    />
                   </div>
                   <div class="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white">
-                    <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    <svg
+                      class="h-3.5 w-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clip-rule="evenodd"
+                      />
                     </svg>
                   </div>
                 </div>
-                <p class="text-sm font-medium text-gray-900 dark:text-white">暂无通知</p>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">所有通知都已处理</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                  暂无通知
+                </p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  所有通知都已处理
+                </p>
               </div>
             </div>
           </div>

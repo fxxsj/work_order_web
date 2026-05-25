@@ -1,19 +1,39 @@
 <template>
-  <BaseDialog :show="dialogVisible" title="采购单详情" width="extra-wide">
+  <BaseDialog
+    :show="dialogVisible"
+    title="采购订单详情"
+    width="extra-wide"
+  >
     <DescriptionGrid :columns="2">
-      <DescriptionItem label="采购单号">{{ detailData?.order_number }}</DescriptionItem>
-      <DescriptionItem label="供应商">{{ detailData?.supplier_name }}</DescriptionItem>
-      <DescriptionItem label="状态">
-        <StatusTag :status="detailData?.status" category="purchaseOrder" :label="detailData?.status_display" />
+      <DescriptionItem label="采购订单号">
+        {{ detailData?.order_number }}
       </DescriptionItem>
-      <DescriptionItem label="总金额">¥{{ Number(detailData?.total_amount || 0).toFixed(2) }}</DescriptionItem>
-      <DescriptionItem label="关联施工单" :span="2">
+      <DescriptionItem label="供应商">
+        {{ detailData?.supplier_name }}
+      </DescriptionItem>
+      <DescriptionItem label="状态">
+        <StatusTag
+          :status="detailData?.status"
+          category="purchaseOrder"
+          :label="detailData?.status_display"
+        />
+      </DescriptionItem>
+      <DescriptionItem label="总金额">
+        ¥{{ Number(detailData?.total_amount || 0).toFixed(2) }}
+      </DescriptionItem>
+      <DescriptionItem
+        label="关联施工单"
+        :span="2"
+      >
         <span
           v-if="detailData?.work_order_number"
           class="cursor-pointer text-primary-600 hover:underline"
           @click="emit('view-work-order', detailData.work_order_number)"
         >
-          {{ detailData.work_order_number }}<Icon name="arrowRight" class="h-3 w-3" />
+          {{ detailData.work_order_number }}<Icon
+            name="arrowRight"
+            class="h-3 w-3"
+          />
         </span>
         <span v-else>-</span>
       </DescriptionItem>
@@ -24,7 +44,14 @@
       :data="detailData?.items || []"
       row-key="id"
     />
-    <template #footer><button class="btn" @click="emit('update:visible', false)">关闭</button></template>
+    <template #footer>
+      <button
+        class="btn btn-secondary"
+        @click="emit('update:visible', false)"
+      >
+        关闭
+      </button>
+    </template>
   </BaseDialog>
 </template>
 

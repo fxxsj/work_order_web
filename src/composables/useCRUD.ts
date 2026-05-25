@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 
 interface CrudAPI {
   create: (data: unknown) => Promise<unknown>
@@ -30,7 +30,7 @@ export function useCRUD(api: CrudAPI, options: UseCRUDOptions = {}) {
 
       if ((result as Record<string, unknown>)?.success !== false) {
         if (successMsg) {
-          ElMessage.success(successMsg)
+          useUIStore().showSuccess(successMsg)
         }
         if (onSuccess) {
           onSuccess(result)
@@ -39,7 +39,7 @@ export function useCRUD(api: CrudAPI, options: UseCRUDOptions = {}) {
       } else {
         const msg = (result as Record<string, unknown>)?.message as string | undefined
         if (errorMsg || msg) {
-          ElMessage.error(msg || errorMsg || '操作失败')
+          useUIStore().showError(msg || errorMsg || '操作失败')
         }
         if (onError) {
           onError(result)
@@ -48,7 +48,7 @@ export function useCRUD(api: CrudAPI, options: UseCRUDOptions = {}) {
       }
     } catch (error: any) {
       console.error('CRUD request failed:', error)
-      ElMessage.error((error as Error)?.message || errorMsg || '操作失败')
+      useUIStore().showError((error as Error)?.message || errorMsg || '操作失败')
       if (onError) {
         onError(error)
       }

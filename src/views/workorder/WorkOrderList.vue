@@ -1,73 +1,149 @@
 <template>
   <TablePageLayout>
     <template #filters>
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <SearchInput
-            v-model="filters.search"
-            class="w-full sm:w-72"
-            placeholder="搜索施工单号、产品名称、客户"
-            @search="handleSearch"
-            @clear="handleSearch"
+      <FilterRow>
+        <SearchInput
+          v-model="filters.search"
+          class="w-full sm:w-72"
+          placeholder="搜索施工单号、产品名称、客户"
+          @search="handleSearch"
+          @clear="handleSearch"
+        />
+        <Select
+          v-model="filters.status"
+          :options="statusOptions"
+          placeholder="状态"
+          clearable
+          class="w-full sm:w-36"
+          @change="handleSearchDebounced"
+        />
+        <Select
+          v-model="filters.priority"
+          :options="priorityOptions"
+          placeholder="优先级"
+          clearable
+          class="w-full sm:w-36"
+          @change="handleSearchDebounced"
+        />
+        <Select
+          v-if="isSalesperson"
+          v-model="filters.approval_status"
+          :options="approvalStatusOptions"
+          placeholder="审核状态"
+          clearable
+          class="w-full sm:w-36"
+          @change="handleSearchDebounced"
+        />
+        <button
+          class="btn btn-secondary"
+          title="重置筛选"
+          @click="handleReset"
+        >
+          <Icon
+            name="rotateCcw"
+            size="md"
+            class="mr-1"
           />
-          <Select
-            v-model="filters.status"
-            :options="statusOptions"
-            placeholder="状态"
-            clearable
-            class="w-36"
-            @change="handleSearchDebounced"
-          />
-          <Select
-            v-model="filters.priority"
-            :options="priorityOptions"
-            placeholder="优先级"
-            clearable
-            class="w-36"
-            @change="handleSearchDebounced"
-          />
-          <Select
-            v-if="isSalesperson"
-            v-model="filters.approval_status"
-            :options="approvalStatusOptions"
-            placeholder="审核状态"
-            clearable
-            class="w-36"
-            @change="handleSearchDebounced"
-          />
-        </div>
-      </div>
-    </template>
-    <template #actions>
-      <div class="flex justify-end gap-3 items-center">
-        <button class="btn btn-secondary" title="重置筛选" @click="handleReset">
-          <Icon name="refresh" size="md" class="mr-1" />
           重置
         </button>
-        <button class="btn btn-success" v-if="canExport" :disabled="exporting" @click="handleExport" title="导出Excel">
-          <Icon name="download" size="md" :class="exporting ? 'animate-spin' : ''" class="mr-1" />
+      </FilterRow>
+    </template>
+    <template #actions>
+      <div class="flex justify-end gap-3 items-center w-full">
+        <button
+          class="btn btn-secondary"
+          title="刷新"
+          :disabled="loading"
+          @click="loadData"
+        >
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
+        </button>
+        <button
+          v-if="canExport"
+          class="btn btn-success"
+          :disabled="exporting"
+          title="导出Excel"
+          @click="handleExport"
+        >
+          <Icon
+            name="download"
+            size="md"
+            :class="exporting ? 'animate-spin' : ''"
+            class="mr-1"
+          />
           导出
         </button>
-        <button class="btn btn-primary" @click="handleCreate" title="新建施工单">
-          <Icon name="plus" size="md" class="mr-1" />
+        <button
+          class="btn btn-primary"
+          title="新建施工单"
+          @click="handleCreate"
+        >
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-1"
+          />
           新建
         </button>
       </div>
     </template>
 
     <template #table>
-      <DataTable :columns="columns" :data="tableData" :loading="loading" row-key="id" @row-click="handleRowClick">
-        <template #cell-order_number="{ row }"><span>{{ row.order_number }}</span></template>
-        <template #cell-customer_name="{ row }"><span>{{ row.customer_name }}</span></template>
-        <template #cell-salesperson_name="{ row }"><span>{{ row.salesperson_name || '-' }}</span></template>
-        <template #cell-product_name="{ row }"><span>{{ row.product_name }}</span></template>
-        <template #cell-production_quantity="{ row }"><span>{{ (row.production_quantity || 0) + (row.defective_quantity || 0) }} 车</span></template>
-        <template #cell-status="{ row }"><StatusTag :status="row.status" category="workOrder" :label="row.status_display" /></template>
-        <template #cell-priority="{ row }"><StatusTag :status="row.priority" category="priority" :label="row.priority_display" /></template>
-        <template #cell-progress="{ row }"><ProgressBar :percentage="row.progress_percentage" :color="row.progress_percentage === 100 ? '#67C23A' : '#409EFF'" /></template>
-        <template #cell-order_date="{ row }"><span>{{ formatDate(row.order_date) }}</span></template>
-        <template #cell-delivery_date="{ row }"><span :style="getDeliveryDateStyle(row.delivery_date, row.status)">{{ formatDate(row.delivery_date) }}</span></template>
-        <template #cell-manager_name="{ row }"><span>{{ row.manager_name }}</span></template>
+      <DataTable
+        :columns="columns"
+        :data="tableData"
+        :loading="loading"
+        row-key="id"
+        @row-click="handleRowClick"
+      >
+        <template #cell-order_number="{ row }">
+          <span>{{ row.order_number }}</span>
+        </template>
+        <template #cell-customer_name="{ row }">
+          <span>{{ row.customer_name }}</span>
+        </template>
+        <template #cell-salesperson_name="{ row }">
+          <span>{{ row.salesperson_name || '-' }}</span>
+        </template>
+        <template #cell-product_name="{ row }">
+          <span>{{ row.product_name }}</span>
+        </template>
+        <template #cell-production_quantity="{ row }">
+          <span>{{ (row.production_quantity || 0) + (row.defective_quantity || 0) }} 车</span>
+        </template>
+        <template #cell-status="{ row }">
+          <StatusTag
+            :status="row.status"
+            category="workOrder"
+            :label="row.status_display"
+          />
+        </template>
+        <template #cell-priority="{ row }">
+          <StatusTag
+            :status="row.priority"
+            category="priority"
+            :label="row.priority_display"
+          />
+        </template>
+        <template #cell-progress="{ row }">
+          <ProgressBar
+            :percentage="row.progress_percentage"
+            :color="row.progress_percentage === 100 ? '#67C23A' : '#409EFF'"
+          />
+        </template>
+        <template #cell-order_date="{ row }">
+          <span>{{ formatDate(row.order_date) }}</span>
+        </template>
+        <template #cell-delivery_date="{ row }">
+          <span :style="getDeliveryDateStyle(row.delivery_date, row.status)">{{ formatDate(row.delivery_date) }}</span>
+        </template>
+        <template #cell-manager_name="{ row }">
+          <span>{{ row.manager_name }}</span>
+        </template>
         <template #cell-actions="{ row }">
           <RowActions
             :actions="getRowActions(row)"
@@ -119,13 +195,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 import { workOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
-import { StatusTag, SearchInput, Select, Icon, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions } from '@/components/common'
+import { StatusTag, SearchInput, Select, Icon, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { WorkOrderStatusChoices, PriorityChoices, ApprovalStatusChoices } from '@/constants'
 import { formatDate } from '@/utils/filter'
@@ -300,7 +376,7 @@ const handleExport = async () => {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-    ElMessage.success('导出成功')
+    useUIStore().showSuccess('导出成功')
   } catch (error: any) {
     if (error.response && error.response.data) {
       const reader = new FileReader()

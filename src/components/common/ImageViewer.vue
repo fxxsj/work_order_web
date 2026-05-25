@@ -10,16 +10,64 @@
     <div class="image-viewer-container">
       <div class="image-viewer-toolbar">
         <div class="flex gap-1">
-          <button class="btn btn-secondary btn-sm" title="放大" @click="zoomIn"><Icon name="zoomIn" class="h-4 w-4" /></button>
-          <button class="btn btn-secondary btn-sm" title="缩小" @click="zoomOut"><Icon name="zoomOut" class="h-4 w-4" /></button>
-          <button class="btn btn-secondary btn-sm" title="左旋转" @click="rotateLeft"><Icon name="rotateCcw" class="h-4 w-4" /></button>
-          <button class="btn btn-secondary btn-sm" title="右旋转" @click="rotateRight"><Icon name="rotateCw" class="h-4 w-4" /></button>
-          <button class="btn btn-secondary btn-sm" title="全屏" @click="toggleFullscreen"><Icon name="maximize" class="h-4 w-4" /></button>
+          <button
+            class="btn btn-secondary btn-sm"
+            title="放大"
+            @click="zoomIn"
+          >
+            <Icon
+              name="zoomIn"
+              class="h-4 w-4"
+            />
+          </button>
+          <button
+            class="btn btn-secondary btn-sm"
+            title="缩小"
+            @click="zoomOut"
+          >
+            <Icon
+              name="zoomOut"
+              class="h-4 w-4"
+            />
+          </button>
+          <button
+            class="btn btn-secondary btn-sm"
+            title="左旋转"
+            @click="rotateLeft"
+          >
+            <Icon
+              name="rotateCcw"
+              class="h-4 w-4"
+            />
+          </button>
+          <button
+            class="btn btn-secondary btn-sm"
+            title="右旋转"
+            @click="rotateRight"
+          >
+            <Icon
+              name="rotateCw"
+              class="h-4 w-4"
+            />
+          </button>
+          <button
+            class="btn btn-secondary btn-sm"
+            title="全屏"
+            @click="toggleFullscreen"
+          >
+            <Icon
+              name="maximize"
+              class="h-4 w-4"
+            />
+          </button>
         </div>
         <span class="scale-info">{{ Math.round(scale * 100) }}%</span>
       </div>
 
-      <div class="image-wrapper" @wheel.prevent="handleWheel">
+      <div
+        class="image-wrapper"
+        @wheel.prevent="handleWheel"
+      >
         <img
           ref="imageRef"
           :src="imageSrc"
@@ -28,10 +76,13 @@
           alt="preview"
           @load="handleLoad"
           @error="handleError"
-        />
+        >
       </div>
 
-      <div v-if="images && images.length > 1" class="thumbnail-list">
+      <div
+        v-if="images && images.length > 1"
+        class="thumbnail-list"
+      >
         <div
           v-for="(img, index) in images"
           :key="index"
@@ -39,7 +90,10 @@
           :class="{ active: currentIndex === index }"
           @click="handleSelectImage(index)"
         >
-          <img :src="img.src || img" :alt="`图片 ${Number(index) + 1}`" />
+          <img
+            :src="img.src || img"
+            :alt="`图片 ${Number(index) + 1}`"
+          >
         </div>
       </div>
     </div>

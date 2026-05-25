@@ -1,5 +1,10 @@
 <template>
-  <BaseDialog :show="dialogVisible" title="添加工序" width="narrow" @close="handleClose; dialogVisible = false;">
+  <BaseDialog
+    :show="dialogVisible"
+    title="添加工序"
+    width="narrow"
+    @close="handleClose; dialogVisible = false;"
+  >
     <div class="space-y-4">
       <Select
         v-model="form.process_id"
@@ -9,12 +14,28 @@
       />
       <div>
         <label class="input-label mb-1.5 block">顺序</label>
-        <InputNumber v-model="form.sequence" :min="1" :max="100" class="w-full" />
+        <InputNumber
+          v-model="form.sequence"
+          :min="1"
+          :max="100"
+          class="w-full"
+        />
       </div>
     </div>
     <template #footer>
-      <button class="btn" @click="handleCancel">取消</button>
-      <button class="btn btn-primary" :disabled="loading" @click="handleSubmit">确定</button>
+      <button
+        class="btn"
+        @click="handleCancel"
+      >
+        取消
+      </button>
+      <button
+        class="btn btn-primary"
+        :disabled="loading"
+        @click="handleSubmit"
+      >
+        确定
+      </button>
     </template>
   </BaseDialog>
 </template>

@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 
 interface UsePaginationOptions {
   immediate?: boolean
@@ -57,7 +57,7 @@ export function usePagination(
       }
     } catch (error: any) {
       console.error('Fetch data failed:', error)
-      ElMessage.error('获取数据失败')
+      useUIStore().showError('获取数据失败')
       data.value = []
       total.value = 0
     } finally {

@@ -1,36 +1,93 @@
 <template>
   <div class="space-y-6">
-    <StatementStats :stats="stats" :loading="statsLoading" />
+    <StatementStats
+      :stats="stats"
+      :loading="statsLoading"
+    />
 
     <TablePageLayout>
       <template #filters>
         <div class="flex flex-col gap-3">
           <div class="flex flex-wrap items-center gap-3">
-            <Select v-model="filters.statement_type" :options="statementTypeOptions" class="w-36" placeholder="对账类型" clearable @change="handleSearch" />
-            <Select v-model="filters.status" :options="statementStatusOptions" class="w-36" placeholder="状态" clearable @change="handleSearch" />
+            <Select
+              v-model="filters.statement_type"
+              :options="statementTypeOptions"
+              class="w-36"
+              placeholder="对账类型"
+              clearable
+              @change="handleSearch"
+            />
+            <Select
+              v-model="filters.status"
+              :options="statementStatusOptions"
+              class="w-36"
+              placeholder="状态"
+              clearable
+              @change="handleSearch"
+            />
           </div>
         </div>
       </template>
       <template #actions>
         <div class="flex justify-end gap-3">
-          <button class="btn btn-secondary" :disabled="loading" @click="loadData" title="刷新">
-            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          <button
+            class="btn btn-secondary"
+            :disabled="loading"
+            title="刷新"
+            @click="loadData"
+          >
+            <Icon
+              name="refresh"
+              size="md"
+              :class="loading ? 'animate-spin' : ''"
+            />
           </button>
-          <button class="btn btn-secondary" @click="handlePrint">打印</button>
-          <button class="btn btn-primary" @click="handleCreate">
-            <Icon name="plus" size="md" class="mr-2" />
+          <button
+            class="btn btn-secondary"
+            @click="handlePrint"
+          >
+            打印
+          </button>
+          <button
+            class="btn btn-primary"
+            @click="handleCreate"
+          >
+            <Icon
+              name="plus"
+              size="md"
+              class="mr-2"
+            />
             生成
           </button>
         </div>
       </template>
 
       <template #table>
-        <DataTable :columns="columns" :data="tableData" :loading="loading" :row-key="(row: any) => row.id">
-          <template #cell-period_start="{ row }"><span>{{ row.period_start }}</span></template>
-          <template #cell-period_end="{ row }"><span>{{ row.period_end }}</span></template>
-          <template #cell-opening_balance="{ row }"><span>¥{{ row.opening_balance?.toLocaleString() || '-' }}</span></template>
-          <template #cell-closing_balance="{ row }"><span class="text-strong">¥{{ row.closing_balance?.toLocaleString() || '-' }}</span></template>
-          <template #cell-status="{ row }"><StatusTag :status="row.status" category="statement" :label="row.status_display" /></template>
+        <DataTable
+          :columns="columns"
+          :data="tableData"
+          :loading="loading"
+          :row-key="(row: any) => row.id"
+        >
+          <template #cell-period_start="{ row }">
+            <span>{{ row.period_start }}</span>
+          </template>
+          <template #cell-period_end="{ row }">
+            <span>{{ row.period_end }}</span>
+          </template>
+          <template #cell-opening_balance="{ row }">
+            <span>¥{{ row.opening_balance?.toLocaleString() || '-' }}</span>
+          </template>
+          <template #cell-closing_balance="{ row }">
+            <span class="text-strong">¥{{ row.closing_balance?.toLocaleString() || '-' }}</span>
+          </template>
+          <template #cell-status="{ row }">
+            <StatusTag
+              :status="row.status"
+              category="statement"
+              :label="row.status_display"
+            />
+          </template>
           <template #cell-actions="{ row }">
             <RowActions
               :actions="getRowActions(row)"
@@ -55,22 +112,57 @@
       </template>
     </TablePageLayout>
 
-    <BaseDialog :show="showCreateModal" title="生成对账单" width="narrow" @close="showCreateModal = false">
-      <form id="statement-form" @submit.prevent="handleGenerate" class="space-y-5">
+    <BaseDialog
+      :show="showCreateModal"
+      title="生成对账单"
+      width="narrow"
+      @close="showCreateModal = false"
+    >
+      <form
+        id="statement-form"
+        class="space-y-5"
+        @submit.prevent="handleGenerate"
+      >
         <div>
           <label class="input-label mb-1.5 block">对账类型</label>
-          <Select v-model="form.statement_type" :options="statementTypeOptions" class="w-full" required />
+          <Select
+            v-model="form.statement_type"
+            :options="statementTypeOptions"
+            class="w-full"
+            required
+          />
         </div>
         <div>
           <label class="input-label mb-1.5 block">对账日期</label>
-          <input type="date" v-model="form.statement_date" class="input w-full" required />
+          <input
+            v-model="form.statement_date"
+            type="date"
+            class="input w-full"
+            required
+          >
         </div>
       </form>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button type="button" class="btn btn-secondary" @click="showCreateModal = false">取消</button>
-          <button form="statement-form" type="submit" class="btn btn-primary" :disabled="submitting">
-            <Icon v-if="submitting" name="refresh" size="sm" class="-ml-1 mr-2 animate-spin" />
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="showCreateModal = false"
+          >
+            取消
+          </button>
+          <button
+            form="statement-form"
+            type="submit"
+            class="btn btn-primary"
+            :disabled="submitting"
+          >
+            <Icon
+              v-if="submitting"
+              name="refresh"
+              size="sm"
+              class="-ml-1 mr-2 animate-spin"
+            />
             {{ submitting ? '生成中...' : '生成' }}
           </button>
         </div>

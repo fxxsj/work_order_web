@@ -9,95 +9,151 @@
             class="btn btn-primary btn-sm"
             @click="handleAddDepartment"
           >
-            <Icon name="plus" class="h-3 w-3" />
+            <Icon
+              name="plus"
+              class="h-3 w-3"
+            />
             添加部门
           </button>
         </div>
       </div>
       <div class="card-body">
+        <EmptyState
+          v-if="!loading && !process"
+          title="请从左侧选择一个工序"
+        />
 
-      <EmptyState
-        v-if="!loading && !process"
-        title="请从左侧选择一个工序"
-      />
-
-      <EmptyState
-        v-else-if="!loading && departmentList.length === 0"
-        title="该工序暂未配置部门规则"
-      >
-        <template #action>
-          <button
-            v-if="process"
-            class="btn btn-primary"
-            @click="handleAddDepartment"
-          >
-            <Icon name="plus" class="h-4 w-4" />
-            配置第一个部门
-          </button>
-        </template>
-      </EmptyState>
-
-      <div v-else class="department-list">
-        <div
-          v-for="(dept, index) in departmentList"
-          :key="dept.id"
-          class="department-card"
-          draggable="true"
-          @dragstart="handleDragStart(index, $event)"
-          @dragover.prevent="handleDragOver(index)"
-          @drop="handleDrop(index)"
-          @dragend="handleDragEnd"
+        <EmptyState
+          v-else-if="!loading && departmentList.length === 0"
+          title="该工序暂未配置部门规则"
         >
-          <div class="department-header">
-            <div class="department-info">
-              <span class="department-name">{{ dept.name }}</span>
-              <Tag :type="dept.is_active ? 'success' : 'info'" size="small">
-                {{ dept.is_active ? '启用' : '禁用' }}
-              </Tag>
+          <template #action>
+            <button
+              v-if="process"
+              class="btn btn-primary"
+              @click="handleAddDepartment"
+            >
+              <Icon
+                name="plus"
+                class="h-4 w-4"
+              />
+              配置第一个部门
+            </button>
+          </template>
+        </EmptyState>
+
+        <div
+          v-else
+          class="department-list"
+        >
+          <div
+            v-for="(dept, index) in departmentList"
+            :key="dept.id"
+            class="department-card"
+            draggable="true"
+            @dragstart="handleDragStart(index, $event)"
+            @dragover.prevent="handleDragOver(index)"
+            @drop="handleDrop(index)"
+            @dragend="handleDragEnd"
+          >
+            <div class="department-header">
+              <div class="department-info">
+                <span class="department-name">{{ dept.name }}</span>
+                <Tag
+                  :type="dept.is_active ? 'success' : 'info'"
+                  size="small"
+                >
+                  {{ dept.is_active ? '启用' : '禁用' }}
+                </Tag>
+              </div>
+              <div class="department-actions">
+                <button
+                  class="btn btn-ghost btn-sm"
+                  @click="handleToggleActive(dept)"
+                >
+                  {{ dept.is_active ? '禁用' : '启用' }}
+                </button>
+                <button
+                  class="btn btn-ghost btn-sm"
+                  style="color: #f56c6c;"
+                  @click="handleDelete(dept)"
+                >
+                  删除
+                </button>
+              </div>
             </div>
-            <div class="department-actions">
-              <button class="btn btn-ghost btn-sm" @click="handleToggleActive(dept)">
-                {{ dept.is_active ? '禁用' : '启用' }}
-              </button>
-              <button class="btn btn-ghost btn-sm" style="color: #f56c6c;" @click="handleDelete(dept)">
-                删除
-              </button>
-            </div>
-          </div>
-          <div class="department-body">
-            <div class="priority-setting">
-              <span class="setting-label">优先级:</span>
-              <InputNumber v-model="dept.priority" :min="1" :max="100" @change="handlePriorityChange(dept)" />
-            </div>
-            <div class="capacity-setting">
-              <span class="setting-label">产能:</span>
-              <InputNumber v-model="dept.capacity" :min="1" @change="handleCapacityChange(dept)" />
+            <div class="department-body">
+              <div class="priority-setting">
+                <span class="setting-label">优先级:</span>
+                <InputNumber
+                  v-model="dept.priority"
+                  :min="1"
+                  :max="100"
+                  @change="handlePriorityChange(dept)"
+                />
+              </div>
+              <div class="capacity-setting">
+                <span class="setting-label">产能:</span>
+                <InputNumber
+                  v-model="dept.capacity"
+                  :min="1"
+                  @change="handleCapacityChange(dept)"
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
       </div>
     </div>
 
     <!-- 添加部门对话框 -->
-    <BaseDialog :show="dialogVisible" title="添加部门" width="normal" @close="dialogVisible = false">
+    <BaseDialog
+      :show="dialogVisible"
+      title="添加部门"
+      width="normal"
+      @close="dialogVisible = false"
+    >
       <div class="space-y-4">
         <div class="flex items-start gap-3">
           <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">部门</label>
-          <Select v-model="form.department_id" :options="availableDepartmentOptions" placeholder="请选择部门" class="flex-1" />
+          <Select
+            v-model="form.department_id"
+            :options="availableDepartmentOptions"
+            placeholder="请选择部门"
+            class="flex-1"
+          />
         </div>
         <div class="flex items-start gap-3">
           <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">优先级</label>
-          <InputNumber v-model="form.priority" :min="1" :max="100" class="flex-1" />
+          <InputNumber
+            v-model="form.priority"
+            :min="1"
+            :max="100"
+            class="flex-1"
+          />
         </div>
         <div class="flex items-start gap-3">
           <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">产能</label>
-          <InputNumber v-model="form.capacity" :min="1" class="flex-1" />
+          <InputNumber
+            v-model="form.capacity"
+            :min="1"
+            class="flex-1"
+          />
         </div>
       </div>
       <template #footer>
-        <button class="btn" @click="dialogVisible = false">取消</button>
-        <button class="btn btn-primary" @click="handleConfirmAdd">确定</button>
+        <button
+          class="btn"
+          @click="dialogVisible = false"
+        >
+          取消
+        </button>
+        <button
+          class="btn btn-primary"
+          @click="handleConfirmAdd"
+        >
+          确定
+        </button>
       </template>
     </BaseDialog>
   </div>

@@ -12,8 +12,14 @@
           >
             标记全部已读
           </button>
-          <button class="btn btn-secondary btn-sm" @click="loadData">
-            <Icon name="refresh" class="h-3 w-3" />
+          <button
+            class="btn btn-secondary btn-sm"
+            @click="loadData"
+          >
+            <Icon
+              name="refresh"
+              class="h-3 w-3"
+            />
             刷新
           </button>
         </div>
@@ -29,10 +35,16 @@
         :row-class="getRowClass"
       >
         <template #cell-status="{ row }">
-          <span v-if="!row.is_read" class="relative flex justify-center">
-            <span class="h-2 w-2 rounded-full bg-primary-500"></span>
+          <span
+            v-if="!row.is_read"
+            class="relative flex justify-center"
+          >
+            <span class="h-2 w-2 rounded-full bg-primary-500" />
           </span>
-          <span v-else class="text-gray-400">已读</span>
+          <span
+            v-else
+            class="text-gray-400"
+          >已读</span>
         </template>
 
         <template #cell-content="{ row }">

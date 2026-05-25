@@ -15,19 +15,27 @@
     <template #actions>
       <div class="flex justify-end gap-3">
         <button
-          @click="loadData"
           :disabled="loading"
           class="btn btn-secondary"
           title="刷新"
+          @click="loadData"
         >
-          <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          <Icon
+            name="refresh"
+            size="md"
+            :class="loading ? 'animate-spin' : ''"
+          />
         </button>
         <button
           v-if="canCreate"
-          @click="showCreateDialog"
           class="btn btn-primary"
+          @click="showCreateDialog"
         >
-          <Icon name="plus" size="md" class="mr-2" />
+          <Icon
+            name="plus"
+            size="md"
+            class="mr-2"
+          />
           新建压凸版
         </button>
       </div>
@@ -42,14 +50,25 @@
         @sort="handleSort"
       >
         <template #cell-confirmed="{ value }">
-          <Tag :type="value ? 'success' : 'info'">{{ value ? '已确认' : '待确认' }}</Tag>
+          <Tag :type="value ? 'success' : 'info'">
+            {{ value ? '已确认' : '待确认' }}
+          </Tag>
         </template>
 
         <template #cell-products="{ row }">
           <template v-if="row.products && row.products.length > 0">
-            <Tag v-for="product in row.products" :key="product.id" class="mr-1 mb-1">{{ product.product_name }} ({{ product.quantity }}个)</Tag>
+            <Tag
+              v-for="product in row.products"
+              :key="product.id"
+              class="mr-1 mb-1"
+            >
+              {{ product.product_name }} ({{ product.quantity }}个)
+            </Tag>
           </template>
-          <span v-else class="text-gray-400 dark:text-dark-400">-</span>
+          <span
+            v-else
+            class="text-gray-400 dark:text-dark-400"
+          >-</span>
         </template>
 
         <template #cell-created_at="{ value }">
@@ -128,7 +147,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 import { embossingPlateAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Icon, Tag, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
@@ -201,7 +220,7 @@ const handleConfirmPlate = async () => {
   try {
     confirming.value = true
     await embossingPlateAPI.confirm(selectedRow.value.id)
-    ElMessage.success('确认成功')
+    useUIStore().showSuccess('确认成功')
     showConfirmDialog.value = false
     await loadData()
   } catch (error: any) { ErrorHandler.showMessage(error, '确认失败') }

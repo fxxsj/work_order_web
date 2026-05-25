@@ -1,69 +1,197 @@
 <template>
-  <BaseDialog :show="dialogVisible" :title="isEdit ? '编辑发货单' : '新建发货单'" width="extra-wide" @close="handleClose">
+  <BaseDialog
+    :show="dialogVisible"
+    :title="isEdit ? '编辑发货单' : '新建发货单'"
+    width="extra-wide"
+    @close="handleClose"
+  >
     <div class="space-y-4">
-      <h4 class="mb-4 border-b-2 border-primary-500 pb-2 text-base font-medium text-gray-700 dark:text-gray-200">基本信息</h4>
+      <h4 class="mb-4 border-b-2 border-primary-500 pb-2 text-base font-medium text-gray-700 dark:text-gray-200">
+        基本信息
+      </h4>
       <div class="flex flex-wrap gap-5">
         <div class="flex-1 min-w-[300px]">
           <label class="input-label mb-1.5 block">销售订单</label>
-          <Select v-model="localForm.sales_order" placeholder="请选择销售订单" :searchable="true" :disabled="isEdit" :options="salesOrderOptions" @change="handleSalesOrderChange" />
+          <Select
+            v-model="localForm.sales_order"
+            placeholder="请选择销售订单"
+            :searchable="true"
+            :disabled="isEdit"
+            :options="salesOrderOptions"
+            @change="handleSalesOrderChange"
+          />
         </div>
         <div class="flex-1 min-w-[300px]">
           <label class="input-label mb-1.5 block">客户</label>
-          <Select v-model="localForm.customer" placeholder="请选择客户" :searchable="true" :disabled="isEdit" :options="customerOptions" @change="handleCustomerChange" />
+          <Select
+            v-model="localForm.customer"
+            placeholder="请选择客户"
+            :searchable="true"
+            :disabled="isEdit"
+            :options="customerOptions"
+            @change="handleCustomerChange"
+          />
         </div>
       </div>
-      <h4 class="mb-4 border-b-2 border-primary-500 pb-2 text-base font-medium text-gray-700 dark:text-gray-200">收货信息</h4>
+      <h4 class="mb-4 border-b-2 border-primary-500 pb-2 text-base font-medium text-gray-700 dark:text-gray-200">
+        收货信息
+      </h4>
       <div class="flex flex-wrap gap-5">
-        <div class="flex-1 min-w-[300px]"><Input v-model="localForm.receiver_name" label="收货人" placeholder="请输入收货人" /></div>
-        <div class="flex-1 min-w-[300px]"><Input v-model="localForm.receiver_phone" label="联系电话" placeholder="请输入联系电话" /></div>
+        <div class="flex-1 min-w-[300px]">
+          <Input
+            v-model="localForm.receiver_name"
+            label="收货人"
+            placeholder="请输入收货人"
+          />
+        </div>
+        <div class="flex-1 min-w-[300px]">
+          <Input
+            v-model="localForm.receiver_phone"
+            label="联系电话"
+            placeholder="请输入联系电话"
+          />
+        </div>
       </div>
-      <TextArea v-model="localForm.delivery_address" label="送货地址" :rows="2" placeholder="请输入送货地址" />
-      <h4 class="mb-4 border-b-2 border-primary-500 pb-2 text-base font-medium text-gray-700 dark:text-gray-200">物流信息</h4>
+      <TextArea
+        v-model="localForm.delivery_address"
+        label="送货地址"
+        :rows="2"
+        placeholder="请输入送货地址"
+      />
+      <h4 class="mb-4 border-b-2 border-primary-500 pb-2 text-base font-medium text-gray-700 dark:text-gray-200">
+        物流信息
+      </h4>
       <div class="flex flex-wrap gap-5">
-        <div class="flex-1 min-w-[300px]"><label class="input-label mb-1.5 block">发货日期</label><input type="date" v-model="localForm.delivery_date" class="input w-full" /></div>
-        <div class="flex-1 min-w-[300px]"><label class="input-label mb-1.5 block">物流公司</label><Select v-model="localForm.logistics_company" placeholder="请选择物流公司" :searchable="true" :creatable="true" :options="logisticsOptions" /></div>
+        <div class="flex-1 min-w-[300px]">
+          <label class="input-label mb-1.5 block">发货日期</label><input
+            v-model="localForm.delivery_date"
+            type="date"
+            class="input w-full"
+          >
+        </div>
+        <div class="flex-1 min-w-[300px]">
+          <label class="input-label mb-1.5 block">物流公司</label><Select
+            v-model="localForm.logistics_company"
+            placeholder="请选择物流公司"
+            :searchable="true"
+            :creatable="true"
+            :options="logisticsOptions"
+          />
+        </div>
       </div>
       <div class="flex flex-wrap gap-5">
-        <div class="flex-1 min-w-[300px]"><Input v-model="localForm.tracking_number" label="物流单号" placeholder="请输入物流单号" /></div>
-        <div class="flex-1 min-w-[300px]"><label class="input-label mb-1.5 block">运费（元）</label><InputNumber v-model="localForm.freight" :precision="2" :min="0" class="w-full" /></div>
+        <div class="flex-1 min-w-[300px]">
+          <Input
+            v-model="localForm.tracking_number"
+            label="物流单号"
+            placeholder="请输入物流单号"
+          />
+        </div>
+        <div class="flex-1 min-w-[300px]">
+          <label class="input-label mb-1.5 block">运费（元）</label><InputNumber
+            v-model="localForm.freight"
+            :precision="2"
+            :min="0"
+            class="w-full"
+          />
+        </div>
       </div>
       <div class="flex flex-wrap gap-5">
-        <div class="flex-1 min-w-[300px]"><label class="input-label mb-1.5 block">包裹数量</label><InputNumber v-model="localForm.package_count" :min="1" class="w-full" /></div>
-        <div class="flex-1 min-w-[300px]"><label class="input-label mb-1.5 block">总重量(kg)</label><InputNumber v-model="localForm.package_weight" :precision="2" :min="0" class="w-full" /></div>
+        <div class="flex-1 min-w-[300px]">
+          <label class="input-label mb-1.5 block">包裹数量</label><InputNumber
+            v-model="localForm.package_count"
+            :min="1"
+            class="w-full"
+          />
+        </div>
+        <div class="flex-1 min-w-[300px]">
+          <label class="input-label mb-1.5 block">总重量(kg)</label><InputNumber
+            v-model="localForm.package_weight"
+            :precision="2"
+            :min="0"
+            class="w-full"
+          />
+        </div>
       </div>
       <h4 class="mb-4 flex items-center justify-between border-b-2 border-primary-500 pb-2 text-base font-medium text-gray-700 dark:text-gray-200">
         <span>发货明细</span>
-        <button class="btn btn-primary btn-sm" @click="addItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加明细</button>
+        <button
+          class="btn btn-primary btn-sm"
+          @click="addItem"
+        >
+          <Icon
+            name="plus"
+            class="mr-1 inline h-3 w-3"
+          />添加明细
+        </button>
       </h4>
       <LineItemsTable
-          :columns="lineItemColumns"
-          :items="localForm.items_data"
-          @delete="removeItem"
-        >
-          <template #cell-product="{ row }">
-            <Select v-model="row.product" placeholder="请选择产品" :searchable="true" :options="productOptions" />
-          </template>
-          <template #cell-quantity="{ row }">
-            <InputNumber v-model="row.quantity" :min="1" :precision="2" />
-          </template>
-          <template #cell-stock_batch="{ row }">
-            <input v-model="row.stock_batch" placeholder="批次号（可选）" class="input w-full" />
-          </template>
-          <template #cell-unit="{ row }">
-            <input v-model="row.unit" placeholder="单位" class="input w-full" />
-          </template>
-          <template #cell-unit_price="{ row }">
-            <InputNumber v-model="row.unit_price" :min="0" :precision="2" />
-          </template>
-          <template #cell-subtotal="{ row }">
-            <span class="text-right">¥{{ calculateSubtotal(row).toFixed(2) }}</span>
-          </template>
-        </LineItemsTable>
-      <TextArea v-model="localForm.notes" label="备注" :rows="3" placeholder="请输入备注信息" class="mt-6" />
+        :columns="lineItemColumns"
+        :items="localForm.items_data"
+        @delete="removeItem"
+      >
+        <template #cell-product="{ row }">
+          <Select
+            v-model="row.product"
+            placeholder="请选择产品"
+            :searchable="true"
+            :options="productOptions"
+          />
+        </template>
+        <template #cell-quantity="{ row }">
+          <InputNumber
+            v-model="row.quantity"
+            :min="1"
+            :precision="2"
+          />
+        </template>
+        <template #cell-stock_batch="{ row }">
+          <input
+            v-model="row.stock_batch"
+            placeholder="批次号（可选）"
+            class="input w-full"
+          >
+        </template>
+        <template #cell-unit="{ row }">
+          <input
+            v-model="row.unit"
+            placeholder="单位"
+            class="input w-full"
+          >
+        </template>
+        <template #cell-unit_price="{ row }">
+          <InputNumber
+            v-model="row.unit_price"
+            :min="0"
+            :precision="2"
+          />
+        </template>
+        <template #cell-subtotal="{ row }">
+          <span class="text-right">¥{{ calculateSubtotal(row).toFixed(2) }}</span>
+        </template>
+      </LineItemsTable>
+      <TextArea
+        v-model="localForm.notes"
+        label="备注"
+        :rows="3"
+        placeholder="请输入备注信息"
+        class="mt-6"
+      />
     </div>
     <template #footer>
-      <button class="btn" @click="handleClose">取消</button>
-      <button class="btn btn-primary" :disabled="submitting" @click="handleSubmit">提交</button>
+      <button
+        class="btn"
+        @click="handleClose"
+      >
+        取消
+      </button>
+      <button
+        class="btn btn-primary"
+        :disabled="submitting"
+        @click="handleSubmit"
+      >
+        提交
+      </button>
     </template>
   </BaseDialog>
 </template>

@@ -1,33 +1,71 @@
 <template>
   <div class="space-y-6">
-    <StockStats :stats="stats" :loading="statsLoading" />
+    <StockStats
+      :stats="stats"
+      :loading="statsLoading"
+    />
 
     <TablePageLayout>
       <template #filters>
         <div class="flex flex-col gap-3">
           <div class="flex flex-wrap items-center gap-3">
-            <Select v-model="filters.status" :options="statusOptions" class="w-full sm:w-40" placeholder="库存状态" clearable @change="handleSearch" />
+            <Select
+              v-model="filters.status"
+              :options="statusOptions"
+              class="w-full sm:w-40"
+              placeholder="库存状态"
+              clearable
+              @change="handleSearch"
+            />
           </div>
         </div>
       </template>
       <template #actions>
         <div class="flex justify-end gap-3">
-          <button class="btn btn-secondary" :disabled="loading" @click="loadData" title="刷新">
-            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          <button
+            class="btn btn-secondary"
+            :disabled="loading"
+            title="刷新"
+            @click="loadData"
+          >
+            <Icon
+              name="refresh"
+              size="md"
+              :class="loading ? 'animate-spin' : ''"
+            />
           </button>
-          <button class="btn btn-warning" @click="handleLowStock">
-            <Icon name="exclamationTriangle" size="md" class="mr-2" />
+          <button
+            class="btn btn-warning"
+            @click="handleLowStock"
+          >
+            <Icon
+              name="exclamationTriangle"
+              size="md"
+              class="mr-2"
+            />
             库存预警
           </button>
-          <button class="btn btn-danger" @click="handleExpired">
-            <Icon name="clock" size="md" class="mr-2" />
+          <button
+            class="btn btn-danger"
+            @click="handleExpired"
+          >
+            <Icon
+              name="clock"
+              size="md"
+              class="mr-2"
+            />
             过期库存
           </button>
         </div>
       </template>
 
       <template #table>
-        <DataTable :columns="columns" :data="tableData" :loading="loading" :row-key="(row: any) => row.id">
+        <DataTable
+          :columns="columns"
+          :data="tableData"
+          :loading="loading"
+          :row-key="(row: any) => row.id"
+        >
           <template #cell-product_name="{ row }">
             <span class="truncate max-w-xs block">{{ row.product_name }}</span>
           </template>
@@ -56,11 +94,20 @@
             <span :class="getExpiryClass(row)">{{ row.expiry_date || '-' }}</span>
           </template>
           <template #cell-days_until_expiry="{ row }">
-            <Tag v-if="row.days_until_expiry !== null" :type="getExpiryTagType(row.days_until_expiry)">{{ row.days_until_expiry > 0 ? `${row.days_until_expiry}天` : `已过期${Math.abs(row.days_until_expiry)}天` }}</Tag>
+            <Tag
+              v-if="row.days_until_expiry !== null"
+              :type="getExpiryTagType(row.days_until_expiry)"
+            >
+              {{ row.days_until_expiry > 0 ? `${row.days_until_expiry}天` : `已过期${Math.abs(row.days_until_expiry)}天` }}
+            </Tag>
             <span v-else>-</span>
           </template>
           <template #cell-status="{ row }">
-            <StatusTag :status="row.status" category="stock" :label="row.status_display" />
+            <StatusTag
+              :status="row.status"
+              category="stock"
+              :label="row.status_display"
+            />
           </template>
           <template #cell-actions="{ row }">
             <RowActions
@@ -90,36 +137,92 @@
       </template>
     </TablePageLayout>
 
-    <BaseDialog :show="detailDialogVisible" title="库存详情" width="wide" @close="detailDialogVisible = false">
-      <DescriptionGrid v-if="currentStock" :columns="2">
-        <DescriptionItem label="产品名称">{{ (currentStock as any).product_name }}</DescriptionItem>
-        <DescriptionItem label="批次号">{{ (currentStock as any).batch_no }}</DescriptionItem>
-        <DescriptionItem label="库存数量">{{ (currentStock as any).quantity }}</DescriptionItem>
-        <DescriptionItem label="预留数量">{{ (currentStock as any).reserved_quantity }}</DescriptionItem>
-        <DescriptionItem label="可用数量">{{ (currentStock as any).available_quantity }}</DescriptionItem>
-        <DescriptionItem label="最小库存">{{ (currentStock as any).min_stock_level }}</DescriptionItem>
-        <DescriptionItem label="库位">{{ (currentStock as any).location || '-' }}</DescriptionItem>
-        <DescriptionItem label="生产日期">{{ (currentStock as any).production_date || '-' }}</DescriptionItem>
-        <DescriptionItem label="过期日期">{{ (currentStock as any).expiry_date || '-' }}</DescriptionItem>
-        <DescriptionItem label="状态">
-          <StatusTag :status="(currentStock as any).status" category="stock" :label="(currentStock as any).status_display" />
+    <BaseDialog
+      :show="detailDialogVisible"
+      title="库存详情"
+      width="wide"
+      @close="detailDialogVisible = false"
+    >
+      <DescriptionGrid
+        v-if="currentStock"
+        :columns="2"
+      >
+        <DescriptionItem label="产品名称">
+          {{ (currentStock as any).product_name }}
         </DescriptionItem>
-        <DescriptionItem label="单位成本">¥{{ (currentStock as any).unit_cost ? (currentStock as any).unit_cost.toLocaleString() : '-' }}</DescriptionItem>
-        <DescriptionItem label="总价值">¥{{ (currentStock as any).total_value ? (currentStock as any).total_value.toLocaleString() : '-' }}</DescriptionItem>
-        <DescriptionItem label="创建时间" :span="2">{{ (currentStock as any).created_at }}</DescriptionItem>
-        <DescriptionItem v-if="(currentStock as any).notes" label="备注" :span="2">
+        <DescriptionItem label="批次号">
+          {{ (currentStock as any).batch_no }}
+        </DescriptionItem>
+        <DescriptionItem label="库存数量">
+          {{ (currentStock as any).quantity }}
+        </DescriptionItem>
+        <DescriptionItem label="预留数量">
+          {{ (currentStock as any).reserved_quantity }}
+        </DescriptionItem>
+        <DescriptionItem label="可用数量">
+          {{ (currentStock as any).available_quantity }}
+        </DescriptionItem>
+        <DescriptionItem label="最小库存">
+          {{ (currentStock as any).min_stock_level }}
+        </DescriptionItem>
+        <DescriptionItem label="库位">
+          {{ (currentStock as any).location || '-' }}
+        </DescriptionItem>
+        <DescriptionItem label="生产日期">
+          {{ (currentStock as any).production_date || '-' }}
+        </DescriptionItem>
+        <DescriptionItem label="过期日期">
+          {{ (currentStock as any).expiry_date || '-' }}
+        </DescriptionItem>
+        <DescriptionItem label="状态">
+          <StatusTag
+            :status="(currentStock as any).status"
+            category="stock"
+            :label="(currentStock as any).status_display"
+          />
+        </DescriptionItem>
+        <DescriptionItem label="单位成本">
+          ¥{{ (currentStock as any).unit_cost ? (currentStock as any).unit_cost.toLocaleString() : '-' }}
+        </DescriptionItem>
+        <DescriptionItem label="总价值">
+          ¥{{ (currentStock as any).total_value ? (currentStock as any).total_value.toLocaleString() : '-' }}
+        </DescriptionItem>
+        <DescriptionItem
+          label="创建时间"
+          :span="2"
+        >
+          {{ (currentStock as any).created_at }}
+        </DescriptionItem>
+        <DescriptionItem
+          v-if="(currentStock as any).notes"
+          label="备注"
+          :span="2"
+        >
           <pre class="m-0 whitespace-pre-wrap">{{ (currentStock as any).notes }}</pre>
         </DescriptionItem>
       </DescriptionGrid>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button class="btn btn-secondary" @click="detailDialogVisible = false">关闭</button>
+          <button
+            class="btn btn-secondary"
+            @click="detailDialogVisible = false"
+          >
+            关闭
+          </button>
         </div>
       </template>
     </BaseDialog>
 
-    <BaseDialog :show="lowStockDialogVisible" title="库存预警" width="extra-wide" @close="lowStockDialogVisible = false">
-      <EmptyState v-if="!loadingLowStock && lowStockList.length === 0" description="暂无低库存预警" />
+    <BaseDialog
+      :show="lowStockDialogVisible"
+      title="库存预警"
+      width="extra-wide"
+      @close="lowStockDialogVisible = false"
+    >
+      <EmptyState
+        v-if="!loadingLowStock && lowStockList.length === 0"
+        description="暂无低库存预警"
+      />
       <SummaryTable
         v-else
         :columns="lowStockColumns"
@@ -133,8 +236,16 @@
       </SummaryTable>
     </BaseDialog>
 
-    <BaseDialog :show="expiredDialogVisible" title="过期库存" width="extra-wide" @close="expiredDialogVisible = false">
-      <EmptyState v-if="!loadingExpired && expiredList.length === 0" description="暂无过期库存" />
+    <BaseDialog
+      :show="expiredDialogVisible"
+      title="过期库存"
+      width="extra-wide"
+      @close="expiredDialogVisible = false"
+    >
+      <EmptyState
+        v-if="!loadingExpired && expiredList.length === 0"
+        description="暂无过期库存"
+      />
       <SummaryTable
         v-else
         :columns="expiredColumns"
@@ -148,21 +259,50 @@
       </SummaryTable>
     </BaseDialog>
 
-    <BaseDialog :show="adjustDialogVisible" title="库存调整" width="normal" @close="adjustDialogVisible = false">
-      <form id="adjust-form" @submit.prevent="handleSaveAdjust" class="space-y-5">
+    <BaseDialog
+      :show="adjustDialogVisible"
+      title="库存调整"
+      width="normal"
+      @close="adjustDialogVisible = false"
+    >
+      <form
+        id="adjust-form"
+        class="space-y-5"
+        @submit.prevent="handleSaveAdjust"
+      >
         <div>
           <label class="input-label mb-1.5 block">调整数量</label>
-          <InputNumber v-model="adjustForm.adjustment" :step="1" class="w-full" />
+          <InputNumber
+            v-model="adjustForm.adjustment"
+            :step="1"
+            class="w-full"
+          />
         </div>
         <div>
           <label class="input-label mb-1.5 block">调整原因</label>
-          <TextArea v-model="adjustForm.reason" :rows="3" class="w-full" />
+          <TextArea
+            v-model="adjustForm.reason"
+            :rows="3"
+            class="w-full"
+          />
         </div>
       </form>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button type="button" class="btn btn-secondary" @click="adjustDialogVisible = false">取消</button>
-          <button form="adjust-form" type="submit" class="btn btn-primary">保存</button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="adjustDialogVisible = false"
+          >
+            取消
+          </button>
+          <button
+            form="adjust-form"
+            type="submit"
+            class="btn btn-primary"
+          >
+            保存
+          </button>
         </div>
       </template>
     </BaseDialog>
@@ -172,7 +312,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Icon } from '@/components/common'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 import { productStockAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
@@ -259,7 +399,7 @@ const handleAdjust = (row: any) => { currentAdjustId.value = row.id; adjustForm.
 const handleSaveAdjust = async () => {
   try { 
     await productStockAPI.adjust(currentAdjustId.value as string | number, adjustForm)
-    ElMessage.success('调整成功')
+    useUIStore().showSuccess('调整成功')
     adjustDialogVisible.value = false
     loadData() 
   } catch (error: any) { 

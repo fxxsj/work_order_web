@@ -1,12 +1,18 @@
 <template>
   <div class="flex w-full items-center gap-2">
-    <div class="progress flex-1" :style="{ height: (strokeWidth || 8) + 'px' }">
+    <div
+      class="progress flex-1"
+      :style="{ height: (strokeWidth || 8) + 'px' }"
+    >
       <div
         class="progress-bar h-full rounded-full transition-all duration-300"
         :style="barStyle"
       />
     </div>
-    <span v-if="showText !== false" class="w-8 text-right text-xs text-gray-500 dark:text-gray-400">
+    <span
+      v-if="showText !== false"
+      class="w-8 text-right text-xs text-gray-500 dark:text-gray-400"
+    >
       {{ Math.round(percentage || 0) }}%
     </span>
   </div>

@@ -3,31 +3,54 @@
     <div class="gantt-header">
       <div class="gantt-controls">
         <div class="inline-flex overflow-hidden rounded-xl border border-gray-200 dark:border-dark-600">
-          <button class="btn btn-sm" :disabled="scale <= SCALE_MIN" @click="zoomOut">
+          <button
+            class="btn btn-sm"
+            :disabled="scale <= SCALE_MIN"
+            @click="zoomOut"
+          >
             <Icon name="zoomOut" /> 缩小
           </button>
-          <button class="btn btn-sm" @click="resetZoom">
+          <button
+            class="btn btn-sm"
+            @click="resetZoom"
+          >
             <Icon name="refresh" /> 重置
           </button>
-          <button class="btn btn-sm" :disabled="scale >= SCALE_MAX" @click="zoomIn">
+          <button
+            class="btn btn-sm"
+            :disabled="scale >= SCALE_MAX"
+            @click="zoomIn"
+          >
             <Icon name="zoomIn" /> 放大
           </button>
         </div>
         <div class="inline-flex overflow-hidden rounded-xl border border-gray-200 dark:border-dark-600 view-mode-group">
-          <button class="btn btn-sm btn-secondary" @click="viewMode = 'day'">
+          <button
+            class="btn btn-sm btn-secondary"
+            @click="viewMode = 'day'"
+          >
             日视图
           </button>
-          <button class="btn btn-sm btn-secondary" @click="viewMode = 'week'">
+          <button
+            class="btn btn-sm btn-secondary"
+            @click="viewMode = 'week'"
+          >
             周视图
           </button>
-          <button class="btn btn-sm btn-secondary" @click="viewMode = 'month'">
+          <button
+            class="btn btn-sm btn-secondary"
+            @click="viewMode = 'month'"
+          >
             月视图
           </button>
         </div>
       </div>
     </div>
 
-    <div ref="ganttContainer" class="gantt-container">
+    <div
+      ref="ganttContainer"
+      class="gantt-container"
+    >
       <!-- 左侧工序列表 -->
       <div class="gantt-sidebar">
         <div class="sidebar-header">
@@ -51,7 +74,12 @@
             {{ process.name }}
           </div>
           <div class="row-cell">
-            <StatusTag :status="process.status" category="process" :label="process.status_display" size="small" />
+            <StatusTag
+              :status="process.status"
+              category="process"
+              :label="process.status_display"
+              size="small"
+            />
           </div>
           <div class="row-cell">
             {{ process.department_name || '-' }}

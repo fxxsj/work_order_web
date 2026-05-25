@@ -1,5 +1,10 @@
 <template>
-  <StatsCards :items="statItems" :loading="loading" :span="8" layout="media" />
+  <StatsCards
+    :items="statItems"
+    :loading="loading"
+    :span="8"
+    layout="media"
+  />
 </template>
 
 <script setup lang="ts">

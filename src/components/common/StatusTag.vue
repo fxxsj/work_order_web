@@ -1,7 +1,18 @@
 <template>
-  <Tag :type="tagType" :size="size" :effect="effect" :hit="hit" :disable-transitions="disableTransitions" :color="variantColor || color">
+  <Tag
+    :type="tagType"
+    :size="size"
+    :effect="effect"
+    :hit="hit"
+    :disable-transitions="disableTransitions"
+    :color="variantColor || color"
+  >
     <slot>{{ displayText }}</slot>
-    <Icon v-if="icon" :name="icon" size="sm" />
+    <Icon
+      v-if="icon"
+      :name="icon"
+      size="sm"
+    />
   </Tag>
 </template>
 

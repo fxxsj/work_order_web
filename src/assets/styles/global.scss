@@ -40,54 +40,8 @@
    Common Page Structure
    ============================================ */
 
-.card-container,
-.page-container,
-.work-order-list,
-.customer-list,
-.supplier-list,
-.department-list,
-.die-list,
-.product-group-list,
-.payment-container,
-.cost-container,
-.statement-container,
-.sales-order-detail {
+.page-container {
   padding: var(--ui-page-padding);
-}
-
-.form-container {
-  max-width: 800px;
-}
-
-.button-group,
-.filter-group,
-.action-group,
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-control-gap);
-}
-
-/* ============================================
-   Responsive Layout
-   ============================================ */
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  /* Flex groups become stacked */
-  .button-group,
-  .filter-group,
-  .action-group,
-  .actions {
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .button-group > *,
-  .filter-group > *,
-  .action-group > *,
-  .actions > * {
-    flex: 1 1 100%;
-  }
 }
 
 /* ============================================

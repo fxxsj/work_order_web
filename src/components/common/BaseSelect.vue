@@ -13,7 +13,10 @@
     @focus="handleFocus"
   >
     <template #option="{ option }">
-      <slot name="option" :option="option.raw || option">
+      <slot
+        name="option"
+        :option="option.raw || option"
+      >
         <span>{{ option.label }}</span>
       </slot>
     </template>

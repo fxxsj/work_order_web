@@ -1,29 +1,75 @@
 <template>
   <div class="space-y-6">
-    <DeliveryStats :stats="stats" :loading="statsLoading" />
+    <DeliveryStats
+      :stats="stats"
+      :loading="statsLoading"
+    />
 
     <TablePageLayout>
       <template #filters>
         <FilterRow>
-          <Select v-model="filters.customer" :options="customerOptions" class="w-40" placeholder="选择客户" clearable filterable @change="handleSearch" />
-          <Select v-model="filters.status" :options="statusOptions" class="w-36" placeholder="发货状态" clearable @change="handleSearch" />
-          <SearchInput v-model="filters.tracking_number" placeholder="搜索物流单号" class="w-full sm:w-64" @search="handleSearchDebounced" @clear="handleSearch" />
+          <Select
+            v-model="filters.customer"
+            :options="customerOptions"
+            class="w-40"
+            placeholder="选择客户"
+            clearable
+            filterable
+            @change="handleSearch"
+          />
+          <Select
+            v-model="filters.status"
+            :options="statusOptions"
+            class="w-36"
+            placeholder="发货状态"
+            clearable
+            @change="handleSearch"
+          />
+          <SearchInput
+            v-model="filters.tracking_number"
+            placeholder="搜索物流单号"
+            class="w-full sm:w-64"
+            @search="handleSearchDebounced"
+            @clear="handleSearch"
+          />
         </FilterRow>
       </template>
       <template #actions>
         <div class="flex justify-end gap-3">
-          <button class="btn btn-secondary" :disabled="loading" @click="loadData" title="刷新">
-            <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+          <button
+            class="btn btn-secondary"
+            :disabled="loading"
+            title="刷新"
+            @click="loadData"
+          >
+            <Icon
+              name="refresh"
+              size="md"
+              :class="loading ? 'animate-spin' : ''"
+            />
           </button>
-          <button class="btn btn-primary" v-if="canCreate" @click="handleCreate">
-            <Icon name="plus" size="md" class="mr-2" />
+          <button
+            v-if="canCreate"
+            class="btn btn-primary"
+            @click="handleCreate"
+          >
+            <Icon
+              name="plus"
+              size="md"
+              class="mr-2"
+            />
             新建发货单
           </button>
         </div>
       </template>
 
       <template #table>
-        <DataTable :columns="columns" :data="tableData" :loading="loading" :row-key="(row: any) => row.id">
+        <DataTable
+          :columns="columns"
+          :data="tableData"
+          :loading="loading"
+          :row-key="(row: any) => row.id"
+        >
           <template #cell-order_number="{ row }">
             <span>{{ row.order_number }}</span>
           </template>
@@ -46,14 +92,23 @@
             <span>{{ row.logistics_company }}</span>
           </template>
           <template #cell-tracking_number="{ row }">
-            <a v-if="row.tracking_number" :href="getTrackingUrl(row)" target="_blank" class="text-primary hover:underline">{{ row.tracking_number }}</a>
+            <a
+              v-if="row.tracking_number"
+              :href="getTrackingUrl(row)"
+              target="_blank"
+              class="text-primary hover:underline"
+            >{{ row.tracking_number }}</a>
             <span v-else>-</span>
           </template>
           <template #cell-delivery_date="{ row }">
             <span>{{ row.delivery_date }}</span>
           </template>
           <template #cell-status="{ row }">
-            <StatusTag :status="row.status" category="delivery" :label="row.status_display" />
+            <StatusTag
+              :status="row.status"
+              category="delivery"
+              :label="row.status_display"
+            />
           </template>
           <template #cell-actions="{ row }">
             <RowActions
@@ -64,8 +119,20 @@
           <template #empty>
             <EmptyState description="暂无发货单数据">
               <template #action>
-                <button class="btn btn-primary" v-if="hasFilters" @click="handleReset">重置筛选</button>
-                <button class="btn btn-primary" v-else-if="canCreate" @click="handleCreate">创建第一个发货单</button>
+                <button
+                  v-if="hasFilters"
+                  class="btn btn-primary"
+                  @click="handleReset"
+                >
+                  重置筛选
+                </button>
+                <button
+                  v-else-if="canCreate"
+                  class="btn btn-primary"
+                  @click="handleCreate"
+                >
+                  创建第一个发货单
+                </button>
               </template>
             </EmptyState>
           </template>
@@ -84,9 +151,28 @@
       </template>
     </TablePageLayout>
 
-    <DeliveryDetailDialog v-model:visible="detailDialogVisible" :data="currentDelivery" />
-    <DeliveryReceiveDialog v-model:visible="receiveDialogVisible" :delivery="currentDelivery" :loading="receiving" @confirm="handleConfirmReceive" />
-    <DeliveryFormDialog v-model:visible="formDialogVisible" :is-edit="showEditModal" :submitting="submitting" :form="form" :customer-list="customerList" :sales-order-list="salesOrderList" :product-list="productList" @submit="handleSubmit" @sales-order-change="handleSalesOrderChange" @customer-change="handleCustomerChange" />
+    <DeliveryDetailDialog
+      v-model:visible="detailDialogVisible"
+      :data="currentDelivery"
+    />
+    <DeliveryReceiveDialog
+      v-model:visible="receiveDialogVisible"
+      :delivery="currentDelivery"
+      :loading="receiving"
+      @confirm="handleConfirmReceive"
+    />
+    <DeliveryFormDialog
+      v-model:visible="formDialogVisible"
+      :is-edit="showEditModal"
+      :submitting="submitting"
+      :form="form"
+      :customer-list="customerList"
+      :sales-order-list="salesOrderList"
+      :product-list="productList"
+      @submit="handleSubmit"
+      @sales-order-change="handleSalesOrderChange"
+      @customer-change="handleCustomerChange"
+    />
 
     <ConfirmDialog
       :show="showShipDialog"
@@ -117,14 +203,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from '@/utils/message'
-import { deliveryOrderAPI, salesOrderAPI, productAPI } from '@/api/modules'
-import { customerAPI } from '@/api/modules/customer'
+import { useUIStore } from '@/stores/ui'
+import { deliveryOrderAPI, salesOrderAPI, productAPI, customerAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog, FilterRow, RowActions } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
-import DeliveryStats from './components/DeliveryStats.vue'
+import { DeliveryStats } from '@/components/inventory'
 import DeliveryDetailDialog from './components/DeliveryDetailDialog.vue'
 import DeliveryReceiveDialog from './components/DeliveryReceiveDialog.vue'
 import DeliveryFormDialog from './components/DeliveryFormDialog.vue'
@@ -278,7 +363,7 @@ const handleShip = async () => {
   shipping.value = true
   try {
     await deliveryOrderAPI.ship(row.id)
-    ElMessage.success('发货成功')
+    useUIStore().showSuccess('发货成功')
     showShipDialog.value = false
     selectedRowAction.value = null
     loadData()
@@ -302,7 +387,7 @@ const handleConfirmReceive = async (data: any) => {
   receiving.value = true
   try { 
     await deliveryOrderAPI.receive(currentDelivery.value.id, data)
-    ElMessage.success('签收成功')
+    useUIStore().showSuccess('签收成功')
     receiveDialogVisible.value = false
     loadData()
     fetchStats() 
@@ -324,7 +409,7 @@ const handleDelete = async () => {
   deleting.value = true
   try {
     await deliveryOrderAPI.delete(row.id)
-    ElMessage.success('删除成功')
+    useUIStore().showSuccess('删除成功')
     showDeleteDialog.value = false
     selectedRowAction.value = null
     loadData()
@@ -346,10 +431,10 @@ const handleSubmit = async (data: any) => {
   try { 
     if (showEditModal.value) { 
       await deliveryOrderAPI.update(currentDelivery.value.id, data)
-      ElMessage.success('更新成功') 
+      useUIStore().showSuccess('更新成功') 
     } else { 
       await deliveryOrderAPI.create(data)
-      ElMessage.success('创建成功') 
+      useUIStore().showSuccess('创建成功') 
     } 
     closeFormDialog()
     loadData()

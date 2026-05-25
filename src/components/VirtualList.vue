@@ -1,43 +1,64 @@
 <template>
   <div class="virtual-list-wrapper">
     <!-- 静态表头 -->
-    <div class="virtual-list-header" :style="{ width: '100%' }">
+    <div
+      class="virtual-list-header"
+      :style="{ width: '100%' }"
+    >
       <slot name="header">
         <table class="data-table w-full">
-          <thead><tr><slot name="columns"></slot></tr></thead>
+          <thead><tr><slot name="columns" /></tr></thead>
         </table>
       </slot>
     </div>
 
     <!-- 虚拟滚动列表 -->
     <RecycleScroller
+      v-slot="{ item, index }"
       class="virtual-list-scroller"
       :items="displayItems"
       :item-size="itemSize"
       key-field="id"
       :buffer="buffer"
-      #default="{ item, index }"
     >
       <div
         class="virtual-list-item"
         :style="itemStyle"
         @click="handleRowClick(item, index)"
       >
-        <slot name="item" :item="item" :index="index"></slot>
+        <slot
+          name="item"
+          :item="item"
+          :index="index"
+        />
       </div>
     </RecycleScroller>
 
     <!-- 加载更多 -->
-    <div v-if="hasMore" class="virtual-list-loadmore">
-      <button class="btn btn-primary btn-sm" v-if="!loading" @click="handleLoadMore">
+    <div
+      v-if="hasMore"
+      class="virtual-list-loadmore"
+    >
+      <button
+        v-if="!loading"
+        class="btn btn-primary btn-sm"
+        @click="handleLoadMore"
+      >
         加载更多
       </button>
       <span v-else>加载中...</span>
     </div>
 
     <!-- 分页器（可选） -->
-    <div v-if="showPagination" class="virtual-list-pagination">
-      <Pagination :total="total" :page="currentPage" :pageSize="pageSize" />
+    <div
+      v-if="showPagination"
+      class="virtual-list-pagination"
+    >
+      <Pagination
+        :total="total"
+        :page="currentPage"
+        :page-size="pageSize"
+      />
     </div>
   </div>
 </template>

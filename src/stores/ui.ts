@@ -7,6 +7,19 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Toast } from '@/types'
 
+interface ConfirmOptions {
+  title?: string
+  message: string
+  confirmText?: string
+  cancelText?: string
+  danger?: boolean
+}
+
+interface ConfirmState extends Required<ConfirmOptions> {
+  show: boolean
+  resolve: ((confirmed: boolean) => void) | null
+}
+
 export const useUIStore = defineStore('ui', () => {
   // ==================== State ====================
 
@@ -15,6 +28,15 @@ export const useUIStore = defineStore('ui', () => {
   const language = ref('zh-CN')
   const toasts = ref<Toast[]>([])
   const globalLoading = ref(false)
+  const confirmState = ref<ConfirmState>({
+    show: false,
+    title: '确认操作',
+    message: '',
+    confirmText: '确定',
+    cancelText: '取消',
+    danger: false,
+    resolve: null
+  })
   let loadingRefCount = 0
 
   let toastIdCounter = 0
@@ -67,6 +89,36 @@ export const useUIStore = defineStore('ui', () => {
 
   function clearAllToasts(): void {
     toasts.value = []
+  }
+
+  // ==================== Confirm Actions ====================
+
+  function confirm(options: ConfirmOptions): Promise<boolean> {
+    if (confirmState.value.resolve) {
+      confirmState.value.resolve(false)
+    }
+
+    return new Promise(resolve => {
+      confirmState.value = {
+        show: true,
+        title: options.title || '确认操作',
+        message: options.message,
+        confirmText: options.confirmText || '确定',
+        cancelText: options.cancelText || '取消',
+        danger: options.danger || false,
+        resolve
+      }
+    })
+  }
+
+  function closeConfirm(confirmed: boolean): void {
+    const resolver = confirmState.value.resolve
+    confirmState.value = {
+      ...confirmState.value,
+      show: false,
+      resolve: null
+    }
+    resolver?.(confirmed)
   }
 
   // ==================== Loading Actions ====================
@@ -164,6 +216,7 @@ export const useUIStore = defineStore('ui', () => {
     language,
     toasts,
     globalLoading,
+    confirmState,
     hasActiveToasts,
     isLoading,
     showToast,
@@ -173,6 +226,8 @@ export const useUIStore = defineStore('ui', () => {
     showInfo,
     hideToast,
     clearAllToasts,
+    confirm,
+    closeConfirm,
     incLoading,
     decLoading,
     setLoading,

@@ -16,7 +16,10 @@
                 <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">
                   {{ displayName }}
                 </h2>
-                <span class="badge" :class="(currentUser as any).is_superuser ? 'badge-danger' : 'badge-gray'">
+                <span
+                  class="badge"
+                  :class="(currentUser as any).is_superuser ? 'badge-danger' : 'badge-gray'"
+                >
                   {{ (currentUser as any).is_superuser ? '超级管理员' : '用户' }}
                 </span>
               </div>
@@ -26,7 +29,13 @@
                   {{ (currentUser as any).email || '未设置邮箱' }}
                 </p>
                 <div class="flex flex-wrap gap-2">
-                  <Tag v-for="role in (currentUser as any).groups" :key="role" type="success">{{ role }}</Tag>
+                  <Tag
+                    v-for="role in (currentUser as any).groups"
+                    :key="role"
+                    type="success"
+                  >
+                    {{ role }}
+                  </Tag>
                 </div>
               </div>
             </div>
@@ -38,11 +47,18 @@
     <!-- 基本信息编辑 -->
     <div class="card">
       <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-        <h2 class="text-lg font-medium text-gray-900 dark:text-white">编辑个人信息</h2>
-        <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">修改您的账户基本信息</p>
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">
+          编辑个人信息
+        </h2>
+        <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
+          修改您的账户基本信息
+        </p>
       </div>
       <div class="px-6 py-6">
-        <form @submit.prevent="handleUpdateProfile" class="space-y-4">
+        <form
+          class="space-y-4"
+          @submit.prevent="handleUpdateProfile"
+        >
           <Input
             :model-value="(currentUser as any).username"
             label="用户名"
@@ -69,7 +85,11 @@
           </div>
 
           <div class="flex justify-end pt-4">
-            <button type="submit" :disabled="updateLoading" class="btn btn-primary">
+            <button
+              type="submit"
+              :disabled="updateLoading"
+              class="btn btn-primary"
+            >
               {{ updateLoading ? '保存中...' : '保存修改' }}
             </button>
           </div>
@@ -80,11 +100,18 @@
     <!-- 修改密码 -->
     <div class="card">
       <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-        <h2 class="text-lg font-medium text-gray-900 dark:text-white">修改密码</h2>
-        <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">更新您的账户密码</p>
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">
+          修改密码
+        </h2>
+        <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
+          更新您的账户密码
+        </p>
       </div>
       <div class="px-6 py-6">
-        <form @submit.prevent="handleChangePassword" class="space-y-4">
+        <form
+          class="space-y-4"
+          @submit.prevent="handleChangePassword"
+        >
           <Input
             v-model="passwordForm.old_password"
             label="旧密码"
@@ -109,7 +136,11 @@
           />
 
           <div class="flex justify-end pt-4">
-            <button type="submit" :disabled="passwordLoading" class="btn btn-primary">
+            <button
+              type="submit"
+              :disabled="passwordLoading"
+              class="btn btn-primary"
+            >
               {{ passwordLoading ? '修改中...' : '修改密码' }}
             </button>
           </div>
@@ -122,7 +153,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from '@/utils/message'
+import { useUIStore } from '@/stores/ui'
 import { Input, Tag } from '@/components/common'
 import { authAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
@@ -158,17 +189,17 @@ const initProfileForm = () => {
 
 const handleUpdateProfile = async () => {
   if (profileForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileForm.email)) {
-    ElMessage.warning('请输入正确的邮箱地址')
+    useUIStore().showWarning('请输入正确的邮箱地址')
     return
   }
   updateLoading.value = true
   try {
     const result: any = await authAPI.updateProfile(profileForm)
     userStore.setUser({ ...currentUser.value, ...result })
-    ElMessage.success(result.message || '个人信息更新成功')
+    useUIStore().showSuccess(result.message || '个人信息更新成功')
   } catch (error: any) {
     ErrorHandler.handle(error, 'Profile.handleUpdateProfile')
-    ElMessage.error(error.response?.data?.error || '个人信息更新失败')
+    useUIStore().showError(error.response?.data?.error || '个人信息更新失败')
   } finally {
     updateLoading.value = false
   }
@@ -176,29 +207,29 @@ const handleUpdateProfile = async () => {
 
 const handleChangePassword = async () => {
   if (!passwordForm.old_password) {
-    ElMessage.warning('请输入旧密码')
+    useUIStore().showWarning('请输入旧密码')
     return
   }
   if (!passwordForm.new_password) {
-    ElMessage.warning('请输入新密码')
+    useUIStore().showWarning('请输入新密码')
     return
   }
   if (passwordForm.new_password.length < 6) {
-    ElMessage.warning('密码长度至少为6位')
+    useUIStore().showWarning('密码长度至少为6位')
     return
   }
   if (!passwordForm.confirm_password) {
-    ElMessage.warning('请再次输入新密码')
+    useUIStore().showWarning('请再次输入新密码')
     return
   }
   if (passwordForm.confirm_password !== passwordForm.new_password) {
-    ElMessage.warning('两次输入的密码不一致')
+    useUIStore().showWarning('两次输入的密码不一致')
     return
   }
   passwordLoading.value = true
   try {
     await authAPI.changePassword(passwordForm)
-    ElMessage.success('密码修改成功，请重新登录')
+    useUIStore().showSuccess('密码修改成功，请重新登录')
     passwordForm.old_password = ''
     passwordForm.new_password = ''
     passwordForm.confirm_password = ''
@@ -208,7 +239,7 @@ const handleChangePassword = async () => {
     }, 2000)
   } catch (error: any) {
     ErrorHandler.handle(error, 'Profile.handleChangePassword')
-    ElMessage.error(error.response?.data?.error || '密码修改失败')
+    useUIStore().showError(error.response?.data?.error || '密码修改失败')
   } finally {
     passwordLoading.value = false
   }

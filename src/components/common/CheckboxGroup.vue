@@ -1,8 +1,14 @@
 <template>
   <div class="w-full">
-    <div v-if="label" class="input-label mb-1.5 block">
+    <div
+      v-if="label"
+      class="input-label mb-1.5 block"
+    >
       {{ label }}
-      <span v-if="required" class="text-red-500">*</span>
+      <span
+        v-if="required"
+        class="text-red-500"
+      >*</span>
     </div>
     <div class="flex flex-wrap gap-3">
       <slot>
@@ -17,10 +23,16 @@
         />
       </slot>
     </div>
-    <p v-if="error" class="input-error-text mt-1.5">
+    <p
+      v-if="error"
+      class="input-error-text mt-1.5"
+    >
       {{ error }}
     </p>
-    <p v-else-if="hint" class="input-hint mt-1.5">
+    <p
+      v-else-if="hint"
+      class="input-hint mt-1.5"
+    >
       {{ hint }}
     </p>
   </div>

@@ -54,14 +54,27 @@ const columnStyle = (column: Column) => ({
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-        <tr v-if="loading" v-for="index in 3" :key="`loading-${index}`">
-          <td v-for="column in columns" :key="column.key" class="px-3 py-2">
-            <div class="h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-dark-700"></div>
+        <tr
+          v-for="index in 3"
+          v-if="loading"
+          :key="`loading-${index}`"
+        >
+          <td
+            v-for="column in columns"
+            :key="column.key"
+            class="px-3 py-2"
+          >
+            <div class="h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-dark-700" />
           </td>
         </tr>
         <tr v-else-if="data.length === 0">
-          <td :colspan="columns.length" class="px-3 py-8 text-center text-sm text-gray-500 dark:text-dark-400">
-            <slot name="empty">暂无数据</slot>
+          <td
+            :colspan="columns.length"
+            class="px-3 py-8 text-center text-sm text-gray-500 dark:text-dark-400"
+          >
+            <slot name="empty">
+              暂无数据
+            </slot>
           </td>
         </tr>
         <tr

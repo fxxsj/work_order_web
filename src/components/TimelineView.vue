@@ -6,35 +6,76 @@
         :key="index"
         class="timeline-item"
       >
-        <div class="timeline-tail"></div>
-        <div class="timeline-node" :class="`timeline-node-${item.type}`" :style="item.color ? { backgroundColor: item.color } : {}">
-          <Icon v-if="item.icon" :name="item.icon" class="h-3 w-3" />
+        <div class="timeline-tail" />
+        <div
+          class="timeline-node"
+          :class="`timeline-node-${item.type}`"
+          :style="item.color ? { backgroundColor: item.color } : {}"
+        >
+          <Icon
+            v-if="item.icon"
+            :name="item.icon"
+            class="h-3 w-3"
+          />
         </div>
         <div class="timeline-content">
-          <div class="card timeline-card" :class="`card-${item.type}`">
+          <div
+            class="card timeline-card"
+            :class="`card-${item.type}`"
+          >
             <div class="card-header">
-              <h4 class="card-title">{{ item.title }}</h4>
-              <Tag :type="getTagType(item.type)" size="small">{{ item.typeLabel }}</Tag>
+              <h4 class="card-title">
+                {{ item.title }}
+              </h4>
+              <Tag
+                :type="getTagType(item.type)"
+                size="small"
+              >
+                {{ item.typeLabel }}
+              </Tag>
             </div>
             <div class="card-content">
-              <p v-if="item.content">{{ item.content }}</p>
-              <div v-if="item.details" class="card-details">
-                <div v-for="(detail, key) in item.details" :key="key" class="detail-item">
+              <p v-if="item.content">
+                {{ item.content }}
+              </p>
+              <div
+                v-if="item.details"
+                class="card-details"
+              >
+                <div
+                  v-for="(detail, key) in item.details"
+                  :key="key"
+                  class="detail-item"
+                >
                   <span class="detail-label">{{ getDetailLabel(key) }}:</span>
                   <span class="detail-value">{{ detail }}</span>
                 </div>
               </div>
             </div>
-            <div v-if="item.operator" class="card-footer">
-              <Icon name="user" class="h-4 w-4" />
+            <div
+              v-if="item.operator"
+              class="card-footer"
+            >
+              <Icon
+                name="user"
+                class="h-4 w-4"
+              />
               <span>{{ item.operator }}</span>
             </div>
           </div>
-          <div v-if="item.timestamp" class="timeline-timestamp">{{ item.timestamp }}</div>
+          <div
+            v-if="item.timestamp"
+            class="timeline-timestamp"
+          >
+            {{ item.timestamp }}
+          </div>
         </div>
       </div>
     </div>
-    <EmptyState v-if="timelineItems.length === 0" title="暂无时间线数据" />
+    <EmptyState
+      v-if="timelineItems.length === 0"
+      title="暂无时间线数据"
+    />
   </div>
 </template>
 

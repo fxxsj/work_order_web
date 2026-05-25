@@ -1,7 +1,9 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-950 px-4">
     <div class="text-center">
-      <div class="text-8xl font-bold text-primary-500 mb-4">404</div>
+      <div class="text-8xl font-bold text-primary-500 mb-4">
+        404
+      </div>
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
         页面未找到
       </h1>

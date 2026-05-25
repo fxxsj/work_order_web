@@ -50,13 +50,23 @@ const handleDelete = (index: number) => {
           >
             {{ column.label }}
           </th>
-          <th v-if="showDelete" class="w-20 px-3 py-2 text-center">操作</th>
+          <th
+            v-if="showDelete"
+            class="w-20 px-3 py-2 text-center"
+          >
+            操作
+          </th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="items.length === 0">
-          <td :colspan="columns.length + (showDelete ? 1 : 0)" class="px-3 py-8 text-center text-sm text-gray-500 dark:text-dark-400">
-            <slot name="empty">{{ emptyText }}</slot>
+          <td
+            :colspan="columns.length + (showDelete ? 1 : 0)"
+            class="px-3 py-8 text-center text-sm text-gray-500 dark:text-dark-400"
+          >
+            <slot name="empty">
+              {{ emptyText }}
+            </slot>
           </td>
         </tr>
         <tr
@@ -71,17 +81,27 @@ const handleDelete = (index: number) => {
             :class="[alignClass(column.align), column.class]"
             :style="columnStyle(column)"
           >
-            <slot :name="`cell-${column.key}`" :row="item" :index="index" :value="item[column.key]">
+            <slot
+              :name="`cell-${column.key}`"
+              :row="item"
+              :index="index"
+              :value="item[column.key]"
+            >
               {{ item[column.key] }}
             </slot>
           </td>
-          <td v-if="showDelete" class="px-3 py-2 text-center">
+          <td
+            v-if="showDelete"
+            class="px-3 py-2 text-center"
+          >
             <button
               class="btn btn-ghost btn-sm text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed dark:text-red-400 dark:hover:bg-red-900/20"
               :disabled="deleteDisabled?.(item, index)"
               @click="handleDelete(index)"
             >
-              <slot name="delete-icon">删除</slot>
+              <slot name="delete-icon">
+                删除
+              </slot>
             </button>
           </td>
         </tr>

@@ -1,14 +1,14 @@
 <template>
   <div class="auth-layout">
     <!-- Background -->
-    <div class="auth-bg"></div>
+    <div class="auth-bg" />
 
     <!-- Decorative Elements -->
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <div class="absolute -right-40 -top-40 h-80 w-80 rounded-full bg-primary-400/20 blur-3xl"></div>
-      <div class="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary-500/15 blur-3xl"></div>
-      <div class="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-300/10 blur-3xl"></div>
-      <div class="absolute inset-0 bg-[linear-gradient(rgba(20,184,166,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(20,184,166,0.03)_1px,transparent_1px)] bg-[size:64px_64px]"></div>
+      <div class="absolute -right-40 -top-40 h-80 w-80 rounded-full bg-primary-400/20 blur-3xl" />
+      <div class="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary-500/15 blur-3xl" />
+      <div class="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-300/10 blur-3xl" />
+      <div class="absolute inset-0 bg-[linear-gradient(rgba(20,184,166,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(20,184,166,0.03)_1px,transparent_1px)] bg-[size:64px_64px]" />
     </div>
 
     <!-- Content Container -->
@@ -18,8 +18,12 @@
         <div class="mb-4 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl shadow-lg shadow-primary-500/30 bg-white/80 backdrop-blur-sm">
           <span class="text-3xl font-bold text-primary-600">印</span>
         </div>
-        <h1 class="auth-title mb-2 text-3xl font-bold">印刷施工单跟踪系统</h1>
-        <p class="text-sm text-gray-500 dark:text-dark-400">高效管理施工单，提升生产效率</p>
+        <h1 class="auth-title mb-2 text-3xl font-bold">
+          印刷施工单跟踪系统
+        </h1>
+        <p class="text-sm text-gray-500 dark:text-dark-400">
+          高效管理施工单，提升生产效率
+        </p>
       </div>
 
       <!-- Card Container -->

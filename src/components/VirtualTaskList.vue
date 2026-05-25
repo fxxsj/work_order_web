@@ -17,14 +17,30 @@
     >
       <!-- 表头列定义 -->
       <template #columns>
-        <th style="width:80px">ID</th>
-        <th style="width:150px">施工单号</th>
-        <th style="width:120px">工序</th>
-        <th style="min-width:200px">任务内容</th>
-        <th style="width:120px">分派部门</th>
-        <th style="width:100px">状态</th>
-        <th style="width:80px">优先级</th>
-        <th style="width:200px">操作</th>
+        <th style="width:80px">
+          ID
+        </th>
+        <th style="width:150px">
+          施工单号
+        </th>
+        <th style="width:120px">
+          工序
+        </th>
+        <th style="min-width:200px">
+          任务内容
+        </th>
+        <th style="width:120px">
+          分派部门
+        </th>
+        <th style="width:100px">
+          状态
+        </th>
+        <th style="width:80px">
+          优先级
+        </th>
+        <th style="width:200px">
+          操作
+        </th>
       </template>
 
       <!-- 列表项模板 -->
@@ -72,23 +88,45 @@
 
           <!-- 状态 -->
           <div class="task-cell task-cell-status">
-            <StatusTag :status="item.status" category="task" :label="item.status_display" size="small" />
+            <StatusTag
+              :status="item.status"
+              category="task"
+              :label="item.status_display"
+              size="small"
+            />
           </div>
 
           <!-- 优先级 -->
           <div class="task-cell task-cell-priority">
-            <StatusTag :status="item.priority" category="priority" :label="item.priority_display" size="small" />
+            <StatusTag
+              :status="item.priority"
+              category="priority"
+              :label="item.priority_display"
+              size="small"
+            />
           </div>
 
           <!-- 操作 -->
           <div class="task-cell task-cell-actions">
-            <button class="btn btn-ghost btn-sm" v-if="item.status === 'pending'" @click.stop="handleAssign(item)">
+            <button
+              v-if="item.status === 'pending'"
+              class="btn btn-ghost btn-sm"
+              @click.stop="handleAssign(item)"
+            >
               分派
             </button>
-            <button class="btn btn-ghost btn-sm" v-if="item.status === 'in_progress'" @click.stop="handleUpdate(item)">
+            <button
+              v-if="item.status === 'in_progress'"
+              class="btn btn-ghost btn-sm"
+              @click.stop="handleUpdate(item)"
+            >
               更新
             </button>
-            <button class="btn btn-ghost btn-sm" v-if="item.status !== 'completed'" @click.stop="handleComplete(item)">
+            <button
+              v-if="item.status !== 'completed'"
+              class="btn btn-ghost btn-sm"
+              @click.stop="handleComplete(item)"
+            >
               完成
             </button>
           </div>

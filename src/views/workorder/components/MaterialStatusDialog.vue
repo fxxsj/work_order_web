@@ -1,10 +1,22 @@
 <template>
-  <BaseDialog :show="dialogVisible" title="更新物料采购状态" width="narrow" @close="handleClose; dialogVisible = false;">
+  <BaseDialog
+    :show="dialogVisible"
+    title="更新物料采购状态"
+    width="narrow"
+    @close="handleClose; dialogVisible = false;"
+  >
     <div class="space-y-4">
-      <Input :model-value="material?.material_name" label="物料名称" disabled />
+      <Input
+        :model-value="material?.material_name"
+        label="物料名称"
+        disabled
+      />
       <div>
         <label class="input-label mb-1.5 block">当前状态</label>
-        <StatusTag :label="material?.purchase_status_display" :variant="currentStatusVariant" />
+        <StatusTag
+          :label="material?.purchase_status_display"
+          :variant="currentStatusVariant"
+        />
       </div>
       <Select
         v-model="form.purchase_status"
@@ -15,16 +27,35 @@
       />
       <div v-if="form.purchase_status === 'ordered'">
         <label class="input-label mb-1.5 block">采购日期</label>
-        <input type="date" v-model="form.purchase_date" class="input w-full" />
+        <input
+          v-model="form.purchase_date"
+          type="date"
+          class="input w-full"
+        >
       </div>
       <div v-if="form.purchase_status === 'received'">
         <label class="input-label mb-1.5 block">回料日期</label>
-        <input type="date" v-model="form.received_date" class="input w-full" />
+        <input
+          v-model="form.received_date"
+          type="date"
+          class="input w-full"
+        >
       </div>
     </div>
     <template #footer>
-      <button class="btn" @click="handleClose">取消</button>
-      <button class="btn btn-primary" :disabled="loading" @click="handleSubmit">确定</button>
+      <button
+        class="btn"
+        @click="handleClose"
+      >
+        取消
+      </button>
+      <button
+        class="btn btn-primary"
+        :disabled="loading"
+        @click="handleSubmit"
+      >
+        确定
+      </button>
     </template>
   </BaseDialog>
 </template>

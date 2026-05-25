@@ -2,21 +2,42 @@
   <div class="card">
     <div class="card-header flex items-center justify-between">
       <span class="text-sm font-semibold text-gray-900 dark:text-white">最近的施工单</span>
-      <button class="btn btn-primary btn-sm" @click="goTo('/workorders')">查看全部</button>
+      <button
+        class="btn btn-primary btn-sm"
+        @click="goTo('/workorders')"
+      >
+        查看全部
+      </button>
     </div>
     <div class="card-body">
-      <SummaryTable :columns="columns" :data="recentOrders">
+      <SummaryTable
+        :columns="columns"
+        :data="recentOrders"
+      >
         <template #cell-status="{ row }">
-          <StatusTag :status="row.status" :label="row.status_display" category="workOrder" size="small" />
+          <StatusTag
+            :status="row.status"
+            :label="row.status_display"
+            category="workOrder"
+            size="small"
+          />
         </template>
         <template #cell-progress="{ row }">
-          <ProgressBar :percentage="row.progress_percentage || 0" :color="row.progress_percentage === 100 ? '#67C23A' : '#409EFF'" />
+          <ProgressBar
+            :percentage="row.progress_percentage || 0"
+            :color="row.progress_percentage === 100 ? '#67C23A' : '#409EFF'"
+          />
         </template>
         <template #cell-delivery_date="{ row }">
           {{ formatDate(row.delivery_date) }}
         </template>
         <template #cell-actions="{ row }">
-          <button class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400" @click="goTo(`/workorders/${row.id}`)">查看</button>
+          <button
+            class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400"
+            @click="goTo(`/workorders/${row.id}`)"
+          >
+            查看
+          </button>
         </template>
       </SummaryTable>
     </div>

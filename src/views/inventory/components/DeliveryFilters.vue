@@ -3,19 +3,50 @@
     <div class="flex flex-wrap gap-4 items-end">
       <div class="flex items-center gap-2">
         <label class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">发货状态</label>
-        <Select v-model="localValue.status" :options="statusOptions" placeholder="全部" clearable class="w-32" @change="handleChange" />
+        <Select
+          v-model="localValue.status"
+          :options="statusOptions"
+          placeholder="全部"
+          clearable
+          class="w-32"
+          @change="handleChange"
+        />
       </div>
       <div class="flex items-center gap-2">
         <label class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">客户</label>
-        <Select v-model="localValue.customer" :options="customerOptions" placeholder="全部客户" clearable searchable class="w-40" @change="handleChange" />
+        <Select
+          v-model="localValue.customer"
+          :options="customerOptions"
+          placeholder="全部客户"
+          clearable
+          searchable
+          class="w-40"
+          @change="handleChange"
+        />
       </div>
       <div class="flex items-center gap-2">
         <label class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">物流单号</label>
-        <Input v-model="localValue.tracking_number" placeholder="物流单号" clearable class="w-40" @input="handleChange" />
+        <Input
+          v-model="localValue.tracking_number"
+          placeholder="物流单号"
+          clearable
+          class="w-40"
+          @input="handleChange"
+        />
       </div>
       <div class="flex gap-2">
-        <button class="btn btn-primary" @click="emit('search')">查询</button>
-        <button class="btn" @click="handleReset">重置</button>
+        <button
+          class="btn btn-primary"
+          @click="emit('search')"
+        >
+          查询
+        </button>
+        <button
+          class="btn"
+          @click="handleReset"
+        >
+          重置
+        </button>
       </div>
     </div>
   </div>

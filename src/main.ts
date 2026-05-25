@@ -9,13 +9,9 @@ import './assets/styles/global.scss'
 // 全局过滤器（Vue 3 使用全局函数替代）
 import { formatDate, formatDateTime } from '@/utils/filter'
 import { useUserStore, useUIStore } from '@/stores'
-import { vLoading } from '@/directives/loading'
 
 // 创建应用实例
 const app = createApp(App)
-
-// 注册全局指令
-app.directive('loading', vLoading)
 
 // 注册 Pinia（必须在 useUIStore 之前）
 app.use(pinia)

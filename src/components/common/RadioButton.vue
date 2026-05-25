@@ -14,7 +14,7 @@
       :disabled="disabled"
       class="sr-only"
       @change="handleChange"
-    />
+    >
     <span>{{ label || value }}</span>
   </label>
 </template>
