@@ -279,7 +279,7 @@ const fetchStats = async () => {
 
 const fetchProducts = async () => { 
   try { 
-    const response: any = await productAPI.getList({ page_size: 1000 })
+    const response: any = await productAPI.getList({ page_size: 100 })
     productList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
   } catch (error: any) {} 
 }

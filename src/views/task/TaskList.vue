@@ -429,7 +429,7 @@ const clearSelection = () => { selectedTasks.value = [] }
 const loadDepartments = async () => {
   loadingDepartments.value = true
   try { 
-    const res: any = await departmentAPI.getList({ page_size: 1000 })
+    const res: any = await departmentAPI.getList({ page_size: 100 })
     departmentList.value = Array.isArray(res) ? res : (res?.results || res?.data || [])
   } catch (error: any) {} finally { loadingDepartments.value = false }
 }
@@ -437,7 +437,7 @@ const loadDepartments = async () => {
 const loadUsers = async (departmentId: any) => {
   loadingUsers.value = true
   try { 
-    const params = departmentId ? { department: departmentId, page_size: 1000 } : { page_size: 1000 }
+    const params = departmentId ? { department: departmentId, page_size: 100 } : { page_size: 100 }
     const res: any = await authAPI.getUsers(params)
     userList.value = Array.isArray(res) ? res : (res?.results || res?.data || [])
   } catch (error: any) {} finally { loadingUsers.value = false }

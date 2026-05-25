@@ -210,13 +210,13 @@ const initFormData = (task: any) => {
 const loadArtworkList = async () => {
   if (artworkList.value.length > 0) return
   loadingArtworks.value = true
-  try { artworkList.value = ((await artworkAPI.getList({ page_size: 1000 })) as any)?.results || [] } catch (error: any) { ErrorHandler.handle(error); useUIStore().showError('加载图稿列表失败') } finally { loadingArtworks.value = false }
+  try { artworkList.value = ((await artworkAPI.getList({ page_size: 50 })) as any)?.results || [] } catch (error: any) { ErrorHandler.handle(error); useUIStore().showError('加载图稿列表失败') } finally { loadingArtworks.value = false }
 }
 
 const loadDieList = async () => {
   if (dieList.value.length > 0) return
   loadingDies.value = true
-  try { dieList.value = ((await dieAPI.getList({ page_size: 1000 })) as any)?.results || [] } catch (error: any) { ErrorHandler.handle(error); useUIStore().showError('加载刀模列表失败') } finally { loadingDies.value = false }
+  try { dieList.value = ((await dieAPI.getList({ page_size: 50 })) as any)?.results || [] } catch (error: any) { ErrorHandler.handle(error); useUIStore().showError('加载刀模列表失败') } finally { loadingDies.value = false }
 }
 
 const handleConfirm = () => {

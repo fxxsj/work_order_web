@@ -430,7 +430,7 @@ const fetchStats = async () => {
 
 const fetchCustomers = async () => {
   try {
-    const response: any = await customerAPI.getList({ page_size: 1000 })
+    const response: any = await customerAPI.getList({ page_size: 50 })
     customerList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
   } catch (error: any) {}
 }

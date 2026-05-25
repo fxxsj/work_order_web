@@ -31,13 +31,14 @@ const processOptions = computed(() => processList.value.map((p: any) => ({ value
 let cacheTimestamp = 0
 const CACHE_DURATION = 10 * 60 * 1000
 
-const loadProcesses = async () => {
-  const now = Date.now()
-  if (processList.value.length === 0 || now - cacheTimestamp > CACHE_DURATION) {
-    loading.value = true
-    try { const res: any = await processAPI.getList({ is_active: true, page_size: 1000 }); processList.value = res?.results || res || []; cacheTimestamp = now } catch (error: any) { ErrorHandler.handle(error) } finally { loading.value = false }
-  }
+const fetchProcesses = async () => {
+  loading.value = true
+  try {
+    const res: any = await processAPI.getList({ is_active: true, page_size: 50 })
+    processList.value = res?.results || res || []
+    cacheTimestamp = Date.now()
+  } catch (error: any) { ErrorHandler.handle(error) } finally { loading.value = false }
 }
 
-loadProcesses()
+fetchProcesses()
 </script>

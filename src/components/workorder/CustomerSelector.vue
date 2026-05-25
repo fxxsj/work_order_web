@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Select, Icon } from '@/components/common'
 import { customerAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
@@ -62,22 +62,67 @@ const customerOptions = computed(() =>
 
 let cacheTimestamp = 0
 const CACHE_DURATION = 5 * 60 * 1000
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
-const searchCustomers = async (query = '') => {
-  const now = Date.now()
-  if (customerList.value.length === 0 || now - cacheTimestamp > CACHE_DURATION || query) {
-    loading.value = true
-    try {
-      const res: any = await customerAPI.getList({ search: query, page_size: 100 })
-      customerList.value = res?.results || res || []
-      cacheTimestamp = now
-    } catch (error: any) {
-      ErrorHandler.handle(error)
-    } finally {
-      loading.value = false
+const fetchCustomers = async (query = '') => {
+  loading.value = true
+  try {
+    const res: any = await customerAPI.getList({ search: query, page_size: 50 })
+    customerList.value = res?.results || res || []
+    if (!query) {
+      cacheTimestamp = Date.now()
     }
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  } finally {
+    loading.value = false
   }
 }
 
-searchCustomers()
+const searchCustomers = (query = '') => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+  searchDebounceTimer = setTimeout(() => {
+    const trimmed = query.trim()
+    const now = Date.now()
+    if (!trimmed && customerList.value.length > 0 && now - cacheTimestamp < CACHE_DURATION) {
+      return
+    }
+    fetchCustomers(trimmed)
+  }, 300)
+}
+
+// 初始加载
+fetchCustomers()
+
+// 编辑回显兜底：如果 modelValue 对应的客户不在列表中，单独请求
+watch(
+  () => props.modelValue,
+  async (id) => {
+    if (!id) return
+    const exists = customerList.value.some((c) => c.id === id)
+    if (exists) return
+    try {
+      const res: any = await customerAPI.getDetail(id)
+      if (res && res.id) {
+        customerList.value = [...customerList.value, res]
+      }
+    } catch (error: any) {
+      ErrorHandler.handle(error)
+    }
+  },
+  { immediate: true }
+)
+
+// 供父组件追加新建的客户
+const appendCustomer = (customer: any) => {
+  if (!customer || !customer.id) return
+  const exists = customerList.value.some((c) => c.id === customer.id)
+  if (!exists) {
+    customerList.value = [...customerList.value, customer]
+  }
+}
+
+defineExpose({ appendCustomer })
 </script>

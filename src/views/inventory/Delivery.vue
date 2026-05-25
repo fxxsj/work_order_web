@@ -311,21 +311,21 @@ const fetchStats = async () => {
 
 const fetchCustomers = async () => { 
   try { 
-    const response: any = await customerAPI.getList({ page_size: 1000 })
+    const response: any = await customerAPI.getList({ page_size: 50 })
     customerList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
   } catch (error: any) {} 
 }
 
 const fetchSalesOrders = async () => { 
   try { 
-    const response: any = await salesOrderAPI.getList({ page_size: 1000 })
+    const response: any = await salesOrderAPI.getList({ page_size: 50 })
     salesOrderList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
   } catch (error: any) {} 
 }
 
 const fetchProducts = async () => { 
   try { 
-    const response: any = await productAPI.getList({ page_size: 1000 })
+    const response: any = await productAPI.getList({ page_size: 50 })
     productList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
   } catch (error: any) {} 
 }

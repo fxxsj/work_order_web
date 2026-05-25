@@ -261,7 +261,7 @@ const supplierOptions = computed(() =>
 
 const loadSuppliers = async () => {
   try { 
-    const response: any = await supplierAPI.getList({ page_size: 1000, status: 'active' })
+    const response: any = await supplierAPI.getList({ page_size: 100, status: 'active' })
     const list = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
     supplierList.value = list
   } catch (error: any) { 

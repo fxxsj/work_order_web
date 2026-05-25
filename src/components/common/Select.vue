@@ -190,6 +190,8 @@ interface Props {
   creatable?: boolean
   creatablePrefix?: string
   multiple?: boolean
+  remote?: boolean
+  remoteMethod?: (query: string) => void
 }
 
 interface Emits {
@@ -208,7 +210,9 @@ const props = withDefaults(defineProps<Props>(), {
   creatablePrefix: '搜索',
   valueKey: 'value',
   labelKey: 'label',
-  multiple: false
+  multiple: false,
+  remote: false,
+  remoteMethod: undefined
 })
 
 const emit = defineEmits<Emits>()
@@ -316,7 +320,7 @@ const selectedLabel = computed(() => {
 
 const filteredOptions = computed(() => {
   let opts = (props.options as any[])
-  if (isSearchable.value && searchQuery.value) {
+  if (isSearchable.value && searchQuery.value && !props.remote) {
     const query = searchQuery.value.toLowerCase()
     opts = opts.filter((opt: any) => {
       // Match label
@@ -397,6 +401,12 @@ const toggle = () => {
   if (props.disabled) return
   isOpen.value = !isOpen.value
 }
+
+watch(searchQuery, (query) => {
+  if (props.remote && props.remoteMethod) {
+    props.remoteMethod(query)
+  }
+})
 
 watch(isOpen, (open: any) => {
   if (open) {

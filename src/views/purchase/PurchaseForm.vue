@@ -167,9 +167,9 @@ const lineItemColumns: Column[] = [
 const fetchOptions = async () => {
   try {
     const [supplierRes, materialRes, workOrderRes] = await Promise.all([
-      supplierAPI.getList({ page_size: 1000, status: 'active' }),
-      materialAPI.getList({ page_size: 1000 }),
-      workOrderAPI.getList({ page_size: 1000, ordering: '-created_at', approval_status: 'approved' })
+      supplierAPI.getList({ page_size: 50, status: 'active' }),
+      materialAPI.getList({ page_size: 50 }),
+      workOrderAPI.getList({ page_size: 50, ordering: '-created_at', approval_status: 'approved' })
     ])
     supplierOptions.value = (supplierRes as any)?.results || []
     materialOptions.value = (materialRes as any)?.results || []

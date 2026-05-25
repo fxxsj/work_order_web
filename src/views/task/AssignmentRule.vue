@@ -205,11 +205,11 @@ const departmentOptions = computed(() => departmentList.value.map((d: any) => ({
 
 const loadProcesses = async () => {
   processListLoading.value = true
-  try { const res: any = await processAPI.getList({ is_active: true, page_size: 1000 }); processList.value = res?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载工序') } finally { processListLoading.value = false }
+  try { const res: any = await processAPI.getList({ is_active: true, page_size: 100 }); processList.value = res?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载工序') } finally { processListLoading.value = false }
 }
 
 const loadDepartments = async () => {
-  try { const res: any = await departmentAPI.getList({ page_size: 1000 }); departmentList.value = res?.results || [] } catch (error: any) {}
+  try { const res: any = await departmentAPI.getList({ page_size: 100 }); departmentList.value = res?.results || [] } catch (error: any) {}
 }
 
 const loadDispatchConfig = async () => {

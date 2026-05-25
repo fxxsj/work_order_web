@@ -217,8 +217,8 @@ const lineItemColumns = [
   { key: 'notes', label: '备注', minWidth: 120 },
 ]
 
-const loadCustomers = async () => { try { const res: any = await customerAPI.getList({ page_size: 1000 }); customerOptions.value = res?.results || [] } catch (error: any) {} }
-const loadProducts = async () => { try { const res: any = await productAPI.getList({ page_size: 1000 }); productOptions.value = res?.results || [] } catch (error: any) {} }
+const loadCustomers = async () => { try { const res: any = await customerAPI.getList({ page_size: 50 }); customerOptions.value = res?.results || [] } catch (error: any) {} }
+const loadProducts = async () => { try { const res: any = await productAPI.getList({ page_size: 50 }); productOptions.value = res?.results || [] } catch (error: any) {} }
 const loadData = async () => {
   if (!isEdit.value) return
   try { const res: any = await salesOrderAPI.getDetail(id.value!); Object.assign(form, { customer: res.customer, order_date: res.order_date, delivery_date: res.delivery_date, contact_person: res.contact_person, contact_phone: res.contact_phone, shipping_address: res.shipping_address, tax_rate: res.tax_rate, discount_amount: res.discount_amount || 0, notes: res.notes, items: res.items?.map((i: any) => ({ product: i.product, quantity: i.quantity, unit_price: i.unit_price, notes: i.notes || '' })) || [] }) } catch (error: any) { ErrorHandler.showMessage(error, '加载数据失败') }

@@ -16,6 +16,7 @@
           />
           <!-- Customer Selector with Quick Create -->
           <CustomerSelector
+            ref="customerSelectorRef"
             v-model="form.customer_id"
             required
             @create="showQuickCustomerCreate = true"
@@ -275,7 +276,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon, Input, TextArea, InputNumber, Select, CheckboxGroup, SectionDivider } from '@/components/common'
 import { useUIStore } from '@/stores/ui'
-import { workOrderAPI, customerAPI, productAPI, materialAPI, artworkAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
+import { workOrderAPI, productAPI, materialAPI, artworkAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
 import { CustomerSelector, ProductListEditor, ProcessSelector, MaterialListEditor, MultiSelect } from '@/components/workorder'
@@ -297,9 +298,10 @@ const showQuickCustomerCreate = ref(false)
 const showQuickProductCreate = ref(false)
 const showQuickMaterialCreate = ref(false)
 
+const customerSelectorRef = ref<any>(null)
+
 // Lists for dropdown options
 const salesOrderList = ref<any[]>([])
-const customerList = ref<any[]>([])
 const productList = ref<any[]>([])
 const materialList = ref<any[]>([])
 const artworkList = ref<any[]>([])
@@ -423,7 +425,6 @@ watch(calculatedTotalQuantity, (newTotal) => {
 onMounted(async () => {
   await Promise.all([
     loadSalesOrders(),
-    loadCustomers(),
     loadProducts(),
     loadMaterials(),
     loadArtworks(),
@@ -451,18 +452,9 @@ const loadSalesOrders = async () => {
   }
 }
 
-const loadCustomers = async () => {
-  try {
-    const res: any = await customerAPI.getList({ page_size: 1000 })
-    customerList.value = res?.results || res || []
-  } catch (error: any) {
-    ErrorHandler.handle(error)
-  }
-}
-
 const loadProducts = async () => {
   try {
-    const res: any = await productAPI.getList({ page_size: 1000 })
+    const res: any = await productAPI.getList({ page_size: 50 })
     productList.value = res?.results || res || []
   } catch (error: any) {
     ErrorHandler.handle(error)
@@ -471,7 +463,7 @@ const loadProducts = async () => {
 
 const loadMaterials = async () => {
   try {
-    const res: any = await materialAPI.getList({ page_size: 1000 })
+    const res: any = await materialAPI.getList({ page_size: 50 })
     materialList.value = res?.results || res || []
   } catch (error: any) {
     ErrorHandler.handle(error)
@@ -481,7 +473,7 @@ const loadMaterials = async () => {
 const loadArtworks = async () => {
   artworkLoading.value = true
   try {
-    const res: any = await artworkAPI.getList({ page_size: 1000 })
+    const res: any = await artworkAPI.getList({ page_size: 50 })
     artworkList.value = res?.results || res || []
   } catch (error: any) {
     ErrorHandler.handle(error)
@@ -493,7 +485,7 @@ const loadArtworks = async () => {
 const loadDies = async () => {
   dieLoading.value = true
   try {
-    const res: any = await dieAPI.getList({ page_size: 1000 })
+    const res: any = await dieAPI.getList({ page_size: 50 })
     dieList.value = res?.results || res || []
   } catch (error: any) {
     ErrorHandler.handle(error)
@@ -505,7 +497,7 @@ const loadDies = async () => {
 const loadFoilingPlates = async () => {
   foilingPlateLoading.value = true
   try {
-    const res: any = await foilingPlateAPI.getList({ page_size: 1000 })
+    const res: any = await foilingPlateAPI.getList({ page_size: 50 })
     foilingPlateList.value = res?.results || res || []
   } catch (error: any) {
     ErrorHandler.handle(error)
@@ -517,7 +509,7 @@ const loadFoilingPlates = async () => {
 const loadEmbossingPlates = async () => {
   embossingPlateLoading.value = true
   try {
-    const res: any = await embossingPlateAPI.getList({ page_size: 1000 })
+    const res: any = await embossingPlateAPI.getList({ page_size: 50 })
     embossingPlateList.value = res?.results || res || []
   } catch (error: any) {
     ErrorHandler.handle(error)
@@ -619,8 +611,7 @@ const handleRemoveMaterial = (index: number) => {
 }
 
 const handleCustomerCreated = (customer: any) => {
-  // Add to customer list and select it
-  customerList.value.push(customer)
+  customerSelectorRef.value?.appendCustomer(customer)
   form.customer_id = customer.id
 }
 
