@@ -4,7 +4,7 @@
     <div v-if="stats" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
       <div class="card stat-card">
         <div class="stat-content">
-          <div class="stat-icon" style="background-color: #409EFF;">
+          <div class="stat-icon bg-[#409EFF]">
             <Icon name="document" />
           </div>
           <div class="stat-info">
@@ -15,7 +15,7 @@
       </div>
       <div class="card stat-card">
         <div class="stat-content">
-          <div class="stat-icon" style="background-color: #67C23A;">
+          <div class="stat-icon bg-[#67C23A]">
             <Icon name="plus" />
           </div>
           <div class="stat-info">
@@ -26,7 +26,7 @@
       </div>
       <div class="card stat-card">
         <div class="stat-content">
-          <div class="stat-icon" style="background-color: #E6A23C;">
+          <div class="stat-icon bg-[#E6A23C]">
             <Icon name="edit" />
           </div>
           <div class="stat-info">
@@ -37,7 +37,7 @@
       </div>
       <div class="card stat-card">
         <div class="stat-content">
-          <div class="stat-icon" style="background-color: #F56C6C;">
+          <div class="stat-icon bg-[#F56C6C]">
             <Icon name="trash" />
           </div>
           <div class="stat-info">
@@ -88,12 +88,10 @@
             <span v-if="!row.changed_fields || row.changed_fields.length === 0">-</span>
           </template>
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
-              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="openDiff(row)">
-                <Icon name="document" size="sm" />
-                <span class="text-xs">查看变更</span>
-              </button>
-            </div>
+            <RowActions
+              :actions="getRowActions(row)"
+              @action="(action) => handleRowAction(action, row)"
+            />
           </template>
           <template #empty>
             <EmptyState description="暂无审计日志数据" />
@@ -188,34 +186,18 @@
           <input type="date" v-model="exportListFilters.end_date" class="input w-40" placeholder="结束日期" @change="loadExportList" />
         </div>
       </div>
-      <div class="table-scroll">
-        <table class="w-full border-collapse">
-          <thead>
-            <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-              <th class="px-3 py-3 w-44">创建时间</th>
-              <th class="px-3 py-3 w-28">用户</th>
-              <th class="px-3 py-3 w-28">状态</th>
-              <th class="px-3 py-3 w-24">记录数</th>
-              <th class="px-3 py-3 w-24">文件大小</th>
-              <th class="px-3 py-3 min-w-44">错误信息</th>
-              <th class="px-3 py-3 w-28">操作</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-            <tr v-for="row in exportList" :key="row.id" class="hover:bg-gray-50 dark:hover:bg-dark-800">
-              <td class="px-3 py-2">{{ formatDateTime(row.created_at) }}</td>
-              <td class="px-3 py-2">{{ row.username }}</td>
-              <td class="px-3 py-2">{{ row.status_display }}</td>
-              <td class="px-3 py-2">{{ row.record_count }}</td>
-              <td class="px-3 py-2">{{ formatFileSize(row.file_size) }}</td>
-              <td class="px-3 py-2">{{ row.error_message || '-' }}</td>
-              <td class="px-3 py-2">
-                <button class="btn btn-ghost btn-sm" :disabled="row.status !== 'completed'" @click="downloadExport(row)">下载</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <DataTable :columns="exportListColumns" :data="exportList" :loading="exportListLoading" row-key="id">
+        <template #cell-created_at="{ row }">{{ formatDateTime(row.created_at) }}</template>
+        <template #cell-status_display="{ row }">{{ row.status_display }}</template>
+        <template #cell-file_size="{ row }">{{ formatFileSize(row.file_size) }}</template>
+        <template #cell-error_message="{ row }">{{ row.error_message || '-' }}</template>
+        <template #cell-actions="{ row }">
+          <RowActions
+            :actions="getExportRowActions(row)"
+            @action="() => downloadExport(row)"
+          />
+        </template>
+      </DataTable>
       <Pagination v-if="exportListTotal > 0" v-model:page="exportListPage" v-model:page-size="exportListPageSize" :total="exportListTotal" layout="total, sizes, prev, pager, next" @update:page-size="handleExportPageSizeChange" @update:page="handleExportPageChange" />
       <template #footer>
         <button class="btn btn-secondary" @click="exportListVisible = false">关闭</button>
@@ -232,8 +214,8 @@ import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
-import { Icon, Select, SearchInput, Tag, Pagination, TablePageLayout, DataTable, EmptyState, BaseDialog, DescriptionGrid, DescriptionItem } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { Icon, Select, SearchInput, Tag, Pagination, TablePageLayout, DataTable, EmptyState, BaseDialog, DescriptionGrid, DescriptionItem, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 
 const userStore = useUserStore()
 
@@ -377,6 +359,28 @@ const actionTagType = (action: any) => {
     logout: 'info'
   }
   return (map as any)[action] || 'info'
+}
+
+const exportListColumns: Column[] = [
+  { key: 'created_at', label: '创建时间', width: 176 },
+  { key: 'username', label: '用户', width: 112 },
+  { key: 'status_display', label: '状态', width: 112 },
+  { key: 'record_count', label: '记录数', width: 96, align: 'right' },
+  { key: 'file_size', label: '文件大小', width: 96 },
+  { key: 'error_message', label: '错误信息', minWidth: 176 },
+  { key: 'actions', label: '操作', width: 112, fixed: 'right' }
+]
+
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'diff', label: '查看变更', icon: 'document', tone: 'primary' }
+]
+
+const getExportRowActions = (row: any): RowAction[] => [
+  { key: 'download', label: '下载', icon: 'download', tone: 'primary', disabled: row.status !== 'completed' }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  if (action.key === 'diff') openDiff(row)
 }
 
 const openDiff = async (row: any) => {
@@ -541,15 +545,6 @@ onMounted(() => {
 
 .audit-search-control {
   width: min(100%, 280px);
-}
-
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.audit-table {
-  width: 100%;
 }
 
 .changed-fields {

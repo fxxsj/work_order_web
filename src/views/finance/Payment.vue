@@ -37,31 +37,10 @@
           <template #cell-bank_account="{ row }"><span class="truncate max-w-xs">{{ row.bank_account }}</span></template>
           <template #cell-notes="{ row }"><span class="truncate max-w-xs">{{ row.notes }}</span></template>
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
-              <button
-                @click="handleView(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
-              >
-                <Icon name="eye" size="sm" />
-                <span class="text-xs">查看</span>
-              </button>
-              <button
-                v-if="canEdit"
-                @click="handleEdit(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
-              >
-                <Icon name="edit" size="sm" />
-                <span class="text-xs">编辑</span>
-              </button>
-              <button
-                v-if="canDelete"
-                @click="confirmDelete(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-              >
-                <Icon name="trash" size="sm" />
-                <span class="text-xs">删除</span>
-              </button>
-            </div>
+            <RowActions
+              :actions="getRowActions(row)"
+              @action="(action) => handleRowAction(action, row)"
+            />
           </template>
           <template #empty>
             <EmptyState description="暂无收款数据">
@@ -171,8 +150,8 @@ import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import PaymentStats from './components/PaymentStats.vue'
-import { Select, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { Select, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('payment')
 
@@ -330,36 +309,20 @@ const getRemainingClass = (row: any) => {
   return 'text-success'
 }
 
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
+  { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value },
+  { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete.value }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  switch (action.key) {
+    case 'view': handleView(row); break
+    case 'edit': handleEdit(row); break
+    case 'delete': confirmDelete(row); break
+  }
+}
+
 onMounted(() => { loadData(); fetchStats(); fetchCustomers() })
 </script>
 
-<style scoped lang="scss">
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.payment-container { padding: var(--ui-page-padding); }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.finance-filter-control { width: min(100%, var(--ui-filter-control-width)); }
-.finance-date-control { width: min(100%, var(--ui-date-range-control-width)); }
-.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
-.finance-table { width: 100%; }
-.text-warning { color: var(--ui-color-warning); }
-.text-success { color: var(--ui-color-success); }
-.card { border-radius: var(--ui-radius-card); box-shadow: var(--ui-shadow-card); }
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section,
-  .filter-group,
-  .action-group,
-  .finance-filter-control,
-  .finance-date-control {
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .filter-group,
-  .action-group {
-    flex-direction: column;
-  }
-}
-</style>

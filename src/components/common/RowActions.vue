@@ -8,10 +8,10 @@
       :class="toneClass(action.tone)"
       :disabled="action.disabled || action.loading"
       :title="action.title || action.label"
-      @click="emitAction(action)"
+      @click.stop="emitAction(action)"
     >
       <Icon
-        :name="action.loading ? 'refresh' : action.icon"
+        :name="(action.loading ? 'refresh' : action.icon) as any"
         size="sm"
         :class="action.loading ? 'animate-spin' : ''"
       />
@@ -23,21 +23,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Icon from '@/components/icons/Icon.vue'
+import type { RowAction, RowActionTone } from './types'
 
-export type RowActionTone = 'default' | 'primary' | 'success' | 'warning' | 'danger'
-export type RowActionIcon = InstanceType<typeof Icon>['$props']['name']
-
-export interface RowAction {
-  key: string
-  label: string
-  icon: RowActionIcon
-  tone?: RowActionTone
-  visible?: boolean
-  disabled?: boolean
-  loading?: boolean
-  loadingLabel?: string
-  title?: string
-}
+export type { RowAction, RowActionTone } from './types'
 
 const props = defineProps<{
   actions: RowAction[]

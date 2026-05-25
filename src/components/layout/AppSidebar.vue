@@ -35,24 +35,20 @@
       </div>
 
       <!-- 任务管理 -->
-      <template v-if="!collapsed">
+      <template v-if="canViewWorkOrderTask && !collapsed">
         <div class="sidebar-section">
           <div class="sidebar-section-title">任务管理</div>
           <router-link to="/tasks" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks' && route.path.startsWith('/tasks') }" @click="$emit('close-mobile')">
             <Icon name="tickets" size="sm" class="flex-shrink-0" />
             <span>任务列表</span>
           </router-link>
-          <router-link to="/tasks/board" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/board' }" @click="$emit('close-mobile')">
-            <Icon name="grid" size="sm" class="flex-shrink-0" />
-            <span>部门任务看板</span>
+          <router-link to="/tasks/operator" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/operator' }" @click="$emit('close-mobile')">
+            <Icon name="person" size="sm" class="flex-shrink-0" />
+            <span>操作员任务中心</span>
           </router-link>
-          <router-link to="/tasks/stats" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/stats' }" @click="$emit('close-mobile')">
-            <Icon name="chartBar" size="sm" class="flex-shrink-0" />
-            <span>协作统计</span>
-          </router-link>
-          <router-link to="/tasks/assignment-history" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/assignment-history' }" @click="$emit('close-mobile')">
-            <Icon name="clock" size="sm" class="flex-shrink-0" />
-            <span>分派历史</span>
+          <router-link to="/tasks/supervisor" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/supervisor' }" @click="$emit('close-mobile')">
+            <Icon name="dashboard" size="sm" class="flex-shrink-0" />
+            <span>主管看板</span>
           </router-link>
         </div>
       </template>
@@ -104,50 +100,70 @@
         </router-link>
         <router-link v-if="canViewSalesOrder" to="/sales-orders" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/sales-orders') }" @click="$emit('close-mobile')">
           <Icon name="tag" size="sm" class="flex-shrink-0" />
-          <span>销售订单</span>
+          <span>客户订单</span>
         </router-link>
       </div>
 
       <!-- 库存管理 -->
-      <div v-if="!collapsed" class="sidebar-section">
+      <div v-if="(canViewStock || canViewStockIn || canViewStockOut || canViewDelivery || canViewQuality) && !collapsed" class="sidebar-section">
         <div class="sidebar-section-title">库存管理</div>
-        <router-link to="/inventory/stocks" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/stocks') }" @click="$emit('close-mobile')">
+        <router-link v-if="canViewStock" to="/inventory/stocks" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/stocks') }" @click="$emit('close-mobile')">
           <Icon name="package" size="sm" class="flex-shrink-0" />
           <span>成品库存</span>
         </router-link>
-        <router-link to="/inventory/delivery" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/delivery') }" @click="$emit('close-mobile')">
+        <router-link v-if="canViewStockIn" to="/inventory/stock-ins" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/stock-ins') }" @click="$emit('close-mobile')">
+          <Icon name="download" size="sm" class="flex-shrink-0" />
+          <span>入库单</span>
+        </router-link>
+        <router-link v-if="canViewStockOut" to="/inventory/stock-outs" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/stock-outs') }" @click="$emit('close-mobile')">
+          <Icon name="upload" size="sm" class="flex-shrink-0" />
+          <span>出库单</span>
+        </router-link>
+        <router-link v-if="canViewDelivery" to="/inventory/delivery" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/delivery') }" @click="$emit('close-mobile')">
           <Icon name="truck" size="sm" class="flex-shrink-0" />
           <span>发货管理</span>
         </router-link>
-        <router-link to="/inventory/quality" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/quality') }" @click="$emit('close-mobile')">
+        <router-link v-if="canViewQuality" to="/inventory/quality" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/inventory/quality') }" @click="$emit('close-mobile')">
           <Icon name="checkCircle" size="sm" class="flex-shrink-0" />
           <span>质量检验</span>
         </router-link>
       </div>
 
       <!-- 财务管理 -->
-      <div v-if="!collapsed" class="sidebar-section">
+      <div v-if="(canViewInvoice || canViewPayment || canViewPaymentPlan || canViewCostCenter || canViewCostItem || canViewCost || canViewStatement) && !collapsed" class="sidebar-section">
         <div class="sidebar-section-title">财务管理</div>
-        <router-link to="/finance/invoices" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/invoices') }" @click="$emit('close-mobile')">
+        <router-link v-if="canViewInvoice" to="/finance/invoices" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/invoices') }" @click="$emit('close-mobile')">
           <Icon name="ticket" size="sm" class="flex-shrink-0" />
           <span>发票管理</span>
         </router-link>
-        <router-link to="/finance/payments" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/payments') }" @click="$emit('close-mobile')">
+        <router-link v-if="canViewPayment" to="/finance/payments" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/payments') }" @click="$emit('close-mobile')">
           <Icon name="dollar" size="sm" class="flex-shrink-0" />
           <span>收款管理</span>
         </router-link>
-        <router-link to="/finance/costs" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/costs') }" @click="$emit('close-mobile')">
+        <router-link v-if="canViewPaymentPlan" to="/finance/payment-plans" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/payment-plans') }" @click="$emit('close-mobile')">
+          <Icon name="calendar" size="sm" class="flex-shrink-0" />
+          <span>收款计划</span>
+        </router-link>
+        <router-link v-if="canViewCostCenter" to="/finance/cost-centers" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/cost-centers') }" @click="$emit('close-mobile')">
+          <Icon name="grid" size="sm" class="flex-shrink-0" />
+          <span>成本中心</span>
+        </router-link>
+        <router-link v-if="canViewCostItem" to="/finance/cost-items" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/cost-items') }" @click="$emit('close-mobile')">
+          <Icon name="list" size="sm" class="flex-shrink-0" />
+          <span>成本项目</span>
+        </router-link>
+        <router-link v-if="canViewCost" to="/finance/costs" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/costs') }" @click="$emit('close-mobile')">
           <Icon name="chart" size="sm" class="flex-shrink-0" />
           <span>成本核算</span>
         </router-link>
-        <router-link to="/finance/statements" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/statements') }" @click="$emit('close-mobile')">
+        <router-link v-if="canViewStatement" to="/finance/statements" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/finance/statements') }" @click="$emit('close-mobile')">
           <Icon name="dollar" size="sm" class="flex-shrink-0" />
           <span>对账管理</span>
         </router-link>
       </div>
 
       <!-- 系统设置 -->
-      <div v-if="!collapsed" class="sidebar-section">
+      <div v-if="(canViewCustomer || canViewSupplier || canViewDepartment || canViewProcess || canViewTaskRule || canViewSystemNotification || canViewAuditLog) && !collapsed" class="sidebar-section">
         <div class="sidebar-section-title">系统设置</div>
         <router-link v-if="canViewCustomer" to="/customers" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/customers') }" @click="$emit('close-mobile')">
           <Icon name="user" size="sm" class="flex-shrink-0" />
@@ -161,13 +177,17 @@
           <Icon name="menu" size="sm" class="flex-shrink-0" />
           <span>部门管理</span>
         </router-link>
-        <router-link v-if="canViewProcess" to="/processes" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/processes') }" @click="$emit('close-mobile')">
+        <router-link v-if="canViewProcess" to="/processes" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/processes' }" @click="$emit('close-mobile')">
           <Icon name="wrench" size="sm" class="flex-shrink-0" />
           <span>工序管理</span>
         </router-link>
-        <router-link to="/tasks/assignment-rules" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/assignment-rules' }" @click="$emit('close-mobile')">
+        <router-link v-if="canViewTaskRule" to="/tasks/assignment-rules" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path === '/tasks/assignment-rules' }" @click="$emit('close-mobile')">
           <Icon name="sliders" size="sm" class="flex-shrink-0" />
-          <span>分派规则配置</span>
+          <span>默认分派部门</span>
+        </router-link>
+        <router-link v-if="canViewSystemNotification" to="/system-notifications" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/system-notifications') }" @click="$emit('close-mobile')">
+          <Icon name="bell" size="sm" class="flex-shrink-0" />
+          <span>通知管理</span>
         </router-link>
         <router-link v-if="canViewAuditLog" to="/audit-logs" class="sidebar-link mb-0.5 py-1.5 text-sm" :class="{ 'sidebar-link-active': route.path.startsWith('/audit-logs') }" @click="$emit('close-mobile')">
           <Icon name="document" size="sm" class="flex-shrink-0" />
@@ -268,6 +288,23 @@ const canViewPurchaseOrder = computed(() => userStore.hasPermission('workorder.v
 const canViewSalesOrder = computed(() => userStore.hasPermission('workorder.view_salesorder'))
 const canViewAuditLog = computed(() => userStore.hasPermission('workorder.view_auditlog'))
 
+// 新增缺漏的权限变量
+const canViewWorkOrderTask = computed(() => userStore.hasPermission('workorder.view_workordertask'))
+const canViewStock = computed(() => userStore.hasPermission('workorder.view_productstock'))
+const canViewStockIn = computed(() => userStore.hasPermission('workorder.view_stockin'))
+const canViewStockOut = computed(() => userStore.hasPermission('workorder.view_stockout'))
+const canViewDelivery = computed(() => userStore.hasPermission('workorder.view_deliveryorder'))
+const canViewQuality = computed(() => userStore.hasPermission('workorder.view_qualityinspection'))
+const canViewInvoice = computed(() => userStore.hasPermission('workorder.view_invoice'))
+const canViewPayment = computed(() => userStore.hasPermission('workorder.view_payment'))
+const canViewPaymentPlan = computed(() => userStore.hasPermission('workorder.view_paymentplan'))
+const canViewCostCenter = computed(() => userStore.hasPermission('workorder.view_costcenter'))
+const canViewCostItem = computed(() => userStore.hasPermission('workorder.view_costitem'))
+const canViewCost = computed(() => userStore.hasPermission('workorder.view_productioncost'))
+const canViewStatement = computed(() => userStore.hasPermission('workorder.view_statement'))
+const canViewTaskRule = computed(() => userStore.hasPermission('workorder.view_taskassignmentrule'))
+const canViewSystemNotification = computed(() => userStore.hasPermission('workorder.view_systemnotificationsettings'))
+
 // 主要导航项
 const mainNavItems = [
   { path: '/dashboard', label: '工作台', icon: 'home' },
@@ -276,12 +313,10 @@ const mainNavItems = [
 
 // Collapsed menu items
 const collapsedMenuItems = computed(() => {
-  const items = [
-    { path: '/tasks', label: '任务列表' },
-    { path: '/tasks/board', label: '部门任务看板' },
-    { path: '/inventory/stocks', label: '成品库存' },
-    { path: '/finance/payments', label: '收款管理' },
-  ]
+  const items = []
+  if (canViewWorkOrderTask.value) items.push({ path: '/tasks', label: '任务列表' })
+  if (canViewStock.value) items.push({ path: '/inventory/stocks', label: '成品库存' })
+  if (canViewPayment.value) items.push({ path: '/finance/payments', label: '收款管理' })
   if (canViewCustomer.value) items.push({ path: '/customers', label: '客户管理' })
   if (canViewSupplier.value) items.push({ path: '/suppliers', label: '供应商管理' })
   return items

@@ -13,31 +13,27 @@
         <div class="lg:col-span-2"><department-priority-panel :process="selectedProcess" :departments="departmentRules" :all-departments="departmentList" :loading="departmentRulesLoading" :can-edit="canEdit" :can-delete="canDelete" @update-priority="handlePriorityUpdate" @toggle-active="handleToggleActive" @add-department="handleAddDepartment" @edit-department="handleEditDepartment" @remove-department="handleRemoveDepartment" /></div>
       </div>
       <Alert v-if="!globalDispatchEnabled" title="自动分派已禁用" type="warning" description="当前自动分派功能已禁用，仅显示预览信息。" :closable="false" show-icon class="mb-4" />
-      <div><h4 class="mb-4 font-bold">分派预览</h4>
-        <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-                <th class="px-4 py-3 w-36">工序</th>
-                <th class="px-4 py-3 w-36">分派部门</th>
-                <th class="px-4 py-3 w-36">分派操作员</th>
-                <th class="px-4 py-3 w-36">预计等待时间</th>
-                <th class="px-4 py-3 w-36">当前负载</th>
-                <th class="px-4 py-3 w-24 text-center">激活规则</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-              <tr v-for="row in previewData" :key="row.id">
-                <td class="px-4 py-3">{{ row.process_name }}</td>
-                <td class="px-4 py-3">{{ row.target_department_name }}</td>
-                <td class="px-4 py-3">{{ row.target_operator_name || '-' }}</td>
-                <td class="px-4 py-3"><span :class="getWaitTimeClass(row.estimated_wait_time)">{{ row.estimated_wait_time || '-' }}</span></td>
-                <td class="px-4 py-3"><ProgressBar :percentage="row.current_load || 0" :color="getLoadColor(row.current_load)" /></td>
-                <td class="px-4 py-3 text-center">{{ row.active_rules_count }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div>
+        <h4 class="mb-4 font-bold">分派预览</h4>
+        <DataTable
+          :columns="columns"
+          :data="previewData"
+          :loading="previewLoading"
+          :row-key="(row: any) => row.id"
+        >
+          <template #cell-estimated_wait_time="{ row }">
+            <span :class="getWaitTimeClass(row.estimated_wait_time)">{{ row.estimated_wait_time || '-' }}</span>
+          </template>
+          <template #cell-current_load="{ row }">
+            <ProgressBar
+              :percentage="row.current_load || 0"
+              :color="getLoadColor(row.current_load)"
+            />
+          </template>
+          <template #empty>
+            <EmptyState description="暂无分派预览数据" />
+          </template>
+        </DataTable>
       </div>
     </div>
     <BaseDialog :show="dialogVisible" :title="dialogTitle" width="narrow">
@@ -82,7 +78,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Icon, SearchInput, TextArea, Select, InputNumber, Toggle, ConfirmDialog } from '@/components/common'
+import { Icon, SearchInput, TextArea, Select, InputNumber, Toggle, ConfirmDialog, DataTable, EmptyState, ProgressBar } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import { ElMessage } from '@/utils/message'
 import { assignmentRuleAPI, processAPI, departmentAPI, dispatchConfigAPI } from '@/api/modules'
 import { useCrudPermission } from '@/composables'
@@ -202,6 +199,15 @@ const handleSubmit = async () => {
 
 const getWaitTimeClass = (time: any) => time && time.includes('小时') && parseInt(time) < 2 ? 'text-success' : time && time.includes('小时') && parseInt(time) > 8 ? 'text-danger' : ''
 const getLoadColor = (load: any) => load < 50 ? '#67C23A' : load < 80 ? '#E6A23C' : '#F56C6C'
+
+const columns: Column[] = [
+  { key: 'process_name', label: '工序', width: 144 },
+  { key: 'target_department_name', label: '分派部门', width: 144 },
+  { key: 'target_operator_name', label: '分派操作员', width: 144 },
+  { key: 'estimated_wait_time', label: '预计等待时间', width: 144 },
+  { key: 'current_load', label: '当前负载', width: 144 },
+  { key: 'active_rules_count', label: '激活规则', width: 96, align: 'center' }
+]
 
 onMounted(() => { loadProcesses(); loadDepartments(); loadDispatchConfig(); loadPreview() })
 </script>

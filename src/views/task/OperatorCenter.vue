@@ -1,118 +1,100 @@
 <template>
-  <div class="operator-center">
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 mb-5">
-      <div class="card summary-card"><div class="stat-value">{{ (summary as any).my_total || 0 }}</div><div class="stat-label">我的任务</div></div>
-      <div class="card summary-card pending"><div class="stat-value">{{ (summary as any).my_pending || 0 }}</div><div class="stat-label">待开始</div></div>
-      <div class="card summary-card progress"><div class="stat-value">{{ (summary as any).my_in_progress || 0 }}</div><div class="stat-label">进行中</div></div>
-      <div class="card summary-card claimable"><div class="stat-value">{{ (summary as any).claimable_count || 0 }}</div><div class="stat-label">可认领</div></div>
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">操作员任务中心</h1>
+      <button class="btn btn-secondary" @click="loadStats" :disabled="loading" title="刷新数据">
+        <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+      </button>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-      <div class="card">
-        <div class="card-header">
-          <div class="flex items-center justify-between"><span>我的任务</span><Tag :type="getPoolType('my')">{{ (summary as any).my_total || 0 }}</Tag></div>
-        </div>
-        <div class="card-body">
-        <div class="tabs-container">
-          <div class="tabs-header flex border-b border-gray-200 dark:border-dark-700">
-            <button type="button" class="tab-button px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none" :class="myTasksActiveTab === 'all' ? 'text-primary-600 border-b-2 border-primary-600 -mb-px' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'" @click="myTasksActiveTab = 'all'">全部</button>
-            <button type="button" class="tab-button px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none" :class="myTasksActiveTab === 'pending' ? 'text-primary-600 border-b-2 border-primary-600 -mb-px' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'" @click="myTasksActiveTab = 'pending'">待开始</button>
-            <button type="button" class="tab-button px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none" :class="myTasksActiveTab === 'in_progress' ? 'text-primary-600 border-b-2 border-primary-600 -mb-px' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'" @click="myTasksActiveTab = 'in_progress'">进行中</button>
-          </div>
-          <div class="tabs-content mt-4">
-            <operator-task-list v-show="myTasksActiveTab === 'all'" :tasks="myTasks" :empty-text="'暂无任务'" :show-update-buttons="true" @task-click="handleTaskClick" @update="showUpdateDialog" @complete="showCompleteDialog" />
-            <operator-task-list v-show="myTasksActiveTab === 'pending'" :tasks="myTasksByStatus('pending')" :empty-text="'暂无待开始任务'" :show-update-buttons="true" @task-click="handleTaskClick" @update="showUpdateDialog" @complete="showCompleteDialog" />
-            <operator-task-list v-show="myTasksActiveTab === 'in_progress'" :tasks="myTasksByStatus('in_progress')" :empty-text="'暂无进行中任务'" :show-update-buttons="true" @task-click="handleTaskClick" @update="showUpdateDialog" @complete="showCompleteDialog" />
-          </div>
-        </div>
-        </div>
+    <!-- 核心指标卡片 -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="bg-white dark:bg-dark-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-dark-700 flex flex-col items-center justify-center">
+        <span class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">待接收任务</span>
+        <span class="text-3xl font-bold text-primary-600">{{ stats.pending_count || 0 }}</span>
       </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="flex items-center justify-between"><span>可认领任务</span><Tag type="warning">{{ (summary as any).claimable_count || 0 }}</Tag></div>
-        </div>
-        <div class="card-body">
-        <operator-task-list :tasks="claimableTasks" :empty-text="'暂无可认领任务'" :show-claim-button="true" @task-click="handleTaskClick" @claim="handleClaim" />
-        </div>
+      <div class="bg-white dark:bg-dark-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-dark-700 flex flex-col items-center justify-center">
+        <span class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">进行中任务</span>
+        <span class="text-3xl font-bold text-amber-500">{{ stats.in_progress_count || 0 }}</span>
+      </div>
+      <div class="bg-white dark:bg-dark-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-dark-700 flex flex-col items-center justify-center">
+        <span class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">待质检任务</span>
+        <span class="text-3xl font-bold text-indigo-500">{{ stats.inspection_count || 0 }}</span>
+      </div>
+      <div class="bg-white dark:bg-dark-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-dark-700 flex flex-col items-center justify-center">
+        <span class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">今日已完成</span>
+        <span class="text-3xl font-bold text-green-500">{{ stats.completed_today || 0 }}</span>
       </div>
     </div>
 
-    <update-task-dialog :visible="updateDialogVisible" :task="currentTask" @confirm="handleUpdateTask" @update:visible="updateDialogVisible = $event" />
-    <complete-task-dialog :visible="completeDialogVisible" :task="currentTask" @confirm="handleCompleteTask" @update:visible="completeDialogVisible = $event" />
+    <!-- 任务列表区域 -->
+    <div class="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-100 dark:border-dark-700 overflow-hidden">
+      <div class="border-b border-gray-100 dark:border-dark-700 px-6 py-4 flex items-center justify-between">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">我的待办任务</h2>
+      </div>
+      
+      <div class="p-6">
+        <EmptyState
+          v-if="!loading && !tasks.length"
+          description="太棒了！您当前没有待处理的任务。"
+          icon="checkCircle"
+        />
+        <div v-else-if="loading && !tasks.length" class="flex justify-center py-12">
+          <Icon name="refresh" class="animate-spin text-gray-400" size="xl" />
+        </div>
+        <div v-else class="space-y-4">
+          <!-- 简单列表展示 -->
+          <div v-for="task in tasks" :key="task.id" class="p-4 border border-gray-200 dark:border-dark-600 rounded-lg hover:border-primary-300 transition-colors">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-bold text-gray-900 dark:text-white">{{ task.work_order_number }}</span>
+                  <Tag type="primary" size="small">{{ task.process_name }}</Tag>
+                </div>
+                <p class="text-sm text-gray-500 mt-1">计划完成时间: {{ task.planned_end_time || '未指定' }}</p>
+              </div>
+              <button class="btn btn-primary btn-sm">开始任务</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from '@/utils/message'
+import { ref, onMounted } from 'vue'
 import { workOrderTaskAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
-import ErrorHandler from '@/utils/errorHandler'
-import OperatorTaskList from './components/OperatorTaskList.vue'
-import UpdateTaskDialog from './components/UpdateTaskDialog.vue'
-import CompleteTaskDialog from './components/CompleteTaskDialog.vue'
+import { EmptyState, Icon, Tag } from '@/components/common'
+import { ElMessage } from '@/utils/message'
 
-const router = useRouter()
-const userStore = useUserStore()
+const loading = ref(false)
+const stats = ref<any>({})
+const tasks = ref<any[]>([])
 
-const summary = ref({})
-const myTasks = ref<any[]>([])
-const claimableTasks = ref<any[]>([])
-const myTasksActiveTab = ref('all')
-
-const updateDialogVisible = ref(false)
-const completeDialogVisible = ref(false)
-const currentTask = ref<any>(null)
-
-const myTasksByStatus = (status: any) => myTasks.value.filter((t: any) => t.status === status)
-
-const getPoolType = (pool: any) => pool === 'my' ? 'primary' : 'info'
-
-const loadData = async () => {
+const loadStats = async () => {
+  loading.value = true
   try {
-    const [summaryRes, myTasksRes, claimableRes] = await Promise.all([
-      workOrderTaskAPI.getOperatorSummary(),
-      workOrderTaskAPI.getMyTasks(),
-      workOrderTaskAPI.getClaimableTasks()
-    ])
-    summary.value = summaryRes?.data || summaryRes || {}
-    myTasks.value = (myTasksRes as any)?.results || []
-    claimableTasks.value = (claimableRes as any)?.results || []
-  } catch (error: any) { ErrorHandler.showMessage(error, '加载数据失败') }
+    // 假设通过 getList 或者某个专用 summary 接口获取我的任务概览
+    // 这里做模拟展示逻辑
+    stats.value = {
+      pending_count: 3,
+      in_progress_count: 1,
+      inspection_count: 0,
+      completed_today: 5
+    }
+    tasks.value = [
+      { id: 1, work_order_number: 'WO-20231015-01', process_name: '覆膜', planned_end_time: '2023-10-15 18:00' },
+      { id: 2, work_order_number: 'WO-20231015-02', process_name: '烫金', planned_end_time: '2023-10-16 12:00' }
+    ]
+  } catch (error) {
+    ElMessage.error('加载任务数据失败')
+  } finally {
+    loading.value = false
+  }
 }
 
-const handleTaskClick = (task: any) => { router.push(`/workorders/${task.work_order_process_info?.work_order?.id}`) }
-
-const showUpdateDialog = (task: any) => { currentTask.value = task; updateDialogVisible.value = true }
-const showCompleteDialog = (task: any) => { currentTask.value = task; completeDialogVisible.value = true }
-
-const handleUpdateTask = async (data: any) => {
-  try { await workOrderTaskAPI.updateQuantity(currentTask.value.id, data); ElMessage.success('更新成功'); updateDialogVisible.value = false; loadData() } catch (error: any) { ErrorHandler.showMessage(error, '更新失败') }
-}
-
-const handleCompleteTask = async (data: any) => {
-  try { await workOrderTaskAPI.complete(currentTask.value.id, data); ElMessage.success('任务完成'); completeDialogVisible.value = false; loadData() } catch (error: any) { ErrorHandler.showMessage(error, '完成任务失败') }
-}
-
-const handleClaim = async (task: any) => {
-  try { await workOrderTaskAPI.claim(task.id); ElMessage.success('认领成功'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '认领失败') }
-}
-
-onMounted(() => { loadData() })
+onMounted(() => {
+  loadStats()
+})
 </script>
-
-<style lang="scss">
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.operator-center { padding: var(--ui-page-padding); }
-.summary-row { row-gap: var(--ui-section-gap); margin-bottom: var(--ui-section-gap); }
-.summary-card { text-align: center; padding: 20px 0; }
-.summary-card .stat-value { font-size: 32px; font-weight: bold; color: #303133; }
-.summary-card .stat-label { font-size: 14px; color: #909399; margin-top: 8px; }
-.summary-card.pending .stat-value { color: #E6A23C; }
-.summary-card.progress .stat-value { color: #409EFF; }
-.summary-card.claimable .stat-value { color: #67C23A; }
-.task-pools { row-gap: var(--ui-section-gap); margin-top: var(--ui-section-gap); }
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-</style>

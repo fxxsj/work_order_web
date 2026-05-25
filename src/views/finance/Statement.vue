@@ -32,23 +32,10 @@
           <template #cell-closing_balance="{ row }"><span class="text-strong">¥{{ row.closing_balance?.toLocaleString() || '-' }}</span></template>
           <template #cell-status="{ row }"><StatusTag :status="row.status" category="statement" :label="row.status_display" /></template>
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
-              <button
-                @click="handleView(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
-              >
-                <Icon name="eye" size="sm" />
-                <span class="text-xs">查看</span>
-              </button>
-              <button
-                v-if="row.status === 'draft'"
-                @click="handleConfirm(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
-              >
-                <Icon name="check" size="sm" />
-                <span class="text-xs">确认</span>
-              </button>
-            </div>
+            <RowActions
+              :actions="getRowActions(row)"
+              @action="(action) => handleRowAction(action, row)"
+            />
           </template>
           <template #empty>
             <EmptyState description="暂无对账单数据" />
@@ -96,8 +83,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { statementAPI } from '@/api/modules'
 import { useCrudList } from '@/composables'
-import { StatusTag, Select, Input, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { StatusTag, Select, Input, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 import StatementStats from './components/StatementStats.vue'
 
 const statsLoading = ref(false)
@@ -161,6 +148,19 @@ onMounted(() => { loadData(); fetchStats() })
 
 const handleView = (row: any) => console.log('View', row)
 const handleConfirm = (row: any) => console.log('Confirm', row)
+
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
+  { key: 'confirm', label: '确认', icon: 'check', tone: 'primary', visible: row.status === 'draft' }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  switch (action.key) {
+    case 'view': handleView(row); break
+    case 'confirm': handleConfirm(row); break
+  }
+}
+
 const handleCreate = () => { 
   form.statement_date = new Date().toISOString().split('T')[0]
   showCreateModal.value = true 
@@ -173,31 +173,3 @@ const handleGenerate = () => {
 const handlePrint = () => window.print()
 </script>
 
-<style scoped lang="scss">
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.statement-container { padding: var(--ui-page-padding); }
-.statement-card { margin-top: var(--ui-section-gap); }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.filter-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.statement-filter-control { width: min(100%, var(--ui-filter-control-width-sm)); }
-.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
-.statement-table { width: 100%; }
-.pagination-row { margin-top: var(--ui-section-gap); text-align: right; }
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section,
-  .filter-group,
-  .action-group,
-  .statement-filter-control {
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .filter-group,
-  .action-group {
-    flex-direction: column;
-  }
-}
-</style>

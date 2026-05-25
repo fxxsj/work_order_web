@@ -11,38 +11,28 @@
           <button class="btn btn-primary btn-sm" @click="addSplitItem"><Icon name="plus" class="h-3 w-3" /> 添加子任务</button>
           <span class="text-sm text-gray-400">至少需要2个子任务，子任务数量总和不能超过父任务数量</span>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-                <th class="px-3 py-2 w-14 text-center">序号</th>
-                <th class="px-3 py-2 w-36">生产数量</th>
-                <th class="px-3 py-2 w-44">分派部门</th>
-                <th class="px-3 py-2 w-44">分派操作员</th>
-                <th class="px-3 py-2 min-w-48">工作内容</th>
-                <th class="px-3 py-2 w-20 text-center">操作</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-              <tr v-for="(item, index) in formData.splits" :key="index">
-                <td class="px-3 py-2 text-center">{{ index + 1 }}</td>
-                <td class="px-3 py-2"><InputNumber v-model="(item as any).production_quantity" :min="1" class="w-full" /></td>
-                <td class="px-3 py-2">
-                  <Select v-model="(item as any).assigned_department" :options="departmentOptions" placeholder="请选择部门" filterable clearable class="w-full" />
-                </td>
-                <td class="px-3 py-2">
-                  <Select v-model="(item as any).assigned_operator" :options="userOptions" placeholder="请选择操作员" filterable clearable class="w-full" />
-                </td>
-                <td class="px-3 py-2">
-                  <input v-model="(item as any).work_content" class="input w-full" placeholder="可选，默认使用父任务内容" />
-                </td>
-                <td class="px-3 py-2 text-center">
-                  <button class="btn btn-danger btn-sm" @click="removeSplitItem(index)" :disabled="formData.splits.length <= 2"><Icon name="trash" class="h-3 w-3" /></button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <LineItemsTable
+          :columns="splitColumns"
+          :items="formData.splits"
+          :delete-disabled="() => formData.splits.length <= 2"
+          @delete="removeSplitItem"
+        >
+          <template #cell-index="{ index }">
+            <span class="text-center block">{{ index + 1 }}</span>
+          </template>
+          <template #cell-production_quantity="{ row }">
+            <InputNumber v-model="row.production_quantity" :min="1" class="w-full" />
+          </template>
+          <template #cell-assigned_department="{ row }">
+            <Select v-model="row.assigned_department" :options="departmentOptions" placeholder="请选择部门" filterable clearable class="w-full" />
+          </template>
+          <template #cell-assigned_operator="{ row }">
+            <Select v-model="row.assigned_operator" :options="userOptions" placeholder="请选择操作员" filterable clearable class="w-full" />
+          </template>
+          <template #cell-work_content="{ row }">
+            <input v-model="row.work_content" class="input w-full" placeholder="可选，默认使用父任务内容" />
+          </template>
+        </LineItemsTable>
         <div class="mt-3 text-sm text-gray-400">子任务数量总和：{{ getTotalSplitQuantity() }} / {{ task?.production_quantity || 0 }} <span v-if="getTotalSplitQuantity() > (task?.production_quantity || 0)" class="font-bold text-danger-600">（超出父任务数量）</span></div>
       </div>
     </div>
@@ -55,7 +45,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, InputNumber, Select } from '@/components/common'
+import { Icon, Input, InputNumber, Select, LineItemsTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import { ElMessage } from '@/utils/message'
 
 const props = defineProps({
@@ -91,6 +82,14 @@ const initFormData = (task: any) => {
 const addSplitItem = () => { formData.splits.push({ production_quantity: 0, assigned_department: null, assigned_operator: null, work_content: '' }) }
 const removeSplitItem = (index: any) => { if (formData.splits.length > 2) formData.splits.splice(index, 1) }
 const getTotalSplitQuantity = () => formData.splits.reduce((sum: any, item: any) => sum + (item.production_quantity || 0), 0)
+
+const splitColumns: Column[] = [
+  { key: 'index', label: '序号', width: 56, align: 'center' },
+  { key: 'production_quantity', label: '生产数量', width: 144 },
+  { key: 'assigned_department', label: '分派部门', width: 176 },
+  { key: 'assigned_operator', label: '分派操作员', width: 176 },
+  { key: 'work_content', label: '工作内容', minWidth: 192 },
+]
 
 const handleConfirm = () => {
   if (!formData.splits || formData.splits.length < 2) { ElMessage.error('至少需要2个子任务'); return }

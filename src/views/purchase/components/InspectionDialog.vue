@@ -1,32 +1,25 @@
 <template>
   <BaseDialog :show="dialogVisible" title="质检确认" width="wide" @close="handleClose; dialogVisible = false;">
     <div class="relative" :class="{ 'opacity-50 pointer-events-none': loading }">
-      <div v-if="loading" class="absolute inset-0 flex items-center justify-center">
+      <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-10">
         <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
       </div>
-      <table class="data-table w-full">
-        <thead>
-          <tr>
-            <th class="min-w-[150px] text-left">物料名称</th>
-            <th class="w-[120px] text-left">物料编码</th>
-            <th class="w-[100px] text-right">收货数量</th>
-            <th class="w-[100px] text-left">质检状态</th>
-            <th class="w-[150px] text-left">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, index) in records" :key="index">
-            <td>{{ row.material_name }}</td>
-            <td>{{ row.material_code }}</td>
-            <td class="text-right">{{ row.received_quantity }}</td>
-            <td><StatusTag :status="row.inspection_status" category="inspection" :label="row.inspection_status_display" size="small" /></td>
-            <td>
-              <button class="btn btn-ghost btn-sm" v-if="row.inspection_status === 'pending'" @click="showForm(row)">质检</button>
-              <button class="btn btn-ghost btn-sm" v-if="canStockIn(row)" @click="handleStockIn(row)">入库</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <SummaryTable
+        :columns="columns"
+        :data="records"
+        :loading="loading"
+        row-key="id"
+      >
+        <template #cell-inspection_status="{ row }">
+          <StatusTag :status="row.inspection_status" category="inspection" :label="row.inspection_status_display" size="small" />
+        </template>
+        <template #cell-actions="{ row }">
+          <RowActions
+            :actions="getRowActions(row)"
+            @action="(action) => handleRowAction(action, row)"
+          />
+        </template>
+      </SummaryTable>
     </div>
     <template #footer><button class="btn" @click="handleClose">取消</button><button class="btn btn-primary" @click="handleSubmit">确认</button></template>
   </BaseDialog>
@@ -34,7 +27,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { StatusTag } from '@/components/common'
+import { StatusTag, SummaryTable, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 
 const props = defineProps({ visible: { type: Boolean, default: false }, records: { type: Array as any, default: () => [] }, loading: { type: Boolean, default: false } })
 const emit = defineEmits(['submit', 'update:visible', 'inspect', 'stock-in'])
@@ -45,4 +39,22 @@ const showForm = (row: any) => emit('inspect', row)
 const handleStockIn = (row: any) => emit('stock-in', row)
 const handleSubmit = () => emit('submit')
 const handleClose = () => emit('update:visible', false)
+
+const columns: Column[] = [
+  { key: 'material_name', label: '物料名称', minWidth: 150 },
+  { key: 'material_code', label: '物料编码', width: 120 },
+  { key: 'received_quantity', label: '收货数量', width: 100, align: 'right' },
+  { key: 'inspection_status', label: '质检状态', width: 100 },
+  { key: 'actions', label: '操作', width: 150 }
+]
+
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'inspect', label: '质检', icon: 'clipboardCheck', tone: 'primary', visible: row.inspection_status === 'pending' },
+  { key: 'stock-in', label: '入库', icon: 'arrowDownTray', tone: 'success', visible: canStockIn(row) }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  if (action.key === 'inspect') showForm(row)
+  if (action.key === 'stock-in') handleStockIn(row)
+}
 </script>

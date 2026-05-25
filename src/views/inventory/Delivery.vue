@@ -56,28 +56,10 @@
             <StatusTag :status="row.status" category="delivery" :label="row.status_display" />
           </template>
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
-              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
-                <Icon name="eye" size="sm" />
-                <span class="text-xs">查看</span>
-              </button>
-              <button v-if="canEdit && row.status === 'pending'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleEdit(row)">
-                <Icon name="edit" size="sm" />
-                <span class="text-xs">编辑</span>
-              </button>
-              <button v-if="canEdit && row.status === 'pending'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20 dark:hover:text-orange-400" @click="confirmShip(row)">
-                <Icon name="truck" size="sm" />
-                <span class="text-xs">发货</span>
-              </button>
-              <button v-if="canEdit && (row.status === 'shipped' || row.status === 'in_transit')" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400" @click="handleReceive(row)">
-                <Icon name="check" size="sm" />
-                <span class="text-xs">签收</span>
-              </button>
-              <button v-if="canDelete && row.status === 'pending'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400" @click="confirmDelete(row)">
-                <Icon name="trash" size="sm" />
-                <span class="text-xs">删除</span>
-              </button>
-            </div>
+            <RowActions
+              :actions="getRowActions(row)"
+              @action="(action) => handleRowAction(action, row)"
+            />
           </template>
           <template #empty>
             <EmptyState description="暂无发货单数据">
@@ -140,8 +122,8 @@ import { deliveryOrderAPI, salesOrderAPI, productAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog, FilterRow } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog, FilterRow, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 import DeliveryStats from './components/DeliveryStats.vue'
 import DeliveryDetailDialog from './components/DeliveryDetailDialog.vue'
 import DeliveryReceiveDialog from './components/DeliveryReceiveDialog.vue'
@@ -382,35 +364,26 @@ const handleSubmit = async (data: any) => {
 const handleSalesOrderChange = (orderId: any) => { /* TODO */ }
 const handleCustomerChange = (customerId: any) => { /* TODO */ }
 
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
+  { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value && row.status === 'pending' },
+  { key: 'ship', label: '发货', icon: 'truck', tone: 'warning', visible: canEdit.value && row.status === 'pending' },
+  { key: 'receive', label: '签收', icon: 'check', tone: 'success', visible: canEdit.value && (row.status === 'shipped' || row.status === 'in_transit') },
+  { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete.value && row.status === 'pending' }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  switch (action.key) {
+    case 'view': handleView(row); break
+    case 'edit': handleEdit(row); break
+    case 'ship': confirmShip(row); break
+    case 'receive': handleReceive(row); break
+    case 'delete': confirmDelete(row); break
+  }
+}
+
 const getTrackingUrl = (row: any) => row.tracking_url || (row.logistics_company === '顺丰' ? `https://www.sf-express.com/sf-service-owf-web/shipment/query?trackingNumber=${row.tracking_number}` : null)
 
 onMounted(() => { loadData(); fetchStats(); fetchCustomers(); fetchSalesOrders(); fetchProducts() })
 </script>
 
-<style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.delivery-container { padding: var(--ui-page-padding); }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.filter-search-control { width: min(100%, 240px); }
-.filter-select-control { width: min(100%, 180px); }
-.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
-.data-table { width: 100%; }
-.card { border-radius: 8px; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); }
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section,
-  .filter-group,
-  .action-group {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .filter-search-control,
-  .filter-select-control,
-  .action-group .btn {
-    width: 100%;
-  }
-}
-</style>

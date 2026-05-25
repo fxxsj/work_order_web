@@ -10,32 +10,25 @@
         <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">子任务列表</label>
         <div class="flex-1">
           <div class="mb-3 flex flex-wrap items-center gap-3"><button class="btn btn-primary btn-sm" @click="addSplitItem">添加子任务</button><span class="text-sm text-gray-400">至少需要2个子任务</span></div>
-          <div class="overflow-x-auto">
-            <table class="dialog-table w-full">
-              <thead>
-                <tr>
-                  <th class="text-center w-16">序号</th>
-                  <th class="text-left w-40">生产数量</th>
-                  <th class="text-left w-44">分派部门</th>
-                  <th class="text-left w-44">分派操作员</th>
-                  <th class="text-center w-20">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(split, index) in form.splits" :key="index">
-                  <td class="text-center">{{ index + 1 }}</td>
-                  <td class="py-1"><InputNumber v-model="(split as any).production_quantity" :min="1" :max="task?.production_quantity || 999999" class="w-full" /></td>
-                  <td class="py-1">
-                    <Select v-model="(split as any).assigned_department" :options="departmentOptions" placeholder="选择部门" filterable clearable class="w-full" @change="v => handleDeptChange(index, v)" />
-                  </td>
-                  <td class="py-1">
-                    <Select v-model="(split as any).assigned_operator" :options="userOptions" placeholder="选择操作员" filterable clearable class="w-full" />
-                  </td>
-                  <td class="text-center"><button class="btn btn-danger btn-sm" @click="removeSplit(index)" :disabled="form.splits.length <= 2">删除</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <LineItemsTable
+            :columns="splitColumns"
+            :items="form.splits"
+            :delete-disabled="() => form.splits.length <= 2"
+            @delete="removeSplit"
+          >
+            <template #cell-index="{ index }">
+              <span class="text-center block">{{ index + 1 }}</span>
+            </template>
+            <template #cell-production_quantity="{ row }">
+              <InputNumber v-model="row.production_quantity" :min="1" :max="task?.production_quantity || 999999" class="w-full" />
+            </template>
+            <template #cell-assigned_department="{ row, index }">
+              <Select v-model="row.assigned_department" :options="departmentOptions" placeholder="选择部门" filterable clearable class="w-full" @change="v => handleDeptChange(index, v)" />
+            </template>
+            <template #cell-assigned_operator="{ row }">
+              <Select v-model="row.assigned_operator" :options="userOptions" placeholder="选择操作员" filterable clearable class="w-full" />
+            </template>
+          </LineItemsTable>
           <div v-if="form.splits.length >= 2" class="mt-3 text-sm font-bold text-warning-600">子任务数量总和: {{ totalQuantity }} / {{ task?.production_quantity || 0 }}</div>
         </div>
       </div>
@@ -49,7 +42,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import { Input, InputNumber, Select } from '@/components/common'
+import { Icon, Input, InputNumber, Select, LineItemsTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import { ElMessage } from '@/utils/message'
 
 const props = defineProps({ visible: { type: Boolean, default: false }, task: { type: Object, default: null }, departmentList: { type: Array as any, default: () => [] }, userList: { type: Array as any, default: () => [] }, loading: { type: Boolean, default: false } })
@@ -64,6 +58,13 @@ const userOptions = computed(() => props.userList.map((u: any) => ({ value: u.id
 
 const addSplitItem = () => form.splits.push({ production_quantity: Math.floor((props.task?.production_quantity || 0) / 2), assigned_department: null, assigned_operator: null })
 const removeSplit = (index: any) => form.splits.splice(index, 1)
+
+const splitColumns: Column[] = [
+  { key: 'index', label: '序号', width: 64, align: 'center' },
+  { key: 'production_quantity', label: '生产数量', width: 160 },
+  { key: 'assigned_department', label: '分派部门', width: 176 },
+  { key: 'assigned_operator', label: '分派操作员', width: 176 },
+]
 const handleDeptChange = (index: any, val: any) => { form.splits[index].assigned_operator = null }
 const handleSubmit = () => {
   if (form.splits.length < 2) { ElMessage.warning('至少需要2个子任务'); return }

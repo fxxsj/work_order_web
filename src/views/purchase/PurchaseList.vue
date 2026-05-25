@@ -60,14 +60,10 @@
         
         <template #cell-actions="{ row }">
           <div class="flex items-center gap-1">
-            <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
-              <Icon name="eye" size="sm" />
-              <span class="text-xs">查看</span>
-            </button>
-            <button v-if="row.status === 'draft' && canEdit" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="showEditDialog(row)">
-              <Icon name="edit" size="sm" />
-              <span class="text-xs">编辑</span>
-            </button>
+            <RowActions
+              :actions="getRowActions(row)"
+              @action="(action) => handleRowAction(action, row)"
+            />
             <select v-if="hasStatusActions(row)" class="ml-1 rounded border-gray-300 bg-transparent py-1 pl-2 pr-6 text-xs text-gray-600 outline-none hover:bg-gray-50 dark:border-dark-600 dark:text-gray-400 dark:hover:bg-dark-700" @change="(e) => { handleStatusAction((e.target as HTMLSelectElement)?.value || '', row); (e.target as HTMLSelectElement).value = ''; }">
               <option value="" disabled selected>更多</option>
               <option v-if="row.status === 'draft'" value="submit">提交</option>
@@ -137,8 +133,8 @@ import { ElMessage } from '@/utils/message'
 import { purchaseOrderAPI, workOrderAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, Icon, StatusTag, Pagination, ConfirmDialog, FilterRow } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, Icon, StatusTag, Pagination, ConfirmDialog, FilterRow, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 import { PurchaseFormDialog, PurchaseDetailDialog, LowStockAlertDialog, ReceiveDialog, InspectionDialog } from './components'
 
 const showCreateModal = ref(false)
@@ -306,6 +302,18 @@ const cancelCancelDialog = () => {
   if (canceling.value) return
   showCancelDialog.value = false
   rowToCancel.value = null
+}
+
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
+  { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: row.status === 'draft' && canEdit.value }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  switch (action.key) {
+    case 'view': handleView(row); break
+    case 'edit': showEditDialog(row); break
+  }
 }
 
 const handleReceiveSuccess = () => { receiveDialogVisible.value = false; loadData() }

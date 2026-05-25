@@ -63,16 +63,10 @@
             <StatusTag :status="row.status" category="stock" :label="row.status_display" />
           </template>
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
-              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
-                <Icon name="eye" size="sm" />
-                <span class="text-xs">查看</span>
-              </button>
-              <button v-if="canEdit" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleAdjust(row)">
-                <Icon name="edit" size="sm" />
-                <span class="text-xs">调整</span>
-              </button>
-            </div>
+            <RowActions
+              :actions="getRowActions(row)"
+              @action="(action) => handleRowAction(action, row)"
+            />
           </template>
           <template #empty>
             <EmptyState
@@ -126,58 +120,32 @@
 
     <BaseDialog :show="lowStockDialogVisible" title="库存预警" width="extra-wide" @close="lowStockDialogVisible = false">
       <EmptyState v-if="!loadingLowStock && lowStockList.length === 0" description="暂无低库存预警" />
-      <div v-else class="overflow-x-auto">
-        <table class="w-full border-collapse">
-          <thead>
-            <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-              <th class="px-4 py-3 w-52">产品名称</th>
-              <th class="px-4 py-3 w-36">批次号</th>
-              <th class="px-4 py-3 w-24 text-right">当前库存</th>
-              <th class="px-4 py-3 w-24 text-right">最小库存</th>
-              <th class="px-4 py-3 w-24 text-right">可用数量</th>
-              <th class="px-4 py-3 w-28">库位</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-            <tr v-for="row in lowStockList" :key="row.id">
-              <td class="px-4 py-3">{{ row.product_name }}</td>
-              <td class="px-4 py-3">{{ row.batch_no }}</td>
-              <td class="px-4 py-3 text-right">{{ row.quantity }}</td>
-              <td class="px-4 py-3 text-right">{{ row.min_stock_level }}</td>
-              <td class="px-4 py-3 text-right font-bold text-danger-600 dark:text-danger-400">{{ row.available_quantity }}</td>
-              <td class="px-4 py-3">{{ row.location }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <SummaryTable
+        v-else
+        :columns="lowStockColumns"
+        :data="lowStockList"
+        :loading="loadingLowStock"
+        row-key="id"
+      >
+        <template #cell-available_quantity="{ row }">
+          <span class="font-bold text-danger-600 dark:text-danger-400">{{ row.available_quantity }}</span>
+        </template>
+      </SummaryTable>
     </BaseDialog>
 
     <BaseDialog :show="expiredDialogVisible" title="过期库存" width="extra-wide" @close="expiredDialogVisible = false">
       <EmptyState v-if="!loadingExpired && expiredList.length === 0" description="暂无过期库存" />
-      <div v-else class="overflow-x-auto">
-        <table class="w-full border-collapse">
-          <thead>
-            <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-              <th class="px-4 py-3 w-52">产品名称</th>
-              <th class="px-4 py-3 w-36">批次号</th>
-              <th class="px-4 py-3 w-24 text-right">库存数量</th>
-              <th class="px-4 py-3 w-28">过期日期</th>
-              <th class="px-4 py-3 w-24 text-right">过期天数</th>
-              <th class="px-4 py-3 w-28">库位</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-            <tr v-for="row in expiredList" :key="row.id">
-              <td class="px-4 py-3">{{ row.product_name }}</td>
-              <td class="px-4 py-3">{{ row.batch_no }}</td>
-              <td class="px-4 py-3 text-right">{{ row.quantity }}</td>
-              <td class="px-4 py-3">{{ row.expiry_date }}</td>
-              <td class="px-4 py-3 text-right text-danger-600 dark:text-danger-400">{{ Math.abs(row.days_until_expiry) }}天</td>
-              <td class="px-4 py-3">{{ row.location }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <SummaryTable
+        v-else
+        :columns="expiredColumns"
+        :data="expiredList"
+        :loading="loadingExpired"
+        row-key="id"
+      >
+        <template #cell-days_until_expiry="{ row }">
+          <span class="text-danger-600 dark:text-danger-400">{{ Math.abs(row.days_until_expiry) }}天</span>
+        </template>
+      </SummaryTable>
     </BaseDialog>
 
     <BaseDialog :show="adjustDialogVisible" title="库存调整" width="normal" @close="adjustDialogVisible = false">
@@ -209,8 +177,8 @@ import { productStockAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, EmptyState, Pagination, InputNumber, TextArea, Select, TablePageLayout, DataTable, Tag, BaseDialog, DescriptionGrid, DescriptionItem } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { StatusTag, EmptyState, Pagination, InputNumber, TextArea, Select, TablePageLayout, DataTable, Tag, BaseDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 import StockStats from './components/StockStats.vue'
 
 const userStore = useUserStore()
@@ -325,9 +293,39 @@ const handleExpired = async () => {
   }
 }
 
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
+  { key: 'adjust', label: '调整', icon: 'edit', tone: 'primary', visible: canEdit.value }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  switch (action.key) {
+    case 'view': handleView(row); break
+    case 'adjust': handleAdjust(row); break
+  }
+}
+
 const getQuantityClass = (row: any) => row.quantity <= row.min_stock_level ? 'font-bold text-danger-600 dark:text-danger-400' : ''
 const getExpiryClass = (row: any) => row.days_until_expiry !== null && row.days_until_expiry <= 0 ? 'font-bold text-danger-600 dark:text-danger-400' : row.days_until_expiry !== null && row.days_until_expiry <= 7 ? 'text-warning-600 dark:text-warning-400' : ''
 const getExpiryTagType = (days: any) => days <= 0 ? 'danger' : days <= 7 ? 'warning' : 'success'
+
+const lowStockColumns: Column[] = [
+  { key: 'product_name', label: '产品名称', width: 208 },
+  { key: 'batch_no', label: '批次号', width: 144 },
+  { key: 'quantity', label: '当前库存', width: 96, align: 'right' },
+  { key: 'min_stock_level', label: '最小库存', width: 96, align: 'right' },
+  { key: 'available_quantity', label: '可用数量', width: 96, align: 'right' },
+  { key: 'location', label: '库位', width: 112 }
+]
+
+const expiredColumns: Column[] = [
+  { key: 'product_name', label: '产品名称', width: 208 },
+  { key: 'batch_no', label: '批次号', width: 144 },
+  { key: 'quantity', label: '库存数量', width: 96, align: 'right' },
+  { key: 'expiry_date', label: '过期日期', width: 112 },
+  { key: 'days_until_expiry', label: '过期天数', width: 96, align: 'right' },
+  { key: 'location', label: '库位', width: 112 }
+]
 
 onMounted(() => { loadData(); fetchStats() })
 </script>

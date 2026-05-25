@@ -54,4 +54,4 @@ export { default as FilterBar } from './FilterBar.vue'
 export { default as StatsCards } from './StatsCards.vue'
 export { default as BaseSelect } from './BaseSelect.vue'
 
-export type { Column } from './types'
+export type { Column, RowAction, RowActionTone } from './types'

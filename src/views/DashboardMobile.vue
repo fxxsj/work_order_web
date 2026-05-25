@@ -8,30 +8,17 @@
       <div class="stat-card approval" @click="goToApprovals"><div class="stat-icon"><Icon name="checkCircle" /></div><div class="stat-content"><div class="stat-number">{{ statistics.pending_approval || 0 }}</div><div class="stat-label">待审核</div></div></div>
     </div>
     <div class="card">
-  <div class="card-header flex items-center justify-between">
-    <span>最近的施工单</span>
-  </div>
-  <div class="card-body">
-    <div class="table-scroll">
-        <table class="data-table w-full">
-          <thead>
-            <tr>
-              <th class="w-32">施工单号</th>
-              <th class="min-w-32">客户</th>
-              <th class="w-24">状态</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in recentOrders" :key="row.id">
-              <td>{{ row.order_number }}</td>
-              <td>{{ row.customer_name }}</td>
-              <td><StatusTag :status="row.status" :label="row.status_display" category="workOrder" size="small" /></td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="card-header flex items-center justify-between">
+        <span>最近的施工单</span>
       </div>
-  </div>
-</div>
+      <div class="card-body">
+        <SummaryTable :columns="columns" :data="recentOrders">
+          <template #cell-status="{ row }">
+            <StatusTag :status="row.status" :label="row.status_display" category="workOrder" size="small" />
+          </template>
+        </SummaryTable>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -39,12 +26,19 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { workOrderAPI } from '@/api/modules'
-import { Icon, StatusTag } from '@/components/common'
+import { Icon, StatusTag, SummaryTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 
 const router = useRouter()
 const loading = ref(false)
 const statistics = reactive({ pending_orders: 0, in_progress_orders: 0, urgent_orders: 0, pending_approval: 0 })
 const recentOrders = ref<any[]>([])
+
+const columns: Column[] = [
+  { key: 'order_number', label: '施工单号', width: 128 },
+  { key: 'customer_name', label: '客户' },
+  { key: 'status', label: '状态', width: 96 },
+]
 
 onMounted(async () => {
   loading.value = true
@@ -74,9 +68,6 @@ const goToApprovals = () => router.push('/workorders?approval_status=pending')
 .stat-icon { font-size: 24px; margin-bottom: 8px; }
 .stat-number { font-size: 24px; font-weight: bold; }
 .stat-label { font-size: 12px; opacity: 0.9; }
-.recent-orders-card { margin-top: var(--ui-section-gap); }
-.table-scroll { overflow-x: auto; }
-.recent-orders-table { width: 100%; }
 
 @media (max-width: bp.$breakpoint-phone-max) {
   .mobile-header,

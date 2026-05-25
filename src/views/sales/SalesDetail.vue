@@ -73,32 +73,18 @@
 
       <div class="card mb-6">
         <div class="mb-4 text-lg font-bold">订单明细</div>
-        <div class="overflow-x-auto">
-          <table class="data-table w-full">
-            <thead>
-              <tr>
-                <th class="min-w-[200px] text-left">产品名称</th>
-                <th class="w-[150px] text-left">规格</th>
-                <th class="w-[100px] text-right">数量</th>
-                <th class="w-[80px] text-center">单位</th>
-                <th class="w-[100px] text-right">单价</th>
-                <th class="w-[120px] text-right">金额</th>
-                <th class="min-w-[150px] text-left">备注</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(row, index) in (detailData.items || [])" :key="index">
-                <td>{{ row.product_name }}</td>
-                <td>{{ row.specification }}</td>
-                <td class="text-right">{{ row.quantity }}</td>
-                <td class="text-center">{{ row.unit }}</td>
-                <td class="text-right">¥{{ formatAmount(row.unit_price) }}</td>
-                <td class="text-right">¥{{ formatAmount(row.quantity * row.unit_price) }}</td>
-                <td>{{ row.notes }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <SummaryTable
+          :columns="columns"
+          :data="detailData.items || []"
+          row-key="id"
+        >
+          <template #cell-unit_price="{ row }">
+            ¥{{ formatAmount(row.unit_price) }}
+          </template>
+          <template #cell-amount="{ row }">
+            ¥{{ formatAmount(row.quantity * row.unit_price) }}
+          </template>
+        </SummaryTable>
       </div>
 
       <div v-if="detailData.notes" class="card mb-6">
@@ -149,7 +135,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from '@/utils/message'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
-import { ConfirmDialog, StatusTag, DescriptionGrid, DescriptionItem } from '@/components/common'
+import { ConfirmDialog, StatusTag, DescriptionGrid, DescriptionItem, SummaryTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import { formatDate } from '@/utils/filter'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -205,6 +192,16 @@ const handleApprove = async () => { try { await salesOrderAPI.approve(String(rou
 const handleReject = async () => { try { await salesOrderAPI.reject(String(route.params.id)); ElMessage.success('已拒绝'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '操作失败') } }
 
 const formatAmount = (amount: any) => amount ? amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '0.00'
+
+const columns: Column[] = [
+  { key: 'product_name', label: '产品名称', minWidth: 200 },
+  { key: 'specification', label: '规格', width: 150 },
+  { key: 'quantity', label: '数量', width: 100, align: 'right' },
+  { key: 'unit', label: '单位', width: 80, align: 'center' },
+  { key: 'unit_price', label: '单价', width: 100, align: 'right' },
+  { key: 'amount', label: '金额', width: 120, align: 'right' },
+  { key: 'notes', label: '备注', minWidth: 150 }
+]
 
 onMounted(() => { loadData() })
 </script>

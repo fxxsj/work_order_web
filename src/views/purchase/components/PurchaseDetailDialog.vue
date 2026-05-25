@@ -19,34 +19,29 @@
       </DescriptionItem>
     </DescriptionGrid>
     <SectionDivider title="采购明细" />
-    <table class="data-table w-full">
-      <thead>
-        <tr>
-          <th class="w-[200px] text-left">物料</th>
-          <th class="w-[120px] text-left">物料编码</th>
-          <th class="w-[100px] text-right">数量</th>
-          <th class="w-[100px] text-right">单价</th>
-          <th class="w-[100px] text-right">小计</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(row, index) in (detailData?.items || [])" :key="index">
-          <td>{{ row.material_name }}</td>
-          <td>{{ row.material_code }}</td>
-          <td class="text-right">{{ row.quantity }}</td>
-          <td class="text-right">{{ row.unit_price }}</td>
-          <td class="text-right">{{ row.subtotal }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <SummaryTable
+      :columns="columns"
+      :data="detailData?.items || []"
+      row-key="id"
+    />
     <template #footer><button class="btn" @click="emit('update:visible', false)">关闭</button></template>
   </BaseDialog>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Icon, StatusTag, SectionDivider, DescriptionGrid, DescriptionItem } from '@/components/common'
+import { Icon, StatusTag, SectionDivider, DescriptionGrid, DescriptionItem, SummaryTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
+
 const props = defineProps({ visible: { type: Boolean, default: false }, detailData: { type: Object, default: null } })
 const emit = defineEmits(['update:visible', 'view-work-order'])
 const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
+
+const columns: Column[] = [
+  { key: 'material_name', label: '物料', width: 200 },
+  { key: 'material_code', label: '物料编码', width: 120 },
+  { key: 'quantity', label: '数量', width: 100, align: 'right' },
+  { key: 'unit_price', label: '单价', width: 100, align: 'right' },
+  { key: 'subtotal', label: '小计', width: 100, align: 'right' }
+]
 </script>

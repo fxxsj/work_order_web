@@ -9,34 +9,30 @@
         <div class="rounded-xl bg-green-50 p-4 text-center dark:bg-green-900/20"><div class="text-2xl font-bold text-green-600">{{ taskStats.completed }}</div><div class="text-xs text-gray-500">已完成</div></div>
         <div class="rounded-xl bg-primary-50 p-4 text-center dark:bg-primary-900/20"><CircularProgress :percentage="taskStats.progress || 0" :size="60" :stroke-width="8" /><div class="mt-1 text-xs text-gray-500">完成进度</div></div>
       </div>
-      <div class="overflow-x-auto">
-        <table class="mt-2 w-full border-collapse text-sm">
-          <thead>
-            <tr class="border-b border-gray-200 bg-gray-50 dark:border-dark-700 dark:bg-dark-800">
-              <th class="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-400">ID</th>
-              <th class="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-400">任务内容</th>
-              <th class="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-400">类型</th>
-              <th class="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-400">状态</th>
-              <th class="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-400">数量</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in tasks" :key="row.id" class="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-dark-800 dark:hover:bg-dark-800">
-              <td class="px-3 py-2 text-center">{{ row.id }}</td>
-              <td class="px-3 py-2">{{ row.work_content }}</td>
-              <td class="px-3 py-2">{{ row.task_type_display }}</td>
-              <td class="px-3 py-2"><StatusTag :status="row.status" category="task" :label="row.status_display" size="small" /></td>
-              <td class="px-3 py-2 text-center">{{ row.production_quantity }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <SummaryTable
+        :columns="columns"
+        :data="tasks"
+        row-key="id"
+      >
+        <template #cell-status="{ row }">
+          <StatusTag :status="row.status" category="task" :label="row.status_display" size="small" />
+        </template>
+      </SummaryTable>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { StatusTag, CircularProgress, LoadingSpinner } from '@/components/common'
+import { StatusTag, CircularProgress, LoadingSpinner, SummaryTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 
 const props = defineProps({ tasks: { type: Array as any, default: () => [] }, taskStats: { type: Object, default: () => ({}) }, loading: { type: Boolean, default: false } })
+
+const columns: Column[] = [
+  { key: 'id', label: 'ID', width: 80, align: 'center' },
+  { key: 'work_content', label: '任务内容', minWidth: 160 },
+  { key: 'task_type_display', label: '类型', width: 120 },
+  { key: 'status', label: '状态', width: 120 },
+  { key: 'production_quantity', label: '数量', width: 80, align: 'center' }
+]
 </script>

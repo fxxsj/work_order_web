@@ -6,6 +6,7 @@ const props = withDefaults(defineProps<{
   items: any[]
   emptyText?: string
   showDelete?: boolean
+  deleteDisabled?: (item: any, index: number) => boolean
 }>(), {
   emptyText: '暂无明细数据',
   showDelete: true,
@@ -76,7 +77,8 @@ const handleDelete = (index: number) => {
           </td>
           <td v-if="showDelete" class="px-3 py-2 text-center">
             <button
-              class="btn btn-ghost btn-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+              class="btn btn-ghost btn-sm text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed dark:text-red-400 dark:hover:bg-red-900/20"
+              :disabled="deleteDisabled?.(item, index)"
               @click="handleDelete(index)"
             >
               <slot name="delete-icon">删除</slot>

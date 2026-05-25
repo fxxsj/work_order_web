@@ -162,7 +162,12 @@
             :data-row-id="resolveRowKey(sortedData[virtualRow.index], virtualRow.index)"
             :data-index="virtualRow.index"
             :ref="measureElement"
-            class="hover:bg-gray-50 dark:hover:bg-dark-800"
+            :class="[
+              'hover:bg-gray-50 dark:hover:bg-dark-800',
+              typeof props.rowClass === 'function'
+                ? props.rowClass(sortedData[virtualRow.index], virtualRow.index)
+                : props.rowClass
+            ]"
           >
             <td
               v-for="(column, colIndex) in columns"
@@ -335,6 +340,7 @@ interface Props {
   serverSideSort?: boolean
   estimateRowHeight?: number
   overscan?: number
+  rowClass?: string | ((row: any, index: number) => string)
 }
 
 const props = withDefaults(defineProps<Props>(), {

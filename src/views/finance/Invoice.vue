@@ -37,20 +37,10 @@
           <template #cell-issue_date="{ row }"><span>{{ row.issue_date }}</span></template>
           <template #cell-status="{ row }"><StatusTag :status="row.status" category="invoice" :label="row.status_display" /></template>
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
-              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
-                <Icon name="eye" size="sm" />
-                <span class="text-xs">查看</span>
-              </button>
-              <button v-if="canEdit && row.status === 'draft'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleEdit(row)">
-                <Icon name="edit" size="sm" />
-                <span class="text-xs">编辑</span>
-              </button>
-              <button v-if="canEdit && row.status === 'draft'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-yellow-50 hover:text-yellow-600 dark:hover:bg-yellow-900/20 dark:hover:text-yellow-400" @click="openSubmitDialog(row)">
-                <Icon name="upload" size="sm" />
-                <span class="text-xs">提交</span>
-              </button>
-            </div>
+            <RowActions
+              :actions="getRowActions(row)"
+              @action="(action) => handleRowAction(action, row)"
+            />
           </template>
           <template #empty>
             <EmptyState description="暂无发票数据">
@@ -152,8 +142,8 @@ import { invoiceAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, SearchInput, Icon, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { StatusTag, Select, SearchInput, Icon, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 import InvoiceStats from './components/InvoiceStats.vue'
 
 const statsLoading = ref(false)
@@ -355,6 +345,20 @@ const handleSave = async () => {
   }
 }
 
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
+  { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value && row.status === 'draft' },
+  { key: 'submit', label: '提交', icon: 'upload', tone: 'warning', visible: canEdit.value && row.status === 'draft' }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  switch (action.key) {
+    case 'view': handleView(row); break
+    case 'edit': handleEdit(row); break
+    case 'submit': openSubmitDialog(row); break
+  }
+}
+
 onMounted(() => {
   loadData()
   fetchStats()
@@ -362,64 +366,3 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.invoice-container {
-  padding: var(--ui-page-padding);
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--ui-control-gap);
-}
-
-.filter-group,
-.action-group {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--ui-control-gap);
-}
-
-.finance-filter-control {
-  width: min(100%, var(--ui-filter-control-width));
-}
-
-.finance-search-control {
-  width: min(100%, var(--ui-search-control-width));
-}
-
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-  overflow-x: auto;
-}
-
-.finance-table {
-  width: 100%;
-}
-
-.card {
-  border-radius: var(--ui-radius-card);
-  box-shadow: var(--ui-shadow-card);
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section,
-  .filter-group,
-  .action-group,
-  .finance-filter-control,
-  .finance-search-control {
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .filter-group,
-  .action-group {
-    flex-direction: column;
-  }
-}
-</style>

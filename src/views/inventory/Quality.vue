@@ -57,20 +57,10 @@
             <span>{{ row.inspection_date }}</span>
           </template>
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
-              <button class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400" @click="handleView(row)">
-                <Icon name="eye" size="sm" />
-                <span class="text-xs">查看</span>
-              </button>
-              <button v-if="canEdit && row.result === 'pending'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400" @click="handleInspect(row)">
-                <Icon name="clipboard" size="sm" />
-                <span class="text-xs">检验</span>
-              </button>
-              <button v-if="canDelete && row.result === 'pending'" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400" @click="confirmDelete(row)">
-                <Icon name="trash" size="sm" />
-                <span class="text-xs">删除</span>
-              </button>
-            </div>
+            <RowActions
+              :actions="getRowActions(row)"
+              @action="(action) => handleRowAction(action, row)"
+            />
           </template>
           <template #empty>
             <EmptyState description="暂无质检数据">
@@ -120,8 +110,8 @@ import { ElMessage } from '@/utils/message'
 import { qualityInspectionAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 import QualityStats from './components/QualityStats.vue'
 import QualityDetailDialog from './components/QualityDetailDialog.vue'
 import QualityInspectDialog from './components/QualityInspectDialog.vue'
@@ -270,34 +260,20 @@ const handleSubmit = async (data: any) => {
   } 
 }
 
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
+  { key: 'inspect', label: '检验', icon: 'clipboard', tone: 'primary', visible: canEdit.value && row.result === 'pending' },
+  { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete.value && row.result === 'pending' }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  switch (action.key) {
+    case 'view': handleView(row); break
+    case 'inspect': handleInspect(row); break
+    case 'delete': confirmDelete(row); break
+  }
+}
+
 onMounted(() => { loadData(); fetchStats(); fetchProducts() })
 </script>
 
-<style lang="scss" scoped>
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.quality-container { padding: var(--ui-page-padding); }
-.header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.filter-group, .action-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-control-gap); }
-.filter-search-control { width: min(100%, 220px); }
-.filter-select-control { width: min(100%, 150px); }
-.table-scroll { margin-top: var(--ui-section-gap); overflow-x: auto; }
-.data-table { width: 100%; }
-.text-danger { color: #F56C6C; }
-.card { border-radius: 8px; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); }
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .header-section,
-  .filter-group,
-  .action-group {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .filter-search-control,
-  .filter-select-control,
-  .action-group .btn {
-    width: 100%;
-  }
-}
-</style>

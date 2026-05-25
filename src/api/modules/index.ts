@@ -13,6 +13,7 @@
 export { customerAPI } from './customer'
 export { departmentAPI } from './department'
 export { processAPI } from './process'
+export { processLogAPI } from './process-log'
 export { productAPI } from './product'
 export { materialAPI } from './material'
 export { productGroupAPI } from './product-group'
@@ -32,6 +33,9 @@ export { invoiceAPI } from './invoice'
 export { productionCostAPI } from './production-cost'
 export { paymentAPI } from './payment'
 export { statementAPI } from './statement'
+export { costCenterAPI } from './cost-center'
+export { costItemAPI } from './cost-item'
+export { paymentPlanAPI } from './payment-plan'
 
 // Inventory API (库存管理)
 export { productStockAPI } from './product-stock'

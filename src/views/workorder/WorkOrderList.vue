@@ -69,31 +69,10 @@
         <template #cell-delivery_date="{ row }"><span :style="getDeliveryDateStyle(row.delivery_date, row.status)">{{ formatDate(row.delivery_date) }}</span></template>
         <template #cell-manager_name="{ row }"><span>{{ row.manager_name }}</span></template>
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
-            <button
-              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
-              @click.stop="handleView(row)"
-            >
-              <Icon name="eye" size="sm" />
-              <span class="text-xs">查看</span>
-            </button>
-            <button
-              v-if="canEdit"
-              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
-              @click.stop="handleEdit(row)"
-            >
-              <Icon name="edit" size="sm" />
-              <span class="text-xs">编辑</span>
-            </button>
-            <button
-              v-if="canDelete"
-              class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-              @click.stop="handleDelete(row)"
-            >
-              <Icon name="trash" size="sm" />
-              <span class="text-xs">删除</span>
-            </button>
-          </div>
+          <RowActions
+            :actions="getRowActions(row)"
+            @action="(action) => handleRowAction(action, row)"
+          />
         </template>
         <template #empty>
           <EmptyState description="暂无施工单数据" />
@@ -146,8 +125,8 @@ import { useUserStore } from '@/stores'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
-import { StatusTag, SearchInput, Select, Icon, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { StatusTag, SearchInput, Select, Icon, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 import { WorkOrderStatusChoices, PriorityChoices, ApprovalStatusChoices } from '@/constants'
 import { formatDate } from '@/utils/filter'
 
@@ -278,6 +257,20 @@ const handleConfirmDelete = async () => {
   }
 }
 
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
+  { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value },
+  { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete.value }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  switch (action.key) {
+    case 'view': handleView(row); break
+    case 'edit': handleEdit(row); break
+    case 'delete': handleDelete(row); break
+  }
+}
+
 const getDeliveryDateStyle = (date: any, status: any) => {
   if (status === 'completed' || status === 'cancelled') return {}
   const diffDays = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
@@ -347,40 +340,3 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
-@use '@/assets/styles/tokens/breakpoints' as bp;
-
-.filter-section {
-  margin-bottom: var(--ui-section-gap);
-}
-
-.filter-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--ui-control-gap);
-}
-
-.workorder-skeleton,
-.table-scroll {
-  margin-top: var(--ui-section-gap);
-}
-
-.table-scroll {
-  overflow-x: auto;
-}
-
-.workorder-table {
-  width: 100%;
-}
-
-.data-table {
-  cursor: pointer;
-}
-
-@media (max-width: bp.$breakpoint-phone-max) {
-  .filter-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-</style>

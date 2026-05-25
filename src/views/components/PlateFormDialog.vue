@@ -31,7 +31,7 @@
       </template>
 
       <!-- Extra fields hint slot (for custom hint text below extra fields) -->
-      <div v-if="$slots.extraHint" style="margin-top: -10px; margin-bottom: 10px; padding-left: 0;">
+      <div v-if="$slots.extraHint" class="-mt-2.5 mb-2.5 pl-0">
         <slot name="extraHint" :form="form" />
       </div>
 
@@ -44,31 +44,20 @@
       <SectionDivider title="包含产品及数量" />
       <div class="space-y-2">
         <button class="btn btn-primary btn-sm" :disabled="!canAddMoreProducts" @click="addProductItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加产品</button>
-        <div v-if="productListHint" style="font-size: 12px; color: #909399; margin-top: 5px;">{{ productListHint }}</div>
-        <div class="mt-3 overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-dark-800 dark:text-gray-400">
-                <th class="px-4 py-2 min-w-64">产品名称</th>
-                <th class="px-4 py-2 w-36">{{ quantityColumnLabel }}</th>
-                <th class="px-4 py-2 w-20 text-center">操作</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-              <tr v-for="(item, index) in productItems" :key="index">
-                <td class="px-4 py-2">
-                  <Select v-model="item.product" :options="productOptions" placeholder="请选择产品" filterable class="w-full" />
-                </td>
-                <td class="px-4 py-2">
-                  <InputNumber v-model="item.quantity" :min="1" class="w-full" />
-                </td>
-                <td class="px-4 py-2 text-center">
-                  <button class="btn btn-danger btn-sm" @click="removeProductItem(index)"><Icon name="trash" class="h-3 w-3" /></button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <div v-if="productListHint" class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{{ productListHint }}</div>
+        <LineItemsTable
+          :columns="productColumns"
+          :items="productItems"
+          class="mt-3"
+          @delete="removeProductItem"
+        >
+          <template #cell-product="{ row }">
+            <Select v-model="row.product" :options="productOptions" placeholder="请选择产品" filterable class="w-full" />
+          </template>
+          <template #cell-quantity="{ row }">
+            <InputNumber v-model="row.quantity" :min="1" class="w-full" />
+          </template>
+        </LineItemsTable>
       </div>
       <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注信息" />
     </div>
@@ -81,7 +70,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, TextArea, Select, InputNumber, SectionDivider } from '@/components/common'
+import { Icon, Input, TextArea, Select, InputNumber, SectionDivider, LineItemsTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -130,6 +120,11 @@ const codeHint = computed(() => `留空则自动生成，格式：${props.codePr
 const namePlaceholder = computed(() => `请输入${props.title}名称`)
 const productListHint = computed(() => props.productListHintText)
 const productOptions = computed(() => props.productList.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
+
+const productColumns: Column[] = [
+  { key: 'product', label: '产品名称', minWidth: 256 },
+  { key: 'quantity', label: props.quantityColumnLabel, width: 144 },
+]
 
 watch(() => props.visible, (val: any) => { if (val) initForm() })
 

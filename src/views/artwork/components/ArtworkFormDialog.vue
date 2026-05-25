@@ -42,30 +42,18 @@
         <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">产品列表</label>
         <div class="flex-1">
           <button class="btn btn-primary btn-sm mb-3" @click="addProductItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加产品</button>
-          <div class="table-scroll overflow-x-auto">
-            <table class="dialog-table w-full">
-              <thead>
-                <tr>
-                  <th class="text-left">产品名称</th>
-                  <th class="text-left w-36">拼版数量</th>
-                  <th class="text-center w-24">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in productItems" :key="index">
-                  <td class="py-1">
-                    <Select v-model="item.product" :options="productOptions" placeholder="请选择产品" filterable class="w-full" />
-                  </td>
-                  <td class="py-1">
-                    <InputNumber v-model="item.imposition_quantity" :min="1" class="w-full" />
-                  </td>
-                  <td class="py-1 text-center">
-                    <button class="btn btn-danger btn-sm" @click="removeProductItem(index)"><Icon name="trash" class="h-3 w-3" /></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <LineItemsTable
+            :columns="productColumns"
+            :items="productItems"
+            @delete="removeProductItem"
+          >
+            <template #cell-product="{ row }">
+              <Select v-model="row.product" :options="productOptions" placeholder="请选择产品" filterable class="w-full" />
+            </template>
+            <template #cell-imposition_quantity="{ row }">
+              <InputNumber v-model="row.imposition_quantity" :min="1" class="w-full" />
+            </template>
+          </LineItemsTable>
         </div>
       </div>
       <TextArea v-model="form.notes" label="备注" :rows="3" placeholder="请输入备注信息" class="w-full" />
@@ -79,7 +67,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, InputNumber, TextArea, CheckboxGroup, Select, SectionDivider } from '@/components/common'
+import { Icon, Input, InputNumber, TextArea, CheckboxGroup, Select, SectionDivider, LineItemsTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import { ElMessage } from '@/utils/message'
 
 const props = defineProps({
@@ -112,6 +101,11 @@ const dieOptions = computed(() => props.dieList.map((d: any) => ({ value: d.id, 
 const foilingPlateOptions = computed(() => props.foilingPlateList.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
 const embossingPlateOptions = computed(() => props.embossingPlateList.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
 const productOptions = computed(() => props.productList.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
+
+const productColumns: Column[] = [
+  { key: 'product', label: '产品名称', width: 250 },
+  { key: 'imposition_quantity', label: '拼版数量', width: 144 },
+]
 
 watch(() => props.visible, (val: any) => { if (val) initForm() })
 

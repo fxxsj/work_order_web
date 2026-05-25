@@ -23,38 +23,24 @@
         <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">物料列表</label>
         <div class="flex-1">
           <button class="btn btn-primary btn-sm mb-3" @click="addMaterialItem"><Icon name="plus" class="mr-1 inline h-3 w-3" />添加物料</button>
-          <div class="table-scroll overflow-x-auto">
-            <table class="dialog-table w-full">
-              <thead>
-                <tr>
-                  <th class="text-left">物料名称</th>
-                  <th class="text-left w-36">尺寸</th>
-                  <th class="text-left w-36">用量</th>
-                  <th class="text-center w-20">需要开料</th>
-                  <th class="text-center w-20">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in materialItems" :key="index">
-                  <td class="py-1">
-                    <Select v-model="item.material" :options="materialOptions" placeholder="请选择物料" filterable class="w-full" />
-                  </td>
-                  <td class="py-1">
-                    <Input v-model="item.material_size" placeholder="如：A4、210x297mm" />
-                  </td>
-                  <td class="py-1">
-                    <Input v-model="item.material_usage" placeholder="如：1000张" />
-                  </td>
-                  <td class="py-1 text-center">
-                    <Toggle v-model="item.need_cutting" />
-                  </td>
-                  <td class="py-1 text-center">
-                    <button class="btn btn-danger btn-sm" @click="removeMaterialItem(index)"><Icon name="trash" class="h-3 w-3" /></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <LineItemsTable
+            :columns="materialColumns"
+            :items="materialItems"
+            @delete="removeMaterialItem"
+          >
+            <template #cell-material="{ row }">
+              <Select v-model="row.material" :options="materialOptions" placeholder="请选择物料" filterable class="w-full" />
+            </template>
+            <template #cell-material_size="{ row }">
+              <Input v-model="row.material_size" placeholder="如：A4、210x297mm" />
+            </template>
+            <template #cell-material_usage="{ row }">
+              <Input v-model="row.material_usage" placeholder="如：1000张" />
+            </template>
+            <template #cell-need_cutting="{ row }">
+              <Toggle v-model="row.need_cutting" />
+            </template>
+          </LineItemsTable>
         </div>
       </div>
 
@@ -77,7 +63,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, InputNumber, Select, TextArea, Toggle, CheckboxGroup, SectionDivider } from '@/components/common'
+import { Icon, Input, InputNumber, Select, TextArea, Toggle, CheckboxGroup, SectionDivider, LineItemsTable } from '@/components/common'
+import type { Column } from '@/components/common/types'
 import { ElMessage } from '@/utils/message'
 
 const props = defineProps({
@@ -122,6 +109,13 @@ const isEditMode = computed(() => props.dialogType === 'edit')
 const processOptions = computed(() => props.processes.map((p: any) => ({ value: p.id, label: p.name, disabled: !p.is_active })))
 const productGroupOptions = computed(() => props.productGroups.map((g: any) => ({ value: g.id, label: `${g.code} - ${g.name}` })))
 const materialOptions = computed(() => props.materials.map((m: any) => ({ value: m.id, label: `${m.name} (${m.code})` })))
+
+const materialColumns: Column[] = [
+  { key: 'material', label: '物料名称', width: 200 },
+  { key: 'material_size', label: '尺寸', width: 144 },
+  { key: 'material_usage', label: '用量', width: 144 },
+  { key: 'need_cutting', label: '需要开料', width: 80, align: 'center' },
+]
 
 const initFormFromProduct = () => {
   if (!props.product) return

@@ -56,42 +56,10 @@
           <template #cell-progress="{ row }"><span class="text-right">{{ taskService.calculateProgress(row) }}%</span></template>
           <template #cell-status="{ row }"><StatusTag :status="row.status" category="task" :label="row.status_display" size="small" /></template>
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
-              <button
-                v-if="row.status !== 'completed'"
-                @click="handleCompleteTask(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400"
-              >
-                <Icon name="check" size="sm" />
-                <span class="text-xs">完成</span>
-              </button>
-              
-              <button
-                v-if="row.status !== 'completed' && !row.auto_calculate_quantity"
-                @click="showUpdateDialog(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-              >
-                <Icon name="edit" size="sm" />
-                <span class="text-xs">更新</span>
-              </button>
-              
-              <button
-                @click="showAssignDialog(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-yellow-50 hover:text-yellow-600 dark:hover:bg-yellow-900/20 dark:hover:text-yellow-400"
-              >
-                <Icon name="user" size="sm" />
-                <span class="text-xs">分派</span>
-              </button>
-              
-              <button
-                v-if="row.status !== 'completed' && !row.is_subtask && !row.subtasks_count"
-                @click="showSplitDialog(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400"
-              >
-                <Icon name="copy" size="sm" />
-                <span class="text-xs">拆分</span>
-              </button>
-            </div>
+            <RowActions
+              :actions="getRowActions(row)"
+              @action="(action) => handleRowAction(action, row)"
+            />
           </template>
           <template #empty>
             <EmptyState :description="hasFilters ? '未找到匹配的任务' : '暂无任务数据'" :action-text="hasFilters ? '重置筛选' : undefined" @action="resetFilters" />
@@ -151,8 +119,8 @@ import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import taskService from '@/services/TaskService'
 import { PriorityChoices } from '@/constants'
-import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, RadioGroup, RadioButton, TablePageLayout, DataTable, ConfirmDialog } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, RadioGroup, RadioButton, TablePageLayout, DataTable, ConfirmDialog, RowActions } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import TaskKanban from '@/components/TaskKanban.vue'
 import TaskLogs from './components/TaskLogs.vue'
@@ -259,6 +227,22 @@ const canBatchAssign = computed(() => userStore.hasPermission('workorder.change_
 const canBatchComplete = computed(() => userStore.hasPermission('workorder.change_workordertask'))
 const canBatchDelete = computed(() => userStore.hasPermission('workorder.delete_workordertask'))
 const canBatchCancel = computed(() => userStore.hasPermission('workorder.change_workordertask'))
+
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'complete', label: '完成', icon: 'check', tone: 'success', visible: row.status !== 'completed' },
+  { key: 'update', label: '更新', icon: 'edit', tone: 'primary', visible: row.status !== 'completed' && !row.auto_calculate_quantity },
+  { key: 'assign', label: '分派', icon: 'user', tone: 'warning' },
+  { key: 'split', label: '拆分', icon: 'copy', tone: 'default', visible: row.status !== 'completed' && !row.is_subtask && !row.subtasks_count }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  switch (action.key) {
+    case 'complete': handleCompleteTask(row); break
+    case 'update': showUpdateDialog(row); break
+    case 'assign': showAssignDialog(row); break
+    case 'split': showSplitDialog(row); break
+  }
+}
 
 const handleSortChange = (payload: any) => { const { prop, order } = payload; /* TODO */ }
 const clearSelection = () => { selectedTasks.value = [] }
