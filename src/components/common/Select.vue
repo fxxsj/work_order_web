@@ -67,7 +67,8 @@
           >
             <!-- Search input -->
             <div
-              v-if="isSearchable"
+              v-show="isSearchable"
+              key="select-search"
               class="select-search"
             >
               <Icon
@@ -236,6 +237,7 @@ const hasError = computed(() => !!props.error)
 const errorMessage = computed(() => typeof props.error === 'string' ? props.error : '')
 
 const isSearchable = computed(() => {
+  if (props.remote) return true
   if (props.searchable === 'auto') return props.options.length > 5
   return props.searchable
 })
