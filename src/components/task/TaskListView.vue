@@ -31,7 +31,7 @@
       <template #cell-progress="{ row }">
         <ProgressBar
           :percentage="calculateProgress(row)"
-          :color="getProgressColor(row)"
+          :status="getProgressStatus(row)"
         />
       </template>
       <template #cell-deadline="{ row }">
@@ -80,7 +80,7 @@ const columns: Column[] = [
 
 const getTaskDeadline = (task: any) => task.deadline || task.due_date || null;
 const calculateProgress = (task: any) => task.production_quantity ? Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100) : 0;
-const getProgressColor = (task: any) => calculateProgress(task) === 100 ? '#67c23a' : '#14b8a6';
+const getProgressStatus = (task: any) => calculateProgress(task) === 100 ? 'success' : 'active';
 const isOverdue = (task: any) => { const dl = getTaskDeadline(task); return dl && new Date(dl) < new Date() };
 
 const canUpdate = (task: any) => props.editable && task.status !== 'completed' && task.status !== 'cancelled';

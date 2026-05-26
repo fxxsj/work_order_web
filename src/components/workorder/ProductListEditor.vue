@@ -12,17 +12,6 @@
         />
         添加产品
       </button>
-      <button
-        v-if="!disabled"
-        class="btn btn-secondary btn-sm"
-        @click="emit('create')"
-      >
-        <Icon
-          name="plus"
-          class="h-3 w-3"
-        />
-        新建产品
-      </button>
     </div>
     <LineItemsTable
       :columns="columns"

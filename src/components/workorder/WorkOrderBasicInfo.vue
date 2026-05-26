@@ -51,7 +51,7 @@
     <DescriptionItem label="进度">
       <ProgressBar
         :percentage="workOrder?.progress_percentage ?? progress"
-        :color="workOrder?.progress_percentage === 100 ? '#67C23A' : '#409EFF'"
+        :status="workOrder?.progress_percentage === 100 ? 'success' : 'active'"
       />
     </DescriptionItem>
     <DescriptionItem label="下单日期">

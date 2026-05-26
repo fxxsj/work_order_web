@@ -89,8 +89,8 @@
         <template #empty>
           <EmptyState
             :description="hasFilters ? '未找到匹配的压凸版' : '暂无压凸版数据'"
-            :action-text="hasFilters ? '重置筛选' : (canCreate && !hasFilters ? '创建第一个压凸版' : undefined)"
-            @action="hasFilters ? handleReset() : showCreateDialog()"
+            :action-text="canCreate && !hasFilters ? '创建第一个压凸版' : undefined"
+            @action="showCreateDialog"
           />
         </template>
       </DataTable>
@@ -171,7 +171,7 @@ const columns: Column[] = [
 
 const {
   searchText, tableData, loading, total, currentPage, pageSize, hasFilters,
-  loadData, handleSearch, handlePageChange, handleSizeChange, resetFilters
+  loadData, handleSearch, handlePageChange, handleSizeChange
 } = useCrudList(embossingPlateAPI, 'getList', { errorContext: '加载压凸版数据失败' })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('embossingplate')
@@ -227,17 +227,18 @@ const handleConfirmPlate = async () => {
   finally { confirming.value = false }
 }
 
-const handleFormConfirm = async (payload: any) => {
-  const { form: formData, productItems } = payload
+const handleFormConfirm = async (data: any) => {
   formLoading.value = true
-  const data = { ...formData }
-  if (dialogType.value === 'create' && !data.code) delete data.code
-  data.products_data = productItems.filter((item: any) => item.product).map((item: any) => ({ product: item.product, quantity: item.quantity || 1 }))
-  if (dialogType.value === 'edit') { await crud.update(currentEmbossingPlate.value.id, data, '保存成功') } else { await crud.create(data, '创建成功') }
-  formLoading.value = false
+  try {
+    if (dialogType.value === 'edit') {
+      await crud.update(currentEmbossingPlate.value.id, data, '保存成功')
+    } else {
+      await crud.create(data, '创建成功')
+    }
+  } finally {
+    formLoading.value = false
+  }
 }
-
-const handleReset = () => { resetFilters() }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
   console.log('sort', key, order)

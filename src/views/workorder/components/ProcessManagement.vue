@@ -66,7 +66,7 @@ import { formatDate } from '@/utils/filter'
 
 const props = defineProps({ processes: { type: Array as any, default: () => [] }, editable: { type: Boolean, default: false } })
 const emit = defineEmits(['add-process', 'start-process', 'complete-process', 'click-process'])
-const getProcessColor = (s: any) => ({ pending: '#909399', in_progress: '#409EFF', completed: '#67C23A', draft: '#E6A23C' } as any)[s] || '#909399'
+const getProcessColor = (s: any) => ({ pending: '#6b7280', in_progress: '#14b8a6', completed: '#22c55e', draft: '#f59e0b' } as any)[s] || '#6b7280'
 const getProcessDepartment = (p: any) => p.department_name || '-'
 const calculateProcessProgress = (p: any) => p.tasks?.length ? Math.round((p.tasks.filter((t: any) => t.status === 'completed').length / p.tasks.length) * 100) : 0
 </script>

@@ -18,14 +18,13 @@
           class="btn btn-secondary"
           :disabled="loading"
           title="刷新"
-          @click="handleRefresh"
+          @click="loadData"
         >
           <Icon
             name="refresh"
             size="md"
             :class="loading ? 'animate-spin' : ''"
           />
-          刷新
         </button>
         <button
           v-if="canCreate"
@@ -123,12 +122,11 @@
     <template #pagination>
       <Pagination
         v-if="total > 0"
-        v-model:page="currentPage"
-        v-model:page-size="pageSize"
+        :page="currentPage"
+        :page-size="pageSize"
         :total="total"
-        layout="total, sizes, prev, pager, next"
-        @update:page-size="handleSizeChange"
         @update:page="handlePageChange"
+        @update:page-size="handleSizeChange"
       />
     </template>
   </TablePageLayout>
@@ -212,7 +210,6 @@ const loadProductList = async () => {
   try { const response: any = await productAPI.getList({ is_active: true, page_size: 100 }); productList.value = Array.isArray(response) ? response : (response?.results || response?.data || []) } catch (error: any) { ErrorHandler.showMessage(error, '加载产品列表') }
 }
 
-const handleRefresh = () => { loadData() }
 const handleCreate = () => {
   currentRow.value = null
   showEditModal.value = false

@@ -18,6 +18,7 @@
           <CustomerSelector
             ref="customerSelectorRef"
             v-model="form.customer_id"
+            label="客户"
             required
             @create="showQuickCustomerCreate = true"
           />
@@ -115,7 +116,6 @@
           <SectionDivider title="工序配置" />
           <ProcessSelector
             v-model="form.process_ids"
-            :show-hint="true"
           />
         </div>
 
@@ -154,7 +154,6 @@
               label="图稿"
               placeholder="选择图稿（可多选）"
               :loading="artworkLoading"
-              :show-hint="true"
             />
             <div class="space-y-2">
               <label class="input-label block text-sm text-gray-600 dark:text-gray-400">CMYK颜色</label>
@@ -171,7 +170,6 @@
               label="刀模"
               placeholder="选择刀模（可多选）"
               :loading="dieLoading"
-              :show-hint="true"
             />
             <MultiSelect
               v-model="form.foiling_plate_ids"
@@ -179,7 +177,6 @@
               label="烫金版"
               placeholder="选择烫金版（可多选）"
               :loading="foilingPlateLoading"
-              :show-hint="true"
             />
           </div>
           <div class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2">
@@ -189,7 +186,6 @@
               label="压凸版"
               placeholder="选择压凸版（可多选）"
               :loading="embossingPlateLoading"
-              :show-hint="true"
             />
           </div>
         </div>
@@ -343,10 +339,10 @@ const printingTypeOptions = [
 ]
 
 const cmykOptions = [
-  { value: 'C', label: 'C' },
-  { value: 'M', label: 'M' },
-  { value: 'Y', label: 'Y' },
-  { value: 'K', label: 'K' }
+  { value: 'C', label: 'C', color: '#00A0E3' },
+  { value: 'M', label: 'M', color: '#E4007F' },
+  { value: 'Y', label: 'Y', color: '#FDB813' },
+  { value: 'K', label: 'K', color: '#1C1C1C' }
 ]
 
 // Computed options for selectors
@@ -439,7 +435,11 @@ onMounted(async () => {
     await loadDetail(id.value)
   } else {
     // Default dates for new work order
-    form.order_date = new Date().toISOString().split('T')[0]
+    const today = new Date()
+    form.order_date = today.toISOString().split('T')[0]
+    const nextWeek = new Date(today)
+    nextWeek.setDate(nextWeek.getDate() + 7)
+    form.delivery_date = nextWeek.toISOString().split('T')[0]
     handleAddProduct()
     handleAddMaterial()
   }
@@ -612,23 +612,21 @@ const handleRemoveMaterial = (index: number) => {
   form.materials.splice(index, 1)
 }
 
-const openQuickMaterialCreate = (index: number | null = null) => {
-  pendingMaterialCreateIndex.value = typeof index === 'number' ? index : null
-  showQuickMaterialCreate.value = true
-}
-
 const handleCustomerCreated = (customer: any) => {
   customerSelectorRef.value?.appendCustomer(customer)
   form.customer_id = customer.id
 }
 
+const openQuickMaterialCreate = (index: number | null = null) => {
+  pendingMaterialCreateIndex.value = typeof index === 'number' ? index : null
+  showQuickMaterialCreate.value = true
+}
+
 const handleProductCreated = (product: any) => {
-  // Add to product list
   productList.value.push(product)
 }
 
 const handleMaterialCreated = (material: any) => {
-  // Add to material list
   materialList.value.push(material)
   if (pendingMaterialCreateIndex.value !== null && form.materials[pendingMaterialCreateIndex.value]) {
     form.materials[pendingMaterialCreateIndex.value].material = material.id

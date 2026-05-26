@@ -1,6 +1,6 @@
 <template>
   <PlateFormDialog
-    v-model="dialogVisibleSync"
+    v-model:visible="dialogVisibleSync"
     :dialog-type="dialogType"
     :initial-data="foilingPlate"
     :loading="loading"
@@ -51,16 +51,6 @@ const dialogVisibleSync = computed({
 })
 
 const handleSubmit = (data: any) => {
-  // PlateFormDialog emits merged data with products_data.
-  // Original FoilingPlateFormDialog emitted { form, productItems } where productItems
-  // had { product, quantity, sort_order } objects.
-  // Reconstruct to match what FoilingPlateList.handleFormConfirm expects.
-  const { products_data, ...formData } = data
-  const productItems = (products_data || []).map((item: any, i: any) => ({
-    product: item.product,
-    quantity: item.quantity,
-    sort_order: i
-  }))
-  emit('confirm', { form: formData, productItems })
+  emit('confirm', data)
 }
 </script>

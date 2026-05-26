@@ -12,17 +12,6 @@
         />
         添加物料
       </button>
-      <button
-        v-if="!disabled"
-        class="btn btn-secondary btn-sm"
-        @click="emit('create', null)"
-      >
-        <Icon
-          name="plus"
-          class="h-3 w-3"
-        />
-        新建物料
-      </button>
     </div>
     <LineItemsTable
       :columns="columns"

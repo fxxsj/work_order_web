@@ -33,7 +33,9 @@ const statusColorMap: Record<string, string> = {
   success: '#22c55e',
   exception: '#ef4444',
   danger: '#ef4444',
-  warning: '#f59e0b'
+  warning: '#f59e0b',
+  active: '#14b8a6',
+  info: '#6b7280'
 }
 
 const barStyle = computed(() => {

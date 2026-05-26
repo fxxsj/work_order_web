@@ -15,21 +15,16 @@
       <div class="-mt-2 text-xs text-gray-400">
         {{ isEditMode ? '主编码不可修改' : '留空则自动生成，格式：ART202412001' }}
       </div>
-      <div
-        v-if="isEditMode"
-        class="flex items-start gap-3"
-      >
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">版本号</label>
-        <div class="flex-1">
-          <InputNumber
-            v-model="form.version"
-            :min="1"
-            disabled
-            class="w-full"
-          />
-          <div class="mt-1 text-xs text-gray-400">
-            完整编码：{{ form.base_code }}{{ form.version > 1 ? '-v' + form.version : '' }}
-          </div>
+      <div v-if="isEditMode">
+        <label class="input-label mb-1.5 block">版本号</label>
+        <InputNumber
+          v-model="form.version"
+          :min="1"
+          disabled
+          class="w-full"
+        />
+        <div class="mt-1 text-xs text-gray-400">
+          完整编码：{{ form.base_code }}{{ form.version > 1 ? '-v' + form.version : '' }}
         </div>
       </div>
       <Input
@@ -37,25 +32,25 @@
         label="图稿名称"
         placeholder="请输入图稿名称"
       />
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">CMYK颜色</label>
+      <div>
+        <label class="input-label mb-1.5 block">CMYK颜色</label>
         <CheckboxGroup
           v-model="form.cmyk_colors"
           :options="cmykOptions"
         />
       </div>
       <div class="flex flex-col gap-2">
-        <label class="input-label block">其他颜色</label>
+        <label class="input-label mb-1.5 block">其他颜色</label>
         <div
           v-for="(color, index) in form.other_colors"
           :key="index"
           class="mb-2 flex items-center gap-2"
         >
-          <input
+          <Input
             v-model="form.other_colors[index]"
             placeholder="请输入颜色名称，如：528C、金色"
-            class="input flex-1"
-          >
+            class="flex-1"
+          />
           <button
             class="btn btn-danger btn-sm btn-circle"
             @click="removeOtherColor(index)"
@@ -81,58 +76,57 @@
         label="拼版尺寸"
         placeholder="如：420x594mm"
       />
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">关联刀模</label>
+      <div>
+        <label class="input-label mb-1.5 block">关联刀模</label>
         <Select
           v-model="form.dies"
           :options="dieOptions"
           multiple
           filterable
           placeholder="请选择刀模（可多选）"
-          class="flex-1"
+          class="w-full"
         />
       </div>
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">关联烫金版</label>
+      <div>
+        <label class="input-label mb-1.5 block">关联烫金版</label>
         <Select
           v-model="form.foiling_plates"
           :options="foilingPlateOptions"
           multiple
           filterable
           placeholder="请选择烫金版（可多选）"
-          class="flex-1"
+          class="w-full"
         />
       </div>
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">关联压凸版</label>
+      <div>
+        <label class="input-label mb-1.5 block">关联压凸版</label>
         <Select
           v-model="form.embossing_plates"
           :options="embossingPlateOptions"
           multiple
           filterable
           placeholder="请选择压凸版（可多选）"
-          class="flex-1"
+          class="w-full"
         />
       </div>
 
       <SectionDivider title="包含产品及拼版数量" />
-      <div class="flex items-start gap-3">
-        <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">产品列表</label>
-        <div class="flex-1">
-          <button
-            class="btn btn-primary btn-sm mb-3"
-            @click="addProductItem"
-          >
-            <Icon
-              name="plus"
-              class="mr-1 inline h-3 w-3"
-            />添加产品
-          </button>
-          <LineItemsTable
-            :columns="productColumns"
-            :items="productItems"
-            @delete="removeProductItem"
-          >
+      <div class="space-y-2">
+        <button
+          class="btn btn-primary btn-sm"
+          @click="addProductItem"
+        >
+          <Icon
+            name="plus"
+            class="mr-1 inline h-3 w-3"
+          />添加产品
+        </button>
+        <LineItemsTable
+          :columns="productColumns"
+          :items="productItems"
+          class="mt-3"
+          @delete="removeProductItem"
+        >
             <template #cell-product="{ row, index }">
               <ProductSelector
                 :model-value="row.product"
@@ -149,7 +143,6 @@
               />
             </template>
           </LineItemsTable>
-        </div>
       </div>
       <TextArea
         v-model="form.notes"
@@ -160,19 +153,21 @@
       />
     </div>
     <template #footer>
-      <button
-        class="btn"
-        @click="handleClose"
-      >
-        取消
-      </button>
-      <button
-        class="btn btn-primary"
-        :disabled="loading"
-        @click="handleConfirm"
-      >
-        确定
-      </button>
+      <div class="flex justify-end gap-3">
+        <button
+          class="btn btn-secondary"
+          @click="handleClose"
+        >
+          取消
+        </button>
+        <button
+          class="btn btn-primary"
+          :disabled="loading"
+          @click="handleConfirm"
+        >
+          确定
+        </button>
+      </div>
     </template>
   </BaseDialog>
   <QuickProductCreateDialog
@@ -213,10 +208,10 @@ const dialogVisible = computed({ get: () => props.visible, set: (val: any) => em
 const isEditMode = computed(() => !!props.artwork)
 const dialogTitle = computed(() => isEditMode.value ? '编辑图稿' : '新建图稿')
 const cmykOptions = [
-  { value: 'C', label: 'C' },
-  { value: 'M', label: 'M' },
-  { value: 'Y', label: 'Y' },
-  { value: 'K', label: 'K' }
+  { value: 'C', label: 'C', color: '#00A0E3' },
+  { value: 'M', label: 'M', color: '#E4007F' },
+  { value: 'Y', label: 'Y', color: '#FDB813' },
+  { value: 'K', label: 'K', color: '#1C1C1C' }
 ]
 const dieOptions = computed(() => props.dieList.map((d: any) => ({ value: d.id, label: `${d.name} (${d.code})` })))
 const foilingPlateOptions = computed(() => props.foilingPlateList.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))

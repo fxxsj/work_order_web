@@ -50,10 +50,10 @@ const props = withDefaults(defineProps<Props>(), {
 const variantColor = computed(() => {
   if (!props.variant) return ''
   const map: Record<string, string> = {
-    success: '#67C23A',
-    warning: '#E6A23C',
-    danger: '#F56C6C',
-    info: '#909399'
+    success: '#22c55e',
+    warning: '#f59e0b',
+    danger: '#ef4444',
+    info: '#6b7280'
   }
   return map[props.variant] || ''
 })

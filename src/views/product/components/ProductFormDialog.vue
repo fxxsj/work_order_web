@@ -76,58 +76,54 @@
         placeholder="请输入产品描述"
       />
 
-      <SectionDivider title="默认物料配置" />
-      <div class="flex items-start gap-3">
-        <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">物料列表</label>
-        <div class="flex-1">
-          <button
-            class="btn btn-primary btn-sm mb-3"
-            @click="addMaterialItem"
-          >
-            <Icon
-              name="plus"
-              class="mr-1 inline h-3 w-3"
-            />添加物料
-          </button>
-          <LineItemsTable
-            :columns="materialColumns"
-            :items="materialItems"
-            @delete="removeMaterialItem"
-          >
-            <template #cell-material="{ row, index }">
-              <MaterialSelector
-                :model-value="row.material"
-                :materials="materialList"
-                @update:model-value="value => row.material = value"
-                @create="openQuickMaterialCreate(index)"
-              />
-            </template>
-            <template #cell-material_size="{ row }">
-              <Input
-                v-model="row.material_size"
-                placeholder="如：A4、210x297mm"
-              />
-            </template>
-            <template #cell-material_usage="{ row }">
-              <Input
-                v-model="row.material_usage"
-                placeholder="如：1000张"
-              />
-            </template>
-            <template #cell-need_cutting="{ row }">
-              <Toggle v-model="row.need_cutting" />
-            </template>
-          </LineItemsTable>
-        </div>
+      <SectionDivider title="物料配置" />
+      <div>
+        <button
+          class="btn btn-primary btn-sm mb-3"
+          @click="addMaterialItem"
+        >
+          <Icon
+            name="plus"
+            class="mr-1 inline h-3 w-3"
+          />添加物料
+        </button>
+        <LineItemsTable
+          :columns="materialColumns"
+          :items="materialItems"
+          @delete="removeMaterialItem"
+        >
+          <template #cell-material="{ row, index }">
+            <MaterialSelector
+              :model-value="row.material"
+              :materials="materialList"
+              @update:model-value="value => row.material = value"
+              @create="openQuickMaterialCreate(index)"
+            />
+          </template>
+          <template #cell-material_size="{ row }">
+            <Input
+              v-model="row.material_size"
+              placeholder="如：A4、210x297mm"
+            />
+          </template>
+          <template #cell-material_usage="{ row }">
+            <Input
+              v-model="row.material_usage"
+              placeholder="如：1000张"
+            />
+          </template>
+          <template #cell-need_cutting="{ row }">
+            <Toggle v-model="row.need_cutting" />
+          </template>
+        </LineItemsTable>
       </div>
 
-      <SectionDivider title="默认工序配置" />
-      <div class="flex items-start gap-3">
-        <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">默认工序</label>
+      <SectionDivider title="工序配置" />
+      <div>
         <CheckboxGroup
           v-model="form.default_processes"
           :options="processOptions"
-          class="flex-1"
+          variant="chip"
         />
       </div>
       <div class="flex items-start gap-3">
@@ -136,19 +132,21 @@
       </div>
     </div>
     <template #footer>
-      <button
-        class="btn"
-        @click="handleClose"
-      >
-        取消
-      </button>
-      <button
-        class="btn btn-primary"
-        :disabled="loading"
-        @click="handleSubmit"
-      >
-        确定
-      </button>
+      <div class="flex justify-end gap-3">
+        <button
+          class="btn btn-secondary"
+          @click="handleClose"
+        >
+          取消
+        </button>
+        <button
+          class="btn btn-primary"
+          :disabled="loading"
+          @click="handleSubmit"
+        >
+          确定
+        </button>
+      </div>
     </template>
   </BaseDialog>
   <QuickMaterialCreateDialog

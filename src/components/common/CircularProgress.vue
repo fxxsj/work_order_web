@@ -42,12 +42,12 @@ const props = defineProps({
   size: { type: Number, default: 60 },
   strokeWidth: { type: Number, default: 8 },
   color: { type: String, default: '' },
-  trackColor: { type: String, default: '#e5e7eb' },
+  trackColor: { type: String, default: '#d1d5db' },
   showText: { type: Boolean, default: false }
 })
 
 const radius = computed(() => 50 - props.strokeWidth / 2)
 const circumference = computed(() => 2 * Math.PI * radius.value)
 const offset = computed(() => circumference.value - (Math.min(100, Math.max(0, props.percentage || 0)) / 100) * circumference.value)
-const barColor = computed(() => props.color || (props.percentage >= 100 ? '#22c55e' : '#3b82f6'))
+const barColor = computed(() => props.color || (props.percentage >= 100 ? '#22c55e' : '#14b8a6'))
 </script>

@@ -25,7 +25,6 @@
             size="md"
             :class="loading ? 'animate-spin' : ''"
           />
-          刷新
         </button>
         <button
           v-if="canCreate"
@@ -171,12 +170,11 @@
     <template #pagination>
       <Pagination
         v-if="total > 0"
-        v-model:page="currentPage"
-        v-model:page-size="pageSize"
+        :page="currentPage"
+        :page-size="pageSize"
         :total="total"
-        layout="total, sizes, prev, pager, next"
-        @update:page-size="handleSizeChange"
         @update:page="handlePageChange"
+        @update:page-size="handleSizeChange"
       />
     </template>
   </TablePageLayout>

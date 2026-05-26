@@ -9,7 +9,6 @@
     :loading="loading"
     :disabled="disabled"
     :clearable="clearable"
-    :hint="showHint ? `已选择 ${selectedCount} 个工序` : ''"
     @update:model-value="v => emit('update:modelValue', v)"
   />
 </template>
@@ -20,12 +19,11 @@ import { Select } from '@/components/common'
 import { processAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
-const props = defineProps({ modelValue: { type: Array as any, default: () => [] }, disabled: { type: Boolean, default: false }, showHint: { type: Boolean, default: false }, clearable: { type: Boolean, default: true } })
+const props = defineProps({ modelValue: { type: Array as any, default: () => [] }, disabled: { type: Boolean, default: false }, clearable: { type: Boolean, default: true } })
 const emit = defineEmits(['update:modelValue'])
 
 const loading = ref(false)
 const processList = ref<any[]>([])
-const selectedCount = computed(() => props.modelValue?.length || 0)
 const processOptions = computed(() => processList.value.map((p: any) => ({ value: p.id, label: p.name, extra: p.code ? { type: 'info', label: p.code } : null })))
 
 let cacheTimestamp = 0

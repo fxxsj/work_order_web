@@ -35,7 +35,7 @@
         <template #cell-progress="{ row }">
           <ProgressBar
             :percentage="getProgress(row)"
-            :color="getProgress(row) === 100 ? '#67C23A' : '#409EFF'"
+            :status="getProgress(row) === 100 ? 'success' : 'active'"
           />
         </template>
         <template #cell-actions>

@@ -39,7 +39,35 @@
             name="selected"
             :option="selectedOption"
           >
-            {{ selectedLabel }}
+            <template v-if="props.multiple && selectedOptions.length > 0">
+              <span class="select-tags">
+                <span
+                  v-for="tag in visibleTags"
+                  :key="String(tag.value)"
+                  class="select-tag"
+                >
+                  <span class="select-tag-text">{{ tag.label }}</span>
+                  <span
+                    class="select-tag-close"
+                    @click.stop="removeTag(tag.value)"
+                  >
+                    <Icon
+                      name="x"
+                      size="xs"
+                    />
+                  </span>
+                </span>
+                <span
+                  v-if="overflowCount > 0"
+                  class="select-tag-overflow"
+                >
+                  +{{ overflowCount }}
+                </span>
+              </span>
+            </template>
+            <template v-else>
+              {{ selectedLabel }}
+            </template>
           </slot>
         </span>
         <span class="select-icon">
@@ -208,6 +236,7 @@ interface Props {
   id?: string
   required?: boolean
   searchable?: boolean | 'auto'
+  filterable?: boolean
   searchPlaceholder?: string
   emptyText?: string
   valueKey?: string
@@ -215,6 +244,8 @@ interface Props {
   creatable?: boolean
   creatablePrefix?: string
   multiple?: boolean
+  collapseTags?: boolean
+  maxTags?: number
   remote?: boolean
   remoteMethod?: (query: string) => void
   loading?: boolean
@@ -233,11 +264,14 @@ const props = withDefaults(defineProps<Props>(), {
   hint: '',
   required: false,
   searchable: 'auto',
+  filterable: false,
   creatable: false,
   creatablePrefix: '搜索',
   valueKey: 'value',
   labelKey: 'label',
   multiple: false,
+  collapseTags: true,
+  maxTags: 3,
   remote: false,
   remoteMethod: undefined,
   loading: false
@@ -264,6 +298,7 @@ const hasError = computed(() => !!props.error)
 const errorMessage = computed(() => typeof props.error === 'string' ? props.error : '')
 
 const isSearchable = computed(() => {
+  if (props.filterable) return true
   if (props.remote) return true
   if (props.searchable === 'auto') return props.options.length > 5
   return props.searchable
@@ -326,7 +361,7 @@ const selectedOption = computed(() => {
 })
 
 const selectedLabel = computed(() => {
-  // Multiple selection
+  // Multiple selection - fallback text for non-tag display
   if (props.multiple && Array.isArray(props.modelValue)) {
     if (props.modelValue.length === 0) return placeholderText.value
     if (props.modelValue.length === 1) {
@@ -346,6 +381,35 @@ const selectedLabel = computed(() => {
   }
   return placeholderText.value
 })
+
+// Multi-select tag support
+const selectedOptions = computed(() => {
+  if (!props.multiple || !Array.isArray(props.modelValue)) return []
+  return props.modelValue.map(v => {
+    const opt = props.options.find((o) => getOptionValue(o) === v)
+    return opt ? { value: v, label: getOptionLabel(opt) } : { value: v, label: String(v) }
+  })
+})
+
+const visibleTags = computed(() => {
+  if (!props.collapseTags) return selectedOptions.value
+  return selectedOptions.value.slice(0, props.maxTags)
+})
+
+const overflowCount = computed(() => {
+  if (!props.collapseTags) return 0
+  return Math.max(0, selectedOptions.value.length - props.maxTags)
+})
+
+const removeTag = (value: any) => {
+  if (props.disabled) return
+  const currentValues = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+  const index = currentValues.findIndex(v => v === value)
+  if (index >= 0) {
+    currentValues.splice(index, 1)
+    emit('update:modelValue', currentValues)
+  }
+}
 
 const filteredOptions = computed(() => {
   let opts = (props.options as any[])
@@ -589,6 +653,7 @@ onUnmounted(() => {
   @apply focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
   @apply hover:border-gray-300 dark:hover:border-dark-500;
   @apply cursor-pointer;
+  min-height: 42px;
 }
 
 .select-trigger-open {
@@ -605,6 +670,37 @@ onUnmounted(() => {
 
 .select-value {
   @apply flex-1 truncate text-left;
+}
+
+.select-tags {
+  @apply flex flex-wrap items-center gap-1;
+}
+
+.select-tag {
+  @apply inline-flex items-center gap-0.5;
+  @apply rounded-md px-2 py-0.5 text-xs leading-tight;
+  @apply bg-primary-50 text-primary-700;
+  @apply dark:bg-primary-900/30 dark:text-primary-300;
+  @apply max-w-[120px];
+}
+
+.select-tag-text {
+  @apply truncate;
+}
+
+.select-tag-close {
+  @apply ml-0.5 inline-flex flex-shrink-0 items-center justify-center;
+  @apply rounded-sm p-px;
+  @apply text-primary-400 hover:text-primary-700;
+  @apply dark:text-primary-500 dark:hover:text-primary-200;
+  @apply hover:bg-primary-100 dark:hover:bg-primary-800/40;
+  @apply transition-colors;
+}
+
+.select-tag-overflow {
+  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs leading-tight;
+  @apply bg-gray-100 text-gray-600;
+  @apply dark:bg-dark-700 dark:text-gray-400;
 }
 
 .select-icon {

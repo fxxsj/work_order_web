@@ -86,12 +86,10 @@
         :row-key="(row: any) => row.id"
       >
         <template #cell-selection="{ row }">
-          <input
-            type="checkbox"
-            :checked="isSelected(row)"
-            class="rounded border-gray-300 text-primary-600 focus:ring-primary-600"
+          <Checkbox
+            :model-value="isSelected(row)"
             @change="toggleSelect(row)"
-          >
+          />
         </template>
         
         <template #cell-order_number="{ row }">
@@ -178,12 +176,10 @@
             v-if="selectedRows.length > 0"
             class="flex items-center gap-2 cursor-pointer"
           >
-            <input
-              type="checkbox"
-              :checked="allSelected"
-              class="rounded border-gray-300 text-primary-600 focus:ring-primary-600"
+            <Checkbox
+              :model-value="allSelected"
               @change="toggleSelectAll"
-            >
+            />
             <span>已选择 {{ selectedRows.length }} 项</span>
           </label>
         </div>
@@ -231,7 +227,7 @@ import { useUIStore } from '@/stores/ui'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
-import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
+import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow, Checkbox } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 

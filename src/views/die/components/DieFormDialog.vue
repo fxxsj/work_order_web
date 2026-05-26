@@ -1,7 +1,7 @@
 <template>
   <PlateFormDialog
     ref="plateFormRef"
-    v-model="dialogVisibleSync"
+    v-model:visible="dialogVisibleSync"
     :dialog-type="dialogType"
     :initial-data="initialData"
     :loading="loading"

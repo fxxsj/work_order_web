@@ -13,7 +13,7 @@
           <template #cell-completion_rate="{ row }">
             <ProgressBar
               :percentage="row.completion_rate || 0"
-              :color="getProgressColor(row.completion_rate)"
+              :status="getProgressStatus(row.completion_rate)"
               :stroke-width="8"
             />
           </template>
@@ -33,7 +33,7 @@
           <template #cell-completion_rate="{ row }">
             <ProgressBar
               :percentage="row.completion_rate || 0"
-              :color="getProgressColor(row.completion_rate)"
+              :status="getProgressStatus(row.completion_rate)"
               :stroke-width="8"
             />
           </template>
@@ -48,7 +48,7 @@ import { SummaryTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 
 defineProps({ businessAnalysis: { type: Object, default: () => ({}) } })
-const getProgressColor = (rate: any) => rate >= 80 ? '#67C23A' : rate >= 50 ? '#409EFF' : '#E6A23C'
+const getProgressStatus = (rate: any) => rate >= 80 ? 'success' : rate >= 50 ? 'active' : 'warning'
 
 const columns: Column[] = [
   { key: 'customer', label: '客户', class: 'min-w-40' },

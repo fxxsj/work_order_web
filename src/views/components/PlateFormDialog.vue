@@ -27,26 +27,23 @@
         v-for="field in extraFields"
         :key="field.prop"
       >
-        <div class="flex items-start gap-3">
-          <label class="w-28 text-sm text-gray-600 dark:text-gray-400 pt-2">{{ field.label }}</label>
-          <div class="flex-1">
-            <Select
-              v-if="field.type === 'select'"
-              v-model="form[field.prop]"
-              :options="field.options"
-              :placeholder="field.placeholder || '请选择'"
-              :disabled="isConfirmed"
-              class="w-full"
-            />
-            <input
-              v-else
-              v-model="form[field.prop]"
-              type="text"
-              :placeholder="field.placeholder || ''"
-              :disabled="isConfirmed"
-              class="input w-full"
-            >
-          </div>
+        <div>
+          <label class="input-label mb-1.5 block">{{ field.label }}</label>
+          <Select
+            v-if="field.type === 'select'"
+            v-model="form[field.prop]"
+            :options="field.options"
+            :placeholder="field.placeholder || '请选择'"
+            :disabled="isConfirmed"
+            class="w-full"
+          />
+          <Input
+            v-else
+            v-model="form[field.prop]"
+            :placeholder="field.placeholder || ''"
+            :disabled="isConfirmed"
+            class="w-full"
+          />
         </div>
       </template>
 
@@ -135,19 +132,21 @@
       />
     </div>
     <template #footer>
-      <button
-        class="btn"
-        @click="handleCancel"
-      >
-        取消
-      </button>
-      <button
-        class="btn btn-primary"
-        :disabled="loading"
-        @click="handleSubmit"
-      >
-        确定
-      </button>
+      <div class="flex justify-end gap-3">
+        <button
+          class="btn btn-secondary"
+          @click="handleCancel"
+        >
+          取消
+        </button>
+        <button
+          class="btn btn-primary"
+          :disabled="loading"
+          @click="handleSubmit"
+        >
+          确定
+        </button>
+      </div>
     </template>
   </BaseDialog>
   <QuickProductCreateDialog
@@ -160,6 +159,7 @@
 import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { Icon, Input, TextArea, Select, InputNumber, SectionDivider, LineItemsTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
+import { useUIStore } from '@/stores/ui'
 import ProductSelector from '@/views/product/components/ProductSelector.vue'
 import QuickProductCreateDialog from '@/views/product/components/QuickProductCreateDialog.vue'
 
@@ -279,8 +279,10 @@ const handleProductCreated = (product: any) => {
 }
 
 const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) return
+  if (!form.name) {
+    useUIStore().showWarning(`请输入${props.title}名称`)
+    return
+  }
 
   const data = { ...form }
   if (props.dialogType === 'create' && !data.code) delete data.code

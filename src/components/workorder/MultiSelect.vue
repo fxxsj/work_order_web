@@ -9,13 +9,11 @@
     :loading="loading"
     :disabled="disabled"
     :clearable="clearable"
-    :hint="showHint && selectedCount > 0 ? `已选择 ${selectedCount} 项` : ''"
     @update:model-value="v => emit('update:modelValue', v)"
   />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { Select } from '@/components/common'
 
 const props = defineProps({
@@ -25,10 +23,8 @@ const props = defineProps({
   placeholder: { type: String, default: '请选择' },
   loading: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
-  clearable: { type: Boolean, default: true },
-  showHint: { type: Boolean, default: false }
+  clearable: { type: Boolean, default: true }
 })
 
 const emit = defineEmits(['update:modelValue'])
-const selectedCount = computed(() => props.modelValue?.length || 0)
 </script>

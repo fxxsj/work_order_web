@@ -36,7 +36,7 @@ const props = defineProps({
   modelValue: { type: [String, Number, Boolean, Array] as unknown as () => string | number | boolean | (string | number | boolean)[] | null, required: true },
   placeholder: { type: String, default: '请选择' },
   options: { type: Array as any, default: () => [] },
-  filterable: { type: Boolean, default: false },
+  filterable: { type: Boolean, default: true },
   remote: { type: Boolean, default: false },
   remoteMethod: { type: Function, default: null },
   loading: { type: Boolean, default: false },

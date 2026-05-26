@@ -112,11 +112,10 @@
           row-key="id"
         >
           <template #cell-selection="{ row }">
-            <input
-              type="checkbox"
-              :checked="isSelected(row)"
+            <Checkbox
+              :model-value="isSelected(row)"
               @change="toggleSelect(row)"
-            >
+            />
           </template>
           <template #cell-expand="{ row }">
             <button
@@ -293,7 +292,7 @@ import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import taskService from '@/services/TaskService'
 import { PriorityChoices } from '@/constants'
-import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, RadioGroup, RadioButton, TablePageLayout, DataTable, ConfirmDialog, RowActions, Tag, ProgressBar, FilterRow } from '@/components/common'
+import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, RadioGroup, RadioButton, TablePageLayout, DataTable, ConfirmDialog, RowActions, Tag, ProgressBar, FilterRow, Checkbox } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import TaskKanban from '@/components/TaskKanban.vue'

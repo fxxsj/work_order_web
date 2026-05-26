@@ -132,7 +132,7 @@
         <template #cell-progress="{ row }">
           <ProgressBar
             :percentage="row.progress_percentage"
-            :color="row.progress_percentage === 100 ? '#67C23A' : '#409EFF'"
+            :status="row.progress_percentage === 100 ? 'success' : 'active'"
           />
         </template>
         <template #cell-order_date="{ row }">
@@ -350,8 +350,8 @@ const handleRowAction = (action: RowAction, row: any) => {
 const getDeliveryDateStyle = (date: any, status: any) => {
   if (status === 'completed' || status === 'cancelled') return {}
   const diffDays = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-  if (diffDays < 0) return { color: '#F56C6C', fontWeight: 'bold' }
-  if (diffDays <= 3) return { color: '#E6A23C', fontWeight: 'bold' }
+  if (diffDays < 0) return { color: '#ef4444', fontWeight: 'bold' }
+  if (diffDays <= 3) return { color: '#f59e0b', fontWeight: 'bold' }
   return {}
 }
 

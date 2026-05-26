@@ -192,6 +192,7 @@
         v-model="formData.processes"
         label="工序"
         :options="processOptions"
+        variant="chip"
         class="w-full"
       />
       <Toggle

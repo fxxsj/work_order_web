@@ -77,7 +77,7 @@
           <template #cell-current_load="{ row }">
             <ProgressBar
               :percentage="row.current_load || 0"
-              :color="getLoadColor(row.current_load)"
+              :status="getLoadStatus(row.current_load)"
             />
           </template>
           <template #empty>
@@ -288,7 +288,7 @@ const handleSubmit = async () => {
 }
 
 const getWaitTimeClass = (time: any) => time && time.includes('小时') && parseInt(time) < 2 ? 'text-success' : time && time.includes('小时') && parseInt(time) > 8 ? 'text-danger' : ''
-const getLoadColor = (load: any) => load < 50 ? '#67C23A' : load < 80 ? '#E6A23C' : '#F56C6C'
+const getLoadStatus = (load: any) => load < 50 ? 'success' : load < 80 ? 'warning' : 'danger'
 
 const columns: Column[] = [
   { key: 'process_name', label: '工序', width: 144 },

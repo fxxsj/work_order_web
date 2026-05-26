@@ -57,7 +57,7 @@
       </div>
       <ProgressBar
         :percentage="progressPercentage"
-        :color="progressColor"
+        :status="progressStatus"
         :show-text="false"
         :stroke-width="6"
       />
@@ -103,7 +103,7 @@ const taskTypeDisplay = computed(() => props.task.task_type_display || '')
 const operatorName = computed(() => props.task.assigned_operator_name || '未分配')
 const progressText = computed(() => `${props.task.quantity_completed || 0} / ${props.task.production_quantity || 0}`)
 const progressPercentage = computed(() => props.task.production_quantity ? Math.round(((props.task.quantity_completed || 0) / props.task.production_quantity) * 100) : 0)
-const progressColor = computed(() => progressPercentage.value === 100 ? '#67c23a' : '#14b8a6')
+const progressStatus = computed(() => progressPercentage.value === 100 ? 'success' : 'active')
 const isOverdue = computed(() => { const dl = props.task.deadline || props.task.due_date; return dl && new Date(dl) < new Date() })
 const getRemainingDays = (task: any) => { const dl = task.deadline || task.due_date; if (!dl) return null; return Math.ceil((new Date(dl).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) }
 const deadlineText = computed(() => { const days = getRemainingDays(props.task); if (days === null) return null; if (days < 0) return `逾期 ${Math.abs(days)} 天`; if (days === 0) return '今天到期'; if (days === 1) return '明天到期'; return `${days} 天后到期` })

@@ -74,8 +74,7 @@
                   {{ dept.is_active ? '禁用' : '启用' }}
                 </button>
                 <button
-                  class="btn btn-ghost btn-sm"
-                  style="color: #f56c6c;"
+                  class="btn btn-ghost btn-sm text-danger-600 dark:text-danger-400"
                   @click="handleDelete(dept)"
                 >
                   删除

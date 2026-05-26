@@ -17,7 +17,7 @@
         <div class="flex-1">
           <ProgressBar
             :percentage="currentProgress"
-            :color="progressColor"
+            :status="progressStatus"
           />
           <div class="mt-2 text-xs text-gray-400">
             {{ task?.quantity_completed || 0 }} / {{ task?.production_quantity || 0 }}
@@ -117,7 +117,7 @@ const form = reactive({ quantity_increment: 1, quantity_defective: 0, completion
 const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
 const dialogTitle = computed(() => updateMode.value === 'complete' ? '完成任务' : '更新进度')
 const currentProgress = computed(() => props.task?.production_quantity ? Math.round((props.task.quantity_completed / props.task.production_quantity) * 100) : 0)
-const progressColor = computed(() => { const p = currentProgress.value; return p >= 100 ? '#67C23A' : p >= 50 ? '#409EFF' : '#E6A23C' })
+const progressStatus = computed(() => { const p = currentProgress.value; return p >= 100 ? 'success' : p >= 50 ? 'active' : 'warning' })
 const maxIncrement = computed(() => (props.task?.production_quantity || 0) - (props.task?.quantity_completed || 0))
 const projectedCompleted = computed(() => (props.task?.quantity_completed || 0) + (form.quantity_increment || 0))
 const updateModeOptions = [
