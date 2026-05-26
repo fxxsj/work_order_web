@@ -13,7 +13,7 @@
         <!-- Modal panel -->
         <div
           ref="dialogRef"
-          :class="['modal-content', widthClasses]"
+          :class="['modal-content', widthClasses, attrs.class]"
           @click.stop
         >
           <!-- Header -->
@@ -55,12 +55,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, onUnmounted, ref, nextTick } from 'vue'
+import { computed, watch, onMounted, onUnmounted, ref, nextTick, useAttrs } from 'vue'
 import Icon from '@/components/icons/Icon.vue'
+
+// Disable attribute inheritance since BaseDialog uses <Teleport>
+defineOptions({ inheritAttrs: false })
 
 // Generate unique ID to avoid ID conflicts with multiple dialogs
 let dialogIdCounter = 0
 const dialogId = `modal-title-${++dialogIdCounter}`
+
+const attrs = useAttrs()
 
 // Focus management
 const dialogRef = ref<HTMLElement | null>(null)
@@ -110,7 +115,8 @@ const widthClasses = computed(() => {
 })
 
 const handleClose = () => {
-  if (props.closeOnClickOutside) {
+  // Support both closeOnClickOutside prop and close-on-click-modal attribute
+  if (props.closeOnClickOutside || attrs['close-on-click-modal']) {
     emit('close')
   }
 }

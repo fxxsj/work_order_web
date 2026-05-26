@@ -130,6 +130,60 @@
         v-model="form.is_active"
         label="是否启用"
       />
+
+      <SectionDivider
+        v-if="dialogType === 'edit'"
+        title="图片管理"
+      />
+      <div v-if="dialogType === 'edit'">
+        <div
+          v-if="productImages.length > 0"
+          class="flex flex-wrap gap-3 mb-3"
+        >
+          <div
+            v-for="(img, idx) in productImages"
+            :key="img.id"
+            class="relative group"
+          >
+            <img
+              :src="img.image"
+              class="w-20 h-20 rounded-lg object-cover"
+            >
+            <button
+              type="button"
+              class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-danger-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+              @click="handleDeleteImage(img.id)"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+        <p
+          v-else
+          class="text-sm text-gray-400 mb-3"
+        >
+          暂无图片
+        </p>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            @click="handleUploadImage"
+          >
+            <Icon
+              name="upload"
+              class="mr-1 inline h-3 w-3"
+            />上传图片
+          </button>
+          <input
+            ref="imageInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            class="hidden"
+            @change="handleImageFileSelected"
+          >
+        </div>
+      </div>
     </div>
     <template #footer>
       <div class="flex justify-end gap-3">
@@ -160,6 +214,7 @@ import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { Icon, Input, InputNumber, Select, TextArea, Toggle, CheckboxGroup, SectionDivider, LineItemsTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
+import { productAPI } from '@/api/modules'
 import MaterialSelector from '@/views/material/components/MaterialSelector.vue'
 import QuickMaterialCreateDialog from '@/views/material/components/QuickMaterialCreateDialog.vue'
 
@@ -180,6 +235,8 @@ const materialList = ref<any[]>([])
 const showQuickMaterialCreate = ref(false)
 const pendingMaterialCreateIndex = ref<number | null>(null)
 const isOpen = ref(false)
+const productImages = ref<any[]>([])
+const imageInput = ref<HTMLInputElement | null>(null)
 
 // Sync with parent visibility prop and init form when opening
 watch(() => props.visible, (val) => {
@@ -189,6 +246,49 @@ watch(() => props.visible, (val) => {
     else resetForm()
   }
 }, { immediate: true })
+
+const loadProductImages = async () => {
+  if (props.dialogType !== 'edit' || !props.product?.id) return
+  try {
+    const response: any = await productAPI.getImages(props.product.id)
+    const list = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
+    productImages.value = list
+  } catch (_) {
+    productImages.value = []
+  }
+}
+
+const handleUploadImage = () => { imageInput.value?.click() }
+
+const handleImageFileSelected = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file || !props.product?.id) return
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append('sort_order', String(productImages.value.length))
+  try {
+    await productAPI.uploadImage(props.product.id, formData)
+    useUIStore().showSuccess('图片上传成功')
+    await loadProductImages()
+  } catch (error: any) {
+    useUIStore().showError('图片上传失败')
+  } finally {
+    target.value = ''
+  }
+}
+
+const handleDeleteImage = async (imageId: number) => {
+  if (!props.product?.id) return
+  if (!confirm('确定要删除此图片吗？')) return
+  try {
+    await productAPI.deleteImage(props.product.id, imageId)
+    useUIStore().showSuccess('图片已删除')
+    productImages.value = productImages.value.filter((img) => img.id !== imageId)
+  } catch (error: any) {
+    useUIStore().showError('删除图片失败')
+  }
+}
 
 const FORM_INITIAL = {
   code: '', name: '', product_type: 'single', product_group: null, specification: '', unit: '件',
@@ -238,6 +338,7 @@ const initFormFromProduct = () => {
   materialItems.value = (props.product.default_materials || []).map((m: any) => ({
     id: m.id, material: m.material, material_size: m.material_size || '', material_usage: m.material_usage || '', need_cutting: m.need_cutting || false, notes: m.notes || '', sort_order: m.sort_order || 0
   }))
+  loadProductImages()
 }
 
 const resetForm = () => {
@@ -261,10 +362,18 @@ const handleMaterialCreated = (material: any) => {
 }
 
 const handleSubmit = () => {
-  if (!form.code) { useUIStore().showWarning('请输入产品编码'); return }
-  if (!form.name) { useUIStore().showWarning('请输入产品名称'); return }
-  if (!form.specification) { useUIStore().showWarning('请输入产品规格'); return }
-  emit('confirm', { form: { ...form }, materialItems: [...materialItems.value] })
+  const code = (form.code || '').trim()
+  const name = (form.name || '').trim()
+  if (!code) { useUIStore().showWarning('请输入产品编码'); return }
+  if (code.length < 2 || code.length > 50) { useUIStore().showWarning('产品编码长度需在2-50个字符之间'); return }
+  if (!/^[A-Za-z0-9-]+$/.test(code)) { useUIStore().showWarning('产品编码只能包含字母、数字和连字符'); return }
+  if (!name) { useUIStore().showWarning('请输入产品名称'); return }
+  if (form.product_type !== 'single' && !form.product_group) { useUIStore().showWarning('请选择产品组'); return }
+  if (form.unit_price !== null && form.unit_price !== undefined && (form.unit_price < 0 || form.unit_price > 99999999.99)) { useUIStore().showWarning('单价需在0-99,999,999.99之间'); return }
+  if (form.stock_quantity !== null && form.stock_quantity !== undefined && form.stock_quantity < 0) { useUIStore().showWarning('库存数量不能为负数'); return }
+  if (form.min_stock_quantity !== null && form.min_stock_quantity !== undefined && form.min_stock_quantity < 0) { useUIStore().showWarning('最小库存不能为负数'); return }
+  if (props.dialogType === 'edit' && form.min_stock_quantity > form.stock_quantity) { useUIStore().showWarning('最小库存不能大于库存数量'); return }
+  emit('confirm', { form: { ...form, code, name }, materialItems: [...materialItems.value] })
 }
 
 const handleClose = () => { resetForm(); emit('update:visible', false) }
