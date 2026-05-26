@@ -19,9 +19,18 @@
       <slot name="filters" />
     </div>
 
-    <!-- 滚动区域：表格 -->
+    <!-- 滚动区域：表格或自定义内容 -->
     <div class="layout-section-scrollable">
-      <div class="card table-scroll-container">
+      <div
+        v-if="$slots.body"
+        class="layout-body-scroll"
+      >
+        <slot name="body" />
+      </div>
+      <div
+        v-else
+        class="card table-scroll-container"
+      >
         <slot name="table" />
       </div>
     </div>
@@ -68,6 +77,10 @@ onUnmounted(() => {
 
 .layout-section-scrollable {
   @apply flex-1 min-h-0 flex flex-col;
+}
+
+.layout-body-scroll {
+  @apply flex-1 overflow-y-auto;
 }
 
 /* 表格滚动容器 - 增强版表体滚动方案 */
