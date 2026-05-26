@@ -7,10 +7,16 @@
       {{ workOrder?.customer_name }}
     </DescriptionItem>
     <DescriptionItem label="业务员">
-      {{ salespersonName }}
+      {{ workOrder?.salesperson_name || salespersonName || '-' }}
     </DescriptionItem>
     <DescriptionItem label="制表人">
       {{ workOrder?.manager_name || '-' }}
+    </DescriptionItem>
+    <DescriptionItem label="创建人">
+      {{ workOrder?.created_by_name || '-' }}
+    </DescriptionItem>
+    <DescriptionItem label="审核人">
+      {{ workOrder?.approved_by_name || '-' }}
     </DescriptionItem>
     <DescriptionItem
       v-if="workOrder?.product_name"
@@ -19,13 +25,19 @@
       {{ workOrder.product_name }}
     </DescriptionItem>
     <DescriptionItem
-      v-if="displayQuantity"
+      v-if="productionQuantity !== '-'"
       label="生产数量"
     >
-      {{ displayQuantity }} 车
+      {{ productionQuantity }} {{ workOrder?.unit || '' }}
+    </DescriptionItem>
+    <DescriptionItem label="不良数量">
+      {{ workOrder?.defective_quantity ?? '-' }}
+    </DescriptionItem>
+    <DescriptionItem label="任务数">
+      {{ workOrder?.total_task_count ?? '-' }}
     </DescriptionItem>
     <DescriptionItem label="总金额">
-      ¥{{ workOrder?.total_amount }}
+      {{ formatAmount(workOrder?.total_amount) }}
     </DescriptionItem>
     <DescriptionItem label="状态">
       <div
@@ -108,6 +120,40 @@
     <DescriptionItem label="交货日期">
       {{ formatDate(workOrder?.delivery_date) }}
     </DescriptionItem>
+    <DescriptionItem label="实际交货">
+      {{ formatDate(workOrder?.actual_delivery_date) }}
+    </DescriptionItem>
+    <DescriptionItem label="印刷形式">
+      {{ workOrder?.printing_type_display || workOrder?.printing_type || '-' }}
+    </DescriptionItem>
+    <DescriptionItem label="印刷色数">
+      {{ workOrder?.printing_colors_display || '-' }}
+    </DescriptionItem>
+    <DescriptionItem
+      v-if="workOrder?.design_file_url"
+      label="设计文件"
+    >
+      <a
+        :href="workOrder.design_file_url"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-primary-600 hover:underline"
+      >
+        查看文件
+      </a>
+    </DescriptionItem>
+    <DescriptionItem
+      v-if="workOrder?.approval_comment"
+      label="审批说明"
+    >
+      {{ workOrder.approval_comment }}
+    </DescriptionItem>
+    <DescriptionItem
+      v-if="workOrder?.rejection_reason"
+      label="拒绝原因"
+    >
+      {{ workOrder.rejection_reason }}
+    </DescriptionItem>
   </DescriptionGrid>
 </template>
 
@@ -142,11 +188,19 @@ const statusMenuPosition = ref({ top: 0, left: 0, width: 128 })
 const currentStatusLabel = computed(() =>
   statusOptions.find(option => option.value === props.workOrder?.status)?.label || props.statusText || '-'
 )
+const productionQuantity = computed(() =>
+  props.workOrder?.production_quantity ?? props.workOrder?.quantity ?? props.displayQuantity ?? '-'
+)
 const statusMenuStyle = computed(() => ({
   top: `${statusMenuPosition.value.top}px`,
   left: `${statusMenuPosition.value.left}px`,
   minWidth: `${statusMenuPosition.value.width}px`
 }))
+
+const formatAmount = (value: any) => {
+  if (value === undefined || value === null || value === '') return '-'
+  return `¥${Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
 
 const updateStatusMenuPosition = () => {
   const rect = statusTriggerRef.value?.getBoundingClientRect()

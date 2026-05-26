@@ -91,7 +91,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['create-purchase', 'view-purchase'])
-const hasPendingMaterials = computed(() => props.materials.some((m: any) => m.purchase_status === 'pending'))
+const hasPendingMaterials = computed(() => props.materials.some((m: any) => !m.purchase_status || m.purchase_status === 'pending'))
 
 const materialColumns: Column[] = [
   { key: 'material_name', label: '物料', minWidth: 176 },

@@ -1,40 +1,30 @@
 <template>
-  <Select
+  <CheckboxGroup
     :model-value="modelValue"
-    label="工序"
-    placeholder="请选择工序"
     :options="processOptions"
-    multiple
-    filterable
-    :loading="loading"
+    variant="chip"
     :disabled="disabled"
-    :clearable="clearable"
-    @update:model-value="v => emit('update:modelValue', v)"
   />
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Select } from '@/components/common'
+import { CheckboxGroup } from '@/components/common'
 import { processAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
-const props = defineProps({ modelValue: { type: Array as any, default: () => [] }, disabled: { type: Boolean, default: false }, clearable: { type: Boolean, default: true } })
+const props = defineProps({ modelValue: { type: Array as any, default: () => [] }, disabled: { type: Boolean, default: false } })
 const emit = defineEmits(['update:modelValue'])
 
 const loading = ref(false)
 const processList = ref<any[]>([])
-const processOptions = computed(() => processList.value.map((p: any) => ({ value: p.id, label: p.name, extra: p.code ? { type: 'info', label: p.code } : null })))
-
-let cacheTimestamp = 0
-const CACHE_DURATION = 10 * 60 * 1000
+const processOptions = computed(() => processList.value.map((p: any) => ({ value: p.id, label: p.name, disabled: !p.is_active })))
 
 const fetchProcesses = async () => {
   loading.value = true
   try {
-    const res: any = await processAPI.getList({ is_active: true, page_size: 50 })
+    const res: any = await processAPI.getList({ is_active: true, page_size: 100 })
     processList.value = res?.results || res || []
-    cacheTimestamp = Date.now()
   } catch (error: any) { ErrorHandler.handle(error) } finally { loading.value = false }
 }
 
