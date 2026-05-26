@@ -15,7 +15,7 @@
         <Select
           v-model="filters.cost_type"
           :options="typeOptions"
-          class="w-32"
+          class="w-full sm:w-36"
           placeholder="费用类型"
           clearable
           @change="handleSearch"

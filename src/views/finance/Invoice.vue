@@ -12,7 +12,7 @@
             <Select
               v-model="filters.customer"
               :options="customerOptions"
-              class="w-40"
+              class="w-full sm:w-36"
               placeholder="选择客户"
               clearable
               filterable
@@ -21,7 +21,7 @@
             <Select
               v-model="filters.status"
               :options="statusOptions"
-              class="w-36"
+              class="w-full sm:w-36"
               placeholder="发票状态"
               clearable
               @change="handleSearch"

@@ -12,7 +12,7 @@
             <Select
               v-model="filters.customer"
               :options="customerOptions"
-              class="w-40"
+              class="w-full sm:w-36"
               placeholder="选择客户"
               clearable
               filterable
@@ -21,7 +21,7 @@
             <Select
               v-model="filters.payment_method"
               :options="paymentMethodOptions"
-              class="w-36"
+              class="w-full sm:w-36"
               placeholder="付款方式"
               clearable
               @change="handleSearch"

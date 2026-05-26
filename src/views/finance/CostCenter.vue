@@ -15,7 +15,7 @@
         <Select
           v-model="filters.is_active"
           :options="[{label: '启用', value: true}, {label: '禁用', value: false}]"
-          class="w-32"
+          class="w-full sm:w-36"
           placeholder="状态"
           clearable
           @change="handleSearch"

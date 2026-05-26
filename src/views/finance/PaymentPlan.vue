@@ -15,7 +15,7 @@
         <Select
           v-model="filters.status"
           :options="statusOptions"
-          class="w-32"
+          class="w-full sm:w-36"
           placeholder="状态"
           clearable
           @change="handleSearch"

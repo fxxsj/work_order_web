@@ -15,7 +15,7 @@
         <Select
           v-model="filters.action"
           :options="actionOptions"
-          class="w-32"
+          class="w-full sm:w-36"
           placeholder="操作动作"
           clearable
           @change="handleSearch"

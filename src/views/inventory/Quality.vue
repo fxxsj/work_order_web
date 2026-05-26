@@ -19,7 +19,7 @@
             <Select
               v-model="filters.inspection_type"
               :options="inspectionTypeOptions"
-              class="w-36"
+              class="w-full sm:w-36"
               placeholder="检验类型"
               clearable
               @change="handleSearch"
@@ -27,7 +27,7 @@
             <Select
               v-model="filters.result"
               :options="resultOptions"
-              class="w-36"
+              class="w-full sm:w-36"
               placeholder="检验结果"
               clearable
               @change="handleSearch"

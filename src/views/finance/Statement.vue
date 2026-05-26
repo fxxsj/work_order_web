@@ -12,7 +12,7 @@
             <Select
               v-model="filters.statement_type"
               :options="statementTypeOptions"
-              class="w-36"
+              class="w-full sm:w-36"
               placeholder="对账类型"
               clearable
               @change="handleSearch"
@@ -20,7 +20,7 @@
             <Select
               v-model="filters.status"
               :options="statementStatusOptions"
-              class="w-36"
+              class="w-full sm:w-36"
               placeholder="状态"
               clearable
               @change="handleSearch"

@@ -12,7 +12,7 @@
             <Select
               v-model="filters.status"
               :options="statusOptions"
-              class="w-full sm:w-40"
+              class="w-full sm:w-36"
               placeholder="库存状态"
               clearable
               @change="handleSearch"

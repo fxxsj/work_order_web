@@ -15,7 +15,7 @@
         <Select
           v-model="filters.type"
           :options="typeOptions"
-          class="w-32"
+          class="w-full sm:w-36"
           placeholder="通知类型"
           clearable
           @change="handleSearch"
