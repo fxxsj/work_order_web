@@ -1,43 +1,45 @@
 <template>
-  <DescriptionGrid
-    :columns="1"
-    class="mt-6"
-  >
-    <DescriptionItem label="图稿（CTP版）">
-      <span v-if="artworkCodes?.length">
-        <span
-          v-for="(code, i) in artworkCodes"
-          :key="i"
-        >
-          {{ code }}<span v-if="(artworkNames as any)?.[i]"> - {{ (artworkNames as any)[i] }}</span><span v-if="Number(i) < artworkCodes.length - 1">、</span>
+  <section class="card p-6">
+    <div class="mb-4 text-lg font-bold">
+      印前资源
+    </div>
+    <DescriptionGrid :columns="1">
+      <DescriptionItem label="图稿（CTP版）">
+        <span v-if="artworkCodes?.length">
+          <span
+            v-for="(code, i) in artworkCodes"
+            :key="i"
+          >
+            {{ code }}<span v-if="(artworkNames as any)?.[i]"> - {{ (artworkNames as any)[i] }}</span><span v-if="Number(i) < artworkCodes.length - 1">、</span>
+          </span>
         </span>
-      </span>
-      <span
-        v-else
-        class="text-gray-400"
-      >-</span>
-    </DescriptionItem>
-    <DescriptionItem
-      v-if="printingType && printingType !== 'none'"
-      label="印刷要求"
-    >
-      <span>{{ printingColorsDisplay || artworkColors }} {{ getPrintingTypeDisplay(printingType) }}</span>
-    </DescriptionItem>
-    <DescriptionItem label="刀模">
-      <span v-if="dieCodes?.length">
         <span
-          v-for="(code, i) in dieCodes"
-          :key="i"
-        >
-          {{ code }}<span v-if="(dieNames as any)?.[i]"> - {{ (dieNames as any)[i] }}</span><span v-if="Number(i) < dieCodes.length - 1">、</span>
+          v-else
+          class="text-gray-400"
+        >-</span>
+      </DescriptionItem>
+      <DescriptionItem
+        v-if="printingType && printingType !== 'none'"
+        label="印刷要求"
+      >
+        <span>{{ printingColorsDisplay || artworkColors }} {{ getPrintingTypeDisplay(printingType) }}</span>
+      </DescriptionItem>
+      <DescriptionItem label="刀模">
+        <span v-if="dieCodes?.length">
+          <span
+            v-for="(code, i) in dieCodes"
+            :key="i"
+          >
+            {{ code }}<span v-if="(dieNames as any)?.[i]"> - {{ (dieNames as any)[i] }}</span><span v-if="Number(i) < dieCodes.length - 1">、</span>
+          </span>
         </span>
-      </span>
-      <span
-        v-else
-        class="text-gray-400"
-      >-</span>
-    </DescriptionItem>
-  </DescriptionGrid>
+        <span
+          v-else
+          class="text-gray-400"
+        >-</span>
+      </DescriptionItem>
+    </DescriptionGrid>
+  </section>
 </template>
 
 <script setup lang="ts">

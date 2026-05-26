@@ -126,10 +126,10 @@
           variant="chip"
         />
       </div>
-      <div class="flex items-start gap-3">
-        <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">是否启用</label>
-        <Toggle v-model="form.is_active" />
-      </div>
+      <Toggle
+        v-model="form.is_active"
+        label="是否启用"
+      />
     </div>
     <template #footer>
       <div class="flex justify-end gap-3">

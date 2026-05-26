@@ -1,7 +1,7 @@
 <template>
-  <div class="mt-6">
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-3 font-bold">
-      <span>采购信息</span>
+  <div class="card p-6">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <span class="text-lg font-bold">采购信息</span>
       <button
         v-if="hasPendingMaterials"
         class="btn btn-primary btn-sm"

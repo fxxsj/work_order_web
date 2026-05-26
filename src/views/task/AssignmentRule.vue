@@ -20,9 +20,10 @@
             /> 新建分派规则
           </button>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-500">启用自动分派：</span><Toggle
+        <div class="w-44">
+          <Toggle
             v-model="globalDispatchEnabled"
+            label="启用自动分派"
             @change="handleGlobalToggle"
           />
         </div>
@@ -128,12 +129,10 @@
           placeholder="JSON格式条件"
           class="w-full"
         />
-        <div class="flex items-start gap-3">
-          <label class="w-24 text-sm text-gray-600 dark:text-gray-400 pt-2">启用</label>
-          <div class="pt-1">
-            <Toggle v-model="form.is_active" />
-          </div>
-        </div>
+        <Toggle
+          v-model="form.is_active"
+          label="启用"
+        />
       </div>
       <template #footer>
         <button

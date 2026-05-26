@@ -3,16 +3,24 @@
     <LoadingOverlay :show="loading" />
     <div
       v-if="workOrder"
-      class="card"
+      class="space-y-6"
     >
       <WorkOrderHeaderActions
         :can-edit="canEdit"
         @back="router.back()"
         @print="handlePrint"
         @edit="handleEdit"
-        @status-change="handleStatusChange"
       />
-      <WorkOrderBasicInfo :work-order="workOrder" />
+      <section class="card p-6">
+        <div class="mb-4 border-b border-gray-200 pb-4 text-lg font-bold text-gray-900 dark:border-dark-700 dark:text-white">
+          基本信息
+        </div>
+        <WorkOrderBasicInfo
+          :work-order="workOrder"
+          :can-edit="canEdit"
+          @status-change="handleStatusChange"
+        />
+      </section>
       <WorkOrderApproval
         v-if="canApprove"
         :work-order="workOrder"
@@ -134,7 +142,7 @@ const loadPurchaseOrders = async (workOrderId: any) => {
 
 const handlePrint = () => window.print()
 const handleEdit = () => router.push(`/workorders/${route.params.id}/edit`)
-const handleStatusChange = async (status: any) => { try { await workOrderAPI.updateStatus(String(route.params.id), { status }); useUIStore().showSuccess('状态已更新'); loadData() } catch (e: any) { ErrorHandler.showMessage(e) } }
+const handleStatusChange = async (status: any) => { try { await workOrderAPI.updateStatus(String(route.params.id), status); useUIStore().showSuccess('状态已更新'); loadData() } catch (e: any) { ErrorHandler.showMessage(e) } }
 const handleApprove = async (status: any) => { try { await workOrderAPI.approve(String(route.params.id), { status }); useUIStore().showSuccess('审核完成'); loadData() } catch (e: any) { ErrorHandler.showMessage(e) } }
 const handleResubmit = async () => { try { await workOrderAPI.resubmit(String(route.params.id)); useUIStore().showSuccess('已重新提交'); loadData() } catch (e: any) { ErrorHandler.showMessage(e) } }
 const handleProcessClick = (process: any) => console.log('Process clicked', process)

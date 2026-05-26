@@ -2,7 +2,7 @@
   <div>
     <div
       v-if="canApprove && workOrder?.approval_status === 'pending'"
-      class="card mt-6"
+      class="card p-6"
     >
       <div class="mb-4 font-bold">
         业务员审核
@@ -47,7 +47,7 @@
     </div>
     <div
       v-if="canResubmit && workOrder?.approval_status === 'rejected'"
-      class="card mt-6"
+      class="card p-6"
     >
       <div class="mb-4 font-bold">
         重新提交审核

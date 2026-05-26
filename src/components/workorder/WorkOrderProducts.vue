@@ -1,9 +1,9 @@
 <template>
   <div
     v-if="hasProducts"
-    class="mt-6"
+    class="card p-6"
   >
-    <div class="mb-3 font-bold">
+    <div class="mb-4 text-lg font-bold">
       产品列表
     </div>
     <SummaryTable

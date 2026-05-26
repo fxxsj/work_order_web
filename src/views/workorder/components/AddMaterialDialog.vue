@@ -43,19 +43,19 @@ import { ref, reactive, computed } from 'vue'
 import { Select, TextArea } from '@/components/common'
 
 const props = defineProps({
-  visible: { type: Boolean, default: false },
+  modelValue: { type: Boolean, default: false },
   materialList: { type: Array as any, default: () => [] },
   loading: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['submit', 'update:visible'])
+const emit = defineEmits(['submit', 'update:modelValue'])
 
 const formRef = ref(null)
 const form = reactive({ material_id: null, notes: '' })
 
-const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
+const dialogVisible = computed({ get: () => props.modelValue, set: (val: any) => emit('update:modelValue', val) })
 
 const handleSubmit = () => { if (form.material_id) emit('submit', { material_id: form.material_id, notes: form.notes }) }
-const handleCancel = () => { emit('update:visible', false) }
+const handleCancel = () => { emit('update:modelValue', false) }
 const handleClose = () => { form.material_id = null; form.notes = '' }
 </script>

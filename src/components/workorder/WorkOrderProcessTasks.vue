@@ -1,7 +1,7 @@
 <template>
-  <div class="card mt-6">
+  <div class="card p-6">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <span class="font-bold">工序和任务管理</span>
+      <span class="text-lg font-bold">工序和任务管理</span>
       <div class="flex flex-wrap items-center gap-3">
         <RadioGroup
           :model-value="viewMode"

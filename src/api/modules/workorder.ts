@@ -37,7 +37,10 @@ class WorkOrderAPI extends BaseAPI {
 
   // 更新状态
   updateStatus(id: number | string, status: unknown) {
-    return this.customAction(`${this.baseUrl}${id}/update_status/`, 'post', { status })
+    const payload = typeof status === 'object' && status !== null && 'status' in status
+      ? status
+      : { status }
+    return this.customAction(`${this.baseUrl}${id}/update_status/`, 'post', payload)
   }
 
   // 获取统计数据
