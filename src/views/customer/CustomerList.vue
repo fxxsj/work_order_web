@@ -237,7 +237,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { customerAPI, authAPI } from '@/api/modules'
+import { authAPI } from '@/api/modules'
+import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Icon, BaseDialog, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'

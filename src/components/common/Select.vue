@@ -43,7 +43,12 @@
           </slot>
         </span>
         <span class="select-icon">
+          <span
+            v-if="props.loading"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent align-middle"
+          />
           <Icon
+            v-else
             name="chevronDown"
             size="md"
             :class="['transition-transform duration-200', isOpen && 'rotate-180']"
@@ -137,7 +142,26 @@
                 v-if="filteredOptions.length === 0"
                 class="select-empty"
               >
-                {{ emptyTextDisplay }}
+                <slot
+                  name="empty"
+                  :query="searchQuery"
+                >
+                  <div class="flex flex-col items-center gap-2">
+                    <span>{{ emptyTextDisplay }}</span>
+                    <button
+                      v-if="creatable"
+                      type="button"
+                      class="btn btn-secondary text-xs"
+                      @click="handleCreateClick"
+                    >
+                      <Icon
+                        name="plus"
+                        size="sm"
+                      />
+                      新建
+                    </button>
+                  </div>
+                </slot>
               </div>
             </div>
           </div>
@@ -193,11 +217,13 @@ interface Props {
   multiple?: boolean
   remote?: boolean
   remoteMethod?: (query: string) => void
+  loading?: boolean
 }
 
 interface Emits {
   (e: 'update:modelValue', value: string | number | boolean | null | (string | number | boolean)[]): void
   (e: 'change', value: string | number | boolean | null | (string | number | boolean)[], option: SelectOption | SelectOption[] | null): void
+  (e: 'create', query: string): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -213,7 +239,8 @@ const props = withDefaults(defineProps<Props>(), {
   labelKey: 'label',
   multiple: false,
   remote: false,
-  remoteMethod: undefined
+  remoteMethod: undefined,
+  loading: false
 })
 
 const emit = defineEmits<Emits>()
@@ -439,6 +466,12 @@ watch(isOpen, (open: any) => {
 })
 
 const selectOption = (option: any) => {
+  if (option._creatable) {
+    isOpen.value = false
+    emit('create', String(getOptionValue(option) ?? ''))
+    return
+  }
+
   const value = getOptionValue(option) ?? null
 
   if (props.multiple) {
@@ -463,6 +496,12 @@ const selectOption = (option: any) => {
     isOpen.value = false
     triggerRef.value?.focus()
   }
+}
+
+const handleCreateClick = () => {
+  const query = searchQuery.value
+  isOpen.value = false
+  emit('create', query)
 }
 
 // Keyboards

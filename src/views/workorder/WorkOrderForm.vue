@@ -128,7 +128,7 @@
             @change="handleMaterialsChange"
             @add="handleAddMaterial"
             @remove="handleRemoveMaterial"
-            @create="showQuickMaterialCreate = true"
+            @create="openQuickMaterialCreate"
           />
         </div>
 
@@ -256,15 +256,15 @@
 
       <!-- Quick Create Dialogs -->
       <QuickCustomerCreateDialog
-        v-model="showQuickCustomerCreate"
+        v-model:visible="showQuickCustomerCreate"
         @created="handleCustomerCreated"
       />
       <QuickProductCreateDialog
-        v-model="showQuickProductCreate"
+        v-model:visible="showQuickProductCreate"
         @created="handleProductCreated"
       />
       <QuickMaterialCreateDialog
-        v-model="showQuickMaterialCreate"
+        v-model:visible="showQuickMaterialCreate"
         @created="handleMaterialCreated"
       />
     </div>
@@ -279,11 +279,12 @@ import { useUIStore } from '@/stores/ui'
 import { workOrderAPI, productAPI, materialAPI, artworkAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
-import { CustomerSelector, ProductListEditor, ProcessSelector, MaterialListEditor, MultiSelect } from '@/components/workorder'
+import { ProductListEditor, ProcessSelector, MaterialListEditor, MultiSelect } from '@/components/workorder'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import CustomerSelector from '@/views/customer/components/CustomerSelector.vue'
 import QuickCustomerCreateDialog from './components/QuickCustomerCreateDialog.vue'
 import QuickProductCreateDialog from './components/QuickProductCreateDialog.vue'
-import QuickMaterialCreateDialog from './components/QuickMaterialCreateDialog.vue'
+import QuickMaterialCreateDialog from '@/views/material/components/QuickMaterialCreateDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -297,6 +298,7 @@ const showSubmitApprovalDialog = ref(false)
 const showQuickCustomerCreate = ref(false)
 const showQuickProductCreate = ref(false)
 const showQuickMaterialCreate = ref(false)
+const pendingMaterialCreateIndex = ref<number | null>(null)
 
 const customerSelectorRef = ref<any>(null)
 
@@ -610,6 +612,11 @@ const handleRemoveMaterial = (index: number) => {
   form.materials.splice(index, 1)
 }
 
+const openQuickMaterialCreate = (index: number | null = null) => {
+  pendingMaterialCreateIndex.value = typeof index === 'number' ? index : null
+  showQuickMaterialCreate.value = true
+}
+
 const handleCustomerCreated = (customer: any) => {
   customerSelectorRef.value?.appendCustomer(customer)
   form.customer_id = customer.id
@@ -623,6 +630,10 @@ const handleProductCreated = (product: any) => {
 const handleMaterialCreated = (material: any) => {
   // Add to material list
   materialList.value.push(material)
+  if (pendingMaterialCreateIndex.value !== null && form.materials[pendingMaterialCreateIndex.value]) {
+    form.materials[pendingMaterialCreateIndex.value].material = material.id
+  }
+  pendingMaterialCreateIndex.value = null
 }
 
 // Validation
@@ -777,4 +788,3 @@ const handleCancel = () => {
   router.back()
 }
 </script>
-

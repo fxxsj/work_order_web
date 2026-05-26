@@ -15,7 +15,7 @@
       <button
         v-if="!disabled"
         class="btn btn-secondary btn-sm"
-        @click="emit('create')"
+        @click="emit('create', null)"
       >
         <Icon
           name="plus"
@@ -31,14 +31,12 @@
       @delete="handleRemove"
     >
       <template #cell-material="{ row, index }">
-        <Select
+        <MaterialSelector
           :model-value="row.material"
-          :options="materialOptions"
-          placeholder="选择物料"
-          filterable
+          :materials="materials"
           :disabled="disabled"
-          searchable
           @update:model-value="v => handleMaterialChange(index, v)"
+          @create="emit('create', index)"
         />
       </template>
       <template #cell-quantity="{ row, index }">
@@ -67,8 +65,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Icon, InputNumber, Input, Select, LineItemsTable } from '@/components/common'
+import { Icon, InputNumber, Input, LineItemsTable } from '@/components/common'
+import MaterialSelector from '@/views/material/components/MaterialSelector.vue'
 
 const props = defineProps({
   items: { type: Array as any, default: () => [] },
@@ -84,13 +82,6 @@ const columns = [
   { key: 'unit', label: '单位', width: 80 },
   { key: 'notes', label: '备注', minWidth: 150 }
 ]
-
-const materialOptions = computed(() =>
-  props.materials.map((m: any) => ({
-    value: m.id,
-    label: `${m.name} (${m.code || '无编码'})`
-  }))
-)
 
 const getMaterialUnit = (materialId: any) => {
   const material = props.materials.find((m: any) => m.id === materialId)

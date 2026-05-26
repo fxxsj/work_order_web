@@ -94,13 +94,12 @@
             :items="materialItems"
             @delete="removeMaterialItem"
           >
-            <template #cell-material="{ row }">
-              <Select
-                v-model="row.material"
-                :options="materialOptions"
-                placeholder="请选择物料"
-                filterable
-                class="w-full"
+            <template #cell-material="{ row, index }">
+              <MaterialSelector
+                :model-value="row.material"
+                :materials="materialList"
+                @update:model-value="value => row.material = value"
+                @create="openQuickMaterialCreate(index)"
               />
             </template>
             <template #cell-material_size="{ row }">
@@ -152,6 +151,10 @@
       </button>
     </template>
   </BaseDialog>
+  <QuickMaterialCreateDialog
+    v-model:visible="showQuickMaterialCreate"
+    @created="handleMaterialCreated"
+  />
 </template>
 
 <script setup lang="ts">
@@ -159,6 +162,8 @@ import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { Icon, Input, InputNumber, Select, TextArea, Toggle, CheckboxGroup, SectionDivider, LineItemsTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
+import MaterialSelector from '@/views/material/components/MaterialSelector.vue'
+import QuickMaterialCreateDialog from '@/views/material/components/QuickMaterialCreateDialog.vue'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -173,6 +178,9 @@ const props = defineProps({
 const emit = defineEmits(['confirm', 'update:visible'])
 
 const materialItems = ref<any[]>([])
+const materialList = ref<any[]>([])
+const showQuickMaterialCreate = ref(false)
+const pendingMaterialCreateIndex = ref<number | null>(null)
 const isOpen = ref(false)
 
 // Sync with parent visibility prop and init form when opening
@@ -201,7 +209,10 @@ const dialogTitle = computed(() => props.dialogType === 'edit' ? '编辑产品' 
 const isEditMode = computed(() => props.dialogType === 'edit')
 const processOptions = computed(() => props.processes.map((p: any) => ({ value: p.id, label: p.name, disabled: !p.is_active })))
 const productGroupOptions = computed(() => props.productGroups.map((g: any) => ({ value: g.id, label: `${g.code} - ${g.name}` })))
-const materialOptions = computed(() => props.materials.map((m: any) => ({ value: m.id, label: `${m.name} (${m.code})` })))
+
+watch(() => props.materials, (materials) => {
+  materialList.value = [...(materials as any[])]
+}, { immediate: true, deep: true })
 
 const materialColumns: Column[] = [
   { key: 'material', label: '物料名称', width: 200 },
@@ -239,6 +250,17 @@ const resetForm = () => {
 const handleProductTypeChange = (value: any) => { if (value === 'single') form.product_group = null }
 const addMaterialItem = () => { materialItems.value.push({ material: null, material_size: '', material_usage: '', need_cutting: false, notes: '', sort_order: materialItems.value.length }) }
 const removeMaterialItem = (index: any) => { materialItems.value.splice(index, 1) }
+const openQuickMaterialCreate = (index: number | null = null) => {
+  pendingMaterialCreateIndex.value = typeof index === 'number' ? index : null
+  showQuickMaterialCreate.value = true
+}
+const handleMaterialCreated = (material: any) => {
+  materialList.value.push(material)
+  if (pendingMaterialCreateIndex.value !== null && materialItems.value[pendingMaterialCreateIndex.value]) {
+    materialItems.value[pendingMaterialCreateIndex.value].material = material.id
+  }
+  pendingMaterialCreateIndex.value = null
+}
 
 const handleSubmit = () => {
   if (!form.code) { useUIStore().showWarning('请输入产品编码'); return }

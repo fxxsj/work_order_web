@@ -9,12 +9,11 @@
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label class="input-label mb-1.5 block">供应商</label>
-          <Select
-            v-model="localForm.supplier"
-            :options="supplierSelectOptions"
-            placeholder="请选择供应商"
-            searchable
-            class="w-full"
+          <SupplierSelector
+            :model-value="localForm.supplier"
+            :suppliers="supplierOptions"
+            @update:model-value="value => localForm.supplier = value"
+            @create="showQuickSupplierCreate = true"
           />
         </div>
         <div>
@@ -57,14 +56,12 @@
           :items="localForm.items"
           @delete="handleDeleteItem"
         >
-          <template #cell-material="{ row }">
-            <Select
-              v-model="row.material"
-              :options="materialSelectOptions"
-              placeholder="请选择物料"
-              searchable
-              class="w-full"
-              @change="handleMaterialChange(row)"
+          <template #cell-material="{ row, index }">
+            <MaterialSelector
+              :model-value="row.material"
+              :materials="materialOptions"
+              @update:model-value="value => handleMaterialChange(row, value)"
+              @create="openQuickMaterialCreate(index)"
             />
           </template>
           <template #cell-quantity="{ row }">
@@ -121,6 +118,14 @@
       </button>
     </template>
   </BaseDialog>
+  <QuickMaterialCreateDialog
+    v-model:visible="showQuickMaterialCreate"
+    @created="handleMaterialCreated"
+  />
+  <QuickSupplierCreateDialog
+    v-model:visible="showQuickSupplierCreate"
+    @created="handleSupplierCreated"
+  />
 </template>
 
 <script setup lang="ts">
@@ -128,6 +133,10 @@ import { ref, reactive, computed, watch } from 'vue'
 import { Icon, Select, TextArea, InputNumber, SectionDivider, LineItemsTable } from '@/components/common'
 import { supplierAPI, materialAPI, workOrderAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
+import MaterialSelector from '@/views/material/components/MaterialSelector.vue'
+import QuickMaterialCreateDialog from '@/views/material/components/QuickMaterialCreateDialog.vue'
+import SupplierSelector from '@/views/supplier/components/SupplierSelector.vue'
+import QuickSupplierCreateDialog from './QuickSupplierCreateDialog.vue'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -139,6 +148,9 @@ const props = defineProps({
 const emit = defineEmits(['confirm', 'close', 'update:visible'])
 
 const loading = ref(false)
+const showQuickSupplierCreate = ref(false)
+const showQuickMaterialCreate = ref(false)
+const pendingMaterialCreateIndex = ref<number | null>(null)
 const supplierOptions = ref<any[]>([])
 const materialOptions = ref<any[]>([])
 const workOrderOptions = ref<any[]>([])
@@ -149,8 +161,6 @@ const localForm = reactive({ ...FORM_INITIAL, items: [] as any[] })
 const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
 const totalAmount = computed(() => localForm.items.reduce((sum: any, item: any) => sum + (item.quantity || 0) * (item.unit_price || 0), 0).toFixed(2))
 
-const supplierSelectOptions = computed(() => supplierOptions.value.map((s: any) => ({ value: s.id, label: s.name })))
-const materialSelectOptions = computed(() => materialOptions.value.map((m: any) => ({ value: m.id, label: `${m.code} - ${m.name}` })))
 const workOrderSelectOptions = computed(() => workOrderOptions.value.map((o: any) => ({ value: o.id, label: o.order_number })))
 
 const lineItemColumns = [
@@ -198,9 +208,28 @@ const syncWorkOrderNumber = () => {
 const handleAddItem = () => { localForm.items.push({ material: null, quantity: 1, unit_price: 0 }) }
 const handleDeleteItem = (index: any) => { localForm.items.splice(index, 1) }
 
-const handleMaterialChange = (row: any) => {
+const handleMaterialChange = (row: any, value: any) => {
+  row.material = value
   const material = materialOptions.value.find((m: any) => m.id === row.material)
   if (material?.unit_price) row.unit_price = material.unit_price
+}
+
+const openQuickMaterialCreate = (index: number | null = null) => {
+  pendingMaterialCreateIndex.value = typeof index === 'number' ? index : null
+  showQuickMaterialCreate.value = true
+}
+
+const handleMaterialCreated = (material: any) => {
+  materialOptions.value.push(material)
+  if (pendingMaterialCreateIndex.value !== null && localForm.items[pendingMaterialCreateIndex.value]) {
+    handleMaterialChange(localForm.items[pendingMaterialCreateIndex.value], material.id)
+  }
+  pendingMaterialCreateIndex.value = null
+}
+
+const handleSupplierCreated = (supplier: any) => {
+  supplierOptions.value.push(supplier)
+  localForm.supplier = supplier.id
 }
 
 const handleSubmit = async () => {

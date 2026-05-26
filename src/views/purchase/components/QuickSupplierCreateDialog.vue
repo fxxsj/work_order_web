@@ -1,15 +1,21 @@
 <template>
   <BaseDialog
     :show="dialogVisible"
-    title="新建客户"
+    title="新建供应商"
     width="narrow"
     @close="handleClose"
   >
     <div class="space-y-4">
       <Input
         v-model="form.name"
-        label="客户名称"
-        placeholder="请输入客户名称"
+        label="供应商名称"
+        placeholder="请输入供应商名称"
+        required
+      />
+      <Input
+        v-model="form.code"
+        label="供应商编码"
+        placeholder="请输入供应商编码"
         required
       />
       <Input
@@ -21,6 +27,11 @@
         v-model="form.phone"
         label="联系电话"
         placeholder="请输入联系电话"
+      />
+      <Input
+        v-model="form.email"
+        label="邮箱"
+        placeholder="请输入邮箱"
       />
       <TextArea
         v-model="form.address"
@@ -38,7 +49,7 @@
       </button>
       <button
         class="btn btn-primary"
-        :disabled="loading || !form.name"
+        :disabled="loading || !form.name || !form.code"
         @click="handleSubmit"
       >
         <span
@@ -54,7 +65,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { Input, TextArea } from '@/components/common'
-import { customerAPI } from '@/api/modules/customer'
+import { supplierAPI } from '@/api/modules'
 import { useUIStore } from '@/stores/ui'
 
 const props = defineProps({
@@ -67,8 +78,10 @@ const emit = defineEmits(['update:modelValue', 'update:visible', 'created'])
 const loading = ref(false)
 const form = reactive({
   name: '',
+  code: '',
   contact_person: '',
   phone: '',
+  email: '',
   address: ''
 })
 
@@ -87,26 +100,34 @@ const handleClose = () => {
 
 const resetForm = () => {
   form.name = ''
+  form.code = ''
   form.contact_person = ''
   form.phone = ''
+  form.email = ''
   form.address = ''
 }
 
 const handleSubmit = async () => {
   if (!form.name) {
-    useUIStore().showWarning('请输入客户名称')
+    useUIStore().showWarning('请输入供应商名称')
+    return
+  }
+  if (!form.code) {
+    useUIStore().showWarning('请输入供应商编码')
     return
   }
 
   loading.value = true
   try {
-    const created: any = await customerAPI.create({
+    const created: any = await supplierAPI.create({
       name: form.name,
+      code: form.code,
       contact_person: form.contact_person || undefined,
       phone: form.phone || undefined,
+      email: form.email || undefined,
       address: form.address || undefined
     })
-    useUIStore().showSuccess('客户创建成功')
+    useUIStore().showSuccess('供应商创建成功')
     emit('created', created)
     handleClose()
   } catch (error: any) {

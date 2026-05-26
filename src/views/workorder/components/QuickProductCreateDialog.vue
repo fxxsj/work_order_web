@@ -63,10 +63,11 @@ import { productAPI } from '@/api/modules'
 import { useUIStore } from '@/stores/ui'
 
 const props = defineProps({
+  modelValue: { type: Boolean, default: undefined },
   visible: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['update:visible', 'created'])
+const emit = defineEmits(['update:modelValue', 'update:visible', 'created'])
 
 const loading = ref(false)
 const form = reactive({
@@ -78,12 +79,15 @@ const form = reactive({
 })
 
 const dialogVisible = computed({
-  get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  get: () => props.modelValue ?? props.visible,
+  set: (val) => {
+    emit('update:modelValue', val)
+    emit('update:visible', val)
+  }
 })
 
 const handleClose = () => {
-  emit('update:visible', false)
+  dialogVisible.value = false
   resetForm()
 }
 

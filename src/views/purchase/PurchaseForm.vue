@@ -5,12 +5,11 @@
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label class="input-label mb-1.5 block">供应商</label>
-            <Select
-              v-model="form.supplier"
-              :options="supplierSelectOptions"
-              placeholder="请选择供应商"
-              searchable
-              class="w-full"
+            <SupplierSelector
+              :model-value="form.supplier"
+              :suppliers="supplierOptions"
+              @update:model-value="value => form.supplier = value"
+              @create="showQuickSupplierCreate = true"
             />
           </div>
           <div>
@@ -54,14 +53,12 @@
             :items="form.items"
             @delete="handleDeleteItem"
           >
-            <template #cell-material="{ row }">
-              <Select
-                v-model="row.material"
-                :options="materialSelectOptions"
-                placeholder="请选择物料"
-                searchable
-                class="w-full"
-                @change="handleMaterialChange(row)"
+            <template #cell-material="{ row, index }">
+              <MaterialSelector
+                :model-value="row.material"
+                :materials="materialOptions"
+                @update:model-value="value => handleMaterialChange(row, value)"
+                @create="openQuickMaterialCreate(index)"
               />
             </template>
             <template #cell-quantity="{ row }">
@@ -124,6 +121,15 @@
         </button>
       </div>
     </div>
+
+    <QuickSupplierCreateDialog
+      v-model:visible="showQuickSupplierCreate"
+      @created="handleSupplierCreated"
+    />
+    <QuickMaterialCreateDialog
+      v-model:visible="showQuickMaterialCreate"
+      @created="handleMaterialCreated"
+    />
   </div>
 </template>
 
@@ -135,10 +141,17 @@ import type { Column } from '@/components/common/types'
 import { materialAPI, purchaseOrderAPI, supplierAPI, workOrderAPI } from '@/api/modules'
 import { useUIStore } from '@/stores/ui'
 import ErrorHandler from '@/utils/errorHandler'
+import QuickSupplierCreateDialog from './components/QuickSupplierCreateDialog.vue'
+import MaterialSelector from '@/views/material/components/MaterialSelector.vue'
+import QuickMaterialCreateDialog from '@/views/material/components/QuickMaterialCreateDialog.vue'
+import SupplierSelector from '@/views/supplier/components/SupplierSelector.vue'
 
 const router = useRouter()
 
 const submitting = ref(false)
+const showQuickSupplierCreate = ref(false)
+const showQuickMaterialCreate = ref(false)
+const pendingMaterialCreateIndex = ref<number | null>(null)
 const supplierOptions = ref<any[]>([])
 const materialOptions = ref<any[]>([])
 const workOrderOptions = ref<any[]>([])
@@ -151,8 +164,6 @@ const form = reactive({
   items: [] as any[]
 })
 
-const supplierSelectOptions = computed(() => supplierOptions.value.map((item: any) => ({ value: item.id, label: item.name })))
-const materialSelectOptions = computed(() => materialOptions.value.map((item: any) => ({ value: item.id, label: `${item.code} - ${item.name}` })))
 const workOrderSelectOptions = computed(() => workOrderOptions.value.map((item: any) => ({ value: item.id, label: item.order_number })))
 
 const totalAmount = computed(() => form.items.reduce((sum: any, item: any) => sum + (item.quantity || 0) * (item.unit_price || 0), 0).toFixed(2))
@@ -192,9 +203,15 @@ const handleDeleteItem = (index: number) => {
   form.items.splice(index, 1)
 }
 
-const handleMaterialChange = (row: any) => {
+const handleMaterialChange = (row: any, value: any) => {
+  row.material = value
   const material = materialOptions.value.find((item: any) => item.id === row.material)
   if (material?.unit_price) row.unit_price = material.unit_price
+}
+
+const openQuickMaterialCreate = (index: number | null = null) => {
+  pendingMaterialCreateIndex.value = typeof index === 'number' ? index : null
+  showQuickMaterialCreate.value = true
 }
 
 const validateForm = () => {
@@ -230,6 +247,19 @@ const handleSubmit = async () => {
 
 const handleCancel = () => {
   router.push('/purchase-orders')
+}
+
+const handleSupplierCreated = (supplier: any) => {
+  supplierOptions.value.push(supplier)
+  form.supplier = supplier.id
+}
+
+const handleMaterialCreated = (material: any) => {
+  materialOptions.value.push(material)
+  if (pendingMaterialCreateIndex.value !== null && form.items[pendingMaterialCreateIndex.value]) {
+    handleMaterialChange(form.items[pendingMaterialCreateIndex.value], material.id)
+  }
+  pendingMaterialCreateIndex.value = null
 }
 
 onMounted(async () => {

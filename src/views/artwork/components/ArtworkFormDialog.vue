@@ -133,13 +133,12 @@
             :items="productItems"
             @delete="removeProductItem"
           >
-            <template #cell-product="{ row }">
-              <Select
-                v-model="row.product"
-                :options="productOptions"
-                placeholder="请选择产品"
-                filterable
-                class="w-full"
+            <template #cell-product="{ row, index }">
+              <ProductSelector
+                :model-value="row.product"
+                :products="localProductList"
+                @update:model-value="value => row.product = value"
+                @create="openQuickProductCreate(index)"
               />
             </template>
             <template #cell-imposition_quantity="{ row }">
@@ -176,6 +175,10 @@
       </button>
     </template>
   </BaseDialog>
+  <QuickProductCreateDialog
+    v-model:visible="showQuickProductCreate"
+    @created="handleProductCreated"
+  />
 </template>
 
 <script setup lang="ts">
@@ -183,6 +186,8 @@ import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { Icon, Input, InputNumber, TextArea, CheckboxGroup, Select, SectionDivider, LineItemsTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
+import ProductSelector from '@/views/product/components/ProductSelector.vue'
+import QuickProductCreateDialog from '@/views/product/components/QuickProductCreateDialog.vue'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -197,6 +202,9 @@ const props = defineProps({
 const emit = defineEmits(['confirm', 'update:visible'])
 
 const productItems = ref<any[]>([])
+const localProductList = ref<any[]>([])
+const showQuickProductCreate = ref(false)
+const pendingProductCreateIndex = ref<number | null>(null)
 
 const FORM_INITIAL = { base_code: '', version: 1, name: '', cmyk_colors: [] as any[], other_colors: [] as any[], imposition_size: '', dies: [] as any[], foiling_plates: [] as any[], embossing_plates: [] as any[], notes: '' }
 const form = reactive({ ...FORM_INITIAL })
@@ -213,7 +221,10 @@ const cmykOptions = [
 const dieOptions = computed(() => props.dieList.map((d: any) => ({ value: d.id, label: `${d.name} (${d.code})` })))
 const foilingPlateOptions = computed(() => props.foilingPlateList.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
 const embossingPlateOptions = computed(() => props.embossingPlateList.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
-const productOptions = computed(() => props.productList.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
+
+watch(() => props.productList, (products) => {
+  localProductList.value = [...(products as any[])]
+}, { immediate: true, deep: true })
 
 const productColumns: Column[] = [
   { key: 'product', label: '产品名称', width: 250 },
@@ -249,6 +260,17 @@ const resetForm = () => {
 
 const addProductItem = () => { productItems.value.push({ product: null, imposition_quantity: 1, sort_order: productItems.value.length }) }
 const removeProductItem = (index: any) => { productItems.value.splice(index, 1) }
+const openQuickProductCreate = (index: number | null = null) => {
+  pendingProductCreateIndex.value = typeof index === 'number' ? index : null
+  showQuickProductCreate.value = true
+}
+const handleProductCreated = (product: any) => {
+  localProductList.value.push(product)
+  if (pendingProductCreateIndex.value !== null && productItems.value[pendingProductCreateIndex.value]) {
+    productItems.value[pendingProductCreateIndex.value].product = product.id
+  }
+  pendingProductCreateIndex.value = null
+}
 const addOtherColor = () => { form.other_colors.push('') }
 const removeOtherColor = (index: any) => { form.other_colors.splice(index, 1) }
 

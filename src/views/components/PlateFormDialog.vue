@@ -110,13 +110,12 @@
           class="mt-3"
           @delete="removeProductItem"
         >
-          <template #cell-product="{ row }">
-            <Select
-              v-model="row.product"
-              :options="productOptions"
-              placeholder="请选择产品"
-              filterable
-              class="w-full"
+          <template #cell-product="{ row, index }">
+            <ProductSelector
+              :model-value="row.product"
+              :products="localProductList"
+              @update:model-value="value => row.product = value"
+              @create="openQuickProductCreate(index)"
             />
           </template>
           <template #cell-quantity="{ row }">
@@ -151,12 +150,18 @@
       </button>
     </template>
   </BaseDialog>
+  <QuickProductCreateDialog
+    v-model:visible="showQuickProductCreate"
+    @created="handleProductCreated"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { Icon, Input, TextArea, Select, InputNumber, SectionDivider, LineItemsTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
+import ProductSelector from '@/views/product/components/ProductSelector.vue'
+import QuickProductCreateDialog from '@/views/product/components/QuickProductCreateDialog.vue'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -186,6 +191,9 @@ const emit = defineEmits(['submit', 'close', 'update:visible', 'field-change'])
 
 const formRef = ref<any>(null)
 const productItems = ref<any[]>([])
+const localProductList = ref<any[]>([])
+const showQuickProductCreate = ref(false)
+const pendingProductCreateIndex = ref<number | null>(null)
 
 const form = reactive({ ...props.formInitialValues })
 
@@ -204,7 +212,10 @@ const codePlaceholder = computed(() => `留空则系统自动生成（格式：$
 const codeHint = computed(() => `留空则自动生成，格式：${props.codePrefix}202412001`)
 const namePlaceholder = computed(() => `请输入${props.title}名称`)
 const productListHint = computed(() => props.productListHintText)
-const productOptions = computed(() => props.productList.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
+
+watch(() => props.productList, (products) => {
+  localProductList.value = [...(products as any[])]
+}, { immediate: true, deep: true })
 
 const productColumns: Column[] = [
   { key: 'product', label: '产品名称', minWidth: 256 },
@@ -253,6 +264,19 @@ const addProductItem = () => {
 }
 
 const removeProductItem = (index: any) => { productItems.value.splice(index, 1) }
+
+const openQuickProductCreate = (index: number | null = null) => {
+  pendingProductCreateIndex.value = typeof index === 'number' ? index : null
+  showQuickProductCreate.value = true
+}
+
+const handleProductCreated = (product: any) => {
+  localProductList.value.push(product)
+  if (pendingProductCreateIndex.value !== null && productItems.value[pendingProductCreateIndex.value]) {
+    productItems.value[pendingProductCreateIndex.value].product = product.id
+  }
+  pendingProductCreateIndex.value = null
+}
 
 const handleSubmit = async () => {
   const valid = await formRef.value.validate().catch(() => false)

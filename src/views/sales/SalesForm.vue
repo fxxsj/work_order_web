@@ -3,14 +3,12 @@
     <div class="card">
       <div class="card-body space-y-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Select
-            v-model="form.customer"
-            :options="customerSelectOptions"
+          <CustomerSelector
+            :model-value="form.customer"
             label="客户"
-            placeholder="请选择客户"
-            searchable
-            class="w-full"
-            @change="handleCustomerChange"
+            :customers="customerOptions"
+            @update:model-value="handleCustomerChange"
+            @create="showQuickCustomerCreate = true"
           />
           <Input
             v-model="form.order_date"
@@ -62,13 +60,11 @@
               @delete="handleRemoveItem"
             >
               <template #cell-product="{ row, index }">
-                <Select
-                  v-model="row.product"
-                  :options="productSelectOptions"
-                  placeholder="请选择产品"
-                  searchable
-                  class="w-full"
-                  @change="(val) => handleProductChange(val, index)"
+                <ProductSelector
+                  :model-value="row.product"
+                  :products="productOptions"
+                  @update:model-value="(val) => handleProductChange(val, index)"
+                  @create="openQuickProductCreate(index)"
                 />
               </template>
               <template #cell-spec="{ row }">
@@ -169,17 +165,30 @@
         </button>
       </div>
     </div>
+    <QuickCustomerCreateDialog
+      v-model:visible="showQuickCustomerCreate"
+      @created="handleCustomerCreated"
+    />
+    <QuickProductCreateDialog
+      v-model:visible="showQuickProductCreate"
+      @created="handleProductCreated"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Icon, Input, TextArea, InputNumber, Select, LineItemsTable, SectionDivider } from '@/components/common'
+import { Icon, Input, TextArea, InputNumber, LineItemsTable, SectionDivider } from '@/components/common'
+import CustomerSelector from '@/views/customer/components/CustomerSelector.vue'
+import ProductSelector from '@/views/product/components/ProductSelector.vue'
 import { useUIStore } from '@/stores/ui'
-import { salesOrderAPI, productAPI, customerAPI } from '@/api/modules'
+import { salesOrderAPI, productAPI } from '@/api/modules'
+import { customerAPI } from '@/api/modules/customer'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
+import QuickCustomerCreateDialog from '@/views/customer/components/QuickCustomerCreateDialog.vue'
+import QuickProductCreateDialog from '@/views/product/components/QuickProductCreateDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -189,6 +198,9 @@ const id = computed(() => route.params.id as string | undefined)
 const isEdit = computed(() => !!id.value && id.value !== 'create')
 
 const submitting = ref(false)
+const showQuickCustomerCreate = ref(false)
+const showQuickProductCreate = ref(false)
+const pendingProductCreateIndex = ref<number | null>(null)
 const customerOptions = ref<any[]>([])
 const productOptions = ref<any[]>([])
 
@@ -203,9 +215,6 @@ const totalAmount = computed(() => {
   const tax = subtotal * (form.tax_rate / 100)
   return subtotal + tax - (form.discount_amount || 0)
 })
-
-const customerSelectOptions = computed(() => customerOptions.value.map((c: any) => ({ value: c.id, label: c.name })))
-const productSelectOptions = computed(() => productOptions.value.map((p: any) => ({ value: p.id, label: `${p.name} (${p.code})` })))
 
 const lineItemColumns = [
   { key: 'product', label: '产品', minWidth: 200 },
@@ -225,15 +234,33 @@ const loadData = async () => {
 }
 
 const handleCustomerChange = (value: any) => {
+  form.customer = value
   const customer = customerOptions.value.find((c: any) => c.id === value)
   if (customer) { form.contact_person = customer.contact_person || ''; form.contact_phone = customer.phone || ''; form.shipping_address = customer.address || '' }
 }
-const handleProductChange = (productId: any, index: any) => { const product = productOptions.value.find((p: any) => p.id === productId); if (product) { form.items[index].unit_price = product.unit_price || 0 } }
+const handleProductChange = (productId: any, index: any) => { form.items[index].product = productId; const product = productOptions.value.find((p: any) => p.id === productId); if (product) { form.items[index].unit_price = product.unit_price || 0 } }
+const openQuickProductCreate = (index: number | null = null) => {
+  pendingProductCreateIndex.value = typeof index === 'number' ? index : null
+  showQuickProductCreate.value = true
+}
 const handleAddItem = () => { form.items.push({ product: null, quantity: 1, unit_price: 0, notes: '' }) }
 const handleRemoveItem = (index: any) => { if (form.items.length > 1) form.items.splice(index, 1) }
 const getProductSpec = (productId: any) => productOptions.value.find((p: any) => p.id === productId)?.specification || '-'
 const getProductUnit = (productId: any) => productOptions.value.find((p: any) => p.id === productId)?.unit || '-'
 const goBack = () => { router.push('/sales-orders') }
+
+const handleCustomerCreated = (customer: any) => {
+  customerOptions.value.push(customer)
+  handleCustomerChange(customer.id)
+}
+
+const handleProductCreated = (product: any) => {
+  productOptions.value.push(product)
+  if (pendingProductCreateIndex.value !== null && form.items[pendingProductCreateIndex.value]) {
+    handleProductChange(product.id, pendingProductCreateIndex.value)
+  }
+  pendingProductCreateIndex.value = null
+}
 
 const handleSubmit = async () => {
   if (!form.customer) { useUIStore().showWarning('请选择客户'); return }

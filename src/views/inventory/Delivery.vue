@@ -204,7 +204,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import { deliveryOrderAPI, salesOrderAPI, productAPI, customerAPI } from '@/api/modules'
+import { deliveryOrderAPI, salesOrderAPI, productAPI } from '@/api/modules'
+import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog, FilterRow, RowActions } from '@/components/common'
@@ -471,4 +472,3 @@ const getTrackingUrl = (row: any) => row.tracking_url || (row.logistics_company 
 
 onMounted(() => { loadData(); fetchStats(); fetchCustomers(); fetchSalesOrders(); fetchProducts() })
 </script>
-

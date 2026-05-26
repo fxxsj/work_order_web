@@ -219,12 +219,11 @@
       >
         <div>
           <label class="input-label mb-1.5 block">客户</label>
-          <Select
-            v-model="form.customer"
-            :options="customerOptions"
-            placeholder="请选择客户"
-            filterable
-            class="w-full"
+          <CustomerSelector
+            :model-value="form.customer"
+            :customers="customerList"
+            @update:model-value="value => form.customer = value"
+            @create="showQuickCustomerCreate = true"
           />
         </div>
         <div>
@@ -304,18 +303,25 @@
       @confirm="handleSubmit"
       @cancel="showSubmitDialogFlag = false"
     />
+    <QuickCustomerCreateDialog
+      v-model:visible="showQuickCustomerCreate"
+      @created="handleCustomerCreated"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import { invoiceAPI, customerAPI } from '@/api/modules'
+import { invoiceAPI } from '@/api/modules'
+import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { StatusTag, Select, SearchInput, Icon, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import InvoiceStats from './components/InvoiceStats.vue'
+import CustomerSelector from '@/views/customer/components/CustomerSelector.vue'
+import QuickCustomerCreateDialog from '@/views/customer/components/QuickCustomerCreateDialog.vue'
 
 const statsLoading = ref(false)
 const submitting = ref(false)
@@ -325,6 +331,7 @@ const stats = ref({})
 const detailDialogVisible = ref(false)
 const formDialogVisible = ref(false)
 const isEdit = ref(false)
+const showQuickCustomerCreate = ref(false)
 
 const submittingInvoice = ref(false)
 const showSubmitDialogFlag = ref(false)
@@ -435,6 +442,11 @@ const fetchCustomers = async () => {
   } catch (error: any) {}
 }
 
+const handleCustomerCreated = (customer: any) => {
+  customerList.value.push(customer)
+  form.customer = customer.id
+}
+
 const handleView = async (row: any) => {
   try {
     const response: any = await invoiceAPI.getDetail(row.id)
@@ -536,4 +548,3 @@ onMounted(() => {
   fetchCustomers()
 })
 </script>
-

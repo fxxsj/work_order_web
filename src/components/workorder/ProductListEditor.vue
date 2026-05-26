@@ -35,6 +35,7 @@
           :model-value="row.product"
           :disabled="disabled"
           @update:model-value="v => handleProductChange(index, v)"
+          @create="emit('create', $event)"
         />
       </template>
       <template #cell-quantity="{ row, index }">
@@ -55,7 +56,7 @@
 
 <script setup lang="ts">
 import { Icon, InputNumber, LineItemsTable } from '@/components/common'
-import ProductSelector from './ProductSelector.vue'
+import ProductSelector from '@/views/product/components/ProductSelector.vue'
 
 const props = defineProps({
   items: { type: Array as any, default: () => [] },
