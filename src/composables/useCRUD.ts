@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { useUIStore } from '@/stores/ui'
+import ErrorHandler from '@/utils/errorHandler'
 
 interface CrudAPI {
   create: (data: unknown) => Promise<unknown>
@@ -47,8 +48,9 @@ export function useCRUD(api: CrudAPI, options: UseCRUDOptions = {}) {
         return null
       }
     } catch (error: any) {
-      console.error('CRUD request failed:', error)
-      useUIStore().showError((error as Error)?.message || errorMsg || '操作失败')
+      // 使用 ErrorHandler 处理错误，自动解析 errors 字段
+      const errorInfo = ErrorHandler.handle(error, 'CRUD request')
+      useUIStore().showError(errorInfo.message || errorMsg || '操作失败')
       if (onError) {
         onError(error)
       }

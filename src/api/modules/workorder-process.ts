@@ -31,8 +31,8 @@ class WorkOrderProcessAPI extends BaseAPI {
   }
 
   // 使用 patch 而非 put 进行更新
-  update(id: number | string, data: unknown) {
-    return this.patch(id, data)
+  update<T = unknown>(id: number | string, data: unknown): Promise<T> {
+    return this.patch<T>(id, data)
   }
 }
 

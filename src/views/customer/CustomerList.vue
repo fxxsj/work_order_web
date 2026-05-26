@@ -130,6 +130,7 @@
           label="客户名称"
           required
           placeholder="请输入客户名称"
+          :error="nameError"
         />
       </div>
       <div>
@@ -236,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { authAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
@@ -244,6 +245,7 @@ import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input,
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
+import { useUIStore } from '@/stores/ui'
 
 const columns: Column[] = [
   { key: 'name', label: '客户名称', sortable: true },
@@ -268,11 +270,19 @@ const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteDialog = ref(false)
 const submitting = ref(false)
+const nameError = ref('')
 const selectedRow = ref<any>(null)
 const salespersonList = ref<any[]>([])
 
 const formInitialValues = { name: '', contact_person: '', phone: '', email: '', address: '', salesperson: null as any, notes: '' }
 const formData = reactive({ ...formInitialValues })
+
+// 监听名称变化，清除错误提示
+watch(() => formData.name, () => {
+  if (nameError.value) {
+    nameError.value = ''
+  }
+})
 
 const crud = useCRUD(customerAPI, {
   onSuccess: () => {
@@ -297,6 +307,7 @@ const loadSalespersons = async () => {
 
 const resetForm = () => {
   Object.assign(formData, formInitialValues)
+  nameError.value = ''
 }
 
 const closeModals = () => {
@@ -307,6 +318,7 @@ const closeModals = () => {
 
 const editRow = (row: any) => {
   selectedRow.value = row
+  nameError.value = ''
   Object.assign(formData, {
     name: row.name,
     contact_person: row.contact_person || '',
@@ -321,13 +333,45 @@ const editRow = (row: any) => {
 
 const handleSubmit = async () => {
   if (!formData.name) return
+
+  // 检查重复名称
+  if (formData.name && formData.name.trim().length >= 2) {
+    const excludeId = showEditModal.value ? selectedRow.value?.id : undefined
+    const exists = await customerAPI.checkName(formData.name.trim(), excludeId)
+    if (exists) {
+      nameError.value = '该客户名称已存在'
+      return
+    }
+  }
+
   submitting.value = true
   try {
     if (showEditModal.value) {
       await crud.update(selectedRow.value.id, formData, '保存成功')
     } else {
-      await crud.create(formData, '创建成功')
+      // 直接调用 API 以便正确处理验证错误
+      await customerAPI.create(formData)
+      useUIStore().showSuccess('创建成功')
+      closeModals()
+      loadData()
     }
+  } catch (error: any) {
+    // 使用 ErrorHandler 解析字段级验证错误
+    // 后端错误格式: { success: false, message: "...", errors: { name: ["错误"] } }
+    const responseData = error?.response?.data
+    const errors = responseData?.errors
+
+    // 检查 name 字段错误并设置到 nameError
+    if (errors && typeof errors === 'object' && errors.name) {
+      const nameErrors = Array.isArray(errors.name) ? errors.name : [errors.name]
+      if (nameErrors.length > 0) {
+        nameError.value = nameErrors[0]
+        return
+      }
+    }
+
+    // 其他错误使用 ErrorHandler 统一处理
+    ErrorHandler.showError(error, '操作失败')
   } finally {
     submitting.value = false
   }

@@ -137,14 +137,33 @@ export class ErrorHandler {
     if (error) {
       const err = error as Record<string, unknown>
       const responseData = (err.response as Record<string, unknown>)?.data as Record<string, unknown> | undefined
-      if (responseData?.error) {
-        message = responseData.error as string
-      } else if (responseData?.message) {
-        message = responseData.message as string
-      } else if (responseData?.detail) {
-        message = responseData.detail as string
-      } else if ((error as Error)?.message) {
-        message = (error as Error).message
+
+      // 优先从 errors 字段提取第一个字段错误（结构化错误格式）
+      if (responseData?.errors && typeof responseData.errors === 'object') {
+        const errors = responseData.errors as Record<string, unknown>
+        for (const fieldName of Object.keys(errors)) {
+          const fieldError = errors[fieldName]
+          if (Array.isArray(fieldError) && fieldError.length > 0) {
+            message = fieldError[0] as string
+            break
+          } else if (typeof fieldError === 'string') {
+            message = fieldError
+            break
+          }
+        }
+      }
+
+      // 其次检查其他字段
+      if (message === '操作失败') {
+        if (responseData?.error) {
+          message = responseData.error as string
+        } else if (responseData?.message) {
+          message = responseData.message as string
+        } else if (responseData?.detail) {
+          message = responseData.detail as string
+        } else if ((error as Error)?.message) {
+          message = (error as Error).message
+        }
       }
     }
 

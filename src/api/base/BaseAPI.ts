@@ -36,23 +36,23 @@ export class BaseAPI {
     this.request = request
   }
 
-  protected _unwrap(response: unknown): unknown {
+  protected _unwrap<T>(response: unknown): T {
     if (
       response &&
       typeof response === 'object' &&
       'success' in response &&
       'data' in response
     ) {
-      return (response as BaseAPIResponse).data
+      return (response as BaseAPIResponse<T>).data
     }
-    return response
+    return response as T
   }
 
-  protected _request(config: AxiosRequestConfig): Promise<unknown> {
-    return this.request(config).then(response => this._unwrap(response))
+  protected _request<T = unknown>(config: AxiosRequestConfig): Promise<T> {
+    return this.request<BaseAPIResponse<T>>(config).then(response => this._unwrap<T>(response))
   }
 
-  getList(params?: Record<string, unknown>, config?: { signal?: AbortSignal }): Promise<unknown> {
+  getList<T = unknown>(params?: Record<string, unknown>, config?: { signal?: AbortSignal }): Promise<T> {
     const requestConfig: AxiosRequestConfig = {
       url: this.baseUrl,
       method: 'get',
@@ -61,96 +61,96 @@ export class BaseAPI {
     if (config?.signal) {
       requestConfig.signal = config.signal
     }
-    return this.request(requestConfig).then(response => this._unwrap(response))
+    return this.request<BaseAPIResponse<T>>(requestConfig).then(response => this._unwrap<T>(response))
   }
 
-  getDetail(id: number | string): Promise<unknown> {
+  getDetail<T = unknown>(id: number | string): Promise<T> {
     if (!id) {
       return Promise.reject(new Error('ID is required'))
     }
-    return this.request({
+    return this.request<BaseAPIResponse<T>>({
       url: `${this.baseUrl}${id}/`,
       method: 'get'
-    }).then(response => this._unwrap(response))
+    }).then(response => this._unwrap<T>(response))
   }
 
-  create(data: unknown): Promise<unknown> {
+  create<T = unknown>(data: unknown): Promise<T> {
     if (!data) {
       return Promise.reject(new Error('Data is required'))
     }
-    return this.request({
+    return this.request<BaseAPIResponse<T>>({
       url: this.baseUrl,
       method: 'post',
       data
-    }).then(response => this._unwrap(response))
+    }).then(response => this._unwrap<T>(response))
   }
 
-  update(id: number | string, data: unknown): Promise<unknown> {
+  update<T = unknown>(id: number | string, data: unknown): Promise<T> {
     if (!id) {
       return Promise.reject(new Error('ID is required'))
     }
     if (!data) {
       return Promise.reject(new Error('Data is required'))
     }
-    return this.request({
+    return this.request<BaseAPIResponse<T>>({
       url: `${this.baseUrl}${id}/`,
       method: 'put',
       data
-    }).then(response => this._unwrap(response))
+    }).then(response => this._unwrap<T>(response))
   }
 
-  patch(id: number | string, data: unknown): Promise<unknown> {
+  patch<T = unknown>(id: number | string, data: unknown): Promise<T> {
     if (!id) {
       return Promise.reject(new Error('ID is required'))
     }
     if (!data) {
       return Promise.reject(new Error('Data is required'))
     }
-    return this.request({
+    return this.request<BaseAPIResponse<T>>({
       url: `${this.baseUrl}${id}/`,
       method: 'patch',
       data
-    }).then(response => this._unwrap(response))
+    }).then(response => this._unwrap<T>(response))
   }
 
-  delete(id: number | string): Promise<unknown> {
+  delete<T = unknown>(id: number | string): Promise<T> {
     if (!id) {
       return Promise.reject(new Error('ID is required'))
     }
-    return this.request({
+    return this.request<BaseAPIResponse<T>>({
       url: `${this.baseUrl}${id}/`,
       method: 'delete'
-    }).then(response => this._unwrap(response))
+    }).then(response => this._unwrap<T>(response))
   }
 
-  batchAction(data: { action: string; ids?: (number | string)[] } & Record<string, unknown>): Promise<unknown> {
+  batchAction<T = unknown>(data: { action: string; ids?: (number | string)[] } & Record<string, unknown>): Promise<T> {
     if (!data) {
       return Promise.reject(new Error('Data is required'))
     }
-    return this.request({
+    return this.request<BaseAPIResponse<T>>({
       url: `${this.baseUrl}batch_action/`,
       method: 'post',
       data
-    }).then(response => this._unwrap(response))
+    }).then(response => this._unwrap<T>(response))
   }
 
-  batchDelete(ids: (number | string)[]): Promise<unknown> {
+  batchDelete<T = unknown>(ids: (number | string)[]): Promise<T> {
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return Promise.reject(new Error('IDs array is required'))
     }
-    return this.batchAction({
+    return this.batchAction<T>({
       action: 'delete',
       ids
     } as { action: string; ids: (number | string)[] })
   }
 
-  customAction(
+  customAction<T = unknown>(
     url: string,
     method: AxiosRequestConfig['method'] = 'get',
     data?: unknown,
     params?: Record<string, unknown>,
     extraConfig?: Omit<AxiosRequestConfig, 'url' | 'method' | 'data' | 'params'>
-  ): Promise<unknown> {
+  ): Promise<T> {
     const config: AxiosRequestConfig = { url, method, ...extraConfig }
     if (data !== undefined && data !== null) {
       config.data = data
@@ -158,7 +158,7 @@ export class BaseAPI {
     if (params) {
       config.params = params
     }
-    return this.request(config).then(response => this._unwrap(response))
+    return this.request<BaseAPIResponse<T>>(config).then(response => this._unwrap<T>(response))
   }
 }
 

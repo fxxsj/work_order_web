@@ -30,8 +30,8 @@ class WorkOrderTaskAPI extends BaseAPI {
    * @param {string} params.ordering - 排序字段（created_at/-created_at/updated_at/-updated_at等）
    * @returns {Promise} API响应
    */
-  getList(params?: Record<string, unknown>) {
-    return super.getList(params)
+  getList<T = unknown>(params?: Record<string, unknown>, config?: { signal?: AbortSignal }): Promise<T> {
+    return super.getList<T>(params, config)
   }
 
   // 完成任务（支持设计图稿任务时选择图稿）

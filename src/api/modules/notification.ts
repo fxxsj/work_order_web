@@ -41,8 +41,8 @@ class NotificationAPI extends BaseAPI {
     })
   }
 
-  // 删除通知
-  delete(id: number | string) {
+  // 删除通知（使用自定义路由而非标准 DELETE，避免与父类泛型签名冲突）
+  deleteNotification(id: number | string) {
     return this.request({
       url: `${this.baseUrl}${id}/delete/`,
       method: 'delete'

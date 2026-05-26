@@ -529,13 +529,13 @@ export interface TaskStatistics {
 
 // ============ 通用分页 ============
 
-export interface ApiResponse<T = unknown> {
-  success: boolean
-  data: T
-  message?: string
-  error?: string
-}
+// ApiResponse 和分页类型统一在 types/api.ts 中定义，此处重新导出避免破坏现有导入路径
+export type { ApiResponse, ApiErrorResponse, PaginatedApiResponse } from './api'
 
+/**
+ * 分页数据结构（与后端 DRF CustomPagination 对应）
+ * data.count / data.next / data.previous / data.results
+ */
 export interface PaginatedResponse<T> {
   count: number
   next: string | null

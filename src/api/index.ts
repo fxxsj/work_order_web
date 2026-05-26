@@ -100,8 +100,9 @@ async function doProactiveRefresh() {
 
   try {
     const response = await axios.post('/api/v1/auth/refresh/', { refresh: refreshToken })
-    const refreshPayload = response?.data?.success !== false ? response?.data?.data || response?.data : response
-    const { access, refresh: newRefresh, access_expires_at } = refreshPayload || {}
+    // 后端已统一返回标准格式: { success, code, message, data: { access, refresh, access_expires_at } }
+    const payload = response?.data?.data || {}
+    const { access, refresh: newRefresh, access_expires_at } = payload
 
     if (!access) {
       throw new Error('No access token in refresh response')
@@ -231,8 +232,9 @@ service.interceptors.response.use(
         }
 
         const response = await axios.post('/api/v1/auth/refresh/', { refresh: refreshToken })
-        const refreshPayload = response?.data?.success !== false ? response?.data?.data || response?.data : response
-        const { access, refresh: newRefresh, access_expires_at } = refreshPayload || {}
+        // 后端已统一返回标准格式: { success, code, message, data: { access, refresh, access_expires_at } }
+        const payload = response?.data?.data || {}
+        const { access, refresh: newRefresh, access_expires_at } = payload
 
         if (!access) {
           throw new Error('No access token in refresh response')
