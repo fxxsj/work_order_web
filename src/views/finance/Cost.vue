@@ -7,15 +7,42 @@
 
     <TablePageLayout>
       <template #filters>
-        <!-- No search fields in original Cost.vue but empty template -->
+        <div class="flex flex-wrap items-center gap-3">
+          <SearchInput
+            v-model="searchText"
+            class="w-full sm:w-72"
+            placeholder="搜索施工单号/客户/周期"
+            @search="searchAndRefreshStats"
+            @clear="searchAndRefreshStats"
+          />
+          <input
+            v-model="filters.period_start"
+            type="month"
+            class="input w-full sm:w-40"
+            @change="searchAndRefreshStats"
+          >
+          <input
+            v-model="filters.period_end"
+            type="month"
+            class="input w-full sm:w-40"
+            @change="searchAndRefreshStats"
+          >
+        </div>
       </template>
 
       <template #actions>
         <div class="flex justify-end gap-3">
           <button
+            v-if="hasFilters"
+            class="btn btn-secondary"
+            @click="handleReset"
+          >
+            重置筛选
+          </button>
+          <button
             class="btn btn-secondary"
             :disabled="loading"
-            @click="loadData"
+            @click="reloadData"
           >
             <Icon
               name="refresh"
@@ -26,7 +53,7 @@
           </button>
           <button
             class="btn btn-primary"
-            @click="handleStats"
+            @click="fetchStats"
           >
             <Icon
               name="chart"
@@ -44,12 +71,22 @@
           :data="tableData"
           :loading="loading"
           row-key="id"
+          :server-side-sort="true"
+          default-sort-key="period"
+          default-sort-order="desc"
+          @sort="handleSort"
         >
           <template #cell-work_order_number="{ row }">
             <span>{{ row.work_order_number }}</span>
           </template>
           <template #cell-product_name="{ row }">
             <span class="truncate max-w-xs">{{ row.product_name }}</span>
+          </template>
+          <template #cell-period="{ row }">
+            <span>{{ row.period || '-' }}</span>
+          </template>
+          <template #cell-customer_name="{ row }">
+            <span>{{ row.customer_name || '-' }}</span>
           </template>
           <template #cell-material_cost="{ row }">
             <span>¥{{ row.material_cost ? row.material_cost.toLocaleString() : '-' }}</span>
@@ -64,7 +101,7 @@
             <span>¥{{ row.overhead_cost ? row.overhead_cost.toLocaleString() : '-' }}</span>
           </template>
           <template #cell-actual_cost="{ row }">
-            <span class="text-strong">¥{{ row.actual_cost ? row.actual_cost.toLocaleString() : '-' }}</span>
+            <span class="text-strong">¥{{ formatAmount(row.total_cost ?? row.actual_cost) }}</span>
           </template>
           <template #cell-standard_cost="{ row }">
             <span>¥{{ row.standard_cost ? row.standard_cost.toLocaleString() : '-' }}</span>
@@ -82,7 +119,7 @@
             />
           </template>
           <template #empty>
-            <EmptyState description="暂无成本数据" />
+            <EmptyState :description="hasFilters ? '未找到匹配的成本数据' : '暂无成本数据'" />
           </template>
         </DataTable>
       </template>
@@ -117,8 +154,11 @@
           <DescriptionItem label="产品名称">
             {{ (currentCost as any).product_name }}
           </DescriptionItem>
-          <DescriptionItem label="成本中心">
-            {{ (currentCost as any).cost_center_name || '-' }}
+          <DescriptionItem label="客户">
+            {{ (currentCost as any).customer_name || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="成本期间">
+            {{ (currentCost as any).period || '-' }}
           </DescriptionItem>
           <DescriptionItem label="计算时间">
             {{ (currentCost as any).calculated_at || '-' }}
@@ -154,7 +194,7 @@
                 <div class="comparison-label">
                   实际成本
                 </div><div class="comparison-value">
-                  ¥{{ (currentCost as any).actual_cost ? (currentCost as any).actual_cost.toLocaleString() : '-' }}
+                  ¥{{ formatAmount((currentCost as any).total_cost ?? (currentCost as any).actual_cost) }}
                 </div>
               </div>
             </div>
@@ -219,11 +259,20 @@
           />
         </div>
         <div>
+          <label class="input-label mb-1.5 block">标准成本</label>
+          <InputNumber
+            v-model="form.standard_cost"
+            :min="0"
+            :precision="2"
+            class="w-full"
+          />
+        </div>
+        <div>
           <TextArea
-            v-model="form.adjust_reason"
-            label="调整原因"
+            v-model="form.notes"
+            label="备注"
             :rows="3"
-            placeholder="请输入调整原因"
+            placeholder="请输入调整说明"
             class="w-full"
           />
         </div>
@@ -271,7 +320,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import CostStats from './components/CostStats.vue'
-import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions } from '@/components/common'
+import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions, SearchInput } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 
 const userStore = useUserStore()
@@ -287,20 +336,30 @@ const adjustDialogVisible = ref(false)
 const showCalculateDialogFlag = ref(false)
 const targetCostForCalculate = ref<any>(null)
 
-const FORM_INITIAL: Record<string, any> = { id: undefined, material_cost: undefined, labor_cost: undefined, equipment_cost: undefined, overhead_cost: undefined, adjust_reason: '' }
+const FORM_INITIAL: Record<string, any> = { id: undefined, material_cost: undefined, labor_cost: undefined, equipment_cost: undefined, overhead_cost: undefined, standard_cost: undefined, notes: '' }
 const form = reactive({ ...FORM_INITIAL })
+const sortKey = ref('period')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
+const sortFieldMap: Record<string, string> = {
+  work_order_number: 'work_order__order_number',
+  customer_name: 'work_order__customer__name',
+  actual_cost: 'total_cost'
+}
 
 const columns: Column[] = [
-  { key: 'work_order_number', label: '施工单号', width: 144 },
+  { key: 'work_order_number', label: '施工单号', width: 144, sortable: true },
+  { key: 'period', label: '成本期间', width: 104, sortable: true },
+  { key: 'customer_name', label: '客户', width: 144, sortable: true },
   { key: 'product_name', label: '产品名称', minWidth: 192 },
-  { key: 'material_cost', label: '材料成本', width: 96, align: 'right' },
-  { key: 'labor_cost', label: '人工成本', width: 96, align: 'right' },
-  { key: 'equipment_cost', label: '设备成本', width: 96, align: 'right' },
-  { key: 'overhead_cost', label: '制造费用', width: 96, align: 'right' },
-  { key: 'actual_cost', label: '实际成本', width: 112, align: 'right' },
-  { key: 'standard_cost', label: '标准成本', width: 112, align: 'right' },
-  { key: 'variance', label: '成本差异', width: 96, align: 'right' },
-  { key: 'variance_rate', label: '差异率', width: 80, align: 'right' },
+  { key: 'material_cost', label: '材料成本', width: 96, align: 'right', sortable: true },
+  { key: 'labor_cost', label: '人工成本', width: 96, align: 'right', sortable: true },
+  { key: 'equipment_cost', label: '设备成本', width: 96, align: 'right', sortable: true },
+  { key: 'overhead_cost', label: '制造费用', width: 96, align: 'right', sortable: true },
+  { key: 'actual_cost', label: '实际成本', width: 112, align: 'right', sortable: true },
+  { key: 'standard_cost', label: '标准成本', width: 112, align: 'right', sortable: true },
+  { key: 'variance', label: '成本差异', width: 96, align: 'right', sortable: true },
+  { key: 'variance_rate', label: '差异率', width: 80, align: 'right', sortable: true },
   { key: 'actions', label: '操作', width: 176, fixed: 'right' }
 ]
 
@@ -311,6 +370,14 @@ const costBreakdownColumns: Column[] = [
   { key: 'description', label: '说明', minWidth: 160 },
 ]
 
+const buildCostParams = (params: Record<string, unknown>) => {
+  const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+  return {
+    ...params,
+    ordering: sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
+  }
+}
+
 const {
   tableData,
   loading,
@@ -319,8 +386,15 @@ const {
   pageSize,
   loadData,
   handlePageChange,
-  handleSizeChange
+  handleSizeChange,
+  handleSearch,
+  resetFilters,
+  hasFilters,
+  searchText,
+  filters
 } = useCrudList(productionCostAPI, 'getList', {
+  initialFilters: { period_start: '', period_end: '' },
+  buildParams: buildCostParams,
   errorContext: '加载成本数据失败'
 })
 
@@ -328,10 +402,37 @@ const canEdit = computed(() => userStore.hasPermission('workorder.change_product
 
 const fetchStats = async () => {
   statsLoading.value = true
-  try { const response: any = await productionCostAPI.getStats({}); stats.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || response || {}) } catch (error: any) { stats.value = {} } finally { statsLoading.value = false }
+  try {
+    const response: any = await productionCostAPI.getStats(buildCostParams({
+      search: searchText.value,
+      period_start: filters.value.period_start,
+      period_end: filters.value.period_end
+    }))
+    stats.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || response || {})
+  } catch (error: any) { stats.value = {} } finally { statsLoading.value = false }
 }
 
-const handleStats = () => { /* TODO: 跳转到统计页面 */ }
+const reloadData = async () => {
+  await loadData()
+  fetchStats()
+}
+
+const searchAndRefreshStats = async () => {
+  await handleSearch()
+  fetchStats()
+}
+
+const handleReset = async () => {
+  await resetFilters()
+  fetchStats()
+}
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  reloadData()
+}
 
 const handleView = async (row: any) => {
   try { const response: any = await productionCostAPI.getDetail(row.id); currentCost.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || response || {}); detailDialogVisible.value = true } catch (error: any) { ErrorHandler.showMessage(error, '获取成本详情失败') }
@@ -357,12 +458,11 @@ const handleCalculate = async () => {
 }
 
 const handleEdit = (row: any) => {
-  Object.assign(form, { id: row.id, material_cost: row.material_cost, labor_cost: row.labor_cost, equipment_cost: row.equipment_cost, overhead_cost: row.overhead_cost, adjust_reason: '' })
+  Object.assign(form, { id: row.id, material_cost: row.material_cost, labor_cost: row.labor_cost, equipment_cost: row.equipment_cost, overhead_cost: row.overhead_cost, standard_cost: row.standard_cost, notes: row.notes || '' })
   adjustDialogVisible.value = true
 }
 
 const handleSaveAdjust = async () => {
-  if (!form.adjust_reason) { useUIStore().showWarning('请输入调整原因'); return }
   submitting.value = true
   try {
     const data = { ...form }
@@ -381,7 +481,7 @@ const getVarianceClass = (row: any) => {
 }
 
 const getCostBreakdown = (cost: any) => {
-  const total = cost.actual_cost || 0
+  const total = Number(cost.total_cost ?? cost.actual_cost ?? 0)
   if (!total) return []
   return [
     { item: '材料成本', amount: cost.material_cost, proportion: total ? (cost.material_cost / total * 100) : 0, description: '原材料消耗' },
@@ -390,6 +490,11 @@ const getCostBreakdown = (cost: any) => {
     { item: '制造费用', amount: cost.overhead_cost, proportion: total ? (cost.overhead_cost / total * 100) : 0, description: '其他制造费用' }
   ]
 }
+
+const formatAmount = (value: unknown) => Number(value || 0).toLocaleString(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+})
 
 const getRowActions = (row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
@@ -405,6 +510,5 @@ const handleRowAction = (action: RowAction, row: any) => {
   }
 }
 
-onMounted(() => { loadData(); fetchStats() })
+onMounted(() => { reloadData() })
 </script>
-

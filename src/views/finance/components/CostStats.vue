@@ -18,7 +18,8 @@ const props = defineProps({
 
 const statItems = computed(() => [
   { key: 'orders', label: '订单数量', value: props.stats.total_orders, format: 'number', iconName: 'list', tone: 'primary' },
-  { key: 'material', label: '平均材料成本', value: props.stats.avg_material_cost, format: 'currency', iconName: 'cube', tone: 'success' },
-  { key: 'labor', label: '平均人工成本', value: props.stats.avg_labor_cost, format: 'currency', iconName: 'user', tone: 'warning' }
+  { key: 'total', label: '总成本', value: props.stats.total_cost, format: 'currency', iconName: 'dollar', tone: 'primary' },
+  { key: 'material', label: '材料成本', value: props.stats.total_material, format: 'currency', iconName: 'cube', tone: 'success' },
+  { key: 'labor', label: '人工成本', value: props.stats.total_labor, format: 'currency', iconName: 'user', tone: 'warning' }
 ])
 </script>
