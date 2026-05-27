@@ -59,6 +59,7 @@ export { workOrderFlowAPI } from './workorder-flow'
 
 // Notification API (包含自定义操作)
 export { notificationAPI } from './notification'
+export { systemNotificationAPI } from './notification'
 
 // System API (系统管理)
 export { taskAssignmentRuleAPI } from './task-assignment-rule'

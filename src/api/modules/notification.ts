@@ -70,3 +70,34 @@ class NotificationAPI extends BaseAPI {
 
 export const notificationAPI = new NotificationAPI()
 export default notificationAPI
+
+class SystemNotificationAPI extends BaseAPI {
+  constructor() {
+    super('/system-notifications/', request)
+  }
+
+  createAnnouncement(data: Record<string, unknown>) {
+    return this.request({
+      url: `${this.baseUrl}create_announcement/`,
+      method: 'post',
+      data
+    })
+  }
+
+  sendUrgentAlert(data: Record<string, unknown>) {
+    return this.request({
+      url: `${this.baseUrl}send_urgent_alert/`,
+      method: 'post',
+      data
+    })
+  }
+
+  revoke(id: number | string) {
+    return this.request({
+      url: `${this.baseUrl}${id}/revoke/`,
+      method: 'delete'
+    })
+  }
+}
+
+export const systemNotificationAPI = new SystemNotificationAPI()
