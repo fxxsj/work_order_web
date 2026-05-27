@@ -19,6 +19,23 @@
           @change="handleSearchDebounced"
         />
         <Select
+          v-model="filters.task_type"
+          :options="taskTypeOptions"
+          placeholder="任务类型"
+          clearable
+          class="w-full sm:w-36"
+          @change="handleSearchDebounced"
+        />
+        <Select
+          v-model="filters.process"
+          :options="processOptions"
+          placeholder="工序"
+          clearable
+          filterable
+          class="w-full sm:w-36"
+          @change="handleSearchDebounced"
+        />
+        <Select
           v-model="filters.assigned_department"
           :options="departmentOptions"
           placeholder="分派部门"
@@ -38,7 +55,7 @@
         <button
           class="btn btn-secondary"
           title="重置"
-          @click="resetFilters"
+          @click="handleReset"
         >
           <Icon
             name="rotateCcw"
@@ -110,6 +127,10 @@
           :data="tableData"
           :loading="loading"
           row-key="id"
+          :server-side-sort="true"
+          default-sort-key="created_at"
+          default-sort-order="desc"
+          @sort="handleSort"
         >
           <template #cell-selection="{ row }">
             <Checkbox
@@ -180,7 +201,7 @@
             <EmptyState
               :description="hasFilters ? '未找到匹配的任务' : '暂无任务数据'"
               :action-text="hasFilters ? '重置筛选' : undefined"
-              @action="resetFilters"
+              @action="handleReset"
             />
           </template>
         </DataTable>
@@ -286,7 +307,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
-import { workOrderTaskAPI, departmentAPI, authAPI } from '@/api/modules'
+import { workOrderTaskAPI, departmentAPI, authAPI, processAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
@@ -315,6 +336,8 @@ const viewMode = ref('table')
 const selectedTasks = ref<any[]>([])
 const expandedRows = ref(new Set())
 const batchOperationLoading = ref(false)
+const sortKey = ref('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const allSelected = computed(() => tableData.value.length > 0 && tableData.value.every((row: any) => selectedTasks.value.some((t: any) => t.id === row.id)))
 const isSelected = (row: any) => selectedTasks.value.some((t: any) => t.id === row.id)
@@ -332,6 +355,21 @@ const toggleExpand = (row: any) => {
   else expandedRows.value.add(row.id)
 }
 
+const sortFieldMap: Record<string, string> = {
+  source: 'work_order_process__work_order__order_number',
+  process_name: 'work_order_process__process__name',
+  assigned_department_name: 'assigned_department__name',
+  assigned_operator_name: 'assigned_operator__username',
+  quantity: 'production_quantity',
+  delivery_date: 'work_order_process__work_order__delivery_date'
+}
+
+const buildTaskParams = (params: Record<string, unknown>) => {
+  const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+  const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
+  return { ...params, ordering }
+}
+
 const {
   filters,
   tableData,
@@ -346,24 +384,25 @@ const {
   handleSizeChange,
   resetFilters
 } = useCrudList(workOrderTaskAPI, 'getList', {
-  initialFilters: { search: '', status: '', task_type: '', work_order_process: '', assigned_department: '', priority: '' },
+  initialFilters: { search: '', status: '', task_type: '', process: '', work_order_process: '', assigned_department: '', priority: '' },
+  buildParams: buildTaskParams,
   errorContext: '加载任务失败'
 })
 
 const columns: Column[] = [
   { key: 'selection', label: '', width: 48, align: 'center' },
   { key: 'expand', label: '', width: 56 },
-  { key: 'id', label: 'ID', width: 80 },
-  { key: 'source', label: '来源', width: 160 },
-  { key: 'process_name', label: '工序', width: 112 },
-  { key: 'work_content', label: '任务内容', minWidth: 192 },
-  { key: 'assigned_department_name', label: '分派部门', width: 112 },
-  { key: 'assigned_operator_name', label: '分派操作员', width: 112 },
+  { key: 'id', label: 'ID', width: 80, sortable: true },
+  { key: 'source', label: '来源', width: 160, sortable: true },
+  { key: 'process_name', label: '工序', width: 112, sortable: true },
+  { key: 'work_content', label: '任务内容', minWidth: 192, sortable: true },
+  { key: 'assigned_department_name', label: '分派部门', width: 112, sortable: true },
+  { key: 'assigned_operator_name', label: '分派操作员', width: 112, sortable: true },
   { key: 'related_info', label: '关联对象', width: 144 },
-  { key: 'quantity', label: '数量', width: 96, align: 'right' },
+  { key: 'quantity', label: '数量', width: 96, align: 'right', sortable: true },
   { key: 'progress', label: '进度', width: 80, align: 'right' },
-  { key: 'delivery_date', label: '交期', width: 120 },
-  { key: 'status', label: '状态', width: 96 },
+  { key: 'delivery_date', label: '交期', width: 120, sortable: true },
+  { key: 'status', label: '状态', width: 96, sortable: true },
   { key: 'followup', label: '待办', width: 120 },
   { key: 'actions', label: '操作', width: 200, fixed: 'right' }
 ]
@@ -394,8 +433,20 @@ const taskStatusOptions = [
   { value: 'cancelled', label: '已取消' }
 ]
 
+const taskTypeOptions = [
+  { value: 'plate_making', label: '制版' },
+  { value: 'cutting', label: '切纸' },
+  { value: 'printing', label: '印刷' },
+  { value: 'foiling', label: '烫金' },
+  { value: 'embossing', label: '压凸' },
+  { value: 'die_cutting', label: '模切' },
+  { value: 'packaging', label: '包装' },
+  { value: 'general', label: '通用' }
+]
+
 const priorityOptions = PriorityChoices
 const departmentOptions = computed(() => departmentList.value.map((d: any) => ({ value: d.id, label: d.name })))
+const processOptions = computed(() => processList.value.map((p: any) => ({ value: p.id, label: p.name })))
 const hasFilters = computed(() => Object.values(filters.value).some((v: any) => v))
 
 const canExport = computed(() => userStore.hasPermission('workorder.view_workordertask'))
@@ -422,7 +473,19 @@ const handleRowAction = (action: RowAction, row: any) => {
   }
 }
 
-const handleSortChange = (payload: any) => { const { prop, order } = payload; /* TODO */ }
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
+}
+
+const handleReset = () => {
+  sortKey.value = 'created_at'
+  sortOrder.value = 'desc'
+  resetFilters()
+}
+
 const clearSelection = () => { selectedTasks.value = [] }
 
 const loadDepartments = async () => {
@@ -431,6 +494,13 @@ const loadDepartments = async () => {
     const res: any = await departmentAPI.getList({ page_size: 100 })
     departmentList.value = Array.isArray(res) ? res : (res?.results || res?.data || [])
   } catch (error: any) {} finally { loadingDepartments.value = false }
+}
+
+const loadProcesses = async () => {
+  try {
+    const res: any = await processAPI.getList({ is_active: true, page_size: 100, ordering: 'sort_order' })
+    processList.value = Array.isArray(res) ? res : (res?.results || res?.data || [])
+  } catch (error: any) {}
 }
 
 const loadUsers = async (departmentId: any) => {
@@ -546,8 +616,8 @@ const handleConfirmBatchAssign = async (data: any) => { try { const ids = select
 const handleExport = async () => {
   try {
     exporting.value = true
-    const params = {}
-    Object.entries(params).forEach(([k, v]: [string, any]) => { if (v) (params as any)[k] = v })
+    const params: Record<string, any> = buildTaskParams({ ...filters.value })
+    Object.entries(params).forEach(([k, v]: [string, any]) => { if (!v) delete params[k] })
     const response: any = await workOrderTaskAPI.export(params)
     const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
@@ -560,5 +630,5 @@ const handleExport = async () => {
   } catch (error: any) { ErrorHandler.showMessage(error, '导出失败') } finally { exporting.value = false }
 }
 
-onMounted(() => { loadData(); loadDepartments() })
+onMounted(() => { loadData(); loadDepartments(); loadProcesses() })
 </script>
