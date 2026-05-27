@@ -16,29 +16,44 @@
               placeholder="选择客户"
               clearable
               filterable
-              @change="handleSearch"
+              @change="searchAndRefreshStats"
             />
             <Select
               v-model="filters.payment_method"
               :options="paymentMethodOptions"
               class="w-full sm:w-36"
-              placeholder="付款方式"
+              placeholder="收款方式"
               clearable
-              @change="handleSearch"
+              @change="searchAndRefreshStats"
+            />
+            <Select
+              v-model="filters.todo"
+              :options="todoOptions"
+              class="w-full sm:w-40"
+              placeholder="待办事项"
+              clearable
+              @change="searchAndRefreshStats"
+            />
+            <SearchInput
+              v-model="searchText"
+              class="w-full sm:w-72"
+              placeholder="搜索收款单号/客户"
+              @search="searchAndRefreshStats"
+              @clear="searchAndRefreshStats"
             />
             <input
               v-model="filters.start_date"
               type="date"
               class="input w-36"
               placeholder="开始日期"
-              @change="handleSearch"
+              @change="searchAndRefreshStats"
             >
             <input
               v-model="filters.end_date"
               type="date"
               class="input w-36"
               placeholder="结束日期"
-              @change="handleSearch"
+              @change="searchAndRefreshStats"
             >
           </div>
         </div>
@@ -49,7 +64,7 @@
             class="btn btn-secondary"
             :disabled="loading"
             title="刷新"
-            @click="loadData"
+            @click="reloadData"
           >
             <Icon
               name="refresh"
@@ -78,6 +93,10 @@
           :data="tableData"
           :loading="loading"
           :row-key="(row: any) => row.id"
+          :server-side-sort="true"
+          default-sort-key="payment_date"
+          default-sort-order="desc"
+          @sort="handleSort"
         >
           <template #cell-payment_number="{ row }">
             <span>{{ row.payment_number }}</span>
@@ -90,6 +109,12 @@
           </template>
           <template #cell-payment_method_display="{ row }">
             <span>{{ row.payment_method_display }}</span>
+          </template>
+          <template #cell-sales_order_number="{ row }">
+            <span>{{ row.sales_order_number || '-' }}</span>
+          </template>
+          <template #cell-invoice_number="{ row }">
+            <span>{{ row.invoice_number || '-' }}</span>
           </template>
           <template #cell-amount="{ row }">
             <span>¥{{ row.amount ? row.amount.toLocaleString() : '-' }}</span>
@@ -105,6 +130,9 @@
           </template>
           <template #cell-notes="{ row }">
             <span class="truncate max-w-xs">{{ row.notes }}</span>
+          </template>
+          <template #cell-follow_up_text="{ row }">
+            <span>{{ row.follow_up_text || '-' }}</span>
           </template>
           <template #cell-actions="{ row }">
             <RowActions
@@ -357,7 +385,7 @@ import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import PaymentStats from './components/PaymentStats.vue'
-import { Select, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions } from '@/components/common'
+import { Select, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions, SearchInput } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import CustomerSelector from '@/views/customer/components/CustomerSelector.vue'
 import QuickCustomerCreateDialog from '@/views/customer/components/QuickCustomerCreateDialog.vue'
@@ -378,18 +406,30 @@ const showDeleteDialog = ref(false)
 const showQuickCustomerCreate = ref(false)
 const deleting = ref(false)
 const selectedRowForDelete = ref<any>(null)
+const sortKey = ref('payment_date')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
+const sortFieldMap: Record<string, string> = {
+  customer_name: 'customer__name',
+  payment_method_display: 'payment_method',
+  sales_order_number: 'sales_order__order_number',
+  invoice_number: 'invoice__invoice_number'
+}
 
 const FORM_INITIAL: Record<string, any> = { id: undefined, customer: undefined, payment_date: '', payment_method: '', amount: undefined, bank_account: '', transaction_number: '', notes: '' }
 const form = reactive({ ...FORM_INITIAL })
 
 const columns: Column[] = [
-  { key: 'payment_number', label: '收款单号', width: 144 },
-  { key: 'customer_name', label: '客户名称', width: 144 },
-  { key: 'payment_date', label: '收款日期', width: 112 },
-  { key: 'payment_method_display', label: '付款方式', width: 96 },
-  { key: 'amount', label: '收款金额', width: 112, align: 'right' },
-  { key: 'applied_amount', label: '已核销金额', width: 112, align: 'right' },
-  { key: 'remaining_amount', label: '未核销金额', width: 112, align: 'right' },
+  { key: 'payment_number', label: '收款单号', width: 144, sortable: true },
+  { key: 'customer_name', label: '客户名称', width: 144, sortable: true },
+  { key: 'payment_date', label: '收款日期', width: 112, sortable: true },
+  { key: 'payment_method_display', label: '收款方式', width: 96, sortable: true },
+  { key: 'sales_order_number', label: '销售订单', width: 128, sortable: true },
+  { key: 'invoice_number', label: '关联发票', width: 128, sortable: true },
+  { key: 'amount', label: '收款金额', width: 112, align: 'right', sortable: true },
+  { key: 'applied_amount', label: '已核销金额', width: 112, align: 'right', sortable: true },
+  { key: 'remaining_amount', label: '未核销金额', width: 112, align: 'right', sortable: true },
+  { key: 'follow_up_text', label: '下一步', width: 144 },
   { key: 'bank_account', label: '银行账户', minWidth: 144 },
   { key: 'notes', label: '备注', minWidth: 144 },
   { key: 'actions', label: '操作', width: 176, fixed: 'right' }
@@ -399,9 +439,13 @@ const columns: Column[] = [
 const customerOptions = computed(() => customerList.value.map((c: any) => ({ value: c.id, label: c.name })))
 const paymentMethodOptions = [
   { value: 'cash', label: '现金' },
-  { value: 'bank_transfer', label: '银行转账' },
+  { value: 'transfer', label: '转账' },
   { value: 'check', label: '支票' },
-  { value: 'other', label: '其他' }
+  { value: 'acceptance', label: '承兑汇票' }
+]
+const todoOptions = [
+  { value: 'pending_writeoff', label: '待核销' },
+  { value: 'missing_invoice_link', label: '待关联发票' }
 ]
 
 const buildPaymentParams = (params: any) => {
@@ -410,10 +454,13 @@ const buildPaymentParams = (params: any) => {
     nextParams.start_date = date_range[0]
     nextParams.end_date = date_range[1]
   }
+  const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+  nextParams.ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
   return nextParams
 }
 
 const {
+  searchText,
   filters,
   tableData,
   loading,
@@ -427,20 +474,55 @@ const {
   handleSizeChange,
   resetFilters
 } = useCrudList(paymentAPI, 'getList', {
-  initialFilters: { customer: '', payment_method: '', date_range: null },
+  initialFilters: { customer: '', payment_method: '', todo: '', start_date: '', end_date: '', date_range: null },
   buildParams: buildPaymentParams
 })
 
-const handleReset = () => resetFilters()
+const handleReset = async () => {
+  await resetFilters()
+  fetchStats()
+}
+
+const searchAndRefreshStats = async () => {
+  await handleSearch()
+  fetchStats()
+}
 
 const fetchStats = async () => {
   statsLoading.value = true
   try {
-    const response: any = await paymentAPI.getSummary()
+    const response: any = await paymentAPI.getSummary(buildPaymentParams({
+      search: searchText.value,
+      customer: filters.value.customer,
+      payment_method: filters.value.payment_method,
+      todo: filters.value.todo,
+      start_date: filters.value.start_date,
+      end_date: filters.value.end_date
+    }))
     const payload = response?.data || response
     const summary = payload?.summary || {}
-    stats.value = { total_amount: summary.total_amount || 0, applied_amount: summary.applied_amount || 0, unapplied_amount: summary.remaining_amount || 0, total_count: summary.total_count || 0 }
+    stats.value = {
+      total_amount: summary.total_amount || 0,
+      applied_amount: summary.applied_amount || 0,
+      unapplied_amount: summary.remaining_amount || 0,
+      total_count: summary.total_count || 0,
+      pending_writeoff_count: summary.pending_writeoff_count || 0,
+      missing_invoice_link_count: summary.missing_invoice_link_count || 0
+    }
   } catch (error: any) { stats.value = {} } finally { statsLoading.value = false }
+}
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
+  fetchStats()
+}
+
+const reloadData = async () => {
+  await loadData()
+  fetchStats()
 }
 
 const fetchCustomers = async () => {
@@ -490,7 +572,7 @@ const handleDelete = async () => {
     await paymentAPI.delete(row.id)
     useUIStore().showSuccess('删除成功')
     showDeleteDialog.value = false
-    loadData()
+    reloadData()
     fetchStats()
   } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
   finally { deleting.value = false }
@@ -506,6 +588,7 @@ const handleSave = async () => {
     const data = { ...form }
     if (data.id) { 
       delete (data as any).id
+      delete (data as any).customer
       await paymentAPI.update(form.id!, data)
       useUIStore().showSuccess('更新成功') 
     } else { 
@@ -513,7 +596,7 @@ const handleSave = async () => {
       useUIStore().showSuccess('创建成功') 
     }
     closeModals()
-    loadData()
+    reloadData()
     fetchStats()
   } catch (error: any) { ErrorHandler.showMessage(error, showEditModal.value ? '更新失败' : '创建失败') } finally { submitting.value = false }
 }
@@ -538,5 +621,5 @@ const handleRowAction = (action: RowAction, row: any) => {
   }
 }
 
-onMounted(() => { loadData(); fetchStats(); fetchCustomers() })
+onMounted(() => { reloadData(); fetchCustomers() })
 </script>

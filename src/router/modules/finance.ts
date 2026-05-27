@@ -49,6 +49,6 @@ export const financeRoutes: RouteRecordRaw[] = [
     path: 'finance/payment-plans',
     name: 'PaymentPlanList',
     component: PaymentPlanList,
-    meta: { title: '付款计划', requiresAuth: true, requiresPermission: ['workorder.view_paymentplan'] }
+    meta: { title: '收款计划', requiresAuth: true, requiresPermission: ['workorder.view_paymentplan'] }
   }
 ]

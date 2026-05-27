@@ -12,12 +12,14 @@ class PaymentAPI extends BaseAPI {
 
   /**
    * 获取收款汇总
+   * @param {Object} params - 汇总筛选参数
    * @returns {Promise} 收款汇总数据
    */
-  getSummary() {
+  getSummary(params?: Record<string, unknown>) {
     return this.request({
       url: `${this.baseUrl}summary/`,
-      method: 'get'
+      method: 'get',
+      params
     })
   }
 }
