@@ -13,18 +13,41 @@
           @clear="handleSearch"
         />
         <Select
-          v-model="filters.cost_type"
+          v-model="filters.type"
           :options="typeOptions"
           class="w-full sm:w-36"
-          placeholder="费用类型"
+          placeholder="类型"
+          clearable
+          @change="handleSearch"
+        />
+        <Select
+          v-model="filters.allocation_method"
+          :options="allocationOptions"
+          class="w-full sm:w-40"
+          placeholder="分摊方法"
+          clearable
+          @change="handleSearch"
+        />
+        <Select
+          v-model="filters.is_active"
+          :options="activeOptions"
+          class="w-full sm:w-36"
+          placeholder="状态"
           clearable
           @change="handleSearch"
         />
       </FilterRow>
     </template>
-    
+
     <template #actions>
       <div class="flex justify-end gap-3">
+        <button
+          v-if="hasFilters"
+          class="btn btn-secondary"
+          @click="resetFilters"
+        >
+          重置筛选
+        </button>
         <button
           :disabled="loading"
           class="btn btn-secondary"
@@ -58,14 +81,21 @@
         :data="tableData"
         :loading="loading"
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="code"
+        default-sort-order="asc"
+        @sort="handleSort"
       >
+        <template #cell-type="{ row }">
+          {{ row.type_display || typeLabel(row.type) }}
+        </template>
+        <template #cell-allocation_method="{ row }">
+          {{ row.allocation_method_display || allocationLabel(row.allocation_method) }}
+        </template>
         <template #cell-is_active="{ value }">
           <Tag :type="value ? 'success' : 'info'">
             {{ value ? '启用' : '禁用' }}
           </Tag>
-        </template>
-        <template #cell-default_amount="{ value }">
-          <span class="text-right">¥{{ value ? Number(value).toFixed(2) : '0.00' }}</span>
         </template>
         <template #cell-actions="{ row }">
           <RowActions
@@ -94,60 +124,323 @@
       />
     </template>
   </TablePageLayout>
+
+  <BaseDialog
+    :show="formDialogVisible"
+    :title="form.id ? '编辑成本项目' : '新建成本项目'"
+    width="normal"
+    @close="formDialogVisible = false"
+  >
+    <div class="space-y-4">
+      <Input
+        v-model="form.code"
+        label="编码"
+        placeholder="2-50 位编码"
+      />
+      <Input
+        v-model="form.name"
+        label="名称"
+        placeholder="2-100 位名称"
+      />
+      <Select
+        v-model="form.type"
+        :options="typeOptions"
+        label="类型"
+      />
+      <Select
+        v-model="form.allocation_method"
+        :options="allocationOptions"
+        label="分摊方法"
+      />
+      <Select
+        v-model="form.is_active"
+        :options="activeOptions"
+        label="状态"
+      />
+      <TextArea
+        v-model="form.description"
+        label="描述"
+        :rows="3"
+      />
+    </div>
+    <template #footer>
+      <button
+        class="btn"
+        :disabled="submitting"
+        @click="formDialogVisible = false"
+      >
+        取消
+      </button>
+      <button
+        class="btn btn-primary"
+        :disabled="submitting"
+        @click="handleFormSubmit"
+      >
+        {{ submitting ? '保存中...' : '保存' }}
+      </button>
+    </template>
+  </BaseDialog>
+
+  <BaseDialog
+    :show="detailDialogVisible"
+    title="成本项目详情"
+    width="wide"
+    @close="detailDialogVisible = false"
+  >
+    <DescriptionGrid
+      v-if="currentRow"
+      :columns="2"
+    >
+      <DescriptionItem label="编码">{{ currentRow.code || '-' }}</DescriptionItem>
+      <DescriptionItem label="名称">{{ currentRow.name || '-' }}</DescriptionItem>
+      <DescriptionItem label="类型">{{ currentRow.type_display || typeLabel(currentRow.type) }}</DescriptionItem>
+      <DescriptionItem label="分摊方法">{{ currentRow.allocation_method_display || allocationLabel(currentRow.allocation_method) }}</DescriptionItem>
+      <DescriptionItem label="状态">{{ currentRow.is_active ? '启用' : '禁用' }}</DescriptionItem>
+      <DescriptionItem label="创建时间">{{ formatDateTime(currentRow.created_at) }}</DescriptionItem>
+      <DescriptionItem label="更新时间">{{ formatDateTime(currentRow.updated_at) }}</DescriptionItem>
+      <DescriptionItem
+        label="描述"
+        :span="2"
+      >
+        {{ currentRow.description || '-' }}
+      </DescriptionItem>
+    </DescriptionGrid>
+    <template #footer>
+      <button
+        class="btn"
+        @click="detailDialogVisible = false"
+      >
+        关闭
+      </button>
+    </template>
+  </BaseDialog>
+
+  <ConfirmDialog
+    :show="showDeleteDialog"
+    title="删除成本项目"
+    :message="`确定要删除成本项目「${currentRow?.name}」吗？此操作不可撤销。`"
+    confirm-text="删除"
+    cancel-text="取消"
+    :danger="true"
+    :loading="deleting"
+    @confirm="handleDelete"
+    @cancel="showDeleteDialog = false"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { costItemAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, RowActions, FilterRow, Select, Tag } from '@/components/common'
+import {
+  BaseDialog,
+  ConfirmDialog,
+  DataTable,
+  DescriptionGrid,
+  DescriptionItem,
+  EmptyState,
+  FilterRow,
+  Icon,
+  Input,
+  Pagination,
+  RowActions,
+  SearchInput,
+  Select,
+  TablePageLayout,
+  Tag,
+  TextArea
+} from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
+import ErrorHandler from '@/utils/errorHandler'
+
+const typeOptions = [
+  { label: '直接材料', value: 'material' },
+  { label: '直接人工', value: 'labor' },
+  { label: '设备折旧', value: 'equipment' },
+  { label: '制造费用', value: 'overhead' }
+]
+const allocationOptions = [
+  { label: '直接分摊', value: 'direct' },
+  { label: '按工时分摊', value: 'labor_hours' },
+  { label: '按机时分摊', value: 'machine_hours' },
+  { label: '按产量分摊', value: 'quantity' },
+  { label: '按产值分摊', value: 'value' }
+]
+const activeOptions = [
+  { label: '启用', value: true },
+  { label: '禁用', value: false }
+]
 
 const columns: Column[] = [
   { key: 'code', label: '项目编码', sortable: true, class: 'w-32' },
   { key: 'name', label: '项目名称', sortable: true, class: 'w-48' },
-  { key: 'cost_type_display', label: '费用类型', sortable: true, class: 'w-32' },
-  { key: 'default_amount', label: '默认金额', sortable: true, class: 'w-32 text-right' },
+  { key: 'type', label: '类型', sortable: true, class: 'w-32' },
+  { key: 'allocation_method', label: '分摊方法', sortable: true, class: 'w-36' },
   { key: 'is_active', label: '状态', sortable: true, class: 'w-24 text-center' },
   { key: 'description', label: '描述', sortable: false },
-  { key: 'actions', label: '操作', sortable: false, class: 'w-32' }
+  { key: 'actions', label: '操作', sortable: false, class: 'w-40' }
 ]
 
-const typeOptions = [
-  { label: '人工费', value: 'labor' },
-  { label: '材料费', value: 'material' },
-  { label: '制造费用', value: 'manufacturing' },
-  { label: '其他费用', value: 'other' }
-]
+const sortKey = ref('code')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+const buildParams = (params: Record<string, unknown>) => ({
+  ...params,
+  ordering: sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
+})
 
 const {
-  searchText, filters, tableData, loading, total, currentPage, pageSize,
-  loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters
-} = useCrudList(costItemAPI, 'getList', { errorContext: '加载成本项目数据失败' })
+  searchText,
+  filters,
+  tableData,
+  loading,
+  total,
+  currentPage,
+  pageSize,
+  loadData,
+  handleSearch,
+  handlePageChange,
+  handleSizeChange,
+  hasFilters,
+  resetFilters
+} = useCrudList(costItemAPI, 'getList', {
+  initialFilters: { type: '', allocation_method: '', is_active: '' },
+  buildParams,
+  errorContext: '加载成本项目数据失败'
+})
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('costitem')
+const formDialogVisible = ref(false)
+const detailDialogVisible = ref(false)
+const showDeleteDialog = ref(false)
+const submitting = ref(false)
+const deleting = ref(false)
+const currentRow = ref<any>(null)
+const form = reactive({
+  id: null as number | null,
+  code: '',
+  name: '',
+  type: 'material',
+  allocation_method: 'direct',
+  is_active: true,
+  description: ''
+})
 
-const getRowActions = (row: any): RowAction[] => {
-  const actions: RowAction[] = []
-  if (canEdit) {
-    actions.push({ key: 'edit', label: '编辑', icon: 'edit' })
-  }
-  if (canDelete) {
-    actions.push({ key: 'delete', label: '删除', icon: 'trash', tone: 'danger' })
-  }
-  return actions
+const typeLabel = (value: string) => typeOptions.find(option => option.value === value)?.label || value || '-'
+const allocationLabel = (value: string) => allocationOptions.find(option => option.value === value)?.label || value || '-'
+const formatDateTime = (value: string | null | undefined) => value ? String(value).replace('T', ' ').slice(0, 19) : '-'
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
+}
+
+const resetForm = (row?: any) => {
+  Object.assign(form, {
+    id: row?.id ?? null,
+    code: row?.code ?? '',
+    name: row?.name ?? '',
+    type: row?.type ?? 'material',
+    allocation_method: row?.allocation_method ?? 'direct',
+    is_active: row?.is_active ?? true,
+    description: row?.description ?? ''
+  })
 }
 
 const showCreateDialog = () => {
-  useUIStore().showInfo('新建成本项目表单开发中...')
+  if (!canCreate.value) return
+  resetForm()
+  formDialogVisible.value = true
 }
 
-const handleRowAction = (action: string, row: any) => {
-  if (action === 'edit') {
-    useUIStore().showInfo('编辑成本项目表单开发中...')
-  } else if (action === 'delete') {
-    useUIStore().showInfo('删除成本项目对接中...')
+const showEditDialog = (row: any) => {
+  if (!canEdit.value) return
+  resetForm(row)
+  formDialogVisible.value = true
+}
+
+const validateForm = () => {
+  form.code = form.code.trim()
+  form.name = form.name.trim()
+  form.description = form.description.trim()
+  if (form.code.length < 2 || form.code.length > 50) {
+    useUIStore().showWarning('成本项目编码长度必须为 2-50')
+    return false
+  }
+  if (form.name.length < 2 || form.name.length > 100) {
+    useUIStore().showWarning('成本项目名称长度必须为 2-100')
+    return false
+  }
+  return true
+}
+
+const handleFormSubmit = async () => {
+  if (!validateForm()) return
+  submitting.value = true
+  try {
+    const payload = {
+      code: form.code,
+      name: form.name,
+      type: form.type,
+      allocation_method: form.allocation_method,
+      is_active: form.is_active,
+      description: form.description
+    }
+    if (form.id) {
+      await costItemAPI.update(form.id, payload)
+      useUIStore().showSuccess('更新成功')
+    } else {
+      await costItemAPI.create(payload)
+      useUIStore().showSuccess('创建成功')
+    }
+    formDialogVisible.value = false
+    loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, '保存成本项目')
+  } finally {
+    submitting.value = false
   }
 }
+
+const getRowActions = (_row: any): RowAction[] => [
+  { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
+  { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value },
+  { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete.value }
+]
+
+const handleRowAction = (action: string, row: any) => {
+  currentRow.value = row
+  switch (action) {
+    case 'view':
+      detailDialogVisible.value = true
+      break
+    case 'edit':
+      showEditDialog(row)
+      break
+    case 'delete':
+      showDeleteDialog.value = true
+      break
+  }
+}
+
+const handleDelete = async () => {
+  if (!currentRow.value) return
+  deleting.value = true
+  try {
+    await costItemAPI.delete(currentRow.value.id)
+    useUIStore().showSuccess('删除成功')
+    showDeleteDialog.value = false
+    loadData()
+  } catch (error) {
+    ErrorHandler.showMessage(error, '删除成本项目')
+  } finally {
+    deleting.value = false
+  }
+}
+
+onMounted(() => {
+  loadData()
+})
 </script>
