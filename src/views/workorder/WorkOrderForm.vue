@@ -548,7 +548,11 @@ const loadDetail = async (workOrderId: string) => {
       form.products = res.products.map((p: any) => ({
         product: p.product?.id || p.product,
         quantity: p.quantity || 1,
-        unit: p.unit || '件'
+        unit: p.unit || '件',
+        specification: p.specification || '',
+        source_type: p.source_type || 'stock',
+        sales_order_item: p.sales_order_item || undefined,
+        sort_order: p.sort_order || 0
       }))
     }
 
@@ -557,6 +561,9 @@ const loadDetail = async (workOrderId: string) => {
       form.materials = res.materials.map((m: any) => ({
         material: m.material?.id || m.material,
         quantity: m.quantity || 1,
+        material_size: m.material_size || '',
+        material_usage: m.material_usage || '',
+        need_cutting: !!m.need_cutting,
         notes: m.notes || ''
       }))
     }
@@ -644,11 +651,31 @@ const validateForm = () => {
     useUIStore().showWarning('请选择交货日期')
     return false
   }
+  if (form.order_date && form.delivery_date && new Date(form.delivery_date) < new Date(form.order_date)) {
+    useUIStore().showWarning('交货日期不能早于下单日期')
+    return false
+  }
+  if ((Number(form.production_quantity) || 0) <= 0) {
+    useUIStore().showWarning('生产数量必须大于 0')
+    return false
+  }
+  if ((Number(form.defective_quantity) || 0) < 0) {
+    useUIStore().showWarning('预损数量不能小于 0')
+    return false
+  }
 
   // Validate products
   const validProducts = form.products.filter(p => p.product)
   if (validProducts.length === 0) {
     useUIStore().showWarning('请至少添加一个产品')
+    return false
+  }
+  if (validProducts.some(p => (Number(p.quantity) || 0) <= 0)) {
+    useUIStore().showWarning('产品数量必须大于 0')
+    return false
+  }
+  if (form.materials.some(m => m.material && (Number(m.quantity) || 0) <= 0)) {
+    useUIStore().showWarning('物料数量必须大于 0')
     return false
   }
 
@@ -666,36 +693,42 @@ const formatPayload = () => {
     production_quantity: form.production_quantity,
     defective_quantity: form.defective_quantity || 0,
     actual_delivery_date: form.actual_delivery_date || undefined,
-    notes: form.notes || undefined,
-    process_ids: form.process_ids,
+    notes: form.notes?.trim() || undefined,
+    processes: form.process_ids,
     printing_type: form.printing_type || 'none',
-    printing_cmyk: form.printing_cmyk,
-    artwork_ids: form.artwork_ids,
-    die_ids: form.die_ids,
-    foiling_plate_ids: form.foiling_plate_ids,
-    embossing_plate_ids: form.embossing_plate_ids
+    printing_cmyk_colors: form.printing_cmyk,
+    artworks: form.artwork_ids,
+    dies: form.die_ids,
+    foiling_plates: form.foiling_plate_ids,
+    embossing_plates: form.embossing_plate_ids
   }
 
   if (form.sales_order_id) {
-    payload.sales_order_id = form.sales_order_id
+    payload.sales_order = form.sales_order_id
   }
 
   // Format products
   payload.products_data = form.products
     .filter(p => p.product)
     .map(p => ({
-      product_id: typeof p.product === 'object' ? p.product.id : p.product,
-      quantity: p.quantity,
-      unit: p.unit
+      product: typeof p.product === 'object' ? p.product.id : p.product,
+      quantity: Number(p.quantity || 0),
+      unit: p.unit || '件',
+      specification: p.specification || '',
+      source_type: p.source_type || 'stock',
+      sales_order_item: p.sales_order_item || undefined,
+      sort_order: p.sort_order || 0
     }))
 
   // Format materials
   payload.materials_data = form.materials
     .filter(m => m.material)
     .map(m => ({
-      material_id: typeof m.material === 'object' ? m.material.id : m.material,
-      quantity: m.quantity,
-      notes: m.notes || undefined
+      material: typeof m.material === 'object' ? m.material.id : m.material,
+      material_size: m.material_size || m.size || '',
+      material_usage: m.material_usage || m.usage || '',
+      need_cutting: !!m.need_cutting,
+      notes: m.notes?.trim() || undefined
     }))
 
   return payload

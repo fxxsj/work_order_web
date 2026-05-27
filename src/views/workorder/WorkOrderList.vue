@@ -34,6 +34,34 @@
           class="w-full sm:w-36"
           @change="handleSearchDebounced"
         />
+        <Input
+          v-model="filters.order_date_after"
+          type="date"
+          label="下单起"
+          class="w-full sm:w-36"
+          @change="handleSearchDebounced"
+        />
+        <Input
+          v-model="filters.order_date_before"
+          type="date"
+          label="下单止"
+          class="w-full sm:w-36"
+          @change="handleSearchDebounced"
+        />
+        <Input
+          v-model="filters.delivery_date_after"
+          type="date"
+          label="交货起"
+          class="w-full sm:w-36"
+          @change="handleSearchDebounced"
+        />
+        <Input
+          v-model="filters.delivery_date_before"
+          type="date"
+          label="交货止"
+          class="w-full sm:w-36"
+          @change="handleSearchDebounced"
+        />
         <button
           class="btn btn-secondary"
           title="重置筛选"
@@ -98,6 +126,10 @@
         :data="tableData"
         :loading="loading"
         row-key="id"
+        :server-side-sort="true"
+        default-sort-key="created_at"
+        default-sort-order="desc"
+        @sort="handleSort"
         @row-click="handleRowClick"
       >
         <template #cell-order_number="{ row }">
@@ -201,7 +233,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
-import { StatusTag, SearchInput, Select, Icon, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
+import { StatusTag, SearchInput, Select, Input, Icon, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { WorkOrderStatusChoices, PriorityChoices, ApprovalStatusChoices } from '@/constants'
 import { formatDate } from '@/utils/filter'
@@ -212,13 +244,25 @@ const userStore = useUserStore()
 
 const exporting = ref(false)
 const deleting = ref(false)
-const ordering = ref('-created_at')
+const sortKey = ref('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
 const editConfirmVisible = ref(false)
 const pendingEditRow = ref<any>(null)
 const deleteConfirmVisible = ref(false)
 const rowToDelete = ref<any>(null)
 
-const buildWorkOrderParams = (params: any) => ({ ordering: ordering.value, ...params })
+const sortFieldMap: Record<string, string> = {
+  customer_name: 'customer__name',
+  salesperson_name: 'customer__salesperson__username',
+  product_name: 'products__product__name',
+  manager_name: 'manager__username'
+}
+
+const buildWorkOrderParams = (params: any) => {
+  const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+  const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
+  return { ...params, ordering }
+}
 
 const {
   filters,
@@ -234,7 +278,16 @@ const {
   handleSizeChange,
   resetFilters: resetCrudFilters
 } = useCrudList(workOrderAPI, 'getList', {
-  initialFilters: { search: '', status: '', priority: '', approval_status: '' },
+  initialFilters: {
+    search: '',
+    status: '',
+    priority: '',
+    approval_status: '',
+    order_date_after: '',
+    order_date_before: '',
+    delivery_date_after: '',
+    delivery_date_before: ''
+  },
   buildParams: buildWorkOrderParams,
   errorContext: '加载施工单失败'
 })
@@ -252,17 +305,17 @@ const isSalesperson = computed(() => {
 const canExport = computed(() => userStore.hasPermission('workorder.view_workorder'))
 
 const columns: Column[] = [
-  { key: 'order_number', label: '施工单号', width: 144 },
-  { key: 'customer_name', label: '客户', width: 144 },
-  { key: 'salesperson_name', label: '业务员', width: 96 },
-  { key: 'product_name', label: '产品名称', minWidth: 192 },
-  { key: 'production_quantity', label: '生产数量', width: 96, align: 'right' },
-  { key: 'status', label: '状态', width: 96 },
-  { key: 'priority', label: '优先级', width: 96 },
+  { key: 'order_number', label: '施工单号', width: 144, sortable: true },
+  { key: 'customer_name', label: '客户', width: 144, sortable: true },
+  { key: 'salesperson_name', label: '业务员', width: 96, sortable: true },
+  { key: 'product_name', label: '产品名称', minWidth: 192, sortable: true },
+  { key: 'production_quantity', label: '生产数量', width: 96, align: 'right', sortable: true },
+  { key: 'status', label: '状态', width: 96, sortable: true },
+  { key: 'priority', label: '优先级', width: 96, sortable: true },
   { key: 'progress', label: '进度', width: 144 },
-  { key: 'order_date', label: '下单日期', width: 112 },
-  { key: 'delivery_date', label: '交货日期', width: 112 },
-  { key: 'manager_name', label: '制表人', width: 96 },
+  { key: 'order_date', label: '下单日期', width: 112, sortable: true },
+  { key: 'delivery_date', label: '交货日期', width: 112, sortable: true },
+  { key: 'manager_name', label: '制表人', width: 96, sortable: true },
   { key: 'actions', label: '操作', width: 176, fixed: 'right' }
 ]
 
@@ -271,13 +324,21 @@ const priorityOptions = computed(() => PriorityChoices.map((c: any) => ({ value:
 const approvalStatusOptions = computed(() => ApprovalStatusChoices.map((c: any) => ({ value: c.value, label: c.label })))
 
 const handleReset = () => {
-  ordering.value = '-created_at'
+  sortKey.value = 'created_at'
+  sortOrder.value = 'desc'
   if (Object.keys(route.query).length > 0) {
     router.replace({ query: {} }).catch(err => {
       if (err.name !== 'NavigationDuplicated') logger.warn('导航错误', err)
     })
   }
   resetCrudFilters()
+}
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
 }
 
 const handleCreate = () => {
@@ -363,6 +424,10 @@ const handleExport = async () => {
     if ((filters.value as any).status) (params as any).status = filters.value.status
     if ((filters.value as any).priority) (params as any).priority = filters.value.priority
     if ((filters.value as any).approval_status) (params as any).approval_status = filters.value.approval_status
+    if ((filters.value as any).order_date_after) (params as any).order_date_after = filters.value.order_date_after
+    if ((filters.value as any).order_date_before) (params as any).order_date_before = filters.value.order_date_before
+    if ((filters.value as any).delivery_date_after) (params as any).delivery_date_after = filters.value.delivery_date_after
+    if ((filters.value as any).delivery_date_before) (params as any).delivery_date_before = filters.value.delivery_date_before
     const now = new Date()
     const filename = `施工单列表_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.xlsx`;
     (params as any).filename = filename
@@ -405,14 +470,20 @@ onMounted(() => {
       'created_at', '-created_at',
       'order_date', '-order_date',
       'delivery_date', '-delivery_date',
-      'order_number', '-order_number'
+      'order_number', '-order_number',
+      'customer__name', '-customer__name',
+      'status', '-status',
+      'priority', '-priority',
+      'approval_status', '-approval_status',
+      'total_amount', '-total_amount'
     ])
     const orderingVal = route.query.ordering as string
     if (allowedOrdering.has(orderingVal)) {
-      ordering.value = orderingVal
+      sortOrder.value = orderingVal.startsWith('-') ? 'desc' : 'asc'
+      const backendKey = orderingVal.replace(/^-/, '')
+      sortKey.value = Object.entries(sortFieldMap).find(([, value]) => value === backendKey)?.[0] || backendKey
     }
   }
   loadData()
 })
 </script>
-
