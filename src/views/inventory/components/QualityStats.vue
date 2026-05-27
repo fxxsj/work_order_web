@@ -8,7 +8,7 @@
         />
       </div><div>
         <div class="text-2xl font-bold">
-          {{ stats.total_count || 0 }}
+          {{ summary.total_count || 0 }}
         </div><div class="text-xs text-gray-500">
           检验总数
         </div>
@@ -22,7 +22,7 @@
         />
       </div><div>
         <div class="text-2xl font-bold">
-          {{ stats.pending_count || 0 }}
+          {{ summary.pending_count || 0 }}
         </div><div class="text-xs text-gray-500">
           待检验
         </div>
@@ -36,7 +36,7 @@
         />
       </div><div>
         <div class="text-2xl font-bold">
-          {{ stats.passed_count || 0 }}
+          {{ passedCount }}
         </div><div class="text-xs text-gray-500">
           合格
         </div>
@@ -50,7 +50,7 @@
         />
       </div><div>
         <div class="text-2xl font-bold">
-          {{ stats.failed_count || 0 }}
+          {{ failedCount }}
         </div><div class="text-xs text-gray-500">
           不合格
         </div>
@@ -60,7 +60,13 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Icon } from '@/components/common'
 
-defineProps({ stats: { type: Object, default: () => ({}) }, loading: { type: Boolean, default: false } })
+const props = defineProps({ stats: { type: Object, default: () => ({}) }, loading: { type: Boolean, default: false } })
+const summary = computed(() => props.stats?.summary || props.stats || {})
+const byResult = computed(() => props.stats?.by_result || [])
+const resultCount = (result: string) => byResult.value.find((row: any) => row.result === result)?.count || 0
+const passedCount = computed(() => resultCount('passed'))
+const failedCount = computed(() => resultCount('failed'))
 </script>

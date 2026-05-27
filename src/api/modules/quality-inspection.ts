@@ -28,10 +28,11 @@ class QualityInspectionAPI extends BaseAPI {
    * 获取质检汇总
    * @returns {Promise} 质检汇总数据
    */
-  getSummary() {
+  getSummary(params?: Record<string, unknown>) {
     return this.request({
       url: `${this.baseUrl}summary/`,
-      method: 'get'
+      method: 'get',
+      params
     })
   }
 }

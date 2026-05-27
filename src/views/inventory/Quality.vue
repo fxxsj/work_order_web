@@ -10,19 +10,19 @@
         <div class="flex flex-col gap-3">
           <div class="flex flex-wrap items-center gap-3">
             <SearchInput
-              v-model="filters.inspection_number"
-              placeholder="搜索检验单号"
+              v-model="searchText"
+              placeholder="搜索检验单/施工单/客户/产品"
               class="w-full sm:w-64"
-              @search="handleSearchDebounced"
-              @clear="handleSearch"
+              @search="searchAndRefreshStats"
+              @clear="searchAndRefreshStats"
             />
             <Select
-              v-model="filters.inspection_type"
+              v-model="filters.type"
               :options="inspectionTypeOptions"
               class="w-full sm:w-36"
               placeholder="检验类型"
               clearable
-              @change="handleSearch"
+              @change="searchAndRefreshStats"
             />
             <Select
               v-model="filters.result"
@@ -30,18 +30,45 @@
               class="w-full sm:w-36"
               placeholder="检验结果"
               clearable
-              @change="handleSearch"
+              @change="searchAndRefreshStats"
             />
+            <Select
+              v-model="filters.todo"
+              :options="todoOptions"
+              class="w-full sm:w-40"
+              placeholder="待办事项"
+              clearable
+              @change="searchAndRefreshStats"
+            />
+            <input
+              v-model="filters.start_date"
+              type="date"
+              class="input w-full sm:w-40"
+              @change="searchAndRefreshStats"
+            >
+            <input
+              v-model="filters.end_date"
+              type="date"
+              class="input w-full sm:w-40"
+              @change="searchAndRefreshStats"
+            >
           </div>
         </div>
       </template>
       <template #actions>
         <div class="flex justify-end gap-3">
           <button
+            v-if="hasFilters"
+            class="btn btn-secondary"
+            @click="handleReset"
+          >
+            重置筛选
+          </button>
+          <button
             class="btn btn-secondary"
             :disabled="loading"
             title="刷新"
-            @click="loadData"
+            @click="reloadData"
           >
             <Icon
               name="refresh"
@@ -70,6 +97,10 @@
           :data="tableData"
           :loading="loading"
           :row-key="(row: any) => row.id"
+          :server-side-sort="true"
+          default-sort-key="inspection_date"
+          default-sort-order="desc"
+          @sort="handleSort"
         >
           <template #cell-inspection_number="{ row }">
             <span>{{ row.inspection_number }}</span>
@@ -83,14 +114,17 @@
           <template #cell-batch_no="{ row }">
             <span>{{ row.batch_no }}</span>
           </template>
-          <template #cell-quantity="{ row }">
-            <span>{{ row.quantity }}</span>
+          <template #cell-inspection_quantity="{ row }">
+            <span>{{ row.inspection_quantity }}</span>
           </template>
-          <template #cell-qualified_quantity="{ row }">
-            <span>{{ row.qualified_quantity || '-' }}</span>
+          <template #cell-passed_quantity="{ row }">
+            <span>{{ row.passed_quantity || '-' }}</span>
           </template>
-          <template #cell-defective_quantity="{ row }">
-            <span :class="row.defective_quantity > 0 ? 'text-danger' : ''">{{ row.defective_quantity || '-' }}</span>
+          <template #cell-failed_quantity="{ row }">
+            <span :class="row.failed_quantity > 0 ? 'text-danger' : ''">{{ row.failed_quantity || '-' }}</span>
+          </template>
+          <template #cell-defective_rate="{ row }">
+            <span :class="Number(row.defective_rate || 0) > 0 ? 'text-danger' : ''">{{ row.defective_rate_formatted || `${Number(row.defective_rate || 0).toFixed(2)}%` }}</span>
           </template>
           <template #cell-result="{ row }">
             <StatusTag
@@ -209,19 +243,33 @@ const formDialogVisible = ref(false)
 const showDeleteDialog = ref(false)
 const selectedRowAction = ref<any>(null)
 
-const form = reactive({ id: null, product: null, batch_no: '', quantity: 0, inspection_type: 'final', notes: '' })
+const form = reactive({
+  id: null,
+  product: null,
+  batch_no: '',
+  inspection_type: 'final',
+  inspection_date: '',
+  inspection_quantity: 0,
+  passed_quantity: 0,
+  failed_quantity: 0,
+  inspection_standard: '',
+  notes: ''
+})
 
 const columns: Column[] = [
-  { key: 'inspection_number', label: '检验单号', width: 144 },
-  { key: 'inspection_type_display', label: '检验类型', width: 96 },
-  { key: 'product_name', label: '产品名称', minWidth: 208 },
-  { key: 'batch_no', label: '批次号', width: 144 },
-  { key: 'quantity', label: '检验数量', width: 96, align: 'right' },
-  { key: 'qualified_quantity', label: '合格数量', width: 96, align: 'right' },
-  { key: 'defective_quantity', label: '不合格数量', width: 112, align: 'right' },
-  { key: 'result', label: '检验结果', width: 96 },
-  { key: 'inspector_name', label: '检验员', width: 96 },
-  { key: 'inspection_date', label: '检验日期', width: 112 },
+  { key: 'inspection_number', label: '检验单号', width: 144, sortable: true },
+  { key: 'inspection_type_display', label: '检验类型', width: 96, sortable: true },
+  { key: 'customer_name', label: '客户', width: 128, sortable: true },
+  { key: 'work_order_number', label: '施工单', width: 128, sortable: true },
+  { key: 'product_name', label: '产品名称', minWidth: 208, sortable: true },
+  { key: 'batch_no', label: '批次号', width: 144, sortable: true },
+  { key: 'inspection_quantity', label: '检验数量', width: 96, align: 'right', sortable: true },
+  { key: 'passed_quantity', label: '合格数量', width: 96, align: 'right', sortable: true },
+  { key: 'failed_quantity', label: '不合格数量', width: 112, align: 'right', sortable: true },
+  { key: 'defective_rate', label: '不良率', width: 96, align: 'right', sortable: true },
+  { key: 'result', label: '检验结果', width: 96, sortable: true },
+  { key: 'inspector_name', label: '检验员', width: 96, sortable: true },
+  { key: 'inspection_date', label: '检验日期', width: 112, sortable: true },
   { key: 'actions', label: '操作', width: 192, fixed: 'right' }
 ]
 
@@ -237,11 +285,26 @@ const resultOptions = [
   { value: 'failed', label: '不合格' },
   { value: 'conditional', label: '条件接收' }
 ]
+const todoOptions = [
+  { value: 'exception_followup', label: '异常待处理' }
+]
 
-const buildQualityParams = (params: any) => {
-  const { inspection_number, ...nextParams } = params
-  if (inspection_number) nextParams.search = inspection_number
-  return nextParams
+const sortKey = ref('inspection_date')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+const sortFieldMap: Record<string, string> = {
+  inspection_type_display: 'inspection_type',
+  customer_name: 'work_order__customer__name',
+  work_order_number: 'work_order__order_number',
+  product_name: 'product__name',
+  inspector_name: 'inspector__username'
+}
+
+const buildQualityParams = (params: Record<string, unknown>) => {
+  const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+  return {
+    ...params,
+    ordering: sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
+  }
 }
 
 const {
@@ -252,23 +315,47 @@ const {
   currentPage,
   pageSize,
   hasFilters,
+  searchText,
   loadData,
   handleSearch,
-  handleSearchDebounced,
   handlePageChange,
   handleSizeChange,
   resetFilters
 } = useCrudList(qualityInspectionAPI, 'getList', {
-  initialFilters: { inspection_number: '', inspection_type: '', result: '' },
+  initialFilters: { type: '', result: '', todo: '', start_date: '', end_date: '' },
   buildParams: buildQualityParams
 })
 
-const handleReset = () => resetFilters()
+const reloadData = async () => {
+  await loadData()
+  fetchStats()
+}
+const searchAndRefreshStats = async () => {
+  await handleSearch()
+  fetchStats()
+}
+const handleReset = async () => {
+  await resetFilters()
+  fetchStats()
+}
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  reloadData()
+}
 
 const fetchStats = async () => { 
   statsLoading.value = true
   try { 
-    const response: any = await qualityInspectionAPI.getStats()
+    const response: any = await qualityInspectionAPI.getSummary(buildQualityParams({
+      search: searchText.value,
+      type: filters.value.type,
+      result: filters.value.result,
+      todo: filters.value.todo,
+      start_date: filters.value.start_date,
+      end_date: filters.value.end_date
+    }))
     stats.value = response || {} 
   } catch (error: any) { 
     stats.value = {} 
@@ -285,7 +372,22 @@ const fetchProducts = async () => {
 }
 
 const handleView = (row: any) => { currentQuality.value = row; detailDialogVisible.value = true }
-const handleCreate = () => { if (!canCreate.value) return; Object.assign(form, { id: null, product: null, batch_no: '', quantity: 0, inspection_type: 'final', notes: '' }); formDialogVisible.value = true }
+const handleCreate = () => {
+  if (!canCreate.value) return
+  Object.assign(form, {
+    id: null,
+    product: null,
+    batch_no: '',
+    inspection_type: 'final',
+    inspection_date: new Date().toISOString().slice(0, 10),
+    inspection_quantity: 0,
+    passed_quantity: 0,
+    failed_quantity: 0,
+    inspection_standard: '',
+    notes: ''
+  })
+  formDialogVisible.value = true
+}
 const handleInspect = (row: any) => { currentQuality.value = row; inspectDialogVisible.value = true }
 
 const confirmDelete = (row: any) => {
@@ -302,7 +404,7 @@ const handleDelete = async () => {
     await qualityInspectionAPI.delete(row.id)
     useUIStore().showSuccess('删除成功')
     showDeleteDialog.value = false
-    loadData()
+    reloadData()
   } catch (error: any) { ErrorHandler.showMessage(error, '删除失败') }
   finally { deleting.value = false }
 }
@@ -310,11 +412,14 @@ const handleDelete = async () => {
 const handleConfirmInspect = async (data: any) => { 
   inspecting.value = true
   try { 
-    await qualityInspectionAPI.inspect(currentQuality.value.id, data)
+    const failedQuantity = Number(data.failed_quantity || 0)
+    await qualityInspectionAPI.complete(currentQuality.value.id, {
+      ...data,
+      result: failedQuantity > 0 ? 'failed' : 'passed'
+    })
     useUIStore().showSuccess('检验完成')
     inspectDialogVisible.value = false
-    loadData()
-    fetchStats() 
+    reloadData()
   } catch (error: any) { 
     ErrorHandler.showMessage(error, '检验失败') 
   } finally { 
@@ -328,7 +433,7 @@ const handleSubmit = async (data: any) => {
     await qualityInspectionAPI.create(data)
     useUIStore().showSuccess('创建成功')
     formDialogVisible.value = false
-    loadData() 
+    reloadData()
   } catch (error: any) { 
     ErrorHandler.showMessage(error, '创建失败') 
   } finally { 
@@ -350,6 +455,5 @@ const handleRowAction = (action: RowAction, row: any) => {
   }
 }
 
-onMounted(() => { loadData(); fetchStats(); fetchProducts() })
+onMounted(() => { reloadData(); fetchProducts() })
 </script>
-
