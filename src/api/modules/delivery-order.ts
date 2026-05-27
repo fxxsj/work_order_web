@@ -56,10 +56,11 @@ class DeliveryOrderAPI extends BaseAPI {
    * 获取发货汇总
    * @returns {Promise} 发货汇总数据
    */
-  getSummary() {
+  getSummary(params?: Record<string, unknown>) {
     return this.request({
       url: `${this.baseUrl}summary/`,
-      method: 'get'
+      method: 'get',
+      params
     })
   }
 

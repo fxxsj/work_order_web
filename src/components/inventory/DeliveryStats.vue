@@ -8,7 +8,7 @@
         />
       </div><div>
         <div class="text-2xl font-bold">
-          {{ stats.total || 0 }}
+          {{ summary.total_count || 0 }}
         </div><div class="text-xs text-gray-500">
           总发货单
         </div>
@@ -22,7 +22,7 @@
         />
       </div><div>
         <div class="text-2xl font-bold">
-          {{ stats.pending || 0 }}
+          {{ summary.pending_count || 0 }}
         </div><div class="text-xs text-gray-500">
           待发货
         </div>
@@ -36,7 +36,7 @@
         />
       </div><div>
         <div class="text-2xl font-bold">
-          {{ stats.in_transit || 0 }}
+          {{ (summary.shipped_count || 0) + (summary.in_transit_count || 0) }}
         </div><div class="text-xs text-gray-500">
           运输中
         </div>
@@ -50,7 +50,7 @@
         />
       </div><div>
         <div class="text-2xl font-bold">
-          {{ stats.completed || 0 }}
+          {{ summary.received_count || 0 }}
         </div><div class="text-xs text-gray-500">
           已完成
         </div>
@@ -60,7 +60,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Icon } from '@/components/common'
 
-defineProps({ stats: { type: Object, default: () => ({}) }, loading: { type: Boolean, default: false } })
+const props = defineProps({ stats: { type: Object, default: () => ({}) }, loading: { type: Boolean, default: false } })
+const summary = computed(() => props.stats?.summary || props.stats || {})
 </script>

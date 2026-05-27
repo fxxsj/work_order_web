@@ -8,6 +8,13 @@
     <TablePageLayout>
       <template #filters>
         <FilterRow>
+          <SearchInput
+            v-model="searchText"
+            placeholder="搜索单号/客户/物流"
+            class="w-full sm:w-64"
+            @search="searchAndRefreshStats"
+            @clear="searchAndRefreshStats"
+          />
           <Select
             v-model="filters.customer"
             :options="customerOptions"
@@ -15,7 +22,7 @@
             placeholder="选择客户"
             clearable
             filterable
-            @change="handleSearch"
+            @change="searchAndRefreshStats"
           />
           <Select
             v-model="filters.status"
@@ -23,24 +30,44 @@
             class="w-full sm:w-36"
             placeholder="发货状态"
             clearable
-            @change="handleSearch"
+            @change="searchAndRefreshStats"
           />
-          <SearchInput
-            v-model="filters.tracking_number"
-            placeholder="搜索物流单号"
-            class="w-full sm:w-64"
-            @search="handleSearchDebounced"
-            @clear="handleSearch"
+          <Select
+            v-model="filters.todo"
+            :options="todoOptions"
+            class="w-full sm:w-40"
+            placeholder="待办事项"
+            clearable
+            @change="searchAndRefreshStats"
           />
+          <input
+            v-model="filters.start_date"
+            type="date"
+            class="input w-full sm:w-40"
+            @change="searchAndRefreshStats"
+          >
+          <input
+            v-model="filters.end_date"
+            type="date"
+            class="input w-full sm:w-40"
+            @change="searchAndRefreshStats"
+          >
         </FilterRow>
       </template>
       <template #actions>
         <div class="flex justify-end gap-3">
           <button
+            v-if="hasFilters"
+            class="btn btn-secondary"
+            @click="handleReset"
+          >
+            重置筛选
+          </button>
+          <button
             class="btn btn-secondary"
             :disabled="loading"
             title="刷新"
-            @click="loadData"
+            @click="reloadData"
           >
             <Icon
               name="refresh"
@@ -69,6 +96,10 @@
           :data="tableData"
           :loading="loading"
           :row-key="(row: any) => row.id"
+          :server-side-sort="true"
+          default-sort-key="created_at"
+          default-sort-order="desc"
+          @sort="handleSort"
         >
           <template #cell-order_number="{ row }">
             <span>{{ row.order_number }}</span>
@@ -79,14 +110,11 @@
           <template #cell-sales_order_number="{ row }">
             <span>{{ row.sales_order_number }}</span>
           </template>
-          <template #cell-receiver_name="{ row }">
-            <span>{{ row.receiver_name }}</span>
+          <template #cell-items_count="{ row }">
+            <span>{{ row.items_count ?? '-' }}</span>
           </template>
-          <template #cell-receiver_phone="{ row }">
-            <span>{{ row.receiver_phone }}</span>
-          </template>
-          <template #cell-delivery_address="{ row }">
-            <span class="truncate max-w-xs block">{{ row.delivery_address }}</span>
+          <template #cell-total_quantity="{ row }">
+            <span>{{ formatAmount(row.total_quantity) }}</span>
           </template>
           <template #cell-logistics_company="{ row }">
             <span>{{ row.logistics_company }}</span>
@@ -253,27 +281,40 @@ const statusOptions = [
   { value: 'rejected', label: '拒收' },
   { value: 'returned', label: '已退货' }
 ]
+const todoOptions = [
+  { value: 'pending_receive', label: '待签收' },
+  { value: 'pending_invoice', label: '待开票' },
+  { value: 'rejected_followup', label: '拒收待处理' }
+]
 const getFormInitialValues = () => ({ id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, package_count: 1, package_weight: '', notes: '', items_data: [] })
 const form = reactive(getFormInitialValues())
 
 const columns: Column[] = [
-  { key: 'order_number', label: '发货单号', width: 144 },
-  { key: 'customer_name', label: '客户名称', width: 144 },
-  { key: 'sales_order_number', label: '销售订单', width: 144 },
-  { key: 'receiver_name', label: '收货人', width: 96 },
-  { key: 'receiver_phone', label: '联系电话', width: 112 },
-  { key: 'delivery_address', label: '送货地址', minWidth: 144 },
-  { key: 'logistics_company', label: '物流公司', width: 112 },
-  { key: 'tracking_number', label: '物流单号', width: 144 },
-  { key: 'delivery_date', label: '发货日期', width: 112 },
-  { key: 'status', label: '状态', width: 96 },
+  { key: 'order_number', label: '发货单号', width: 144, sortable: true },
+  { key: 'customer_name', label: '客户名称', width: 144, sortable: true },
+  { key: 'sales_order_number', label: '销售订单', width: 144, sortable: true },
+  { key: 'items_count', label: '明细数', width: 80 },
+  { key: 'total_quantity', label: '发货数量', width: 96 },
+  { key: 'logistics_company', label: '物流公司', width: 112, sortable: true },
+  { key: 'tracking_number', label: '物流单号', width: 144, sortable: true },
+  { key: 'delivery_date', label: '发货日期', width: 112, sortable: true },
+  { key: 'status', label: '状态', width: 96, sortable: true },
   { key: 'actions', label: '操作', width: 200, fixed: 'right' }
 ]
 
-const buildDeliveryParams = (params: any) => {
-  const { tracking_number, ...nextParams } = params
-  if (tracking_number) nextParams.search = tracking_number
-  return nextParams
+const sortKey = ref('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+const sortFieldMap: Record<string, string> = {
+  customer_name: 'customer__name',
+  sales_order_number: 'sales_order__order_number'
+}
+
+const buildDeliveryParams = (params: Record<string, unknown>) => {
+  const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+  return {
+    ...params,
+    ordering: sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
+  }
 }
 
 const {
@@ -284,24 +325,48 @@ const {
   currentPage,
   pageSize,
   hasFilters,
+  searchText,
   loadData,
   handleSearch,
-  handleSearchDebounced,
   handlePageChange,
   handleSizeChange,
   resetFilters
 } = useCrudList(deliveryOrderAPI, 'getList', {
-  initialFilters: { status: '', customer: '', tracking_number: '' },
+  initialFilters: { status: '', customer: '', todo: '', start_date: '', end_date: '' },
   buildParams: buildDeliveryParams
 })
 
-const handleReset = () => resetFilters()
+const reloadData = async () => {
+  await loadData()
+  fetchStats()
+}
+const searchAndRefreshStats = async () => {
+  await handleSearch()
+  fetchStats()
+}
+const handleReset = async () => {
+  await resetFilters()
+  fetchStats()
+}
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  reloadData()
+}
 const resetForm = () => Object.assign(form, getFormInitialValues())
 
 const fetchStats = async () => { 
   statsLoading.value = true
   try { 
-    const response: any = await deliveryOrderAPI.getStats()
+    const response: any = await deliveryOrderAPI.getSummary(buildDeliveryParams({
+      search: searchText.value,
+      status: filters.value.status,
+      customer: filters.value.customer,
+      todo: filters.value.todo,
+      start_date: filters.value.start_date,
+      end_date: filters.value.end_date
+    }))
     stats.value = response || {} 
   } catch (error: any) { 
     stats.value = {} 
@@ -387,11 +452,19 @@ const handleReceive = async (row: any) => { currentDelivery.value = row; receive
 const handleConfirmReceive = async (data: any) => {
   receiving.value = true
   try { 
-    await deliveryOrderAPI.receive(currentDelivery.value.id, data)
-    useUIStore().showSuccess('签收成功')
+    if (data.received === 'rejected') {
+      await deliveryOrderAPI.reject(currentDelivery.value.id, {
+        reject_reason: data.received_notes
+      })
+      useUIStore().showSuccess('拒收处理成功')
+    } else {
+      await deliveryOrderAPI.receive(currentDelivery.value.id, {
+        received_notes: data.received_notes
+      })
+      useUIStore().showSuccess('签收成功')
+    }
     receiveDialogVisible.value = false
-    loadData()
-    fetchStats() 
+    reloadData()
   } catch (error: any) { 
     ErrorHandler.showMessage(error, '签收失败') 
   } finally { 
@@ -469,6 +542,10 @@ const handleRowAction = (action: RowAction, row: any) => {
 }
 
 const getTrackingUrl = (row: any) => row.tracking_url || (row.logistics_company === '顺丰' ? `https://www.sf-express.com/sf-service-owf-web/shipment/query?trackingNumber=${row.tracking_number}` : null)
+const formatAmount = (value: unknown) => Number(value || 0).toLocaleString(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+})
 
-onMounted(() => { loadData(); fetchStats(); fetchCustomers(); fetchSalesOrders(); fetchProducts() })
+onMounted(() => { reloadData(); fetchCustomers(); fetchSalesOrders(); fetchProducts() })
 </script>
