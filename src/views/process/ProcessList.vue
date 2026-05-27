@@ -9,6 +9,22 @@
           @search="handleSearch"
           @clear="handleSearch"
         />
+        <Select
+          v-model="filters.is_active"
+          class="w-full sm:w-36"
+          placeholder="状态"
+          :options="activeFilterOptions"
+          clearable
+          @change="handleSearch"
+        />
+        <Select
+          v-model="filters.task_generation_rule"
+          class="w-full sm:w-48"
+          placeholder="任务生成规则"
+          :options="taskRuleOptions"
+          clearable
+          @change="handleSearch"
+        />
       </FilterRow>
     </template>
 
@@ -47,17 +63,33 @@
         :data="tableData"
         :loading="loading"
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="sort_order"
+        default-sort-order="asc"
         @sort="handleSort"
       >
+        <template #cell-task_generation_rule="{ value }">
+          <span class="text-sm text-gray-700 dark:text-gray-300">
+            {{ getTaskRuleLabel(value) }}
+          </span>
+        </template>
+
         <template #cell-is_active="{ value }">
           <Tag :type="value ? 'success' : 'info'">
             {{ value ? '启用' : '禁用' }}
           </Tag>
         </template>
 
+        <template #cell-is_builtin="{ value }">
+          <Tag :type="value ? 'warning' : 'info'">
+            {{ value ? '内置' : '自定义' }}
+          </Tag>
+        </template>
+
         <template #cell-actions="{ row }">
           <RowActions
             :actions="[
+              { key: 'detail', label: '详情', icon: 'eye' },
               { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
               { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
             ]"
@@ -105,7 +137,7 @@
           label="工序编码"
           required
           placeholder="请输入工序编码"
-          :disabled="showEditModal"
+          :disabled="showEditModal && formData.is_builtin"
         />
       </div>
       <div>
@@ -141,9 +173,67 @@
         />
       </div>
       <div>
+        <Select
+          v-model="formData.task_generation_rule"
+          label="任务生成规则"
+          :options="taskRuleOptions"
+          placeholder="请选择任务生成规则"
+          @change="syncTaskRuleRequirements"
+        />
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <Toggle
+          v-model="formData.requires_artwork"
+          label="需要图稿"
+          @change="handleRequiresArtworkChange"
+        />
+        <Toggle
+          v-model="formData.artwork_required"
+          label="图稿必选"
+          :disabled="!formData.requires_artwork"
+        />
+        <Toggle
+          v-model="formData.requires_die"
+          label="需要刀模"
+          @change="handleRequiresDieChange"
+        />
+        <Toggle
+          v-model="formData.die_required"
+          label="刀模必选"
+          :disabled="!formData.requires_die"
+        />
+        <Toggle
+          v-model="formData.requires_foiling_plate"
+          label="需要烫金版"
+          @change="handleRequiresFoilingPlateChange"
+        />
+        <Toggle
+          v-model="formData.foiling_plate_required"
+          label="烫金版必选"
+          :disabled="!formData.requires_foiling_plate"
+        />
+        <Toggle
+          v-model="formData.requires_embossing_plate"
+          label="需要压凸版"
+          @change="handleRequiresEmbossingPlateChange"
+        />
+        <Toggle
+          v-model="formData.embossing_plate_required"
+          label="压凸版必选"
+          :disabled="!formData.requires_embossing_plate"
+        />
+      </div>
+      <div>
+        <Toggle
+          v-model="formData.is_parallel"
+          label="可并行执行"
+        />
+      </div>
+      <div>
         <Toggle
           v-model="formData.is_active"
           label="是否启用"
+          :disabled="formData.is_builtin && formData.is_active"
         />
       </div>
     </form>
@@ -188,7 +278,88 @@
     </template>
   </BaseDialog>
 
-  <!-- Delete Confirmation Dialog -->
+  <BaseDialog
+    :show="showDetailModal"
+    title="工序详情"
+    width="wide"
+    @close="closeDetail"
+  >
+    <div
+      v-if="currentDetail"
+      class="space-y-5"
+    >
+      <section>
+        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-dark-100">
+          基本信息
+        </h3>
+        <DescriptionGrid :columns="2">
+          <DescriptionItem label="工序编码">
+            {{ currentDetail.code || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="工序名称">
+            {{ currentDetail.name || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="标准工时">
+            {{ currentDetail.standard_duration ?? 0 }} 小时
+          </DescriptionItem>
+          <DescriptionItem label="排序">
+            {{ currentDetail.sort_order ?? 0 }}
+          </DescriptionItem>
+          <DescriptionItem label="状态">
+            {{ currentDetail.is_active ? '启用' : '禁用' }}
+          </DescriptionItem>
+          <DescriptionItem label="类型">
+            {{ currentDetail.is_builtin ? '内置' : '自定义' }}
+          </DescriptionItem>
+          <DescriptionItem
+            label="描述"
+            :span="2"
+          >
+            {{ currentDetail.description || '-' }}
+          </DescriptionItem>
+        </DescriptionGrid>
+      </section>
+      <section>
+        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-dark-100">
+          任务与版配置
+        </h3>
+        <DescriptionGrid :columns="2">
+          <DescriptionItem label="任务生成规则">
+            {{ getTaskRuleLabel(currentDetail.task_generation_rule) }}
+          </DescriptionItem>
+          <DescriptionItem label="可并行执行">
+            {{ currentDetail.is_parallel ? '是' : '否' }}
+          </DescriptionItem>
+          <DescriptionItem label="图稿">
+            {{ formatPlateRule(currentDetail.requires_artwork, currentDetail.artwork_required) }}
+          </DescriptionItem>
+          <DescriptionItem label="刀模">
+            {{ formatPlateRule(currentDetail.requires_die, currentDetail.die_required) }}
+          </DescriptionItem>
+          <DescriptionItem label="烫金版">
+            {{ formatPlateRule(currentDetail.requires_foiling_plate, currentDetail.foiling_plate_required) }}
+          </DescriptionItem>
+          <DescriptionItem label="压凸版">
+            {{ formatPlateRule(currentDetail.requires_embossing_plate, currentDetail.embossing_plate_required) }}
+          </DescriptionItem>
+        </DescriptionGrid>
+      </section>
+      <section>
+        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-dark-100">
+          系统信息
+        </h3>
+        <DescriptionGrid :columns="2">
+          <DescriptionItem label="工序ID">
+            {{ currentDetail.id }}
+          </DescriptionItem>
+          <DescriptionItem label="创建时间">
+            {{ formatDateTime(currentDetail.created_at) }}
+          </DescriptionItem>
+        </DescriptionGrid>
+      </section>
+    </div>
+  </BaseDialog>
+
   <ConfirmDialog
     :show="showDeleteDialog"
     title="删除确认"
@@ -205,33 +376,61 @@
 import { ref, reactive, onMounted } from 'vue'
 import { processAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, TextArea, Toggle, Icon, Tag, BaseDialog, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Toggle, Icon, Tag, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
+import { formatDateTime } from '@/utils/filter'
 
 const columns: Column[] = [
   { key: 'code', label: '工序编码', sortable: true, class: 'w-28' },
   { key: 'name', label: '工序名称', sortable: true, class: 'w-44' },
   { key: 'description', label: '描述', sortable: false },
   { key: 'standard_duration', label: '标准工时(小时)', sortable: true, class: 'w-32 text-right' },
+  { key: 'task_generation_rule', label: '任务生成规则', sortable: true, class: 'w-40' },
   { key: 'sort_order', label: '排序', sortable: true, class: 'w-20 text-center' },
   { key: 'is_active', label: '状态', sortable: true, class: 'w-24' },
+  { key: 'is_builtin', label: '类型', sortable: true, class: 'w-24' },
   { key: 'actions', label: '操作', sortable: false, class: 'w-32' }
 ]
 
+const sortKey = ref('sort_order')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
 const {
-  searchText, tableData, loading, total, currentPage, pageSize,
+  searchText, filters, tableData, loading, total, currentPage, pageSize,
   loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters
-} = useCrudList(processAPI, 'getList', { errorContext: '加载工序数据失败' })
+} = useCrudList(processAPI, 'getList', {
+  initialFilters: { is_active: '', task_generation_rule: '' },
+  errorContext: '加载工序数据失败',
+  buildParams: (params) => {
+    const ordering = sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
+    return { ...params, ordering }
+  }
+})
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('process')
 
 // Modal states
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
+const showDetailModal = ref(false)
 const showDeleteDialog = ref(false)
 const submitting = ref(false)
 const selectedRow = ref<any>(null)
+const currentDetail = ref<any>(null)
+
+const activeFilterOptions = [
+  { value: 'true', label: '启用' },
+  { value: 'false', label: '禁用' }
+]
+
+const taskRuleOptions = [
+  { value: 'artwork', label: '按图稿生成任务' },
+  { value: 'die', label: '按刀模生成任务' },
+  { value: 'product', label: '按产品生成任务' },
+  { value: 'material', label: '按物料生成任务' },
+  { value: 'general', label: '生成通用任务' }
+]
 
 const formInitialValues: Record<string, any> = {
   id: undefined as number | undefined,
@@ -240,7 +439,18 @@ const formInitialValues: Record<string, any> = {
   description: '',
   standard_duration: 0,
   sort_order: 0,
-  is_active: true
+  is_active: true,
+  is_builtin: false,
+  task_generation_rule: 'general',
+  requires_artwork: false,
+  requires_die: false,
+  requires_foiling_plate: false,
+  requires_embossing_plate: false,
+  artwork_required: true,
+  die_required: true,
+  foiling_plate_required: true,
+  embossing_plate_required: true,
+  is_parallel: false
 }
 const formData = reactive({ ...formInitialValues })
 
@@ -270,27 +480,146 @@ const editRow = (row: any) => {
     description: row.description || '',
     standard_duration: row.standard_duration || 0,
     sort_order: row.sort_order || 0,
-    is_active: row.is_active !== false
+    is_active: row.is_active !== false,
+    is_builtin: row.is_builtin === true,
+    task_generation_rule: row.task_generation_rule || 'general',
+    requires_artwork: row.requires_artwork === true,
+    requires_die: row.requires_die === true,
+    requires_foiling_plate: row.requires_foiling_plate === true,
+    requires_embossing_plate: row.requires_embossing_plate === true,
+    artwork_required: row.artwork_required !== false,
+    die_required: row.die_required !== false,
+    foiling_plate_required: row.foiling_plate_required !== false,
+    embossing_plate_required: row.embossing_plate_required !== false,
+    is_parallel: row.is_parallel === true
   })
   showEditModal.value = true
 }
 
+const getTaskRuleLabel = (value: string) =>
+  taskRuleOptions.find(option => option.value === value)?.label || value || '-'
+
+const formatPlateRule = (required: boolean, strict: boolean) => {
+  if (!required) return '不需要'
+  return strict ? '需要且必选' : '需要但可选'
+}
+
+const syncTaskRuleRequirements = () => {
+  if (formData.task_generation_rule === 'artwork') {
+    formData.requires_artwork = true
+    formData.artwork_required = true
+  }
+  if (formData.task_generation_rule === 'die') {
+    formData.requires_die = true
+    formData.die_required = true
+  }
+}
+
+const handleRequiresArtworkChange = (value: boolean) => {
+  if (value) formData.artwork_required = true
+}
+
+const handleRequiresDieChange = (value: boolean) => {
+  if (value) formData.die_required = true
+}
+
+const handleRequiresFoilingPlateChange = (value: boolean) => {
+  if (value) formData.foiling_plate_required = true
+}
+
+const handleRequiresEmbossingPlateChange = (value: boolean) => {
+  if (value) formData.embossing_plate_required = true
+}
+
+const openDetail = async (row: any) => {
+  selectedRow.value = row
+  try {
+    currentDetail.value = await processAPI.getDetail(row.id)
+    showDetailModal.value = true
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载工序详情失败')
+  }
+}
+
+const closeDetail = () => {
+  showDetailModal.value = false
+  currentDetail.value = null
+}
+
 const handleSubmit = async () => {
-  if (!formData.name) {
+  const code = (formData.code || '').trim()
+  const name = (formData.name || '').trim()
+  const duration = Number(formData.standard_duration ?? 0)
+  const sortOrderValue = Number(formData.sort_order ?? 0)
+
+  if (!name) {
     ErrorHandler.showMessage('请输入工序名称', '校验失败')
     return
   }
-  if (!formData.code) {
+  if (!code) {
     ErrorHandler.showMessage('请输入工序编码', '校验失败')
     return
   }
+  if (code.length < 2 || code.length > 50) {
+    ErrorHandler.showMessage('工序编码长度必须在2-50个字符之间', '校验失败')
+    return
+  }
+  if (!/^[A-Za-z0-9_-]+$/.test(code)) {
+    ErrorHandler.showMessage('工序编码只能包含字母、数字、连字符和下划线', '校验失败')
+    return
+  }
+  if (duration < 0 || duration > 9999) {
+    ErrorHandler.showMessage('标准工时必须在0-9999之间', '校验失败')
+    return
+  }
+  if (sortOrderValue < 0 || sortOrderValue > 99999) {
+    ErrorHandler.showMessage('排序值必须在0-99999之间', '校验失败')
+    return
+  }
+
+  syncTaskRuleRequirements()
+
+  if (formData.requires_artwork && !formData.artwork_required) {
+    ErrorHandler.showMessage('工序需要图稿时，图稿必选必须开启', '校验失败')
+    return
+  }
+  if (formData.requires_die && !formData.die_required) {
+    ErrorHandler.showMessage('工序需要刀模时，刀模必选必须开启', '校验失败')
+    return
+  }
+  if (formData.requires_foiling_plate && !formData.foiling_plate_required) {
+    ErrorHandler.showMessage('工序需要烫金版时，烫金版必选必须开启', '校验失败')
+    return
+  }
+  if (formData.requires_embossing_plate && !formData.embossing_plate_required) {
+    ErrorHandler.showMessage('工序需要压凸版时，压凸版必选必须开启', '校验失败')
+    return
+  }
+  if (formData.task_generation_rule === 'artwork' && !formData.requires_artwork) {
+    ErrorHandler.showMessage('按图稿生成任务时，必须启用需要图稿', '校验失败')
+    return
+  }
+  if (formData.task_generation_rule === 'die' && !formData.requires_die) {
+    ErrorHandler.showMessage('按刀模生成任务时，必须启用需要刀模', '校验失败')
+    return
+  }
+
+  const payload = {
+    ...formData,
+    code,
+    name,
+    description: (formData.description || '').trim(),
+    standard_duration: duration,
+    sort_order: sortOrderValue
+  }
+
   submitting.value = true
   try {
     if (showEditModal.value) {
-      const { id, ...updateData } = formData
+      const { id, ...updateData } = payload
       await crud.update(id, updateData, '保存成功')
     } else {
-      const { id, ...createData } = formData
+      const { id, ...createData } = payload
       await crud.create(createData, '创建成功')
     }
   } finally {
@@ -304,6 +633,7 @@ const confirmDelete = (row: any) => {
 }
 
 const handleRowAction = (action: string, row: any) => {
+  if (action === 'detail') openDetail(row)
   if (action === 'edit') editRow(row)
   if (action === 'delete') confirmDelete(row)
 }
@@ -318,7 +648,10 @@ const handleDelete = async () => {
 }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
-  console.log('sort', key, order)
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
 }
 
 onMounted(() => {
