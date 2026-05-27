@@ -9,6 +9,14 @@
           @search="handleSearch"
           @clear="handleSearch"
         />
+        <Select
+          v-model="filters.confirmed"
+          class="w-full sm:w-36"
+          placeholder="确认状态"
+          :options="confirmedFilterOptions"
+          clearable
+          @change="handleSearch"
+        />
       </FilterRow>
     </template>
 
@@ -47,6 +55,9 @@
         :data="tableData"
         :loading="loading"
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="created_at"
+        default-sort-order="desc"
         @sort="handleSort"
       >
         <template #cell-confirmed="{ value }">
@@ -150,7 +161,7 @@ import { ref, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { embossingPlateAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Icon, Tag, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Select, Icon, Tag, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -169,10 +180,20 @@ const columns: Column[] = [
   { key: 'actions', label: '操作', sortable: false, class: 'w-36' }
 ]
 
+const sortKey = ref('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
 const {
-  searchText, tableData, loading, total, currentPage, pageSize, hasFilters,
+  searchText, filters, tableData, loading, total, currentPage, pageSize, hasFilters,
   loadData, handleSearch, handlePageChange, handleSizeChange
-} = useCrudList(embossingPlateAPI, 'getList', { errorContext: '加载压凸版数据失败' })
+} = useCrudList(embossingPlateAPI, 'getList', {
+  initialFilters: { confirmed: '' },
+  errorContext: '加载压凸版数据失败',
+  buildParams: (params) => {
+    const ordering = sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
+    return { ...params, ordering }
+  }
+})
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('embossingplate')
 const crud = useCRUD(embossingPlateAPI, { onSuccess: () => { dialogVisible.value = false; loadData() } })
@@ -187,6 +208,11 @@ const productList = ref<any[]>([])
 const selectedRow = ref<any>(null)
 const showDeleteDialog = ref(false)
 const showConfirmDialog = ref(false)
+
+const confirmedFilterOptions = [
+  { value: 'true', label: '已确认' },
+  { value: 'false', label: '待确认' }
+]
 
 const loadProductList = async () => {
   try { const response: any = await productAPI.getList({ is_active: true, page_size: 100 }); productList.value = response?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载产品列表失败') }
@@ -241,7 +267,10 @@ const handleFormConfirm = async (data: any) => {
 }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
-  console.log('sort', key, order)
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
 }
 
 onMounted(() => { loadData(); loadProductList() })
