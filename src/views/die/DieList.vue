@@ -9,6 +9,22 @@
           @search="handleSearch"
           @clear="handleSearch"
         />
+        <Select
+          v-model="filters.confirmed"
+          class="w-full sm:w-36"
+          placeholder="确认状态"
+          :options="confirmedFilterOptions"
+          clearable
+          @change="handleSearch"
+        />
+        <Select
+          v-model="filters.die_type"
+          class="w-full sm:w-40"
+          placeholder="刀模类型"
+          :options="dieTypeOptions"
+          clearable
+          @change="handleSearch"
+        />
       </FilterRow>
     </template>
 
@@ -47,6 +63,9 @@
         :data="tableData"
         :loading="loading"
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="created_at"
+        default-sort-order="desc"
         @sort="handleSort"
       >
         <template #cell-die_type="{ row }">
@@ -102,6 +121,7 @@
         <template #cell-actions="{ row }">
           <RowActions
             :actions="[
+              { key: 'confirm', label: '确认', icon: 'check', tone: 'success', visible: !row.confirmed && canEdit },
               { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
               { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
             ]"
@@ -153,13 +173,25 @@
     @confirm="handleDelete"
     @cancel="cancelDelete"
   />
+
+  <ConfirmDialog
+    :show="showConfirmDialog"
+    title="确认刀模"
+    :message="`确定要确认刀模「${targetDieForConfirm?.name}」吗？确认后编码、名称、尺寸、材质和厚度将不可修改。`"
+    confirm-text="确认"
+    cancel-text="取消"
+    :loading="confirming"
+    loading-text="确认中..."
+    @confirm="handleConfirm"
+    @cancel="cancelConfirm"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { dieAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, Tag, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, Icon, Pagination, Tag, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -179,10 +211,20 @@ const columns: Column[] = [
   { key: 'actions', label: '操作', sortable: false, class: 'w-32' }
 ]
 
+const sortKey = ref('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
 const {
-  searchText, tableData, loading, total, currentPage, pageSize,
+  searchText, filters, tableData, loading, total, currentPage, pageSize,
   loadData, handleSearch, handleSearchDebounced, handlePageChange, handleSizeChange, hasFilters
-} = useCrudList(dieAPI, 'getList', { errorContext: '加载刀模数据失败' })
+} = useCrudList(dieAPI, 'getList', {
+  initialFilters: { confirmed: '', die_type: '' },
+  errorContext: '加载刀模数据失败',
+  buildParams: (params) => {
+    const ordering = sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
+    return { ...params, ordering }
+  }
+})
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('die')
 const crud = useCRUD(dieAPI, { onSuccess: () => { closeFormDialog(); loadData() } })
@@ -190,12 +232,26 @@ const crud = useCRUD(dieAPI, { onSuccess: () => { closeFormDialog(); loadData() 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteDialog = ref(false)
+const showConfirmDialog = ref(false)
 const submitting = ref(false)
 const deleting = ref(false)
+const confirming = ref(false)
 const currentRow = ref<any>(null)
 const productList = ref<any[]>([])
 
 const targetDieForDelete = ref<any>(null)
+const targetDieForConfirm = ref<any>(null)
+
+const confirmedFilterOptions = [
+  { value: 'true', label: '已确认' },
+  { value: 'false', label: '待确认' }
+]
+
+const dieTypeOptions = [
+  { value: 'combined', label: '拼版刀模' },
+  { value: 'dedicated', label: '专用刀模' },
+  { value: 'universal', label: '通用刀模' }
+]
 
 const formDialogVisible = computed({
   get: () => showCreateModal.value || showEditModal.value,
@@ -253,7 +309,13 @@ const openDeleteDialog = (row: any) => {
   showDeleteDialog.value = true
 }
 
+const openConfirmDialog = (row: any) => {
+  targetDieForConfirm.value = row
+  showConfirmDialog.value = true
+}
+
 const handleRowAction = (action: string, row: any) => {
+  if (action === 'confirm') openConfirmDialog(row)
   if (action === 'edit') handleEdit(row)
   if (action === 'delete') openDeleteDialog(row)
 }
@@ -262,6 +324,12 @@ const cancelDelete = () => {
   if (deleting.value) return
   showDeleteDialog.value = false
   targetDieForDelete.value = null
+}
+
+const cancelConfirm = () => {
+  if (confirming.value) return
+  showConfirmDialog.value = false
+  targetDieForConfirm.value = null
 }
 
 const handleDelete = async () => {
@@ -277,11 +345,30 @@ const handleDelete = async () => {
   }
 }
 
+const handleConfirm = async () => {
+  const row = targetDieForConfirm.value
+  if (!row) return
+  confirming.value = true
+  try {
+    await dieAPI.confirm(row.id)
+    showConfirmDialog.value = false
+    targetDieForConfirm.value = null
+    loadData()
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '确认刀模失败')
+  } finally {
+    confirming.value = false
+  }
+}
+
 const getDieTypeTagType = (dieType: any) => { const typeMap = { combined: 'warning', dedicated: 'primary', universal: 'success' }; return (typeMap as any)[dieType] || 'info' }
 const getDieTypeLabel = (dieType: any) => { const labelMap = { combined: '拼版刀模', dedicated: '专用刀模', universal: '通用刀模' }; return (labelMap as any)[dieType] || dieType }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
-  console.log('sort', key, order)
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
 }
 
 onMounted(() => { loadData(); loadProductList() })

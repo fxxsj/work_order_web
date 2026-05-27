@@ -279,12 +279,46 @@ const handleProductCreated = (product: any) => {
 }
 
 const handleSubmit = async () => {
-  if (!form.name) {
+  const code = (form.code || '').trim()
+  const name = (form.name || '').trim()
+  const size = (form.size || '').trim()
+  const material = (form.material || '').trim()
+  const thickness = (form.thickness || '').trim()
+
+  if (!name) {
     useUIStore().showWarning(`请输入${props.title}名称`)
     return
   }
+  if (name.length > 200) {
+    useUIStore().showWarning(`${props.title}名称不能超过200个字符`)
+    return
+  }
+  if (code.length > 50) {
+    useUIStore().showWarning(`${props.title}编码不能超过50个字符`)
+    return
+  }
+  if (size.length > 100) {
+    useUIStore().showWarning('尺寸不能超过100个字符')
+    return
+  }
+  if (material.length > 100) {
+    useUIStore().showWarning('材质不能超过100个字符')
+    return
+  }
+  if (thickness.length > 50) {
+    useUIStore().showWarning('厚度不能超过50个字符')
+    return
+  }
 
-  const data = { ...form }
+  const data = {
+    ...form,
+    code,
+    name,
+    size,
+    material,
+    thickness,
+    notes: (form.notes || '').trim()
+  }
   if (props.dialogType === 'create' && !data.code) delete data.code
 
   data.products_data = productItems.value
