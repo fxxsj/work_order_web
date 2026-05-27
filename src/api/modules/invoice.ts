@@ -38,12 +38,14 @@ class InvoiceAPI extends BaseAPI {
 
   /**
    * 获取发票汇总
+   * @param {Object} params - 汇总筛选参数
    * @returns {Promise} 发票汇总数据
    */
-  getSummary() {
+  getSummary(params?: Record<string, unknown>) {
     return this.request({
       url: `${this.baseUrl}summary/`,
-      method: 'get'
+      method: 'get',
+      params
     })
   }
 }

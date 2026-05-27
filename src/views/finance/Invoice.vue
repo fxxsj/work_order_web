@@ -16,7 +16,7 @@
               placeholder="选择客户"
               clearable
               filterable
-              @change="handleSearch"
+              @change="searchAndRefreshStats"
             />
             <Select
               v-model="filters.status"
@@ -24,13 +24,21 @@
               class="w-full sm:w-36"
               placeholder="发票状态"
               clearable
-              @change="handleSearch"
+              @change="searchAndRefreshStats"
+            />
+            <Select
+              v-model="filters.todo"
+              :options="todoOptions"
+              class="w-full sm:w-40"
+              placeholder="待办事项"
+              clearable
+              @change="searchAndRefreshStats"
             />
             <SearchInput
               v-model="filters.invoice_number"
               placeholder="搜索发票号码"
-              @search="handleSearch"
-              @clear="handleSearch"
+              @search="searchAndRefreshStats"
+              @clear="searchAndRefreshStats"
             />
           </div>
         </div>
@@ -41,7 +49,7 @@
           <button
             class="btn btn-secondary"
             :disabled="loading"
-            @click="loadData"
+            @click="reloadData"
           >
             <Icon
               name="refresh"
@@ -71,6 +79,10 @@
           :data="tableData"
           :loading="loading"
           row-key="id"
+          :server-side-sort="true"
+          default-sort-key="created_at"
+          default-sort-order="desc"
+          @sort="handleSort"
         >
           <template #cell-invoice_number="{ row }">
             <span>{{ row.invoice_number }}</span>
@@ -89,6 +101,12 @@
           </template>
           <template #cell-total_amount="{ row }">
             <span>¥{{ row.total_amount ? row.total_amount.toLocaleString() : '-' }}</span>
+          </template>
+          <template #cell-payment_remaining_amount="{ row }">
+            <span>¥{{ row.payment_remaining_amount ? row.payment_remaining_amount.toLocaleString() : '0' }}</span>
+          </template>
+          <template #cell-follow_up_text="{ row }">
+            <span>{{ row.follow_up_text || '-' }}</span>
           </template>
           <template #cell-issue_date="{ row }">
             <span>{{ row.issue_date }}</span>
@@ -317,7 +335,7 @@ import { invoiceAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, SearchInput, Icon, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions } from '@/components/common'
+import { StatusTag, Select, SearchInput, Icon, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import InvoiceStats from './components/InvoiceStats.vue'
 import CustomerSelector from '@/views/customer/components/CustomerSelector.vue'
@@ -336,6 +354,14 @@ const showQuickCustomerCreate = ref(false)
 const submittingInvoice = ref(false)
 const showSubmitDialogFlag = ref(false)
 const targetInvoiceForSubmit = ref<any>(null)
+const sortKey = ref('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
+const sortFieldMap: Record<string, string> = {
+  customer_name: 'customer__name',
+  invoice_type_display: 'invoice_type',
+  payment_remaining_amount: 'received_payment_amount'
+}
 
 const FORM_INITIAL: Record<string, any> = {
   id: undefined,
@@ -350,21 +376,23 @@ const FORM_INITIAL: Record<string, any> = {
 const form = reactive({ ...FORM_INITIAL })
 
 const columns: Column[] = [
-  { key: 'invoice_number', label: '发票号码', width: 144 },
-  { key: 'invoice_type_display', label: '发票类型', width: 112 },
-  { key: 'customer_name', label: '客户名称', width: 144 },
-  { key: 'amount', label: '金额(不含税)', width: 112, align: 'right' },
-  { key: 'tax_amount', label: '税额', width: 96, align: 'right' },
-  { key: 'total_amount', label: '价税合计', width: 112, align: 'right' },
-  { key: 'issue_date', label: '开票日期', width: 112 },
-  { key: 'status', label: '状态', width: 96 },
+  { key: 'invoice_number', label: '发票号码', width: 144, sortable: true },
+  { key: 'invoice_type_display', label: '发票类型', width: 112, sortable: true },
+  { key: 'customer_name', label: '客户名称', width: 144, sortable: true },
+  { key: 'amount', label: '金额(不含税)', width: 112, align: 'right', sortable: true },
+  { key: 'tax_amount', label: '税额', width: 96, align: 'right', sortable: true },
+  { key: 'total_amount', label: '价税合计', width: 112, align: 'right', sortable: true },
+  { key: 'payment_remaining_amount', label: '待收款', width: 112, align: 'right' },
+  { key: 'follow_up_text', label: '下一步', width: 144 },
+  { key: 'issue_date', label: '开票日期', width: 112, sortable: true },
+  { key: 'status', label: '状态', width: 96, sortable: true },
   { key: 'actions', label: '操作', width: 176, fixed: 'right' }
 ]
 
 const customerOptions = computed(() => customerList.value.map((c: any) => ({ value: c.id, label: c.name })))
 const invoiceTypeOptions = [
   { value: 'vat_special', label: '增值税专用发票' },
-  { value: 'vat_common', label: '增值税普通发票' },
+  { value: 'vat_normal', label: '增值税普通发票' },
   { value: 'electronic', label: '电子发票' }
 ]
 const statusOptions = [
@@ -375,10 +403,17 @@ const statusOptions = [
   { value: 'cancelled', label: '已作废' },
   { value: 'refunded', label: '已红冲' }
 ]
+const todoOptions = [
+  { value: 'pending_attachment', label: '待补发票附件' },
+  { value: 'pending_receipt', label: '待确认客户收票' },
+  { value: 'pending_payment', label: '待跟进收款' }
+]
 
 const buildInvoiceParams = (params: any) => {
   const { invoice_number, ...nextParams } = params
   if (invoice_number) nextParams.search = invoice_number
+  const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+  nextParams.ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
   return nextParams
 }
 
@@ -396,43 +431,60 @@ const {
   handleSizeChange,
   resetFilters
 } = useCrudList(invoiceAPI, 'getList', {
-  initialFilters: { status: '', customer: '', invoice_number: '' },
+  initialFilters: { status: '', customer: '', todo: '', invoice_number: '' },
   buildParams: buildInvoiceParams
 })
 
-const hasFilters = computed(() => filters.value.status || filters.value.customer || filters.value.invoice_number)
+const hasFilters = computed(() => filters.value.status || filters.value.customer || filters.value.todo || filters.value.invoice_number)
 const { canCreate, canEdit } = useCrudPermission('invoice')
 
-const handleReset = () => resetFilters()
+const handleReset = async () => {
+  await resetFilters()
+  fetchStats()
+}
+
+const searchAndRefreshStats = async () => {
+  await handleSearch()
+  fetchStats()
+}
 
 const fetchStats = async () => {
   statsLoading.value = true
   try {
-    const response: any = await invoiceAPI.getSummary()
+    const response: any = await invoiceAPI.getSummary(buildInvoiceParams({
+      status: filters.value.status,
+      customer: filters.value.customer,
+      todo: filters.value.todo,
+      invoice_number: filters.value.invoice_number
+    }))
     const payload = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || response || {})
     const summary = payload?.summary || {}
     const byStatus = payload?.by_status || []
 
-    let pendingAmount = 0
-    let receivedAmount = 0
-    try {
-      const listResponse: any = await invoiceAPI.getList({ page_size: 1000 })
-      const list = Array.isArray(listResponse) ? listResponse : (listResponse?.results || listResponse?.data || listResponse || [])
-      pendingAmount = list.filter((i: any) => i.status === 'issued' || i.status === 'sent').reduce((sum: any, i: any) => sum + (i.total_amount || 0), 0)
-      receivedAmount = list.filter((i: any) => i.status === 'received').reduce((sum: any, i: any) => sum + (i.total_amount || 0), 0)
-    } catch (e: any) {}
-
     stats.value = {
       total_count: summary.total_count || 0,
       draft_count: byStatus.find((row: any) => row.status === 'draft')?.count || 0,
-      pending_amount: pendingAmount,
-      received_amount: receivedAmount
+      pending_amount: summary.pending_payment_amount || 0,
+      total_amount: summary.total_amount || 0
     }
   } catch (error: any) {
     stats.value = {}
   } finally {
     statsLoading.value = false
   }
+}
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
+  fetchStats()
+}
+
+const reloadData = async () => {
+  await loadData()
+  fetchStats()
 }
 
 const fetchCustomers = async () => {
