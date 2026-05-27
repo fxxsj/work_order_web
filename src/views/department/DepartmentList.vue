@@ -9,6 +9,14 @@
           @search="handleSearch"
           @clear="handleSearch"
         />
+        <Select
+          v-model="filters.is_active"
+          class="w-full sm:w-36"
+          placeholder="状态"
+          :options="activeFilterOptions"
+          clearable
+          @change="handleSearch"
+        />
       </FilterRow>
     </template>
 
@@ -47,6 +55,9 @@
         :data="tableData"
         :loading="loading"
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="sort_order"
+        default-sort-order="asc"
         @sort="handleSort"
       >
         <template #cell-code="{ value }">
@@ -113,6 +124,7 @@
         <template #cell-actions="{ row }">
           <RowActions
             :actions="[
+              { key: 'detail', label: '详情', icon: 'eye' },
               { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
               { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
             ]"
@@ -228,7 +240,70 @@
     </template>
   </BaseDialog>
 
-  <!-- Delete Confirmation Dialog -->
+  <BaseDialog
+    :show="showDetailModal"
+    title="部门详情"
+    width="wide"
+    @close="closeDetail"
+  >
+    <div
+      v-if="currentDetail"
+      class="space-y-5"
+    >
+      <section>
+        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-dark-100">
+          基本信息
+        </h3>
+        <DescriptionGrid :columns="2">
+          <DescriptionItem label="部门编码">
+            {{ currentDetail.code || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="部门名称">
+            {{ currentDetail.name || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="上级部门">
+            {{ currentDetail.parent_name || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="层级">
+            {{ currentDetail.level ?? '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="子部门数">
+            {{ currentDetail.children_count ?? 0 }}
+          </DescriptionItem>
+          <DescriptionItem label="排序">
+            {{ currentDetail.sort_order ?? 0 }}
+          </DescriptionItem>
+          <DescriptionItem label="状态">
+            {{ currentDetail.is_active ? '启用' : '禁用' }}
+          </DescriptionItem>
+          <DescriptionItem label="创建时间">
+            {{ formatDateTime(currentDetail.created_at) }}
+          </DescriptionItem>
+          <DescriptionItem
+            label="关联工序"
+            :span="2"
+          >
+            <span v-if="!currentDetail.process_names?.length">-</span>
+            <span v-else>{{ currentDetail.process_names.join('、') }}</span>
+          </DescriptionItem>
+        </DescriptionGrid>
+      </section>
+      <section>
+        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-dark-100">
+          系统信息
+        </h3>
+        <DescriptionGrid :columns="2">
+          <DescriptionItem label="部门ID">
+            {{ currentDetail.id }}
+          </DescriptionItem>
+          <DescriptionItem label="更新时间">
+            {{ formatDateTime(currentDetail.updated_at) }}
+          </DescriptionItem>
+        </DescriptionGrid>
+      </section>
+    </div>
+  </BaseDialog>
+
   <ConfirmDialog
     :show="showDeleteDialog"
     title="删除部门"
@@ -247,7 +322,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { departmentAPI, processAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, BaseDialog, ConfirmDialog, EmptyState, Pagination, SearchInput, Icon, Input, Select, InputNumber, CheckboxGroup, Toggle, Tag, RowActions, FilterRow } from '@/components/common'
+import { TablePageLayout, DataTable, BaseDialog, ConfirmDialog, EmptyState, Pagination, SearchInput, Icon, Input, Select, InputNumber, CheckboxGroup, Toggle, Tag, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -264,24 +339,42 @@ const columns: Column[] = [
   { key: 'actions', label: '操作', sortable: false, class: 'w-32' }
 ]
 
+const sortKey = ref('sort_order')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
 const {
-  searchText, tableData, loading, total, currentPage, pageSize,
+  searchText, filters, tableData, loading, total, currentPage, pageSize,
   loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters
-} = useCrudList(departmentAPI, 'getList', { errorContext: '加载部门数据失败' })
+} = useCrudList(departmentAPI, 'getList', {
+  initialFilters: { is_active: '' },
+  errorContext: '加载部门数据失败',
+  buildParams: (params) => {
+    const orderingKey = sortKey.value === 'parent_name' ? 'parent__name' : sortKey.value
+    const ordering = sortOrder.value === 'desc' ? `-${orderingKey}` : orderingKey
+    return { ...params, ordering }
+  }
+})
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('department')
 const crud = useCRUD(departmentAPI, { onSuccess: () => { closeModals(); loadData(); loadAllDepartments() } })
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
+const showDetailModal = ref(false)
 const showDeleteDialog = ref(false)
 const submitting = ref(false)
 const deleting = ref(false)
 const selectedRow = ref<any>(null)
+const currentDetail = ref<any>(null)
 
 const allProcesses = ref<any[]>([])
 const allDepartments = ref<any[]>([])
 const expandedProcesses = ref({})
+
+const activeFilterOptions = [
+  { value: 'true', label: '启用' },
+  { value: 'false', label: '禁用' }
+]
 
 const formInitialValues = { code: '', name: '', parent: null as any, sort_order: 0, is_active: true, processes: [], children_count: 0 }
 const formData = reactive({ ...formInitialValues })
@@ -361,12 +454,28 @@ const handleEdit = (row: any) => {
   showEditModal.value = true
 }
 
+const openDetail = async (row: any) => {
+  selectedRow.value = row
+  try {
+    currentDetail.value = await departmentAPI.getDetail(row.id)
+    showDetailModal.value = true
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载部门详情失败')
+  }
+}
+
+const closeDetail = () => {
+  showDetailModal.value = false
+  currentDetail.value = null
+}
+
 const confirmDelete = (row: any) => {
   selectedRow.value = row
   showDeleteDialog.value = true
 }
 
 const handleRowAction = (action: string, row: any) => {
+  if (action === 'detail') openDetail(row)
   if (action === 'edit') handleEdit(row)
   if (action === 'delete') confirmDelete(row)
 }
@@ -393,24 +502,55 @@ const handleDelete = async () => {
 }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
-  console.log('sort', key, order)
-  // TODO: 实现服务端排序
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
 }
 
 const handleSubmit = async () => {
-  // 简易验证
-  if (!formData.code || !formData.name) return
-  if (!/^[a-z0-9_]+$/.test(formData.code)) {
+  const code = (formData.code || '').trim()
+  const name = (formData.name || '').trim()
+  const sortOrderValue = Number(formData.sort_order ?? 0)
+
+  if (!code) {
+    ErrorHandler.showMessage('请输入部门编码', '验证失败')
+    return
+  }
+  if (code.length < 2 || code.length > 20) {
+    ErrorHandler.showMessage('部门编码长度必须在2-20个字符之间', '验证失败')
+    return
+  }
+  if (!/^[a-z0-9_]+$/.test(code)) {
     ErrorHandler.showMessage('部门编码只能包含小写字母、数字和下划线', '验证失败')
     return
+  }
+  if (!name) {
+    ErrorHandler.showMessage('请输入部门名称', '验证失败')
+    return
+  }
+  if (name.length < 2 || name.length > 50) {
+    ErrorHandler.showMessage('部门名称长度必须在2-50个字符之间', '验证失败')
+    return
+  }
+  if (sortOrderValue < 0 || sortOrderValue > 99999) {
+    ErrorHandler.showMessage('排序值必须在0-99999之间', '验证失败')
+    return
+  }
+
+  const payload = {
+    ...formData,
+    code,
+    name,
+    sort_order: sortOrderValue
   }
 
   submitting.value = true
   try {
     if (showEditModal.value) { 
-      await crud.update(selectedRow.value.id, formData, '保存成功') 
+      await crud.update(selectedRow.value.id, payload, '保存成功')
     } else { 
-      await crud.create(formData, '创建成功') 
+      await crud.create(payload, '创建成功')
     }
   } finally {
     submitting.value = false
