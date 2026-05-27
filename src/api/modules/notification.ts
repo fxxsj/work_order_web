@@ -9,6 +9,11 @@ class NotificationAPI extends BaseAPI {
     super('/notifications/', request)
   }
 
+  // 兼容旧调用名
+  list(params?: Record<string, unknown>, config?: { signal?: AbortSignal }) {
+    return this.getList(params, config)
+  }
+
   // 标记单个通知为已读
   markAsRead(id: number | string) {
     return this.request({
@@ -23,6 +28,11 @@ class NotificationAPI extends BaseAPI {
       url: `${this.baseUrl}mark_all_read/`,
       method: 'post'
     })
+  }
+
+  // 兼容旧调用名，实际后端动作仍是 mark_all_read
+  markAllRead() {
+    return this.markAllAsRead()
   }
 
   // 获取未读数量

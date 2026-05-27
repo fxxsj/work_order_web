@@ -478,13 +478,23 @@ export interface CostRecord {
 // ============ 通知 ============
 
 export interface Notification {
-  id: number
+  id: number | string
   title: string
   content?: string
+  notification_type?: string
+  notification_type_display?: string
+  priority?: 'low' | 'normal' | 'high' | 'urgent'
+  priority_display?: string
   type?: 'info' | 'warning' | 'success' | 'error'
   is_read?: boolean
+  read_at?: string | null
   link?: string
   created_at?: string
+  work_order_id?: number | null
+  work_order_process_id?: number | null
+  task_id?: number | null
+  purchase_order_id?: number | null
+  data?: Record<string, unknown>
 }
 
 export interface Toast {
