@@ -82,6 +82,10 @@
         :data="tableData" 
         :loading="loading" 
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="created_at"
+        default-sort-order="desc"
+        @sort="handleSort"
       >
         <template #cell-order_number="{ row }">
           <span class="font-medium text-gray-900 dark:text-gray-100">{{ row.order_number }}</span>
@@ -117,8 +121,16 @@
           <span class="text-right">¥{{ row.total_amount ? row.total_amount.toLocaleString() : '-' }}</span>
         </template>
         
-        <template #cell-received_date="{ row }">
-          <span :class="row.received_date ? '' : 'text-gray-400'">{{ row.received_date || '-' }}</span>
+        <template #cell-ordered_date="{ row }">
+          <span :class="row.ordered_date ? '' : 'text-gray-400'">{{ row.ordered_date || '-' }}</span>
+        </template>
+        
+        <template #cell-expected_date="{ row }">
+          <span :class="row.expected_date ? '' : 'text-gray-400'">{{ row.expected_date || '-' }}</span>
+        </template>
+        
+        <template #cell-actual_received_date="{ row }">
+          <span :class="row.actual_received_date ? '' : 'text-gray-400'">{{ row.actual_received_date || '-' }}</span>
         </template>
         
         <template #cell-actions="{ row }">
@@ -227,6 +239,7 @@
     <ReceiveDialog
       v-model:visible="receiveDialogVisible"
       :purchase-order="currentPurchaseOrder"
+      :purchase-detail="currentDetailData"
       @success="handleReceiveSuccess"
     />
     <InspectionDialog
@@ -272,7 +285,7 @@ const inspectionDialogVisible = ref(false)
 const currentPurchaseId = ref<any>(null)
 const currentPurchaseOrder = ref<any>(null)
 const currentDetailData = ref<any>(null)
-const form = reactive({ supplier: null as any, work_order_number: '', notes: '', items: [] as any[] })
+const form = reactive({ supplier: null as any, work_order: null as any, work_order_number: '', notes: '', items: [] as any[] })
 
 const showCancelDialog = ref(false)
 const canceling = ref(false)
@@ -283,13 +296,20 @@ const columns: Column[] = [
   { key: 'supplier_name', label: '供应商', sortable: true, class: 'w-44' },
   { key: 'status', label: '状态', sortable: true, class: 'w-24 text-center' },
   { key: 'work_order_number', label: '关联施工单', sortable: true, class: 'w-36' },
-  { key: 'items_count', label: '明细数量', sortable: false, class: 'w-24 text-center' },
+  { key: 'items_count', label: '明细数量', sortable: true, class: 'w-24 text-center' },
   { key: 'total_amount', label: '总金额', sortable: true, class: 'w-28 text-right' },
-  { key: 'order_date', label: '下单日期', sortable: true, class: 'w-28 text-center' },
+  { key: 'ordered_date', label: '下单日期', sortable: true, class: 'w-28 text-center' },
   { key: 'expected_date', label: '预计到货', sortable: true, class: 'w-28 text-center' },
-  { key: 'received_date', label: '实际到货', sortable: true, class: 'w-28 text-center' },
+  { key: 'actual_received_date', label: '实际到货', sortable: true, class: 'w-28 text-center' },
   { key: 'actions', label: '操作', sortable: false, class: 'w-44' }
 ]
+
+const sortKey = ref('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+const sortFieldMap: Record<string, string> = {
+  supplier_name: 'supplier__name',
+  work_order_number: 'work_order__order_number'
+}
 
 const statusOptions = [
   { value: 'draft', label: '草稿' },
@@ -315,7 +335,12 @@ const {
   resetFilters,
   hasFilters
 } = useCrudList(purchaseOrderAPI, 'getList', {
-  initialFilters: { supplier_name: '', status: '' }
+  initialFilters: { supplier_name: '', status: '' },
+  buildParams: (params) => {
+    const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+    const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
+    return { ...params, ordering }
+  }
 })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('purchaseorder')
@@ -329,7 +354,13 @@ const showEditDialog = (row: any) => {
   if (!canEdit.value) return; 
   currentPurchaseId.value = row.id; 
   purchaseOrderAPI.getDetail(row.id).then((res: any) => { 
-    Object.assign(form, { supplier: (res as any).supplier, work_order_number: (res as any).work_order_number, notes: (res as any).notes, items: res.items || [] }); 
+    Object.assign(form, {
+      supplier: (res as any).supplier,
+      work_order: (res as any).work_order,
+      work_order_number: (res as any).work_order_number,
+      notes: (res as any).notes,
+      items: (res.items || []).map((item: any) => ({ ...item }))
+    }); 
     showEditModal.value = true;
     formDialogVisible.value = true
   }).catch(e => ErrorHandler.showMessage(e, '加载详情')) 
@@ -364,7 +395,7 @@ const handleFormConfirm = async (data: any) => {
   } 
 }
 
-const resetForm = () => { Object.assign(form, { supplier: null, work_order_number: '', notes: '', items: [] }) }
+const resetForm = () => { Object.assign(form, { supplier: null, work_order: null, work_order_number: '', notes: '', items: [] }) }
 
 const closeFormDialog = () => {
   formDialogVisible.value = false
@@ -383,7 +414,7 @@ const handleStatusAction = async (cmd: any, row: any) => {
       case 'approve': await purchaseOrderAPI.approve(row.id); useUIStore().showSuccess('批准成功'); break
       case 'reject': await purchaseOrderAPI.reject(row.id); useUIStore().showSuccess('拒绝成功'); break
       case 'placeOrder': await purchaseOrderAPI.placeOrder(row.id); useUIStore().showSuccess('下单成功'); break
-      case 'receive': currentPurchaseOrder.value = row; receiveDialogVisible.value = true; return
+      case 'receive': await openReceiveDialog(row); return
       case 'inspection': currentPurchaseId.value = row.id; inspectionDialogVisible.value = true; return
       case 'cancel': 
         rowToCancel.value = row;
@@ -433,6 +464,24 @@ const handleRowAction = (action: RowAction, row: any) => {
 const handleReceiveSuccess = () => { receiveDialogVisible.value = false; loadData() }
 const handleCreateFromLowStock = (data: any) => { lowStockDialogVisible.value = false; showCreateDialog() }
 const showLowStockDialog = () => { lowStockDialogVisible.value = true }
+
+const openReceiveDialog = async (row: any) => {
+  try {
+    currentPurchaseOrder.value = row
+    currentPurchaseId.value = row.id
+    currentDetailData.value = await purchaseOrderAPI.getDetail(row.id)
+    receiveDialogVisible.value = true
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载采购订单详情')
+  }
+}
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
+}
 
 const navigateToWorkOrder = (workOrderNumber: any) => {
   workOrderAPI.getList({ search: workOrderNumber, approval_status: '' }).then(res => {

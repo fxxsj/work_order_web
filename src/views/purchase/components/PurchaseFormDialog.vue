@@ -236,8 +236,22 @@ const handleSubmit = async () => {
   if (!localForm.supplier) { ErrorHandler.showWarning('请选择供应商'); return }
   if (!localForm.items?.length) { ErrorHandler.showWarning('请至少添加一条采购明细'); return }
   if (localForm.items.find((item: any) => !item.material)) { ErrorHandler.showWarning('请选择所有明细的物料'); return }
+  if (localForm.items.find((item: any) => Number(item.quantity || 0) <= 0)) { ErrorHandler.showWarning('采购数量必须大于 0'); return }
+  if (localForm.items.find((item: any) => Number(item.unit_price || 0) < 0)) { ErrorHandler.showWarning('单价不能为负数'); return }
   loading.value = true
-  try { emit('confirm', { ...localForm }) } finally { loading.value = false }
+  try {
+    emit('confirm', {
+      supplier: localForm.supplier,
+      work_order: localForm.work_order,
+      notes: localForm.notes.trim(),
+      items_data: localForm.items.map((item: any) => ({
+        material: item.material,
+        quantity: Number(item.quantity || 0),
+        unit_price: Number(item.unit_price || 0),
+        work_order_material: item.work_order_material || undefined
+      }))
+    })
+  } finally { loading.value = false }
 }
 
 const handleClose = () => {

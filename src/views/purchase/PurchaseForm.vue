@@ -227,6 +227,14 @@ const validateForm = () => {
     ErrorHandler.showWarning('请选择所有明细的物料')
     return false
   }
+  if (form.items.some((item: any) => Number(item.quantity || 0) <= 0)) {
+    ErrorHandler.showWarning('采购数量必须大于 0')
+    return false
+  }
+  if (form.items.some((item: any) => Number(item.unit_price || 0) < 0)) {
+    ErrorHandler.showWarning('单价不能为负数')
+    return false
+  }
   return true
 }
 
@@ -235,7 +243,17 @@ const handleSubmit = async () => {
 
   submitting.value = true
   try {
-    await purchaseOrderAPI.create({ ...form })
+    await purchaseOrderAPI.create({
+      supplier: form.supplier,
+      work_order: form.work_order,
+      notes: form.notes.trim(),
+      items_data: form.items.map((item: any) => ({
+        material: item.material,
+        quantity: Number(item.quantity || 0),
+        unit_price: Number(item.unit_price || 0),
+        work_order_material: item.work_order_material || undefined
+      }))
+    })
     useUIStore().showSuccess('创建成功')
     router.push('/purchase-orders')
   } catch (error: any) {
