@@ -9,6 +9,14 @@
           @search="handleSearch"
           @clear="handleSearch"
         />
+        <Select
+          v-model="filters.confirmed"
+          :options="confirmedOptions"
+          placeholder="确认状态"
+          clearable
+          class="w-full sm:w-36"
+          @change="handleSearchDebounced"
+        />
       </FilterRow>
     </template>
 
@@ -47,6 +55,9 @@
         :data="tableData"
         :loading="loading"
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="code"
+        default-sort-order="desc"
         @sort="handleSort"
       >
         <template #cell-code="{ row }">
@@ -233,16 +244,34 @@ import { ref, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { artworkAPI, productAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, ConfirmDialog, Tag, RowActions, FilterRow } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, ConfirmDialog, Tag, RowActions, FilterRow, Select } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
 import ArtworkFormDialog from './components/ArtworkFormDialog.vue'
 
+const sortKey = ref('code')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
+const sortFieldMap: Record<string, string> = {
+  code: 'base_code',
+  color_display: 'base_code'
+}
+
+const buildArtworkParams = (params: Record<string, unknown>) => {
+  const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+  if (backendSortKey === 'base_code') {
+    const ordering = sortOrder.value === 'desc' ? '-base_code,-version' : 'base_code,version'
+    return { ...params, ordering }
+  }
+  const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
+  return { ...params, ordering }
+}
+
 const columns: Column[] = [
   { key: 'code', label: '图稿编码', sortable: true, class: 'w-44' },
   { key: 'name', label: '图稿名称', sortable: true, class: 'w-48' },
-  { key: 'color_display', label: '色数', sortable: true, class: 'w-48 text-center' },
+  { key: 'color_display', label: '色数', sortable: false, class: 'w-48 text-center' },
   { key: 'imposition_size', label: '拼版尺寸', sortable: true, class: 'w-44' },
   { key: 'confirmed', label: '确认状态', sortable: true, class: 'w-28 text-center' },
   { key: 'die_codes', label: '关联刀模', sortable: false, class: 'min-w-48' },
@@ -255,9 +284,18 @@ const columns: Column[] = [
 ]
 
 const {
-  searchText, tableData, loading, total, currentPage, pageSize,
+  searchText, filters, tableData, loading, total, currentPage, pageSize,
   loadData, handleSearch, handleSearchDebounced, handlePageChange, handleSizeChange, hasFilters
-} = useCrudList(artworkAPI, 'getList', { errorContext: '加载图稿数据失败' })
+} = useCrudList(artworkAPI, 'getList', {
+  initialFilters: { confirmed: '' },
+  buildParams: buildArtworkParams,
+  errorContext: '加载图稿数据失败'
+})
+
+const confirmedOptions = [
+  { value: true, label: '已确认' },
+  { value: false, label: '未确认' }
+]
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('artwork')
 const canConfirm = canEdit
@@ -429,7 +467,10 @@ const handleDelete = async () => {
 }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
-  console.log('sort', key, order)
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
 }
 
 onMounted(() => { loadData(); loadProductList(); loadDieList(); loadFoilingPlateList(); loadEmbossingPlateList() })

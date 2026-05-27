@@ -270,11 +270,16 @@ const addOtherColor = () => { form.other_colors.push('') }
 const removeOtherColor = (index: any) => { form.other_colors.splice(index, 1) }
 
 const handleConfirm = () => {
+  form.name = form.name.trim()
+  form.imposition_size = form.imposition_size.trim()
+  form.notes = form.notes.trim()
+  form.other_colors = form.other_colors.map((c: any) => String(c).trim()).filter((c: string) => c)
   if (!form.name) { useUIStore().showWarning('请输入图稿名称'); return }
+  if (form.name.length > 200) { useUIStore().showWarning('图稿名称不能超过200个字符'); return }
+  if (form.imposition_size.length > 100) { useUIStore().showWarning('拼版尺寸不能超过100个字符'); return }
   const data: any = { ...form }
   if (!isEditMode.value && !data.base_code) delete (data as any).base_code
   if (!isEditMode.value) delete (data as any).version
-  if (data.other_colors) data.other_colors = data.other_colors.filter((c: any) => c && c.trim())
   data.products_data = productItems.value.filter((item: any) => item.product).map((item: any) => ({ product: item.product, imposition_quantity: item.imposition_quantity || 1 }))
   emit('confirm', data)
 }
