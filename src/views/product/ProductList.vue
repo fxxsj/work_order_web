@@ -243,7 +243,7 @@ const { exporting, exportData } = useExport(
 )
 
 const handleExport = async () => {
-  try { await exportData() } catch (error: any) { ErrorHandler.showMessage(error, '导出失败') }
+  try { await exportData({}) } catch (error: any) { ErrorHandler.showMessage(error, '导出失败') }
 }
 
 // Import

@@ -22,6 +22,28 @@ class CustomerAPI extends BaseAPI {
       return false
     }
   }
+
+  /** 导出客户为 Excel */
+  exportCustomers(params?: Record<string, unknown>) {
+    return this.request({
+      url: `${this.baseUrl}export/`,
+      method: 'get',
+      params,
+      responseType: 'blob'
+    })
+  }
+
+  /** 从 Excel 导入客户 */
+  importCustomers(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return this.request({
+      url: `${this.baseUrl}import_customers/`,
+      method: 'post',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  }
 }
 
 export const customerAPI = new CustomerAPI()

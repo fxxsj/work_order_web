@@ -239,7 +239,7 @@
   <BaseDialog
     :show="previewDialogVisible"
     title="分派效果预览"
-    width="medium"
+    width="normal"
     @close="previewDialogVisible = false"
   >
     <DataTable

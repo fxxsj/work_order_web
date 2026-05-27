@@ -4,7 +4,7 @@
       <div class="card-body space-y-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <CustomerSelector
-            :model-value="form.customer"
+            :model-value="form.customer ?? undefined"
             label="客户"
             :customers="customerOptions"
             @update:model-value="handleCustomerChange"
@@ -205,7 +205,7 @@ const customerOptions = ref<any[]>([])
 const productOptions = ref<any[]>([])
 
 const form = reactive({
-  customer: null, order_date: '', delivery_date: '', contact_person: '', contact_phone: '', shipping_address: '',
+  customer: null as number | null, order_date: '', delivery_date: '', contact_person: '', contact_phone: '', shipping_address: '',
   tax_rate: 13, discount_amount: 0, notes: '',
   items: [{ product: null, quantity: 1, unit_price: 0, notes: '' }]
 })

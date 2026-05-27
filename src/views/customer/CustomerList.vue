@@ -14,6 +14,13 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
+        <input
+          ref="fileInput"
+          type="file"
+          class="hidden"
+          accept=".xlsx,.xls"
+          @change="handleImportFile"
+        >
         <button
           :disabled="loading"
           class="btn btn-secondary"
@@ -25,6 +32,29 @@
             size="md"
             :class="loading ? 'animate-spin' : ''"
           />
+        </button>
+        <button
+          class="btn btn-secondary"
+          :disabled="exporting"
+          @click="handleExport"
+        >
+          <Icon
+            name="download"
+            size="md"
+            class="mr-2"
+          />
+          导出
+        </button>
+        <button
+          class="btn btn-secondary"
+          @click="handleImportClick"
+        >
+          <Icon
+            name="upload"
+            size="md"
+            class="mr-2"
+          />
+          导入
         </button>
         <button
           v-if="canCreate"
@@ -47,6 +77,9 @@
         :data="tableData"
         :loading="loading"
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="name"
+        default-sort-order="asc"
         @sort="handleSort"
       >
         <template #cell-name="{ value }">
@@ -83,6 +116,7 @@
         <template #cell-actions="{ row }">
           <RowActions
             :actions="[
+              { key: 'detail', label: '详情', icon: 'eye' },
               { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
               { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
             ]"
@@ -223,6 +257,69 @@
     </template>
   </BaseDialog>
 
+  <BaseDialog
+    :show="showDetailModal"
+    title="客户详情"
+    width="wide"
+    @close="closeDetail"
+  >
+    <div
+      v-if="currentDetail"
+      class="space-y-5"
+    >
+      <section>
+        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-dark-100">
+          基本信息
+        </h3>
+        <DescriptionGrid :columns="2">
+          <DescriptionItem label="客户名称">
+            {{ currentDetail.name || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="业务员">
+            {{ currentDetail.salesperson_name || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="联系人">
+            {{ currentDetail.contact_person || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="联系电话">
+            {{ currentDetail.phone || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="邮箱">
+            {{ currentDetail.email || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="创建时间">
+            {{ formatDateTime(currentDetail.created_at) }}
+          </DescriptionItem>
+          <DescriptionItem
+            label="地址"
+            :span="2"
+          >
+            {{ currentDetail.address || '-' }}
+          </DescriptionItem>
+          <DescriptionItem
+            label="备注"
+            :span="2"
+          >
+            {{ currentDetail.notes || '-' }}
+          </DescriptionItem>
+        </DescriptionGrid>
+      </section>
+      <section>
+        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-dark-100">
+          系统信息
+        </h3>
+        <DescriptionGrid :columns="2">
+          <DescriptionItem label="客户ID">
+            {{ currentDetail.id }}
+          </DescriptionItem>
+          <DescriptionItem label="更新时间">
+            {{ formatDateTime(currentDetail.updated_at) }}
+          </DescriptionItem>
+        </DescriptionGrid>
+      </section>
+    </div>
+  </BaseDialog>
+
   <!-- Delete Confirmation Dialog -->
   <ConfirmDialog
     :show="showDeleteDialog"
@@ -240,8 +337,8 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { authAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
-import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Icon, BaseDialog, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
+import { useCrudList, useCrudPermission, useCRUD, useExport } from '@/composables'
+import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Icon, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -258,21 +355,39 @@ const columns: Column[] = [
   { key: 'actions', label: '操作', sortable: false, class: 'w-32' }
 ]
 
+const sortKey = ref('name')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
 const {
   searchText, tableData, loading, total, currentPage, pageSize,
   loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters
-} = useCrudList(customerAPI, 'getList', { errorContext: '加载客户数据失败' })
+} = useCrudList(customerAPI, 'getList', {
+  errorContext: '加载客户数据失败',
+  buildParams: (params) => {
+    const orderingKey = sortKey.value === 'salesperson_name' ? 'salesperson__username' : sortKey.value
+    const ordering = sortOrder.value === 'desc' ? `-${orderingKey}` : orderingKey
+    return { ...params, ordering }
+  }
+})
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('customer')
 
 // Modal states
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
+const showDetailModal = ref(false)
 const showDeleteDialog = ref(false)
 const submitting = ref(false)
 const nameError = ref('')
 const selectedRow = ref<any>(null)
+const currentDetail = ref<any>(null)
 const salespersonList = ref<any[]>([])
+const fileInput = ref<HTMLInputElement | null>(null)
+
+const { exporting, exportData } = useExport(
+  (params) => customerAPI.exportCustomers(params),
+  { fileNamePrefix: 'customers', fileExtension: 'xlsx' }
+)
 
 const formInitialValues = { name: '', contact_person: '', phone: '', email: '', address: '', salesperson: null as any, notes: '' }
 const formData = reactive({ ...formInitialValues })
@@ -331,26 +446,67 @@ const editRow = (row: any) => {
   showEditModal.value = true
 }
 
+const openDetail = async (row: any) => {
+  selectedRow.value = row
+  try {
+    currentDetail.value = await customerAPI.getDetail(row.id)
+    showDetailModal.value = true
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载客户详情失败')
+  }
+}
+
+const closeDetail = () => {
+  showDetailModal.value = false
+  currentDetail.value = null
+}
+
 const handleSubmit = async () => {
-  if (!formData.name) return
+  // 校验客户名称
+  const name = (formData.name || '').trim()
+  if (!name) {
+    nameError.value = '请输入客户名称'
+    return
+  }
+  if (name.length < 2) {
+    nameError.value = '客户名称长度需至少2个字符'
+    return
+  }
+  if (name.length > 200) {
+    nameError.value = '客户名称长度不能超过200个字符'
+    return
+  }
+
+  // 校验手机号格式（可选）
+  const phone = (formData.phone || '').trim()
+  if (phone && !/^[\d\-+() ]+$/.test(phone)) {
+    useUIStore().showWarning('电话号码格式不正确，只能包含数字和-+()空格')
+    return
+  }
 
   // 检查重复名称
-  if (formData.name && formData.name.trim().length >= 2) {
+  if (name.length >= 2) {
     const excludeId = showEditModal.value ? selectedRow.value?.id : undefined
-    const exists = await customerAPI.checkName(formData.name.trim(), excludeId)
+    const exists = await customerAPI.checkName(name, excludeId)
     if (exists) {
       nameError.value = '该客户名称已存在'
       return
     }
   }
 
+  const payload = {
+    ...formData,
+    name,
+    phone
+  }
+
   submitting.value = true
   try {
     if (showEditModal.value) {
-      await crud.update(selectedRow.value.id, formData, '保存成功')
+      await crud.update(selectedRow.value.id, payload, '保存成功')
     } else {
       // 直接调用 API 以便正确处理验证错误
-      await customerAPI.create(formData)
+      await customerAPI.create(payload)
       useUIStore().showSuccess('创建成功')
       closeModals()
       loadData()
@@ -371,7 +527,7 @@ const handleSubmit = async () => {
     }
 
     // 其他错误使用 ErrorHandler 统一处理
-    ErrorHandler.showError(error, '操作失败')
+    ErrorHandler.showMessage(error, '操作失败')
   } finally {
     submitting.value = false
   }
@@ -383,6 +539,7 @@ const confirmDelete = (row: any) => {
 }
 
 const handleRowAction = (action: string, row: any) => {
+  if (action === 'detail') openDetail(row)
   if (action === 'edit') editRow(row)
   if (action === 'delete') confirmDelete(row)
 }
@@ -397,8 +554,44 @@ const handleDelete = async () => {
 }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
-  console.log('sort', key, order)
-  // TODO: 实现服务端排序
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
+}
+
+const handleExport = async () => {
+  try {
+    await exportData({})
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '导出失败')
+  }
+}
+
+const handleImportClick = () => {
+  fileInput.value?.click()
+}
+
+const handleImportFile = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  try {
+    const result: any = await customerAPI.importCustomers(file)
+    const created = result?.created_count || 0
+    const updated = result?.updated_count || 0
+    const errors = result?.error_count || 0
+    if (errors === 0) {
+      useUIStore().showSuccess(`导入成功: 新增 ${created} 条, 更新 ${updated} 条`)
+    } else {
+      useUIStore().showWarning(`导入完成: 新增 ${created} 条, 更新 ${updated} 条, 失败 ${errors} 条`)
+    }
+    await loadData()
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '导入失败')
+  } finally {
+    target.value = ''
+  }
 }
 
 onMounted(() => {

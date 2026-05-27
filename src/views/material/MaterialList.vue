@@ -12,6 +12,14 @@
           @search="handleSearch"
           @clear="handleSearch"
         />
+        <Select
+          v-model="filters.is_active"
+          :options="statusFilterOptions"
+          class="w-full sm:w-36"
+          placeholder="全部状态"
+          clearable
+          @change="handleSearch"
+        />
       </FilterRow>
     </template>
 
@@ -50,6 +58,9 @@
         :data="tableData"
         :loading="loading"
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="code"
+        default-sort-order="asc"
         @sort="handleSort"
       >
         <template #cell-unit_price="{ value }">
@@ -236,10 +247,25 @@ const columns: Column[] = [
   { key: 'actions', label: '操作', sortable: false, class: 'w-32' }
 ]
 
+const sortKey = ref('code')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
 const {
-  searchText, tableData, loading, total, currentPage, pageSize,
+  searchText, filters, tableData, loading, total, currentPage, pageSize,
   loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters
-} = useCrudList(materialAPI, 'getList', { errorContext: '加载物料数据失败' })
+} = useCrudList(materialAPI, 'getList', {
+  errorContext: '加载物料数据失败',
+  initialFilters: { is_active: '' },
+  buildParams: (params) => {
+    const ordering = sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
+    return { ...params, ordering }
+  }
+})
+
+const statusFilterOptions = [
+  { value: 'true', label: '启用' },
+  { value: 'false', label: '停用' },
+]
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('material')
 const crud = useCRUD(materialAPI, { onSuccess: () => { closeModals(); loadData() } })
@@ -252,7 +278,33 @@ const deleting = ref(false)
 const selectedRow = ref<any>(null)
 const supplierList = ref<any[]>([])
 
-const formInitialValues = { code: '', name: '', specification: '', unit: '个', unit_price: 0, stock_quantity: 0, min_stock_quantity: 0, lead_time_days: 7, need_cutting: false, default_supplier: null, notes: '' }
+type MaterialForm = {
+  code: string
+  name: string
+  specification: string
+  unit: string
+  unit_price: number
+  stock_quantity: number
+  min_stock_quantity: number
+  lead_time_days: number
+  need_cutting: boolean
+  default_supplier: number | null
+  notes: string
+}
+
+const formInitialValues: MaterialForm = {
+  code: '',
+  name: '',
+  specification: '',
+  unit: '个',
+  unit_price: 0,
+  stock_quantity: 0,
+  min_stock_quantity: 0,
+  lead_time_days: 7,
+  need_cutting: false,
+  default_supplier: null,
+  notes: ''
+}
 const form = reactive({ ...formInitialValues })
 
 const supplierOptions = computed(() =>
@@ -285,21 +337,58 @@ const resetForm = () => { Object.assign(form, formInitialValues) }
 const handleEdit = (row: any) => {
   showEditModal.value = true; 
   selectedRow.value = row
-  Object.assign(form, { code: row.code || '', name: row.name || '', specification: row.specification || '', unit: row.unit || '个', unit_price: Number(row.unit_price || 0), stock_quantity: Number(row.stock_quantity || 0), min_stock_quantity: Number(row.min_stock_quantity || 0), lead_time_days: Number(row.lead_time_days ?? 7), need_cutting: !!row.need_cutting, default_supplier: row.default_supplier || null, notes: row.notes || '' })
+  Object.assign(form, {
+    code: row.code || '',
+    name: row.name || '',
+    specification: row.specification || '',
+    unit: row.unit || '个',
+    unit_price: Number(row.unit_price || 0),
+    stock_quantity: Number(row.stock_quantity || 0),
+    min_stock_quantity: Number(row.min_stock_quantity || 0),
+    lead_time_days: Number(row.lead_time_days ?? 7),
+    need_cutting: !!row.need_cutting,
+    default_supplier: row.default_supplier || null,
+    notes: row.notes || ''
+  })
 }
 
 const handleSubmit = async () => {
-  if (!form.code || !form.name || !form.unit) {
-    ErrorHandler.showMessage('请填写必填项', '验证失败')
+  const trimmedCode = form.code.trim()
+  const trimmedName = form.name.trim()
+  const trimmedUnit = form.unit.trim()
+
+  if (!trimmedCode || !trimmedName || !trimmedUnit) {
+    ErrorHandler.showWarning('请填写必填项')
     return
+  }
+
+  if (trimmedCode.length < 2 || trimmedCode.length > 50) {
+    ErrorHandler.showWarning('物料编码长度应在 2-50 个字符之间')
+    return
+  }
+  if (!/^[A-Za-z0-9-]+$/.test(trimmedCode)) {
+    ErrorHandler.showWarning('物料编码只能包含字母、数字和连字符')
+    return
+  }
+
+  if (showEditModal.value && form.min_stock_quantity > form.stock_quantity) {
+    ErrorHandler.showWarning('最小库存不能大于当前库存')
+    return
+  }
+
+  const payload: MaterialForm = {
+    ...form,
+    code: trimmedCode,
+    name: trimmedName,
+    unit: trimmedUnit
   }
 
   submitting.value = true
   try {
-    if (showEditModal.value) { 
-      await crud.update(selectedRow.value.id, form, '保存成功') 
-    } else { 
-      await crud.create(form, '创建成功') 
+    if (showEditModal.value) {
+      await crud.update(selectedRow.value.id, payload, '保存成功')
+    } else {
+      await crud.create(payload, '创建成功')
     }
   } finally {
     submitting.value = false
@@ -337,7 +426,10 @@ const handleDelete = async () => {
 }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
-  console.log('sort', key, order)
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
 }
 
 onMounted(() => { loadData(); loadSuppliers() })
