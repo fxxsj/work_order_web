@@ -9,13 +9,20 @@
       <template #filters>
         <div class="flex flex-col gap-3">
           <div class="flex flex-wrap items-center gap-3">
+            <SearchInput
+              v-model="searchText"
+              class="w-full sm:w-72"
+              placeholder="搜索产品/批次/库位/施工单"
+              @search="searchAndRefreshStats"
+              @clear="searchAndRefreshStats"
+            />
             <Select
               v-model="filters.status"
               :options="statusOptions"
               class="w-full sm:w-36"
               placeholder="库存状态"
               clearable
-              @change="handleSearch"
+              @change="searchAndRefreshStats"
             />
           </div>
         </div>
@@ -26,7 +33,7 @@
             class="btn btn-secondary"
             :disabled="loading"
             title="刷新"
-            @click="loadData"
+            @click="reloadData"
           >
             <Icon
               name="refresh"
@@ -65,6 +72,10 @@
           :data="tableData"
           :loading="loading"
           :row-key="(row: any) => row.id"
+          :server-side-sort="true"
+          default-sort-key="created_at"
+          default-sort-order="desc"
+          @sort="handleSort"
         >
           <template #cell-product_name="{ row }">
             <span class="truncate max-w-xs block">{{ row.product_name }}</span>
@@ -271,9 +282,18 @@
         @submit.prevent="handleSaveAdjust"
       >
         <div>
+          <label class="input-label mb-1.5 block">调整类型</label>
+          <RadioGroup
+            v-model="adjustForm.adjust_type"
+            :options="adjustTypeOptions"
+          />
+        </div>
+        <div>
           <label class="input-label mb-1.5 block">调整数量</label>
           <InputNumber
-            v-model="adjustForm.adjustment"
+            v-model="adjustForm.quantity"
+            :min="0"
+            :precision="2"
             :step="1"
             class="w-full"
           />
@@ -317,7 +337,7 @@ import { productStockAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, EmptyState, Pagination, InputNumber, TextArea, Select, TablePageLayout, DataTable, Tag, BaseDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions } from '@/components/common'
+import { StatusTag, EmptyState, Pagination, InputNumber, TextArea, Select, TablePageLayout, DataTable, Tag, BaseDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions, SearchInput, RadioGroup } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import StockStats from './components/StockStats.vue'
 
@@ -335,20 +355,34 @@ const loadingExpired = ref(false)
 const lowStockList = ref<any[]>([])
 const expiredList = ref<any[]>([])
 const currentAdjustId = ref<string | number | null>(null)
-const adjustForm = reactive({ adjustment: 0, reason: '' })
+const adjustForm = reactive({ adjust_type: 'add', quantity: 0, reason: '' })
+const sortKey = ref('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
+const sortFieldMap: Record<string, string> = {
+  product_name: 'product__name',
+  available_quantity: 'quantity',
+  days_until_expiry: 'expiry_date'
+}
+
+const buildStockParams = (params: Record<string, unknown>) => {
+  const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+  const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
+  return { ...params, ordering }
+}
 
 const columns: Column[] = [
-  { key: 'product_name', label: '产品名称', width: 208 },
-  { key: 'batch_no', label: '批次号', width: 144 },
-  { key: 'quantity', label: '库存数量', width: 96, align: 'right' },
-  { key: 'reserved_quantity', label: '预留数量', width: 96, align: 'right' },
-  { key: 'available_quantity', label: '可用数量', width: 96, align: 'right' },
-  { key: 'min_stock_level', label: '最小库存', width: 96, align: 'right' },
-  { key: 'location', label: '库位', width: 112 },
-  { key: 'production_date', label: '生产日期', width: 112 },
-  { key: 'expiry_date', label: '过期日期', width: 112 },
-  { key: 'days_until_expiry', label: '过期天数', width: 96, align: 'right' },
-  { key: 'status', label: '状态', width: 96 },
+  { key: 'product_name', label: '产品名称', width: 208, sortable: true },
+  { key: 'batch_no', label: '批次号', width: 144, sortable: true },
+  { key: 'quantity', label: '库存数量', width: 96, align: 'right', sortable: true },
+  { key: 'reserved_quantity', label: '预留数量', width: 96, align: 'right', sortable: true },
+  { key: 'available_quantity', label: '可用数量', width: 96, align: 'right', sortable: true },
+  { key: 'min_stock_level', label: '最小库存', width: 96, align: 'right', sortable: true },
+  { key: 'location', label: '库位', width: 112, sortable: true },
+  { key: 'production_date', label: '生产日期', width: 112, sortable: true },
+  { key: 'expiry_date', label: '过期日期', width: 112, sortable: true },
+  { key: 'days_until_expiry', label: '过期天数', width: 96, align: 'right', sortable: true },
+  { key: 'status', label: '状态', width: 96, sortable: true },
   { key: 'actions', label: '操作', width: 144, fixed: 'right' }
 ]
 
@@ -358,8 +392,14 @@ const statusOptions = [
   { value: 'quality_check', label: '质检中' },
   { value: 'defective', label: '次品' }
 ]
+const adjustTypeOptions = [
+  { value: 'add', label: '增加' },
+  { value: 'subtract', label: '减少' },
+  { value: 'set', label: '设置为' }
+]
 
 const {
+  searchText,
   filters,
   tableData,
   loading,
@@ -372,18 +412,25 @@ const {
   handleSizeChange,
   resetFilters
 } = useCrudList(productStockAPI, 'getList', {
-  initialFilters: { status: '' }
+  initialFilters: { status: '' },
+  buildParams: buildStockParams
 })
 
-const hasFilters = computed(() => !!filters.value.status)
-const canEdit = computed(() => userStore.hasPermission('workorder.change_stock'))
+const hasFilters = computed(() => !!filters.value.status || !!searchText.value)
+const canEdit = computed(() => userStore.hasPermission('workorder.change_productstock'))
 
-const handleReset = () => resetFilters()
+const handleReset = async () => {
+  await resetFilters()
+  fetchStats()
+}
 
 const fetchStats = async () => {
   statsLoading.value = true
-  try { 
-    const response: any = await productStockAPI.getSummary()
+  try {
+    const response: any = await productStockAPI.getSummary(buildStockParams({
+      status: filters.value.status,
+      search: searchText.value
+    }))
     stats.value = response || {} 
   } catch (error: any) { 
     stats.value = {} 
@@ -394,17 +441,42 @@ const fetchStats = async () => {
 
 const handleView = async (row: any) => { currentStock.value = row; detailDialogVisible.value = true }
 
-const handleAdjust = (row: any) => { currentAdjustId.value = row.id; adjustForm.adjustment = 0; adjustForm.reason = ''; adjustDialogVisible.value = true }
+const handleAdjust = (row: any) => { currentAdjustId.value = row.id; Object.assign(adjustForm, { adjust_type: 'add', quantity: 0, reason: '' }); adjustDialogVisible.value = true }
 
 const handleSaveAdjust = async () => {
   try { 
+    if (!adjustForm.quantity || adjustForm.quantity <= 0) {
+      ErrorHandler.showMessage('请输入大于 0 的调整数量', '验证失败')
+      return
+    }
+    if (!adjustForm.reason.trim()) {
+      ErrorHandler.showMessage('请输入调整原因', '验证失败')
+      return
+    }
     await productStockAPI.adjust(currentAdjustId.value as string | number, adjustForm)
     useUIStore().showSuccess('调整成功')
     adjustDialogVisible.value = false
-    loadData() 
+    reloadData()
   } catch (error: any) { 
     ErrorHandler.showMessage(error, '调整失败') 
   }
+}
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
+}
+
+const reloadData = async () => {
+  await loadData()
+  fetchStats()
+}
+
+const searchAndRefreshStats = async () => {
+  await handleSearch()
+  fetchStats()
 }
 
 const handleLowStock = async () => {
@@ -467,5 +539,5 @@ const expiredColumns: Column[] = [
   { key: 'location', label: '库位', width: 112 }
 ]
 
-onMounted(() => { loadData(); fetchStats() })
+onMounted(() => { reloadData() })
 </script>
