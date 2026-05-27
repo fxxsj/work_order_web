@@ -4,6 +4,7 @@
  */
 import request from '@/api/index'
 import { BaseAPI } from '@/api/base/BaseAPI'
+import { workOrderFlowAPI } from './workorder-flow'
 
 class SalesOrderAPI extends BaseAPI {
   constructor() {
@@ -99,6 +100,27 @@ class SalesOrderAPI extends BaseAPI {
       url: `${this.baseUrl}${id}/update_payment/`,
       method: 'post',
       data
+    })
+  }
+
+  /**
+   * 从销售订单创建施工单
+   */
+  convertToWorkOrder(id: number | string, data: Record<string, unknown> = {}) {
+    return workOrderFlowAPI.createFromSalesOrder({
+      sales_order_id: id,
+      ...data
+    })
+  }
+
+  /**
+   * 批量从销售订单创建施工单
+   */
+  batchConvertToWorkOrder(ids: Array<number | string>, data: Record<string, unknown> = {}) {
+    return workOrderFlowAPI.createFromSalesOrders({
+      sales_order_ids: ids,
+      allow_partial: true,
+      ...data
     })
   }
 }

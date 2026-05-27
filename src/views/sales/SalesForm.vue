@@ -216,6 +216,8 @@ const totalAmount = computed(() => {
   return subtotal + tax - (form.discount_amount || 0)
 })
 
+const toDate = (value: string) => value ? new Date(`${value}T00:00:00`) : null
+
 const lineItemColumns = [
   { key: 'product', label: '产品', minWidth: 200 },
   { key: 'spec', label: '规格', width: 150 },
@@ -266,12 +268,35 @@ const handleSubmit = async () => {
   if (!form.customer) { useUIStore().showWarning('请选择客户'); return }
   if (!form.order_date) { useUIStore().showWarning('请选择订单日期'); return }
   if (!form.delivery_date) { useUIStore().showWarning('请选择交货日期'); return }
-  if (!form.items.some((i: any) => i.product)) { useUIStore().showWarning('请至少选择一个产品'); return }
+  const orderDate = toDate(form.order_date)
+  const deliveryDate = toDate(form.delivery_date)
+  if (orderDate && deliveryDate && deliveryDate < orderDate) { useUIStore().showWarning('交货日期不能早于订单日期'); return }
+  if (form.tax_rate < 0 || form.tax_rate > 100) { useUIStore().showWarning('税率必须在 0-100 之间'); return }
+  if ((form.discount_amount || 0) < 0) { useUIStore().showWarning('折扣金额不能小于 0'); return }
+
+  const items = form.items
+    .filter((i: any) => i.product)
+    .map((i: any) => ({
+      product: i.product,
+      quantity: Number(i.quantity || 0),
+      unit: getProductUnit(i.product),
+      unit_price: Number(i.unit_price || 0),
+      notes: (i.notes || '').trim()
+    }))
+  if (items.length === 0) { useUIStore().showWarning('请至少选择一个产品'); return }
+  if (items.some((i: any) => i.quantity <= 0)) { useUIStore().showWarning('产品数量必须大于 0'); return }
+  if (items.some((i: any) => i.unit_price < 0)) { useUIStore().showWarning('产品单价不能小于 0'); return }
 
   submitting.value = true
   try {
-    const data = { ...form, items_data: form.items.filter((i: any) => i.product).map((i: any) => ({ product: i.product, quantity: i.quantity, unit_price: i.unit_price, notes: i.notes })) }
-    delete (data as any).items
+    const data = {
+      ...form,
+      contact_person: form.contact_person.trim(),
+      contact_phone: form.contact_phone.trim(),
+      shipping_address: form.shipping_address.trim(),
+      notes: form.notes.trim(),
+      items
+    }
     if (isEdit.value) { await salesOrderAPI.update(id.value!, data); useUIStore().showSuccess('保存成功') } else { await salesOrderAPI.create(data); useUIStore().showSuccess('创建成功') }
     router.push('/sales-orders')
   } catch (error: any) { ErrorHandler.showMessage(error, isEdit.value ? '保存失败' : '创建失败') } finally { submitting.value = false }

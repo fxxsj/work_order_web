@@ -265,6 +265,25 @@
       @confirm="confirmConvert"
       @cancel="cancelConvert"
     />
+    <ConfirmDialog
+      :show="showRejectDialog"
+      title="审核拒绝"
+      message="请填写拒绝原因。"
+      confirm-text="拒绝"
+      cancel-text="取消"
+      :danger="true"
+      :loading="rejecting"
+      loading-text="处理中..."
+      @confirm="confirmReject"
+      @cancel="cancelReject"
+    >
+      <TextArea
+        v-model="rejectReason"
+        label="拒绝原因"
+        :rows="3"
+        placeholder="请输入拒绝原因"
+      />
+    </ConfirmDialog>
   </div>
 </template>
 
@@ -274,7 +293,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
-import { ConfirmDialog, StatusTag, DescriptionGrid, DescriptionItem, SummaryTable } from '@/components/common'
+import { ConfirmDialog, StatusTag, DescriptionGrid, DescriptionItem, SummaryTable, TextArea } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { formatDate } from '@/utils/filter'
 import ErrorHandler from '@/utils/errorHandler'
@@ -288,6 +307,9 @@ const detailData = reactive<any>({})
 const operationHistory = ref<any[]>([])
 const showConvertDialog = ref(false)
 const converting = ref(false)
+const showRejectDialog = ref(false)
+const rejectReason = ref('')
+const rejecting = ref(false)
 
 const canEdit = computed(() => userStore.hasPermission('workorder.change_salesorder'))
 const canConvert = computed(() => userStore.hasPermission('workorder.add_workorder'))
@@ -328,7 +350,29 @@ const confirmConvert = async () => {
 
 const handleSubmit = async () => { try { await salesOrderAPI.submit(String(route.params.id)); useUIStore().showSuccess('提交成功'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '提交失败') } }
 const handleApprove = async () => { try { await salesOrderAPI.approve(String(route.params.id)); useUIStore().showSuccess('审核通过'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '审核失败') } }
-const handleReject = async () => { try { await salesOrderAPI.reject(String(route.params.id)); useUIStore().showSuccess('已拒绝'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '操作失败') } }
+const handleReject = () => {
+  rejectReason.value = ''
+  showRejectDialog.value = true
+}
+const cancelReject = () => {
+  showRejectDialog.value = false
+  rejectReason.value = ''
+}
+const confirmReject = async () => {
+  const reason = rejectReason.value.trim()
+  if (!reason) { useUIStore().showWarning('请填写拒绝原因'); return }
+  rejecting.value = true
+  try {
+    await salesOrderAPI.reject(String(route.params.id), { reason })
+    useUIStore().showSuccess('已拒绝')
+    cancelReject()
+    loadData()
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '操作失败')
+  } finally {
+    rejecting.value = false
+  }
+}
 
 const formatAmount = (amount: any) => amount ? amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '0.00'
 

@@ -84,6 +84,10 @@
         :data="tableData" 
         :loading="loading" 
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="created_at"
+        default-sort-order="desc"
+        @sort="handleSort"
       >
         <template #cell-selection="{ row }">
           <Checkbox
@@ -218,6 +222,26 @@
     @confirm="executeBatchConvert"
     @cancel="showBatchConvertDialog = false"
   />
+
+  <ConfirmDialog
+    :show="showRejectDialog"
+    title="审核拒绝"
+    :message="`请填写订单「${currentRow?.order_number || ''}」的拒绝原因。`"
+    confirm-text="拒绝"
+    cancel-text="取消"
+    :danger="true"
+    :loading="rejecting"
+    loading-text="处理中..."
+    @confirm="executeReject"
+    @cancel="cancelReject"
+  >
+    <TextArea
+      v-model="rejectReason"
+      label="拒绝原因"
+      :rows="3"
+      placeholder="请输入拒绝原因"
+    />
+  </ConfirmDialog>
 </template>
 
 <script setup lang="ts">
@@ -227,7 +251,7 @@ import { useUIStore } from '@/stores/ui'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
-import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow, Checkbox } from '@/components/common'
+import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow, Checkbox, TextArea } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -238,22 +262,31 @@ const selectedRows = ref<any[]>([])
 
 const converting = ref(false)
 const batchConverting = ref(false)
+const rejecting = ref(false)
 const showConvertDialog = ref(false)
 const showBatchConvertDialog = ref(false)
+const showRejectDialog = ref(false)
 const currentRow = ref<any>(null)
+const rejectReason = ref('')
 
 const columns: Column[] = [
   { key: 'selection', label: '', width: 48, align: 'center' },
-  { key: 'order_number', label: '订单号', width: 144 },
-  { key: 'customer_name', label: '客户名称', width: 144 },
-  { key: 'order_date', label: '订单日期', width: 112 },
-  { key: 'delivery_date', label: '交货日期', width: 112 },
-  { key: 'total_amount', label: '订单金额', width: 112, align: 'right' },
-  { key: 'status', label: '订单状态', width: 96, align: 'center' },
-  { key: 'payment_status', label: '付款状态', width: 96, align: 'center' },
-  { key: 'items_count', label: '明细数', width: 80, align: 'center' },
+  { key: 'order_number', label: '订单号', width: 144, sortable: true },
+  { key: 'customer_name', label: '客户名称', width: 144, sortable: true },
+  { key: 'order_date', label: '订单日期', width: 112, sortable: true },
+  { key: 'delivery_date', label: '交货日期', width: 112, sortable: true },
+  { key: 'total_amount', label: '订单金额', width: 112, align: 'right', sortable: true },
+  { key: 'status', label: '订单状态', width: 96, align: 'center', sortable: true },
+  { key: 'payment_status', label: '付款状态', width: 96, align: 'center', sortable: true },
+  { key: 'items_count', label: '明细数', width: 80, align: 'center', sortable: true },
   { key: 'actions', label: '操作', width: 220, align: 'center', fixed: 'right' }
 ]
+
+const sortKey = ref('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+const sortFieldMap: Record<string, string> = {
+  customer_name: 'customer__name'
+}
 
 const statusOptions = [
   { value: 'draft', label: '草稿' },
@@ -273,10 +306,17 @@ const paymentStatusOptions = [
 const {
   filters, tableData, loading, total, currentPage, pageSize,
   loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters, resetFilters
-} = useCrudList(salesOrderAPI, 'getList', { initialFilters: { search: '', status: '', payment_status: '' } })
+} = useCrudList(salesOrderAPI, 'getList', {
+  initialFilters: { search: '', status: '', payment_status: '' },
+  buildParams: (params) => {
+    const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
+    const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
+    return { ...params, ordering }
+  }
+})
 
 const canCreate = computed(() => userStore.hasPermission('workorder.add_salesorder'))
-const canBatchConvert = computed(() => selectedRows.value.length > 0)
+const canBatchConvert = computed(() => selectedRows.value.some((row: any) => canConvert(row)))
 
 const allSelected = computed(() => tableData.value.length > 0 && tableData.value.every((row: any) => selectedRows.value.some((r: any) => r.id === row.id)))
 const isSelected = (row: any) => selectedRows.value.some((r: any) => r.id === row.id)
@@ -290,7 +330,18 @@ const toggleSelectAll = () => {
   else selectedRows.value = [...tableData.value]
 }
 
-const handleReset = () => { resetFilters() }
+const handleReset = () => {
+  sortKey.value = 'created_at'
+  sortOrder.value = 'desc'
+  resetFilters()
+}
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
+}
 
 const handleAdd = () => { router.push('/sales-orders/create') }
 const handleView = (row: any) => { router.push(`/sales-orders/${row.id}`) }
@@ -325,11 +376,24 @@ const handleBatchConvertRequest = () => {
 
 const executeBatchConvert = async () => {
   if (selectedRows.value.length === 0) return;
+  const convertibleRows = selectedRows.value.filter((row: any) => canConvert(row))
+  if (convertibleRows.length === 0) {
+    useUIStore().showWarning('请选择已审核或生产中的订单')
+    return
+  }
   try {
     batchConverting.value = true
-    const orderIds = selectedRows.value.map((r: any) => r.id)
+    const orderIds = convertibleRows.map((r: any) => r.id)
     const response: any = await salesOrderAPI.batchConvertToWorkOrder(orderIds)
-    useUIStore().showSuccess(`成功转换 ${response.success_count} 个订单`)
+    const createdCount = Array.isArray(response?.created) ? response.created.length : Number(response?.success_count || 0)
+    const failedCount = Array.isArray(response?.failed) ? response.failed.length : Number(response?.failed_count || 0)
+    if (createdCount > 0 && failedCount > 0) {
+      useUIStore().showWarning(`已转换 ${createdCount} 个订单，${failedCount} 个失败`)
+    } else if (createdCount > 0) {
+      useUIStore().showSuccess(`成功转换 ${createdCount} 个订单`)
+    } else {
+      useUIStore().showWarning('没有订单被转换')
+    }
     showBatchConvertDialog.value = false;
     selectedRows.value = []
     loadData()
@@ -349,7 +413,34 @@ const handleApprove = async (row: any) => {
 }
 
 const handleReject = async (row: any) => {
-  try { await salesOrderAPI.reject(row.id); useUIStore().showSuccess('已拒绝'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '操作失败') }
+  currentRow.value = row
+  rejectReason.value = ''
+  showRejectDialog.value = true
+}
+
+const cancelReject = () => {
+  showRejectDialog.value = false
+  rejectReason.value = ''
+}
+
+const executeReject = async () => {
+  if (!currentRow.value) return
+  const reason = rejectReason.value.trim()
+  if (!reason) {
+    useUIStore().showWarning('请填写拒绝原因')
+    return
+  }
+  try {
+    rejecting.value = true
+    await salesOrderAPI.reject(currentRow.value.id, { reason })
+    useUIStore().showSuccess('已拒绝')
+    cancelReject()
+    loadData()
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '操作失败')
+  } finally {
+    rejecting.value = false
+  }
 }
 
 const handleRowAction = (action: string, row: any) => {
