@@ -11,6 +11,18 @@ class StockOutAPI extends BaseAPI {
   }
 
   /**
+   * 提交出库单
+   * @param {number} id - 出库单ID
+   * @returns {Promise} 提交结果
+   */
+  submit(id: number | string) {
+    return this.request({
+      url: `${this.baseUrl}${id}/submit/`,
+      method: 'post'
+    })
+  }
+
+  /**
    * 审核出库单
    * @param {number} id - 出库单ID
    * @returns {Promise} 审核结果
@@ -26,10 +38,11 @@ class StockOutAPI extends BaseAPI {
    * 获取出库汇总
    * @returns {Promise} 出库汇总数据
    */
-  getSummary() {
+  getSummary(params?: Record<string, unknown>) {
     return this.request({
       url: `${this.baseUrl}summary/`,
-      method: 'get'
+      method: 'get',
+      params
     })
   }
 }
