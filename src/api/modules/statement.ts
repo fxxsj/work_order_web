@@ -25,6 +25,19 @@ class StatementAPI extends BaseAPI {
   }
 
   /**
+   * 获取对账单汇总
+   * @param {Object} params - 汇总筛选参数
+   * @returns {Promise} 对账单汇总数据
+   */
+  getSummary(params?: Record<string, unknown>) {
+    return this.request({
+      url: `${this.baseUrl}summary/`,
+      method: 'get',
+      params
+    })
+  }
+
+  /**
    * 生成对账单
    * @param {Object} params - 生成参数
    * @returns {Promise} 生成结果

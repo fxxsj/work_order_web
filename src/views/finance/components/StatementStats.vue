@@ -19,7 +19,8 @@ const props = defineProps({
 
 const statItems = computed(() => [
   { key: 'total', label: '对账单总数', value: props.stats.total_count, format: 'number', iconName: 'document', tone: 'primary' },
-  { key: 'paid', label: '已付款', value: props.stats.paid_amount, format: 'currency', iconName: 'checkCircle', tone: 'success' },
-  { key: 'pending', label: '待付款', value: props.stats.pending_amount, format: 'currency', iconName: 'clock', tone: 'warning' }
+  { key: 'debit', label: '本期借方', value: props.stats.total_debit, format: 'currency', iconName: 'dollar', tone: 'primary' },
+  { key: 'credit', label: '本期贷方', value: props.stats.total_credit, format: 'currency', iconName: 'checkCircle', tone: 'success' },
+  { key: 'closing', label: '期末余额', value: props.stats.closing_balance, format: 'currency', iconName: 'clock', tone: 'warning' }
 ])
 </script>
