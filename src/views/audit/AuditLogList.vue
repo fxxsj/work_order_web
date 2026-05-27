@@ -161,6 +161,10 @@
           :data="tableData"
           :loading="loading"
           row-key="id"
+          :server-side-sort="true"
+          default-sort-key="created_at"
+          default-sort-order="desc"
+          @sort="handleSort"
         >
           <template #cell-created_at="{ row }">
             <span>{{ formatDateTime(row.created_at) }}</span>
@@ -279,7 +283,7 @@
       <form
         id="export-form"
         class="space-y-5"
-        @submit.prevent="handleExport({ action_type: exportFilters.action_type, model: exportFilters.model, user_id: exportFilters.user_id })"
+        @submit.prevent="handleExport(buildExportFilters())"
       >
         <div>
           <label class="input-label mb-1.5 block">日期范围</label>
@@ -450,7 +454,13 @@ import type { Column, RowAction } from '@/components/common/types'
 
 const userStore = useUserStore()
 
-const buildAuditParams = (params: any) => ({ ordering: '-created_at', ...params })
+const sortKey = ref('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
+const buildAuditParams = (params: any) => {
+  const ordering = sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
+  return { ...params, ordering }
+}
 
 const {
   searchText,
@@ -481,13 +491,13 @@ const {
 })
 
 const columns: Column[] = [
-  { key: 'created_at', label: '时间', width: 176 },
-  { key: 'action_type', label: '操作类型', width: 112 },
-  { key: 'username', label: '用户', width: 112 },
-  { key: 'content_type_name', label: '对象类型', width: 128 },
+  { key: 'created_at', label: '时间', width: 176, sortable: true },
+  { key: 'action_type', label: '操作类型', width: 112, sortable: true },
+  { key: 'username', label: '用户', width: 112, sortable: true },
+  { key: 'content_type_name', label: '对象类型', width: 128, sortable: true },
   { key: 'object_repr', label: '对象', minWidth: 208 },
-  { key: 'object_id', label: '对象ID', width: 112 },
-  { key: 'ip_address', label: 'IP', width: 128 },
+  { key: 'object_id', label: '对象ID', width: 112, sortable: true },
+  { key: 'ip_address', label: 'IP', width: 128, sortable: true },
   { key: 'changed_fields', label: '变更字段', minWidth: 176 },
   { key: 'actions', label: '操作', width: 112, fixed: 'right' }
 ]
@@ -554,6 +564,24 @@ const {
 
 const canExportAuditLog = computed(() => userStore.hasPermission('workorder.add_auditlogexport'))
 const canViewAuditExport = computed(() => userStore.hasPermission('workorder.view_auditlogexport'))
+
+const handleSort = (key: string, order: 'asc' | 'desc') => {
+  sortKey.value = key === 'content_type_name' ? 'content_type__model' : key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
+}
+
+const buildExportFilters = () => ({
+  action_type: exportFilters.action_type,
+  model: exportFilters.model,
+  user_id: exportFilters.user_id,
+  object_id: filters.value.object_id,
+  ip_address: filters.value.ip_address,
+  request_method: filters.value.request_method,
+  search: searchText.value,
+  ordering: sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
+})
 
 const formattedDiff = computed(() => {
   if (!diffData.value || !diffData.value.changes) return '-'
