@@ -12,6 +12,14 @@
           @search="handleSearch"
           @clear="handleSearch"
         />
+        <Select
+          v-model="filters.is_active"
+          class="w-full sm:w-36"
+          placeholder="状态"
+          :options="activeFilterOptions"
+          clearable
+          @change="handleSearch"
+        />
       </FilterRow>
     </template>
 
@@ -50,6 +58,9 @@
         :data="tableData"
         :loading="loading"
         :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="code"
+        default-sort-order="asc"
         @sort="handleSort"
       >
         <template #cell-is_active="{ value }">
@@ -179,7 +190,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { productGroupAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, BaseDialog, ConfirmDialog, Pagination, Input, TextArea, Toggle, Icon, Tag, RowActions, FilterRow } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, BaseDialog, ConfirmDialog, Pagination, Input, TextArea, Toggle, Icon, Tag, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -191,10 +202,20 @@ const columns: Column[] = [
   { key: 'actions', label: '操作', sortable: false, class: 'w-44' }
 ]
 
+const sortKey = ref('code')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
 const {
-  searchText, tableData, loading, total, currentPage, pageSize,
+  searchText, filters, tableData, loading, total, currentPage, pageSize,
   loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters
-} = useCrudList(productGroupAPI, 'getList', { errorContext: '加载产品组数据失败' })
+} = useCrudList(productGroupAPI, 'getList', {
+  initialFilters: { is_active: '' },
+  errorContext: '加载产品组数据失败',
+  buildParams: (params) => {
+    const ordering = sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
+    return { ...params, ordering }
+  }
+})
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('productgroup')
 const crud = useCRUD(productGroupAPI, { onSuccess: () => { closeModals(); loadData() } })
@@ -205,6 +226,11 @@ const showDeleteDialog = ref(false)
 const submitting = ref(false)
 const deleting = ref(false)
 const currentRow = ref<any>(null)
+
+const activeFilterOptions = [
+  { value: 'true', label: '启用' },
+  { value: 'false', label: '禁用' }
+]
 
 const getFormInitialValues = () => ({ id: null, code: '', name: '', description: '', is_active: true })
 const form = reactive(getFormInitialValues())
@@ -234,14 +260,30 @@ const closeModals = () => {
 }
 
 const handleSubmit = async () => {
-  if (!form.code || !form.name) {
-    ErrorHandler.showMessage('请填写必填项', '验证失败')
+  const code = (form.code || '').trim()
+  const name = (form.name || '').trim()
+  const description = (form.description || '').trim()
+
+  if (!code || !name) {
+    ErrorHandler.showMessage('请填写产品组编码和名称', '验证失败')
+    return
+  }
+  if (code.length > 50) {
+    ErrorHandler.showMessage('产品组编码不能超过50个字符', '验证失败')
+    return
+  }
+  if (!/^[A-Za-z0-9-]+$/.test(code)) {
+    ErrorHandler.showMessage('产品组编码只能包含字母、数字和连字符', '验证失败')
+    return
+  }
+  if (name.length > 200) {
+    ErrorHandler.showMessage('产品组名称不能超过200个字符', '验证失败')
     return
   }
   
   submitting.value = true
   try {
-    const data = { code: form.code, name: form.name, description: form.description, is_active: form.is_active }
+    const data = { code, name, description, is_active: form.is_active }
     if (form.id) { 
       await crud.update(form.id, data, '更新成功') 
     } else { 
@@ -283,7 +325,10 @@ const handleDelete = async () => {
 }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
-  console.log('sort', key, order)
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1
+  loadData()
 }
 
 onMounted(() => { loadData() })
