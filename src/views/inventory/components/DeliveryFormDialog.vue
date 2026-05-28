@@ -250,6 +250,36 @@ const handleCustomerChange = (value: any) => emit('customer-change', value)
 const addItem = () => { if (!localForm.items_data) localForm.items_data = []; localForm.items_data.push({ ...ITEM_INITIAL }) }
 const removeItem = (index: any) => localForm.items_data?.splice(index, 1)
 const calculateSubtotal = (item: any) => (item.quantity || 0) * (item.unit_price || 0)
+const trimText = (value: any) => (typeof value === 'string' ? value.trim() : value)
+const emptyToNull = (value: any) => (value === '' || value === undefined ? null : value)
+const normalizePayload = () => {
+  const payload: Record<string, any> = {
+    delivery_date: localForm.delivery_date,
+    receiver_name: trimText(localForm.receiver_name),
+    receiver_phone: trimText(localForm.receiver_phone),
+    delivery_address: trimText(localForm.delivery_address),
+    logistics_company: trimText(localForm.logistics_company) || '',
+    tracking_number: trimText(localForm.tracking_number) || '',
+    freight: Number(localForm.freight || 0),
+    package_count: Number(localForm.package_count || 1),
+    package_weight: emptyToNull(localForm.package_weight),
+    notes: trimText(localForm.notes) || '',
+    items_data: (localForm.items_data || []).map((item: any) => ({
+      product: item.product,
+      sales_order_item: emptyToNull(item.sales_order_item),
+      quantity: Number(item.quantity || 0),
+      unit: trimText(item.unit) || '件',
+      unit_price: Number(item.unit_price || 0),
+      stock_batch: trimText(item.stock_batch) || '',
+      notes: trimText(item.notes) || ''
+    }))
+  }
+  if (!props.isEdit) {
+    payload.sales_order = localForm.sales_order
+    payload.customer = localForm.customer
+  }
+  return payload
+}
 const validateItems = () => {
   if (!localForm.items_data?.length) { ErrorHandler.showWarning('请至少添加一条发货明细'); return false }
   for (let i = 0; i < localForm.items_data.length; i++) {
@@ -270,6 +300,6 @@ const handleSubmit = () => {
   if (!localForm.delivery_date) { ErrorHandler.showWarning('请选择发货日期'); return }
   if (!localForm.package_count) { ErrorHandler.showWarning('请输入包裹数量'); return }
   if (!validateItems()) return
-  emit('submit')
+  emit('submit', normalizePayload())
 }
 </script>

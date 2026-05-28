@@ -195,7 +195,7 @@
       :submitting="submitting"
       :form="form"
       :customer-list="customerList"
-      :sales-order-list="salesOrderList"
+      :sales-order-list="availableSalesOrderList"
       :product-list="productList"
       @submit="handleSubmit"
       @sales-order-change="handleSalesOrderChange"
@@ -288,6 +288,32 @@ const todoOptions = [
 ]
 const getFormInitialValues = () => ({ id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, package_count: 1, package_weight: '', notes: '', items_data: [] })
 const form = reactive(getFormInitialValues())
+const deliveryEligibleSalesOrderStatuses = new Set(['approved', 'in_production', 'completed'])
+
+const normalizeId = (value: any) => {
+  if (value && typeof value === 'object') return normalizeId(value.id)
+  if (value === null || value === undefined || value === '') return null
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : value
+}
+const sameId = (left: any, right: any) => {
+  const leftId = normalizeId(left)
+  const rightId = normalizeId(right)
+  return leftId !== null && rightId !== null && String(leftId) === String(rightId)
+}
+const getCustomerId = (record: any) => normalizeId(record?.customer_id ?? record?.customer?.id ?? record?.customer)
+const getSalesOrderId = (record: any) => normalizeId(record?.sales_order_id ?? record?.sales_order?.id ?? record?.sales_order)
+
+const availableSalesOrderList = computed(() => {
+  const selectedCustomerId = normalizeId(form.customer)
+  const selectedSalesOrderId = normalizeId(form.sales_order)
+  return salesOrderList.value.filter((order: any) => {
+    const isCurrentOrder = selectedSalesOrderId !== null && sameId(order.id, selectedSalesOrderId)
+    const statusAllowed = deliveryEligibleSalesOrderStatuses.has(order.status) || isCurrentOrder
+    const customerMatched = !selectedCustomerId || sameId(getCustomerId(order), selectedCustomerId)
+    return statusAllowed && customerMatched
+  })
+})
 
 const columns: Column[] = [
   { key: 'order_number', label: '发货单号', width: 144, sortable: true },
@@ -406,9 +432,46 @@ const handleCreate = () => {
 }
 const handleEdit = (row: any) => {
   if (!canEdit.value) return
-  currentDelivery.value = row
-  showCreateModal.value = false
-  showEditModal.value = true
+  loadDeliveryForEdit(row)
+}
+
+const mapDeliveryItemToForm = (item: any) => ({
+  product: normalizeId(item.product_id ?? item.product?.id ?? item.product),
+  sales_order_item: normalizeId(item.sales_order_item_id ?? item.sales_order_item?.id ?? item.sales_order_item),
+  quantity: Number(item.quantity || 0),
+  unit: item.unit || '件',
+  unit_price: Number(item.unit_price || 0),
+  stock_batch: item.stock_batch || '',
+  notes: item.notes || ''
+})
+
+const mapDeliveryToForm = (delivery: any) => ({
+  id: delivery.id ?? null,
+  sales_order: getSalesOrderId(delivery),
+  customer: getCustomerId(delivery),
+  delivery_date: delivery.delivery_date || '',
+  receiver_name: delivery.receiver_name || '',
+  receiver_phone: delivery.receiver_phone || '',
+  delivery_address: delivery.delivery_address || '',
+  logistics_company: delivery.logistics_company || '',
+  tracking_number: delivery.tracking_number || '',
+  freight: Number(delivery.freight || 0),
+  package_count: Number(delivery.package_count || 1),
+  package_weight: delivery.package_weight ?? '',
+  notes: delivery.notes || '',
+  items_data: (delivery.items || []).map(mapDeliveryItemToForm)
+})
+
+const loadDeliveryForEdit = async (row: any) => {
+  try {
+    const detail: any = await deliveryOrderAPI.getDetail(row.id)
+    currentDelivery.value = detail
+    Object.assign(form, getFormInitialValues(), mapDeliveryToForm(detail))
+    showCreateModal.value = false
+    showEditModal.value = true
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载发货单失败')
+  }
 }
 
 const closeFormDialog = () => {
@@ -520,8 +583,72 @@ const handleSubmit = async (data: any) => {
   } 
 }
 
-const handleSalesOrderChange = (orderId: any) => { /* TODO */ }
-const handleCustomerChange = (customerId: any) => { /* TODO */ }
+const pickFirstText = (...values: any[]) => values.find(value => typeof value === 'string' && value.trim())?.trim() || ''
+
+const prefillReceiverFromCustomer = (customerId: any) => {
+  const customer = customerList.value.find((item: any) => sameId(item.id, customerId))
+  if (!customer) return
+  if (!form.receiver_name) form.receiver_name = pickFirstText(customer.contact_person, customer.name)
+  if (!form.receiver_phone) form.receiver_phone = pickFirstText(customer.phone)
+  if (!form.delivery_address) form.delivery_address = pickFirstText(customer.address)
+}
+
+const mapSalesOrderItemToDeliveryItem = (item: any) => {
+  const quantity = Number(item.quantity || 0)
+  const deliveredQuantity = Number(item.delivered_quantity || 0)
+  const remainingQuantity = Math.max(quantity - deliveredQuantity, 0)
+  if (remainingQuantity <= 0) return null
+  return {
+    product: normalizeId(item.product_id ?? item.product?.id ?? item.product),
+    sales_order_item: normalizeId(item.id),
+    quantity: remainingQuantity,
+    unit: item.unit || '件',
+    unit_price: Number(item.unit_price || 0),
+    stock_batch: '',
+    notes: ''
+  }
+}
+
+const applySalesOrderToForm = (salesOrder: any) => {
+  const customerId = getCustomerId(salesOrder)
+  if (customerId) form.customer = customerId
+  form.receiver_name = pickFirstText(salesOrder.contact_person, salesOrder.customer_contact, form.receiver_name)
+  form.receiver_phone = pickFirstText(salesOrder.contact_phone, salesOrder.customer_phone, form.receiver_phone)
+  form.delivery_address = pickFirstText(salesOrder.shipping_address, salesOrder.customer_address, form.delivery_address)
+  prefillReceiverFromCustomer(form.customer)
+}
+
+const handleSalesOrderChange = async (orderId: any) => {
+  form.sales_order = normalizeId(orderId)
+  if (!form.sales_order) {
+    form.items_data = []
+    return
+  }
+
+  const listOrder = salesOrderList.value.find((item: any) => sameId(item.id, form.sales_order))
+  if (listOrder) applySalesOrderToForm(listOrder)
+
+  try {
+    const detail: any = await salesOrderAPI.getDetail(form.sales_order)
+    applySalesOrderToForm(detail)
+    const items = (detail.items || [])
+      .map(mapSalesOrderItemToDeliveryItem)
+      .filter(Boolean)
+    form.items_data = items
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载销售订单明细失败')
+  }
+}
+
+const handleCustomerChange = (customerId: any) => {
+  form.customer = normalizeId(customerId)
+  prefillReceiverFromCustomer(form.customer)
+  const selectedSalesOrder = salesOrderList.value.find((item: any) => sameId(item.id, form.sales_order))
+  if (selectedSalesOrder && !sameId(getCustomerId(selectedSalesOrder), form.customer)) {
+    form.sales_order = null
+    form.items_data = []
+  }
+}
 
 const getRowActions = (row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
