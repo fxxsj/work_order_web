@@ -48,7 +48,6 @@
       </section>
 
       <section class="print-section">
-        <div class="section-title">一、客户订单信息</div>
         <table class="print-table info-table">
           <tbody>
             <tr>
@@ -65,86 +64,74 @@
         </table>
       </section>
 
-      <div class="two-column">
-        <section class="print-section">
-          <div class="section-title">二、产品明细（最多显示3行）</div>
-          <table class="print-table product-table">
-            <thead>
-              <tr>
-                <th class="col-index">序号</th>
-                <th>产品名称</th>
-                <th>产品规格</th>
-                <th>数量</th>
-                <th>单位</th>
-                <th>拼板数</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(product, index) in visibleProducts"
-                :key="product.id || index"
-              >
-                <td class="text-center">{{ index + 1 }}</td>
-                <td>{{ textValue(product.product_name || product.product_detail?.name) }}</td>
-                <td>{{ textValue(product.specification || product.product_detail?.specification) }}</td>
-                <td class="text-center">{{ textValue(product.quantity) }}</td>
-                <td class="text-center">{{ textValue(product.unit || product.product_detail?.unit) }}</td>
-                <td class="text-center">{{ textValue(product.imposition_quantity) }}</td>
-              </tr>
-              <tr
-                v-for="index in productBlankRows"
-                :key="`product-blank-${index}`"
-              >
-                <td class="text-center">{{ visibleProducts.length + index }}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-              </tr>
-              <tr>
-                <td colspan="6" class="product-more">
-                  <span v-if="hiddenProductCount > 0">
-                    以上仅显示前 3 个产品，其他还有 {{ hiddenProductCount }} 个产品。
-                  </span>
-                  <span v-else class="fixed-placeholder"></span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
-        <section class="print-section">
-          <div class="section-title">三、印刷信息</div>
-          <table class="print-table info-table print-info-table">
-            <tbody>
-              <tr>
-                <th>印刷形式：</th>
-                <td>{{ textValue(workOrder?.printing_type_display || workOrder?.printing_type) }}</td>
-              </tr>
-              <tr>
-                <th>印刷 CMYK 颜色：</th>
-                <td>{{ formatColorList(workOrder?.printing_cmyk_colors) }}</td>
-              </tr>
-              <tr>
-                <th>印刷其他颜色：</th>
-                <td>{{ formatColorList(workOrder?.printing_other_colors) }}</td>
-              </tr>
-              <tr>
-                <th>生产数量：</th>
-                <td>{{ quantityWithUnit(workOrder?.production_quantity ?? workOrder?.quantity ?? displayQuantity, '车头') }}</td>
-              </tr>
-              <tr>
-                <th>预损数量：</th>
-                <td>{{ quantityWithUnit(workOrder?.defective_quantity, '车头') }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-      </div>
+      <section class="print-section">
+        <table class="print-table print-info-grid">
+          <thead>
+            <tr>
+              <th>印刷形式</th>
+              <th>CMYK 颜色</th>
+              <th>其他颜色</th>
+              <th>生产数量</th>
+              <th>预损数量</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ textValue(workOrder?.printing_type_display || workOrder?.printing_type) }}</td>
+              <td>{{ formatColorList(workOrder?.printing_cmyk_colors) }}</td>
+              <td>{{ formatColorList(workOrder?.printing_other_colors) }}</td>
+              <td>{{ quantityWithUnit(workOrder?.production_quantity ?? workOrder?.quantity ?? displayQuantity, '车头') }}</td>
+              <td>{{ quantityWithUnit(workOrder?.defective_quantity, '车头') }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
 
       <section class="print-section">
-        <div class="section-title">四、图稿与板材</div>
+        <table class="print-table product-table">
+          <thead>
+            <tr>
+              <th class="col-index">序号</th>
+              <th class="product-name-col">产品名称</th>
+              <th class="product-spec-col">产品规格</th>
+              <th class="product-quantity-col">数量</th>
+              <th class="product-imposition-col">拼板数</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(product, index) in visibleProducts"
+              :key="product.id || index"
+            >
+              <td class="text-center">{{ index + 1 }}</td>
+              <td>{{ textValue(product.product_name || product.product_detail?.name) }}</td>
+              <td>{{ textValue(product.specification || product.product_detail?.specification) }}</td>
+              <td class="text-center">{{ productQuantityText(product) }}</td>
+              <td class="text-center">{{ textValue(product.imposition_quantity) }}</td>
+            </tr>
+            <tr
+              v-for="index in productBlankRows"
+              :key="`product-blank-${index}`"
+            >
+              <td class="text-center">{{ visibleProducts.length + index }}</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colspan="5" class="product-more">
+                <span v-if="hiddenProductCount > 0">
+                  以上仅显示前 3 个产品，其他还有 {{ hiddenProductCount }} 个产品。
+                </span>
+                <span v-else class="fixed-placeholder"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="print-section">
         <table class="print-table plate-table">
           <thead>
             <tr>
@@ -169,25 +156,33 @@
       </section>
 
       <section class="print-section process-section">
-        <div class="section-title">五、工序 / 施工内容</div>
         <div class="process-grid">
           <label
-            v-for="(process, index) in fixedProcesses"
-            :key="process.key"
+            v-for="(process, index) in visibleProcessItems"
+            :key="process.id || process.key || index"
             class="process-item"
           >
-            <span class="checkbox-mark">{{ hasProcess(process) ? '☑' : '☐' }}</span>
+            <span class="checkbox-mark">☑</span>
             <span>{{ index + 1 }}. {{ process.label }}</span>
+          </label>
+          <label
+            v-for="index in processBlankCells"
+            :key="`process-blank-${index}`"
+            class="process-item process-item-blank"
+          >
+            <span class="checkbox-mark">☐</span>
+            <span></span>
           </label>
         </div>
         <div class="process-note">
           <span>其他说明：</span>
-          <span class="note-line"></span>
+          <span class="note-line">
+            <span v-if="hiddenProcessCount > 0">以上仅显示前 {{ processSlots }} 道工序，其他还有 {{ hiddenProcessCount }} 道工序。</span>
+          </span>
         </div>
       </section>
 
       <section class="print-section material-section">
-        <div class="section-title">六、物料信息</div>
         <table class="print-table material-table">
           <thead>
             <tr>
@@ -196,10 +191,6 @@
               <th>规格/尺寸</th>
               <th>用量</th>
               <th>是否开料</th>
-              <th>采购状态</th>
-              <th>采购日期</th>
-              <th>回料日期</th>
-              <th>开料日期</th>
               <th>备注</th>
             </tr>
           </thead>
@@ -213,10 +204,6 @@
               <td>{{ textValue(material.material_size) }}</td>
               <td>{{ textValue(material.material_usage || material.quantity) }}</td>
               <td class="text-center">{{ material.need_cutting ? '是' : '否' }}</td>
-              <td class="text-center">{{ textValue(material.purchase_status_display || material.purchase_status) }}</td>
-              <td class="text-center">{{ formatDate(material.purchase_date) }}</td>
-              <td class="text-center">{{ formatDate(material.received_date) }}</td>
-              <td class="text-center">{{ formatDate(material.cut_date) }}</td>
               <td>{{ textValue(material.notes, '') }}</td>
             </tr>
             <tr
@@ -229,17 +216,12 @@
               <td></td>
               <td></td>
               <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
             </tr>
           </tbody>
         </table>
       </section>
 
       <section class="print-section approval-section">
-        <div class="section-title">七、审批信息</div>
         <table class="print-table info-table">
           <tbody>
             <tr>
@@ -311,35 +293,9 @@ const props = defineProps({
   companyName: { type: String, default: '' }
 })
 
-const fixedProcesses = [
-  { key: 'CTP', label: 'CTP制版', aliases: ['CTP', '制版', 'CTP制版'] },
-  { key: 'CUT', label: '开料', aliases: ['CUT', '开料'] },
-  { key: 'PRT', label: '印刷', aliases: ['PRT', '印刷'] },
-  { key: 'VAN', label: '过油', aliases: ['VAN', 'OIL', '过油'] },
-  { key: 'LAM_G', label: '覆光膜', aliases: ['LAM_G', 'CFM', '覆光膜'] },
-  { key: 'LAM_M', label: '覆哑膜', aliases: ['LAM_M', 'CFMM', '覆哑膜'] },
-  { key: 'UV', label: 'UV', aliases: ['UV'] },
-  { key: 'FOIL_G', label: '烫金', aliases: ['FOIL_G', '烫金'] },
-  { key: 'FOIL_S', label: '烫银', aliases: ['FOIL_S', '烫银'] },
-  { key: 'EMB', label: '压凸', aliases: ['EMB', '压凸'] },
-  { key: 'TEX', label: '压纹', aliases: ['TEX', 'BEM', '起鼓', '压纹'] },
-  { key: 'SCORE', label: '压线', aliases: ['SCORE', 'VAMP', '压线'] },
-  { key: 'DIE', label: '模切', aliases: ['DIE', '模切'] },
-  { key: 'TRIM', label: '切成品', aliases: ['TRIM', '切成品'] },
-  { key: 'LAM_B', label: '对裱', aliases: ['LAM_B', '对裱'] },
-  { key: 'MOUNT', label: '裱坑', aliases: ['MOUNT', 'PASTE', '裱坑'] },
-  { key: 'GLUE', label: '粘胶', aliases: ['GLUE', 'GLUING', '粘胶'] },
-  { key: 'BOX', label: '粘盒', aliases: ['BOX', '糊盒', '粘盒'] },
-  { key: 'WINDOW', label: '粘窗口', aliases: ['WINDOW', '验窗', '粘窗口'] },
-  { key: 'STAPLE', label: '打钉', aliases: ['STAPLE', 'NAILING', '打钉'] },
-  { key: 'PACK', label: '包装', aliases: ['PACK', '包装'] },
-  { key: 'SPLIT_CUT', label: '分切', aliases: ['分切'] },
-  { key: 'SLITTING', label: '分条', aliases: ['分条'] },
-  { key: 'OTHER', label: '其他', aliases: ['其他'] }
-]
-
 const productRows = 3
-const materialRows = 10
+const materialRows = 8
+const processSlots = 12
 
 const handlePrint = () => window.print()
 
@@ -393,6 +349,36 @@ const productBlankRows = computed(() => Math.max(productRows - visibleProducts.v
 const visibleMaterials = computed(() => asArray(props.materials).slice(0, materialRows))
 const materialBlankRows = computed(() => Math.max(materialRows - visibleMaterials.value.length, 0))
 
+const actualProcessItems = computed(() =>
+  asArray(props.processes)
+    .map((process: any, index: number) => ({
+      id: process.id,
+      key: process.process_code || process.code || process.id || index,
+      sequence: Number(process.sequence ?? process.sort_order ?? process.order ?? index + 1),
+      label: textValue(
+        process.process_name ||
+          process.name ||
+          process.process_detail?.name ||
+          process.process?.name ||
+          process.process_code ||
+          process.code,
+        ''
+      )
+    }))
+    .filter((process: any) => process.label)
+    .sort((a: any, b: any) => a.sequence - b.sequence)
+)
+
+const visibleProcessItems = computed(() => actualProcessItems.value.slice(0, processSlots))
+const hiddenProcessCount = computed(() => Math.max(actualProcessItems.value.length - processSlots, 0))
+const processBlankCells = computed(() => Math.max(processSlots - visibleProcessItems.value.length, 0))
+
+const productQuantityText = (product: any) => {
+  const quantity = textValue(product?.quantity, '')
+  const unit = textValue(product?.unit || product?.product_detail?.unit, '')
+  return [quantity, unit].filter(Boolean).join(' ') || '-'
+}
+
 const printableCompanyName = computed(() =>
   textValue(props.workOrder?.company_name || props.companyName, '')
 )
@@ -416,25 +402,6 @@ const businessPersonName = computed(() =>
   )
 )
 
-const normalizedProcessKeys = computed(() => {
-  const keys = new Set<string>()
-  asArray(props.processes).forEach((process: any) => {
-    ;[
-      process.process_code,
-      process.process_name,
-      process.name,
-      process.code
-    ].forEach((value: any) => {
-      if (value !== null && value !== undefined && value !== '') {
-        keys.add(String(value).trim().toLowerCase())
-      }
-    })
-  })
-  return keys
-})
-
-const hasProcess = (process: any) =>
-  process.aliases.some((alias: string) => normalizedProcessKeys.value.has(alias.trim().toLowerCase()))
 </script>
 
 <style scoped>
@@ -461,7 +428,7 @@ const hasProcess = (process: any) =>
   display: flex;
   flex-direction: column;
   font-family: "SimSun", "Songti SC", "Noto Serif CJK SC", serif;
-  font-size: 9.4px;
+  font-size: 10.6px;
   height: 297mm;
   line-height: 1.28;
   margin: 0 auto;
@@ -474,7 +441,7 @@ const hasProcess = (process: any) =>
   align-items: start;
   display: grid;
   grid-template-columns: 1fr 58mm;
-  margin-bottom: 2.2mm;
+  margin-bottom: 3mm;
 }
 
 .print-title-block {
@@ -483,7 +450,7 @@ const hasProcess = (process: any) =>
 }
 
 .print-title-block h1 {
-  font-size: 25px;
+  font-size: 27px;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1.15;
@@ -491,7 +458,7 @@ const hasProcess = (process: any) =>
 }
 
 .print-title-block h2 {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: 0;
   margin: 3mm 0 0;
@@ -499,7 +466,7 @@ const hasProcess = (process: any) =>
 
 .top-meta {
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 12px;
   width: 100%;
 }
 
@@ -507,7 +474,7 @@ const hasProcess = (process: any) =>
 .top-meta td {
   border: 0;
   font-weight: 700;
-  padding: 1.1mm 0;
+  padding: 1.35mm 0;
   text-align: left;
   white-space: nowrap;
 }
@@ -518,10 +485,10 @@ const hasProcess = (process: any) =>
 
 .date-strip {
   display: grid;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   grid-template-columns: 1fr 1fr 1fr;
-  margin-bottom: 2.4mm;
+  margin-bottom: 3mm;
 }
 
 .date-strip span {
@@ -532,21 +499,13 @@ const hasProcess = (process: any) =>
 .date-line {
   border-bottom: 1px solid #111;
   display: inline-block;
-  min-height: 4mm;
+  min-height: 4.8mm;
   min-width: 28mm;
   text-align: center;
 }
 
 .print-section {
-  margin-top: 2.4mm;
-}
-
-.section-title {
-  border: 1px solid #111;
-  border-bottom: 0;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 1.2mm 2.4mm;
+  margin-top: 3mm;
 }
 
 .print-table {
@@ -560,7 +519,7 @@ const hasProcess = (process: any) =>
   border: 1px solid #111;
   color: #111;
   overflow: hidden;
-  padding: 1.35mm 1.6mm;
+  padding: 1.75mm 1.9mm;
   text-overflow: ellipsis;
   vertical-align: middle;
 }
@@ -575,17 +534,13 @@ const hasProcess = (process: any) =>
 }
 
 .info-table td {
-  height: 6.2mm;
-}
-
-.two-column {
-  display: grid;
-  gap: 3mm;
-  grid-template-columns: 1.1fr 1fr;
+  height: 8mm;
 }
 
 .product-table th,
 .product-table td,
+.print-info-grid th,
+.print-info-grid td,
 .material-table th,
 .material-table td,
 .plate-table th,
@@ -594,12 +549,28 @@ const hasProcess = (process: any) =>
 }
 
 .product-table tbody td {
-  height: 6.1mm;
+  height: 8mm;
+}
+
+.product-table .product-name-col {
+  width: 36%;
+}
+
+.product-table .product-spec-col {
+  width: 36%;
+}
+
+.product-table .product-quantity-col {
+  width: 14%;
+}
+
+.product-table .product-imposition-col {
+  width: 10%;
 }
 
 .product-table .product-more {
   font-weight: 700;
-  height: 5.5mm;
+  height: 7mm;
   text-align: left;
 }
 
@@ -608,21 +579,26 @@ const hasProcess = (process: any) =>
   height: 3mm;
 }
 
-.print-info-table th {
-  width: 35mm;
+.print-info-grid {
+  font-size: 10.6px;
+}
+
+.print-info-grid th,
+.print-info-grid td {
+  height: 8mm;
 }
 
 .plate-table td {
-  height: 9mm;
-  font-size: 10px;
+  height: 11mm;
+  font-size: 11px;
 }
 
 .plate-note {
   border: 1px solid #111;
   border-top: 0;
-  font-size: 10px;
-  height: 6mm;
-  padding: 1.2mm 2.4mm;
+  font-size: 11px;
+  height: 7mm;
+  padding: 1.55mm 2.4mm;
 }
 
 .process-grid {
@@ -637,16 +613,16 @@ const hasProcess = (process: any) =>
   border-bottom: 1px solid #111;
   border-right: 1px solid #111;
   display: flex;
-  font-size: 10px;
+  font-size: 11px;
   gap: 1.5mm;
-  height: 6.1mm;
+  height: 7mm;
   padding: 0 3mm;
   white-space: nowrap;
 }
 
 .checkbox-mark {
   font-family: "SimSun", serif;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
 }
 
@@ -655,9 +631,9 @@ const hasProcess = (process: any) =>
   border: 1px solid #111;
   border-top: 0;
   display: flex;
-  font-size: 10px;
+  font-size: 11px;
   gap: 3mm;
-  height: 6mm;
+  height: 7mm;
   padding: 0 3mm;
 }
 
@@ -668,13 +644,13 @@ const hasProcess = (process: any) =>
 }
 
 .material-table {
-  font-size: 8.5px;
+  font-size: 10.2px;
 }
 
 .material-table th,
 .material-table td {
-  height: 5.6mm;
-  padding: 0.85mm 1mm;
+  height: 7.2mm;
+  padding: 1.1mm 1.25mm;
 }
 
 .material-table .col-index,
@@ -691,14 +667,14 @@ const hasProcess = (process: any) =>
   border-top: 1px solid #111;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  margin-top: 2.4mm;
+  margin-top: 3mm;
 }
 
 .signature-cell {
   border-bottom: 1px solid #111;
   border-right: 1px solid #111;
-  font-size: 10px;
-  height: 18mm;
+  font-size: 11px;
+  height: 19mm;
   padding: 2mm 4mm 1.2mm;
 }
 
@@ -718,7 +694,7 @@ const hasProcess = (process: any) =>
 }
 
 .print-footer {
-  font-size: 10px;
+  font-size: 11px;
   margin-top: auto;
   padding: 2.2mm 2mm 0;
 }
@@ -728,7 +704,7 @@ const hasProcess = (process: any) =>
 }
 
 .page-number {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.2;
   margin-top: 1.4mm;
   text-align: center;
