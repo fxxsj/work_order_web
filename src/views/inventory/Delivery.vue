@@ -189,18 +189,6 @@
       :loading="receiving"
       @confirm="handleConfirmReceive"
     />
-    <DeliveryFormDialog
-      v-model:visible="formDialogVisible"
-      :is-edit="showEditModal"
-      :submitting="submitting"
-      :form="form"
-      :customer-list="customerList"
-      :sales-order-list="availableSalesOrderList"
-      :product-list="productList"
-      @submit="handleSubmit"
-      @sales-order-change="handleSalesOrderChange"
-      @customer-change="handleCustomerChange"
-    />
 
     <ConfirmDialog
       :show="showShipDialog"
@@ -230,9 +218,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
-import { deliveryOrderAPI, salesOrderAPI, productAPI } from '@/api/modules'
+import { deliveryOrderAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
@@ -241,36 +230,24 @@ import type { Column, RowAction } from '@/components/common/types'
 import { DeliveryStats } from '@/components/inventory'
 import DeliveryDetailDialog from './components/DeliveryDetailDialog.vue'
 import DeliveryReceiveDialog from './components/DeliveryReceiveDialog.vue'
-import DeliveryFormDialog from './components/DeliveryFormDialog.vue'
 
+const router = useRouter()
 const { canCreate, canEdit, canDelete } = useCrudPermission('deliveryorder')
 
 const statsLoading = ref(false)
-const submitting = ref(false)
 const receiving = ref(false)
 const shipping = ref(false)
 const deleting = ref(false)
 const customerList = ref<any[]>([])
-const salesOrderList = ref<any[]>([])
-const productList = ref<any[]>([])
 const currentDelivery = ref<any>(null)
 const stats = ref({})
 
 // Dialog states
 const detailDialogVisible = ref(false)
-const showCreateModal = ref(false)
-const showEditModal = ref(false)
 const receiveDialogVisible = ref(false)
 const showDeleteDialog = ref(false)
 const showShipDialog = ref(false)
 const selectedRowAction = ref<any>(null)
-
-const formDialogVisible = computed({
-  get: () => showCreateModal.value || showEditModal.value,
-  set: (visible: boolean) => {
-    if (!visible) closeFormDialog()
-  }
-})
 
 const customerOptions = computed(() => customerList.value.map((c: any) => ({ value: c.id, label: c.name })))
 const statusOptions = [
@@ -286,39 +263,10 @@ const todoOptions = [
   { value: 'pending_invoice', label: '待开票' },
   { value: 'rejected_followup', label: '拒收待处理' }
 ]
-const getFormInitialValues = () => ({ id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, package_count: 1, package_weight: '', notes: '', items_data: [] })
-const form = reactive(getFormInitialValues())
-const deliveryEligibleSalesOrderStatuses = new Set(['approved', 'in_production', 'completed'])
-
-const normalizeId = (value: any) => {
-  if (value && typeof value === 'object') return normalizeId(value.id)
-  if (value === null || value === undefined || value === '') return null
-  const numberValue = Number(value)
-  return Number.isFinite(numberValue) ? numberValue : value
-}
-const sameId = (left: any, right: any) => {
-  const leftId = normalizeId(left)
-  const rightId = normalizeId(right)
-  return leftId !== null && rightId !== null && String(leftId) === String(rightId)
-}
-const getCustomerId = (record: any) => normalizeId(record?.customer_id ?? record?.customer?.id ?? record?.customer)
-const getSalesOrderId = (record: any) => normalizeId(record?.sales_order_id ?? record?.sales_order?.id ?? record?.sales_order)
-
-const availableSalesOrderList = computed(() => {
-  const selectedCustomerId = normalizeId(form.customer)
-  const selectedSalesOrderId = normalizeId(form.sales_order)
-  return salesOrderList.value.filter((order: any) => {
-    const isCurrentOrder = selectedSalesOrderId !== null && sameId(order.id, selectedSalesOrderId)
-    const statusAllowed = deliveryEligibleSalesOrderStatuses.has(order.status) || isCurrentOrder
-    const customerMatched = !selectedCustomerId || sameId(getCustomerId(order), selectedCustomerId)
-    return statusAllowed && customerMatched
-  })
-})
-
 const columns: Column[] = [
   { key: 'order_number', label: '发货单号', width: 144, sortable: true },
   { key: 'customer_name', label: '客户名称', width: 144, sortable: true },
-  { key: 'sales_order_number', label: '销售订单', width: 144, sortable: true },
+  { key: 'sales_order_number', label: '客户订单', width: 144, sortable: true },
   { key: 'items_count', label: '明细数', width: 80 },
   { key: 'total_quantity', label: '发货数量', width: 96 },
   { key: 'logistics_company', label: '物流公司', width: 112, sortable: true },
@@ -380,7 +328,6 @@ const handleSort = (key: string, order: 'asc' | 'desc') => {
   currentPage.value = 1
   reloadData()
 }
-const resetForm = () => Object.assign(form, getFormInitialValues())
 
 const fetchStats = async () => { 
   statsLoading.value = true
@@ -408,77 +355,14 @@ const fetchCustomers = async () => {
   } catch (error: any) {} 
 }
 
-const fetchSalesOrders = async () => { 
-  try { 
-    const response: any = await salesOrderAPI.getList({ page_size: 50 })
-    salesOrderList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
-  } catch (error: any) {} 
-}
-
-const fetchProducts = async () => { 
-  try { 
-    const response: any = await productAPI.getList({ page_size: 50 })
-    productList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
-  } catch (error: any) {} 
-}
-
 const handleView = (row: any) => { currentDelivery.value = row; detailDialogVisible.value = true }
 const handleCreate = () => {
   if (!canCreate.value) return
-  currentDelivery.value = null
-  showEditModal.value = false
-  resetForm()
-  showCreateModal.value = true
+  router.push('/inventory/delivery/create')
 }
 const handleEdit = (row: any) => {
   if (!canEdit.value) return
-  loadDeliveryForEdit(row)
-}
-
-const mapDeliveryItemToForm = (item: any) => ({
-  product: normalizeId(item.product_id ?? item.product?.id ?? item.product),
-  sales_order_item: normalizeId(item.sales_order_item_id ?? item.sales_order_item?.id ?? item.sales_order_item),
-  quantity: Number(item.quantity || 0),
-  unit: item.unit || '件',
-  unit_price: Number(item.unit_price || 0),
-  stock_batch: item.stock_batch || '',
-  notes: item.notes || ''
-})
-
-const mapDeliveryToForm = (delivery: any) => ({
-  id: delivery.id ?? null,
-  sales_order: getSalesOrderId(delivery),
-  customer: getCustomerId(delivery),
-  delivery_date: delivery.delivery_date || '',
-  receiver_name: delivery.receiver_name || '',
-  receiver_phone: delivery.receiver_phone || '',
-  delivery_address: delivery.delivery_address || '',
-  logistics_company: delivery.logistics_company || '',
-  tracking_number: delivery.tracking_number || '',
-  freight: Number(delivery.freight || 0),
-  package_count: Number(delivery.package_count || 1),
-  package_weight: delivery.package_weight ?? '',
-  notes: delivery.notes || '',
-  items_data: (delivery.items || []).map(mapDeliveryItemToForm)
-})
-
-const loadDeliveryForEdit = async (row: any) => {
-  try {
-    const detail: any = await deliveryOrderAPI.getDetail(row.id)
-    currentDelivery.value = detail
-    Object.assign(form, getFormInitialValues(), mapDeliveryToForm(detail))
-    showCreateModal.value = false
-    showEditModal.value = true
-  } catch (error: any) {
-    ErrorHandler.showMessage(error, '加载发货单失败')
-  }
-}
-
-const closeFormDialog = () => {
-  showCreateModal.value = false
-  showEditModal.value = false
-  currentDelivery.value = null
-  resetForm()
+  router.push(`/inventory/delivery/${row.id}/edit`)
 }
 
 const confirmShip = (row: any) => {
@@ -563,93 +447,6 @@ const cancelDelete = () => {
   selectedRowAction.value = null
 }
 
-const handleSubmit = async (data: any) => { 
-  submitting.value = true
-  try { 
-    if (showEditModal.value) { 
-      await deliveryOrderAPI.update(currentDelivery.value.id, data)
-      useUIStore().showSuccess('更新成功') 
-    } else { 
-      await deliveryOrderAPI.create(data)
-      useUIStore().showSuccess('创建成功') 
-    } 
-    closeFormDialog()
-    loadData()
-    fetchStats() 
-  } catch (error: any) { 
-    ErrorHandler.showMessage(error, showEditModal.value ? '更新失败' : '创建失败') 
-  } finally { 
-    submitting.value = false 
-  } 
-}
-
-const pickFirstText = (...values: any[]) => values.find(value => typeof value === 'string' && value.trim())?.trim() || ''
-
-const prefillReceiverFromCustomer = (customerId: any) => {
-  const customer = customerList.value.find((item: any) => sameId(item.id, customerId))
-  if (!customer) return
-  if (!form.receiver_name) form.receiver_name = pickFirstText(customer.contact_person, customer.name)
-  if (!form.receiver_phone) form.receiver_phone = pickFirstText(customer.phone)
-  if (!form.delivery_address) form.delivery_address = pickFirstText(customer.address)
-}
-
-const mapSalesOrderItemToDeliveryItem = (item: any) => {
-  const quantity = Number(item.quantity || 0)
-  const deliveredQuantity = Number(item.delivered_quantity || 0)
-  const remainingQuantity = Math.max(quantity - deliveredQuantity, 0)
-  if (remainingQuantity <= 0) return null
-  return {
-    product: normalizeId(item.product_id ?? item.product?.id ?? item.product),
-    sales_order_item: normalizeId(item.id),
-    quantity: remainingQuantity,
-    unit: item.unit || '件',
-    unit_price: Number(item.unit_price || 0),
-    stock_batch: '',
-    notes: ''
-  }
-}
-
-const applySalesOrderToForm = (salesOrder: any) => {
-  const customerId = getCustomerId(salesOrder)
-  if (customerId) form.customer = customerId
-  form.receiver_name = pickFirstText(salesOrder.contact_person, salesOrder.customer_contact, form.receiver_name)
-  form.receiver_phone = pickFirstText(salesOrder.contact_phone, salesOrder.customer_phone, form.receiver_phone)
-  form.delivery_address = pickFirstText(salesOrder.shipping_address, salesOrder.customer_address, form.delivery_address)
-  prefillReceiverFromCustomer(form.customer)
-}
-
-const handleSalesOrderChange = async (orderId: any) => {
-  form.sales_order = normalizeId(orderId)
-  if (!form.sales_order) {
-    form.items_data = []
-    return
-  }
-
-  const listOrder = salesOrderList.value.find((item: any) => sameId(item.id, form.sales_order))
-  if (listOrder) applySalesOrderToForm(listOrder)
-
-  try {
-    const detail: any = await salesOrderAPI.getDetail(form.sales_order)
-    applySalesOrderToForm(detail)
-    const items = (detail.items || [])
-      .map(mapSalesOrderItemToDeliveryItem)
-      .filter(Boolean)
-    form.items_data = items
-  } catch (error: any) {
-    ErrorHandler.showMessage(error, '加载销售订单明细失败')
-  }
-}
-
-const handleCustomerChange = (customerId: any) => {
-  form.customer = normalizeId(customerId)
-  prefillReceiverFromCustomer(form.customer)
-  const selectedSalesOrder = salesOrderList.value.find((item: any) => sameId(item.id, form.sales_order))
-  if (selectedSalesOrder && !sameId(getCustomerId(selectedSalesOrder), form.customer)) {
-    form.sales_order = null
-    form.items_data = []
-  }
-}
-
 const getRowActions = (row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
   { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value && row.status === 'pending' },
@@ -674,5 +471,5 @@ const formatAmount = (value: unknown) => Number(value || 0).toLocaleString(undef
   maximumFractionDigits: 2
 })
 
-onMounted(() => { reloadData(); fetchCustomers(); fetchSalesOrders(); fetchProducts() })
+onMounted(() => { reloadData(); fetchCustomers() })
 </script>

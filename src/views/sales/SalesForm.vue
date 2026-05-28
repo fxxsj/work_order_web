@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="pb-32 sm:pb-24">
     <div class="card">
       <div class="card-body space-y-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -136,19 +136,23 @@
         />
       </div>
 
-      <div class="card-footer flex flex-col gap-3 sm:flex-row sm:justify-end">
+    </div>
+
+    <div class="fixed bottom-0 left-4 right-4 z-20 rounded-t-xl border border-b-0 border-gray-100 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-dark-700 dark:bg-dark-900/95 md:left-6 md:right-6 lg:left-[calc(16rem+2rem)] lg:right-8">
+      <div class="flex flex-row gap-3 sm:justify-end">
         <button
-          class="btn btn-secondary"
+          class="btn btn-secondary btn-icon shrink-0"
+          aria-label="返回"
+          title="返回"
           @click="goBack"
         >
           <Icon
             name="arrowLeft"
             size="md"
           />
-          取消
         </button>
         <button
-          class="btn btn-primary"
+          class="btn btn-primary min-w-0 flex-1 sm:flex-none"
           :disabled="submitting"
           @click="handleSubmit"
         >
@@ -165,6 +169,7 @@
         </button>
       </div>
     </div>
+
     <QuickCustomerCreateDialog
       v-model:visible="showQuickCustomerCreate"
       @created="handleCustomerCreated"

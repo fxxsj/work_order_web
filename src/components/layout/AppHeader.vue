@@ -42,23 +42,75 @@
         />
 
         <!-- Quick Actions -->
-        <select
-          class="select btn-ghost btn-icon hidden sm:inline-flex"
-          @change="handleQuickAction"
+        <div
+          ref="quickActionRef"
+          class="relative"
         >
-          <option value="">
-            新建
-          </option>
-          <option value="workorder">
-            施工单
-          </option>
-          <option value="sales">
-            客户订单
-          </option>
-          <option value="purchase">
-            采购订单
-          </option>
-        </select>
+          <button
+            class="inline-flex h-9 w-9 items-center justify-center gap-2 rounded-lg text-sm font-medium text-gray-600 transition-all hover:scale-105 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-800 sm:w-auto sm:px-3 sm:text-gray-700 sm:dark:text-dark-200"
+            :class="{ 'bg-gray-100 text-primary-600 dark:bg-dark-800 dark:text-primary-400': quickActionOpen }"
+            aria-label="新建"
+            :aria-expanded="quickActionOpen"
+            aria-haspopup="menu"
+            @click.stop="quickActionOpen = !quickActionOpen"
+          >
+            <Icon
+              name="plus"
+              size="sm"
+            />
+            <span class="hidden sm:inline">新建</span>
+            <Icon
+              name="chevronDown"
+              size="xs"
+              class="hidden text-gray-400 transition-transform dark:text-dark-400 sm:block"
+              :class="{ 'rotate-180': quickActionOpen }"
+            />
+          </button>
+
+          <transition name="dropdown">
+            <div
+              v-if="quickActionOpen"
+              class="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-72 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl shadow-gray-900/10 dark:border-dark-700 dark:bg-dark-900 dark:shadow-black/30"
+              role="menu"
+            >
+              <div class="border-b border-gray-100 px-4 py-3 dark:border-dark-800">
+                <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                  快速新建
+                </div>
+              </div>
+
+              <div class="p-2">
+                <div
+                  v-for="group in quickActionGroups"
+                  :key="group.label"
+                  class="[&:not(:last-child)]:mb-2"
+                >
+                  <div class="px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-dark-500">
+                    {{ group.label }}
+                  </div>
+                  <button
+                    v-for="item in group.items"
+                    :key="item.key"
+                    class="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-dark-800"
+                    role="menuitem"
+                    @click="handleQuickAction(item.path)"
+                  >
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-600 transition-colors group-hover:bg-primary-100 group-hover:text-primary-700 dark:bg-dark-800 dark:text-dark-300 dark:group-hover:bg-primary-900/30 dark:group-hover:text-primary-300">
+                      <Icon
+                        :name="item.icon"
+                        size="sm"
+                      />
+                    </span>
+                    <span class="min-w-0">
+                      <span class="block text-sm font-medium text-gray-900 dark:text-white">{{ item.label }}</span>
+                      <span class="block truncate text-xs text-gray-500 dark:text-dark-400">{{ item.description }}</span>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </transition>
+        </div>
 
         <!-- User Dropdown -->
         <div
@@ -219,8 +271,31 @@ const userStore = useUserStore()
 
 const dropdownOpen = ref(false)
 const dropdownRef = ref<any>(null)
+const quickActionOpen = ref(false)
+const quickActionRef = ref<any>(null)
 const logoutDialogVisible = ref(false)
 const logoutLoading = ref(false)
+const quickActionGroups = [
+  {
+    label: '生产',
+    items: [
+      { key: 'workorder', label: '施工单', description: '安排生产工序与物料', icon: 'clipboard' as const, path: '/workorders/create' }
+    ]
+  },
+  {
+    label: '订单',
+    items: [
+      { key: 'sales', label: '客户订单', description: '录入客户订单明细', icon: 'shoppingBag' as const, path: '/sales-orders/create' },
+      { key: 'purchase', label: '采购订单', description: '创建供应商采购需求', icon: 'shoppingCart' as const, path: '/purchase-orders/create' }
+    ]
+  },
+  {
+    label: '库存',
+    items: [
+      { key: 'delivery', label: '发货单', description: '登记客户订单发货', icon: 'truck' as const, path: '/inventory/delivery/create' }
+    ]
+  }
+]
 
 // Page title from route meta
 const pageTitle = computed(() => route.meta.title || '')
@@ -283,15 +358,9 @@ const handleNotificationClick = (notification: any) => {
   }
 }
 
-const handleQuickAction = (e: any) => {
-  const command = e.target.value
-  if (!command) return
-  switch (command) {
-    case 'workorder': router.push('/workorders/create'); break
-    case 'sales': router.push('/sales-orders/create'); break
-    case 'purchase': router.push('/purchase-orders/create'); break
-  }
-  e.target.value = '' // reset select
+const handleQuickAction = (path: string) => {
+  quickActionOpen.value = false
+  router.push(path)
 }
 
 const openAdmin = () => {
@@ -341,6 +410,9 @@ function closeDropdown() {
 function handleClickOutside(event: any) {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
     closeDropdown()
+  }
+  if (quickActionRef.value && !quickActionRef.value.contains(event.target)) {
+    quickActionOpen.value = false
   }
 }
 

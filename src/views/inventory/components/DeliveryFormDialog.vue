@@ -11,10 +11,10 @@
       </h4>
       <div class="flex flex-wrap gap-5">
         <div class="flex-1 min-w-[300px]">
-          <label class="input-label mb-1.5 block">销售订单</label>
+          <label class="input-label mb-1.5 block">客户订单</label>
           <Select
             v-model="localForm.sales_order"
-            placeholder="请选择销售订单"
+            placeholder="请选择客户订单"
             :searchable="true"
             :disabled="isEdit"
             :options="salesOrderOptions"
@@ -292,7 +292,7 @@ const validateItems = () => {
 }
 const handleSubmit = () => {
   if (!localForm.customer) { ErrorHandler.showWarning('请选择客户'); return }
-  if (!localForm.sales_order) { ErrorHandler.showWarning('请选择销售订单'); return }
+  if (!localForm.sales_order) { ErrorHandler.showWarning('请选择客户订单'); return }
   if (!localForm.receiver_name) { ErrorHandler.showWarning('请输入收货人'); return }
   if (!localForm.receiver_phone) { ErrorHandler.showWarning('请输入联系电话'); return }
   if (!/^1[3-9]\d{9}$/.test(localForm.receiver_phone)) { ErrorHandler.showWarning('请输入有效的手机号码'); return }

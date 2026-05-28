@@ -185,6 +185,18 @@ describe('Inventory Routes', () => {
     expect(route!.meta!.title).toBe('发货管理')
   })
 
+  it('should have delivery create route', () => {
+    const route = inventoryRoutes.find(r => r.name === 'DeliveryCreate')
+    expect(route).toBeDefined()
+    expect(route!.meta!.title).toBe('新建发货单')
+  })
+
+  it('should have delivery edit route', () => {
+    const route = inventoryRoutes.find(r => r.name === 'DeliveryEdit')
+    expect(route).toBeDefined()
+    expect(route!.meta!.title).toBe('编辑发货单')
+  })
+
   it('should have quality route', () => {
     const route = inventoryRoutes.find(r => r.name === 'QualityList')
     expect(route).toBeDefined()

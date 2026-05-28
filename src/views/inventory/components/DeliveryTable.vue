@@ -64,7 +64,7 @@ const emit = defineEmits(['view', 'edit', 'ship'])
 const columns: Column[] = [
   { key: 'order_number', label: '发货单号', width: 160 },
   { key: 'customer_name', label: '客户名称', width: 160 },
-  { key: 'sales_order_number', label: '销售订单', width: 160 },
+  { key: 'sales_order_number', label: '客户订单', width: 160 },
   { key: 'receiver_name', label: '收货人', width: 112 },
   { key: 'receiver_phone', label: '联系电话', width: 128 },
   { key: 'delivery_address', label: '送货地址' },
