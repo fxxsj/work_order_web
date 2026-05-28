@@ -96,7 +96,7 @@ class SystemNotificationAPI extends BaseAPI {
     if (config?.signal) {
       requestConfig.signal = config.signal
     }
-    return this.requestWithFallback(requestConfig)
+    return this.requestWithFallback(requestConfig).then(response => this._unwrap(response))
   }
 
   createAnnouncement(data: Record<string, unknown>) {
