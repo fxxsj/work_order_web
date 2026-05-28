@@ -51,6 +51,7 @@ declare module 'vue' {
     LoadingOverlay: typeof import('./components/common/LoadingOverlay.vue')['default']
     LoadingSpinner: typeof import('./components/common/LoadingSpinner.vue')['default']
     MaterialListEditor: typeof import('./components/workorder/MaterialListEditor.vue')['default']
+    MonthRangePicker: typeof import('./components/common/MonthRangePicker.vue')['default']
     MultiSelect: typeof import('./components/workorder/MultiSelect.vue')['default']
     NotificationCenter: typeof import('./components/NotificationCenter.vue')['default']
     OperatorTaskList: typeof import('./components/task/OperatorTaskList.vue')['default']

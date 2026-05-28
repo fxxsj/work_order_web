@@ -43,6 +43,7 @@ export { default as Tag } from './Tag.vue'
 export { default as Alert } from './Alert.vue'
 export { default as CircularProgress } from './CircularProgress.vue'
 export { default as DateRangePicker } from './DateRangePicker.vue'
+export { default as MonthRangePicker } from './MonthRangePicker.vue'
 export { default as StatusTag } from './StatusTag.vue'
 export { default as ImageViewer } from './ImageViewer.vue'
 

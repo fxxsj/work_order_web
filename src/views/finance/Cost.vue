@@ -15,25 +15,12 @@
             @search="searchAndRefreshStats"
             @clear="searchAndRefreshStats"
           />
-          <div class="flex w-full min-w-0 items-center gap-2 sm:w-auto">
-            <input
-              v-model="filters.period_start"
-              type="month"
-              class="input min-w-0 flex-1 sm:w-40"
-              aria-label="开始月份"
-              title="开始月份"
-              @change="searchAndRefreshStats"
-            >
-            <span class="text-sm text-gray-400 dark:text-dark-400">至</span>
-            <input
-              v-model="filters.period_end"
-              type="month"
-              class="input min-w-0 flex-1 sm:w-40"
-              aria-label="结束月份"
-              title="结束月份"
-              @change="searchAndRefreshStats"
-            >
-          </div>
+          <MonthRangePicker
+            v-model="periodRange"
+            class="w-full sm:w-64"
+            placeholder="选择成本期间"
+            @change="handlePeriodRangeChange"
+          />
         </div>
       </template>
 
@@ -327,7 +314,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import CostStats from './components/CostStats.vue'
-import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions, SearchInput } from '@/components/common'
+import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions, SearchInput, MonthRangePicker } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 
 const userStore = useUserStore()
@@ -406,6 +393,19 @@ const {
 })
 
 const canEdit = computed(() => userStore.hasPermission('workorder.change_productioncost'))
+const periodRange = computed<[string, string]>({
+  get: () => [filters.value.period_start || '', filters.value.period_end || ''],
+  set: ([start, end]) => {
+    filters.value.period_start = start
+    filters.value.period_end = end
+  }
+})
+
+const handlePeriodRangeChange = async ([start, end]: [string, string]) => {
+  filters.value.period_start = start
+  filters.value.period_end = end
+  await searchAndRefreshStats()
+}
 
 const fetchStats = async () => {
   statsLoading.value = true
