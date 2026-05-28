@@ -76,8 +76,31 @@ class SystemNotificationAPI extends BaseAPI {
     super('/system-notifications/', request)
   }
 
+  private requestWithFallback(config: Record<string, unknown>) {
+    return this.request(config as any).catch((error: any) => {
+      if (error?.response?.status !== 404) throw error
+      const url = String(config.url || '')
+      return this.request({
+        ...config,
+        url: url.replace('/system-notifications/', '/notification-admin/')
+      } as any)
+    })
+  }
+
+  getList(params?: Record<string, unknown>, config?: { signal?: AbortSignal }) {
+    const requestConfig: Record<string, unknown> = {
+      url: this.baseUrl,
+      method: 'get',
+      params
+    }
+    if (config?.signal) {
+      requestConfig.signal = config.signal
+    }
+    return this.requestWithFallback(requestConfig)
+  }
+
   createAnnouncement(data: Record<string, unknown>) {
-    return this.request({
+    return this.requestWithFallback({
       url: `${this.baseUrl}create_announcement/`,
       method: 'post',
       data
@@ -85,7 +108,7 @@ class SystemNotificationAPI extends BaseAPI {
   }
 
   sendUrgentAlert(data: Record<string, unknown>) {
-    return this.request({
+    return this.requestWithFallback({
       url: `${this.baseUrl}send_urgent_alert/`,
       method: 'post',
       data
@@ -93,7 +116,7 @@ class SystemNotificationAPI extends BaseAPI {
   }
 
   revoke(id: number | string) {
-    return this.request({
+    return this.requestWithFallback({
       url: `${this.baseUrl}${id}/revoke/`,
       method: 'delete'
     })
