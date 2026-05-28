@@ -181,7 +181,7 @@
           <img
             v-for="img in images"
             :key="img.id"
-            :src="img.image"
+            :src="resolveMediaUrl(img.image)"
             class="w-24 h-24 rounded-lg object-cover cursor-pointer hover:opacity-80 transition"
             @click="previewImage(img.image)"
           >
@@ -212,9 +212,8 @@
   </BaseDialog>
 
   <ImageViewer
-    v-if="previewSrc"
-    :src="previewSrc"
-    @close="previewSrc = undefined"
+    v-model:visible="previewVisible"
+    :src="previewSrc || ''"
   />
 </template>
 
@@ -222,6 +221,7 @@
 import { ref, computed, watch } from 'vue'
 import { BaseDialog, DescriptionGrid, DescriptionItem, Tag } from '@/components/common'
 import ImageViewer from '@/components/common/ImageViewer.vue'
+import { resolveMediaUrl } from '@/utils/mediaUrl'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -233,6 +233,7 @@ const emit = defineEmits(['update:visible'])
 
 const isOpen = ref(false)
 const previewSrc = ref<string | undefined>(undefined)
+const previewVisible = ref(false)
 
 watch(() => props.visible, (val) => { isOpen.value = val }, { immediate: true })
 
@@ -256,10 +257,14 @@ const getProcessName = (id: number) => {
   return found ? found.name : `工序 #${id}`
 }
 
-const previewImage = (src: string) => { previewSrc.value = src }
+const previewImage = (src: string) => {
+  previewSrc.value = resolveMediaUrl(src)
+  previewVisible.value = true
+}
 
 const handleClose = () => {
   previewSrc.value = undefined
+  previewVisible.value = false
   emit('update:visible', false)
 }
 </script>

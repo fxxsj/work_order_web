@@ -605,6 +605,7 @@ const handleSubmit = async () => {
   }
 
   const payload = {
+    id: showEditModal.value ? selectedRow.value?.id : undefined,
     ...formData,
     code,
     name,

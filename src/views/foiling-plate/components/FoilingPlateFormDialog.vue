@@ -10,6 +10,7 @@
     :form-initial-values="FORM_INITIAL"
     :extra-fields="extraFieldsConfig"
     :rules="rules"
+    :image-api="foilingPlateAPI"
     @submit="handleSubmit"
   />
 </template>
@@ -17,6 +18,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import PlateFormDialog from '@/views/components/PlateFormDialog.vue'
+import { foilingPlateAPI } from '@/api/modules'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },

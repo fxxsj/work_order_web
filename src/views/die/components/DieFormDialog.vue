@@ -11,6 +11,7 @@
     :form-initial-values="FORM_INITIAL_VALUES"
     :extra-fields="extraFieldsConfig"
     :rules="rules"
+    :image-api="dieAPI"
     quantity-column-label="拼版个数"
     :can-add-more="canAddMoreProducts"
     :product-list-hint-text="productListHint"
@@ -34,6 +35,7 @@
 import { ref, computed, watch } from 'vue'
 import PlateFormDialog from '@/views/components/PlateFormDialog.vue'
 import { ConfirmDialog } from '@/components/common'
+import { dieAPI } from '@/api/modules'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },

@@ -9,6 +9,7 @@
     code-prefix="EP"
     :form-initial-values="FORM_INITIAL"
     :rules="rules"
+    :image-api="embossingPlateAPI"
     @submit="handleSubmit"
   />
 </template>
@@ -16,6 +17,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import PlateFormDialog from '@/views/components/PlateFormDialog.vue'
+import { embossingPlateAPI } from '@/api/modules'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },

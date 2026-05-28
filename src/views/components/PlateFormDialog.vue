@@ -130,6 +130,22 @@
         :rows="3"
         placeholder="请输入备注信息"
       />
+
+      <template v-if="imageApi">
+        <SectionDivider :title="`${title}图片`" />
+        <ImageManager
+          :images="assetImages"
+          :resource-id="initialData?.id"
+          :api="imageApi"
+          :allow-pending="dialogType === 'create'"
+          :pending-reset-key="pendingResetKey"
+          :readonly="isConfirmed"
+          :disabled-reason="`已确认的${title}不允许修改图片`"
+          :empty-text="`暂无${title}图片`"
+          @changed="loadAssetImages"
+          @pending-change="files => pendingImages = files"
+        />
+      </template>
     </div>
     <template #footer>
       <div class="flex justify-end gap-3">
@@ -157,11 +173,19 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, TextArea, Select, InputNumber, SectionDivider, LineItemsTable } from '@/components/common'
+import type { PropType } from 'vue'
+import { Icon, Input, TextArea, Select, InputNumber, SectionDivider, LineItemsTable, ImageManager } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
+import { normalizeImageListResponse } from '@/utils/imageListResponse'
 import ProductSelector from '@/views/product/components/ProductSelector.vue'
 import QuickProductCreateDialog from '@/views/product/components/QuickProductCreateDialog.vue'
+
+interface ImageApi {
+  getImages: (id: number | string) => Promise<unknown>
+  uploadImage: (id: number | string, formData: FormData) => Promise<unknown>
+  deleteImage: (id: number | string, imageId: number | string) => Promise<unknown>
+}
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -184,7 +208,9 @@ const props = defineProps({
   /** Whether more products can be added (reactive computed from parent) */
   canAddMore: { type: Boolean, default: true },
   /** Hint text below the add-product button */
-  productListHintText: { type: String, default: '' }
+  productListHintText: { type: String, default: '' },
+  /** Optional image API with getImages/uploadImage/deleteImage */
+  imageApi: { type: Object as PropType<ImageApi | null>, default: null }
 })
 
 const emit = defineEmits(['submit', 'close', 'update:visible', 'field-change'])
@@ -194,6 +220,9 @@ const productItems = ref<any[]>([])
 const localProductList = ref<any[]>([])
 const showQuickProductCreate = ref(false)
 const pendingProductCreateIndex = ref<number | null>(null)
+const assetImages = ref<any[]>([])
+const pendingImages = ref<File[]>([])
+const pendingResetKey = ref(0)
 
 const form = reactive({ ...props.formInitialValues })
 
@@ -224,6 +253,19 @@ const productColumns: Column[] = [
 
 watch(() => props.visible, (val: any) => { if (val) initForm() })
 
+const loadAssetImages = async () => {
+  if (!props.imageApi || !props.initialData?.id) {
+    assetImages.value = []
+    return
+  }
+  try {
+    const response = await props.imageApi.getImages(props.initialData.id)
+    assetImages.value = normalizeImageListResponse(response)
+  } catch (_) {
+    assetImages.value = []
+  }
+}
+
 // Watch extra fields and emit change events
 watch(() => props.extraFields.map((f: any) => form[f.prop]).join('|'), () => {
   const extraData: Record<string, unknown> = {}
@@ -246,9 +288,13 @@ const initForm = () => {
       quantity: p.quantity,
       sort_order: p.sort_order || 0
     }))
+    loadAssetImages()
   } else {
     Object.assign(form, props.formInitialValues)
     productItems.value = []
+    assetImages.value = []
+    pendingImages.value = []
+    pendingResetKey.value += 1
   }
   nextTick(() => { formRef.value?.clearValidate() })
 }
@@ -256,6 +302,9 @@ const initForm = () => {
 const resetForm = () => {
   Object.assign(form, props.formInitialValues)
   productItems.value = []
+  assetImages.value = []
+  pendingImages.value = []
+  pendingResetKey.value += 1
   nextTick(() => { formRef.value?.clearValidate() })
 }
 
@@ -310,7 +359,7 @@ const handleSubmit = async () => {
     return
   }
 
-  const data = {
+  const data: Record<string, any> = {
     ...form,
     code,
     name,
@@ -325,7 +374,7 @@ const handleSubmit = async () => {
     .filter((item: any) => item.product)
     .map((item: any) => ({ product: item.product, quantity: item.quantity || 1 }))
 
-  emit('submit', data)
+  emit('submit', { ...data, pendingImages: [...pendingImages.value] })
 }
 
 const handleCancel = () => { emit('update:visible', false) }

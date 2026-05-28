@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Icon } from '@/components/common'
 
 const props = defineProps({
@@ -134,6 +134,14 @@ const imageStyle = computed(() => ({
   transform: `scale(${scale.value}) rotate(${rotation.value}deg)`,
   transition: 'transform 0.3s'
 }))
+
+watch(() => props.visible, (visible) => {
+  if (visible) {
+    currentIndex.value = 0
+    scale.value = 1
+    rotation.value = 0
+  }
+})
 
 const zoomIn = () => { scale.value = Math.min(scale.value + 0.2, 3) }
 const zoomOut = () => { scale.value = Math.max(scale.value - 0.2, 0.2) }

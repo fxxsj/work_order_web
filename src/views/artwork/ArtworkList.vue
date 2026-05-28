@@ -249,6 +249,7 @@ import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
 import ArtworkFormDialog from './components/ArtworkFormDialog.vue'
+import { uploadPendingImages } from '@/utils/pendingImageUpload'
 
 const sortKey = ref('code')
 const sortOrder = ref<'asc' | 'desc'>('desc')
@@ -415,12 +416,20 @@ const openEditModal = async (row: any) => {
 }
 
 const handleFormConfirm = async (formData: any) => {
+  const { pendingImages = [], ...payload } = formData
   submitting.value = true
   try {
     if (showEditModal.value && currentArtwork.value) {
-      await crud.update(currentArtwork.value.id, formData, '保存成功')
+      await crud.update(currentArtwork.value.id, payload, '保存成功')
     } else {
-      await crud.create(formData, '创建成功')
+      const created: any = await crud.create(payload, '创建成功')
+      if (created?.id && pendingImages.length > 0) {
+        try {
+          await uploadPendingImages(artworkAPI, created.id, pendingImages)
+        } catch (error: any) {
+          ErrorHandler.showMessage(error, '图稿已创建，部分图片上传失败，请进入编辑页重试')
+        }
+      }
     }
   } finally {
     submitting.value = false

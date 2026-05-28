@@ -17,8 +17,8 @@
           />
           <MonthRangePicker
             v-model="periodRange"
-            class="w-full sm:w-64"
-            placeholder="选择成本期间"
+            class="w-full sm:w-auto"
+            placeholder="选择时间范围"
             @change="handlePeriodRangeChange"
           />
         </div>
@@ -394,8 +394,8 @@ const {
 
 const canEdit = computed(() => userStore.hasPermission('workorder.change_productioncost'))
 const periodRange = computed<[string, string]>({
-  get: () => [filters.value.period_start || '', filters.value.period_end || ''],
-  set: ([start, end]) => {
+  get: (): [string, string] => [String(filters.value.period_start || ''), String(filters.value.period_end || '')],
+  set: ([start, end]: [string, string]) => {
     filters.value.period_start = start
     filters.value.period_end = end
   }

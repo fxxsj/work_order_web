@@ -43,6 +43,7 @@ declare module 'vue' {
     GlobalConfirm: typeof import('./components/common/GlobalConfirm.vue')['default']
     HelpTooltip: typeof import('./components/common/HelpTooltip.vue')['default']
     Icon: typeof import('./components/icons/Icon.vue')['default']
+    ImageManager: typeof import('./components/common/ImageManager.vue')['default']
     ImageViewer: typeof import('./components/common/ImageViewer.vue')['default']
     Input: typeof import('./components/common/Input.vue')['default']
     InputNumber: typeof import('./components/common/InputNumber.vue')['default']

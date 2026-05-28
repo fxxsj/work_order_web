@@ -131,58 +131,18 @@
         label="是否启用"
       />
 
-      <SectionDivider
-        v-if="dialogType === 'edit'"
-        title="图片管理"
-      />
-      <div v-if="dialogType === 'edit'">
-        <div
-          v-if="productImages.length > 0"
-          class="flex flex-wrap gap-3 mb-3"
-        >
-          <div
-            v-for="(img, idx) in productImages"
-            :key="img.id"
-            class="relative group"
-          >
-            <img
-              :src="img.image"
-              class="w-20 h-20 rounded-lg object-cover"
-            >
-            <button
-              type="button"
-              class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-danger-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-              @click="handleDeleteImage(img.id)"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-        <p
-          v-else
-          class="text-sm text-gray-400 mb-3"
-        >
-          暂无图片
-        </p>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            @click="handleUploadImage"
-          >
-            <Icon
-              name="upload"
-              class="mr-1 inline h-3 w-3"
-            />上传图片
-          </button>
-          <input
-            ref="imageInput"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            class="hidden"
-            @change="handleImageFileSelected"
-          >
-        </div>
+      <SectionDivider title="图片管理" />
+      <div>
+        <ImageManager
+          :images="productImages"
+          :resource-id="props.product?.id"
+          :api="productAPI"
+          :allow-pending="dialogType === 'create'"
+          :pending-reset-key="pendingResetKey"
+          empty-text="暂无产品图片"
+          @changed="loadProductImages"
+          @pending-change="files => pendingImages = files"
+        />
       </div>
     </div>
     <template #footer>
@@ -211,10 +171,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, InputNumber, Select, TextArea, Toggle, CheckboxGroup, SectionDivider, LineItemsTable } from '@/components/common'
+import { Icon, Input, InputNumber, Select, TextArea, Toggle, CheckboxGroup, SectionDivider, LineItemsTable, ImageManager } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
 import { productAPI } from '@/api/modules'
+import { normalizeImageListResponse } from '@/utils/imageListResponse'
 import MaterialSelector from '@/views/material/components/MaterialSelector.vue'
 import QuickMaterialCreateDialog from '@/views/material/components/QuickMaterialCreateDialog.vue'
 
@@ -236,7 +197,8 @@ const showQuickMaterialCreate = ref(false)
 const pendingMaterialCreateIndex = ref<number | null>(null)
 const isOpen = ref(false)
 const productImages = ref<any[]>([])
-const imageInput = ref<HTMLInputElement | null>(null)
+const pendingImages = ref<File[]>([])
+const pendingResetKey = ref(0)
 
 // Sync with parent visibility prop and init form when opening
 watch(() => props.visible, (val) => {
@@ -248,45 +210,15 @@ watch(() => props.visible, (val) => {
 }, { immediate: true })
 
 const loadProductImages = async () => {
-  if (props.dialogType !== 'edit' || !props.product?.id) return
+  if (props.dialogType !== 'edit' || !props.product?.id) {
+    productImages.value = []
+    return
+  }
   try {
-    const response: any = await productAPI.getImages(props.product.id)
-    const list = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
-    productImages.value = list
+    const response = await productAPI.getImages(props.product.id)
+    productImages.value = normalizeImageListResponse(response)
   } catch (_) {
     productImages.value = []
-  }
-}
-
-const handleUploadImage = () => { imageInput.value?.click() }
-
-const handleImageFileSelected = async (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file || !props.product?.id) return
-  const formData = new FormData()
-  formData.append('image', file)
-  formData.append('sort_order', String(productImages.value.length))
-  try {
-    await productAPI.uploadImage(props.product.id, formData)
-    useUIStore().showSuccess('图片上传成功')
-    await loadProductImages()
-  } catch (error: any) {
-    useUIStore().showError('图片上传失败')
-  } finally {
-    target.value = ''
-  }
-}
-
-const handleDeleteImage = async (imageId: number) => {
-  if (!props.product?.id) return
-  if (!confirm('确定要删除此图片吗？')) return
-  try {
-    await productAPI.deleteImage(props.product.id, imageId)
-    useUIStore().showSuccess('图片已删除')
-    productImages.value = productImages.value.filter((img) => img.id !== imageId)
-  } catch (error: any) {
-    useUIStore().showError('删除图片失败')
   }
 }
 
@@ -344,6 +276,9 @@ const initFormFromProduct = () => {
 const resetForm = () => {
   Object.assign(form, FORM_INITIAL)
   materialItems.value = []
+  productImages.value = []
+  pendingImages.value = []
+  pendingResetKey.value += 1
 }
 
 const handleProductTypeChange = (value: any) => { if (value === 'single') form.product_group = null }
@@ -373,7 +308,7 @@ const handleSubmit = () => {
   if (form.stock_quantity !== null && form.stock_quantity !== undefined && form.stock_quantity < 0) { useUIStore().showWarning('库存数量不能为负数'); return }
   if (form.min_stock_quantity !== null && form.min_stock_quantity !== undefined && form.min_stock_quantity < 0) { useUIStore().showWarning('最小库存不能为负数'); return }
   if (props.dialogType === 'edit' && form.min_stock_quantity > form.stock_quantity) { useUIStore().showWarning('最小库存不能大于库存数量'); return }
-  emit('confirm', { form: { ...form, code, name }, materialItems: [...materialItems.value] })
+  emit('confirm', { form: { ...form, code, name }, materialItems: [...materialItems.value], pendingImages: [...pendingImages.value] })
 }
 
 const handleClose = () => { resetForm(); emit('update:visible', false) }

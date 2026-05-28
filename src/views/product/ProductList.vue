@@ -185,6 +185,7 @@ import ProductDetailDialog from './components/ProductDetailDialog.vue'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
+import { uploadPendingImages } from '@/utils/pendingImageUpload'
 
 const columns: Column[] = [
   { key: 'code', label: '产品编码', sortable: true, class: 'w-28' },
@@ -363,7 +364,7 @@ const closeModals = () => {
 }
 
 const handleFormConfirm = async (payload: any) => {
-  const { form: formData, materialItems } = payload;
+  const { form: formData, materialItems, pendingImages = [] } = payload;
   formLoading.value = true
   try {
     let productId
@@ -378,6 +379,13 @@ const handleFormConfirm = async (payload: any) => {
       useUIStore().showSuccess('创建成功')
     }
     await saveProductMaterials(productId, materialItems)
+    if (!showEditModal.value && pendingImages.length > 0) {
+      try {
+        await uploadPendingImages(productAPI, productId, pendingImages)
+      } catch (error: any) {
+        ErrorHandler.showMessage(error, '产品已创建，部分图片上传失败，请进入编辑页重试')
+      }
+    }
     closeModals()
     await loadData()
   } catch (error: any) {

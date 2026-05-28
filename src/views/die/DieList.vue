@@ -196,6 +196,7 @@ import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
 import DieFormDialog from './components/DieFormDialog.vue'
+import { uploadPendingImages } from '@/utils/pendingImageUpload'
 
 const columns: Column[] = [
   { key: 'code', label: '刀模编码', sortable: true, class: 'w-36' },
@@ -284,12 +285,20 @@ const handleEdit = async (row: any) => {
 }
 
 const handleFormSubmit = async (data: any) => {
+  const { pendingImages = [], ...payload } = data
   submitting.value = true
   try {
     if (showEditModal.value && currentRow.value) {
-      await crud.update(currentRow.value.id, data, '保存成功')
+      await crud.update(currentRow.value.id, payload, '保存成功')
     } else {
-      await crud.create(data, '创建成功')
+      const created: any = await crud.create(payload, '创建成功')
+      if (created?.id && pendingImages.length > 0) {
+        try {
+          await uploadPendingImages(dieAPI, created.id, pendingImages)
+        } catch (error: any) {
+          ErrorHandler.showMessage(error, '刀模已创建，部分图片上传失败，请进入编辑页重试')
+        }
+      }
     }
   } finally {
     submitting.value = false

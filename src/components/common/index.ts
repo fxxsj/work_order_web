@@ -46,6 +46,7 @@ export { default as DateRangePicker } from './DateRangePicker.vue'
 export { default as MonthRangePicker } from './MonthRangePicker.vue'
 export { default as StatusTag } from './StatusTag.vue'
 export { default as ImageViewer } from './ImageViewer.vue'
+export { default as ImageManager } from './ImageManager.vue'
 
 // Legacy migration exports
 export { default as DataSelector } from './DataSelector.vue'

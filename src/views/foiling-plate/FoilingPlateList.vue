@@ -180,6 +180,7 @@ import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
 import FoilingPlateFormDialog from './components/FoilingPlateFormDialog.vue'
+import { uploadPendingImages } from '@/utils/pendingImageUpload'
 
 const columns: Column[] = [
   { key: 'code', label: '烫金版编码', sortable: true, class: 'w-36' },
@@ -274,12 +275,23 @@ const handleConfirmPlate = async () => {
 }
 
 const handleFormConfirm = async (data: any) => {
+  const { pendingImages = [], ...payload } = data
   formLoading.value = true
   try {
     if (dialogType.value === 'edit') {
-      await crud.update(currentFoilingPlate.value.id, data, '保存成功')
+      await crud.update(currentFoilingPlate.value.id, payload, '保存成功')
     } else {
-      await crud.create(data, '创建成功')
+      const created: any = await foilingPlateAPI.create(payload)
+      useUIStore().showSuccess('创建成功')
+      if (created?.id && pendingImages.length > 0) {
+        try {
+          await uploadPendingImages(foilingPlateAPI, created.id, pendingImages)
+        } catch (error: any) {
+          ErrorHandler.showMessage(error, '烫金版已创建，部分图片上传失败，请进入编辑页重试')
+        }
+      }
+      dialogVisible.value = false
+      await loadData()
     }
   } finally {
     formLoading.value = false

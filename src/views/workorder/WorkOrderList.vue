@@ -34,32 +34,18 @@
           class="w-full sm:w-36"
           @change="handleSearchDebounced"
         />
-        <Input
-          v-model="filters.order_date_after"
-          type="date"
-          label="下单起"
-          class="w-full sm:w-36"
+        <DateRangePicker
+          v-model="orderDateRange"
+          class="w-full sm:w-[300px]"
+          start-placeholder="下单起"
+          end-placeholder="下单止"
           @change="handleSearchDebounced"
         />
-        <Input
-          v-model="filters.order_date_before"
-          type="date"
-          label="下单止"
-          class="w-full sm:w-36"
-          @change="handleSearchDebounced"
-        />
-        <Input
-          v-model="filters.delivery_date_after"
-          type="date"
-          label="交货起"
-          class="w-full sm:w-36"
-          @change="handleSearchDebounced"
-        />
-        <Input
-          v-model="filters.delivery_date_before"
-          type="date"
-          label="交货止"
-          class="w-full sm:w-36"
+        <DateRangePicker
+          v-model="deliveryDateRange"
+          class="w-full sm:w-[300px]"
+          start-placeholder="交货起"
+          end-placeholder="交货止"
           @change="handleSearchDebounced"
         />
         <button
@@ -233,7 +219,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
-import { StatusTag, SearchInput, Select, Input, Icon, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
+import { StatusTag, SearchInput, Select, DateRangePicker, Icon, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { WorkOrderStatusChoices, PriorityChoices, ApprovalStatusChoices } from '@/constants'
 import { formatDate } from '@/utils/filter'
@@ -322,6 +308,22 @@ const columns: Column[] = [
 const statusOptions = computed(() => WorkOrderStatusChoices.map((c: any) => ({ value: c.value, label: c.label })))
 const priorityOptions = computed(() => PriorityChoices.map((c: any) => ({ value: c.value, label: c.label })))
 const approvalStatusOptions = computed(() => ApprovalStatusChoices.map((c: any) => ({ value: c.value, label: c.label })))
+
+const orderDateRange = computed<[string, string]>({
+  get: (): [string, string] => [String(filters.value.order_date_after || ''), String(filters.value.order_date_before || '')],
+  set: ([start, end]: [string, string]) => {
+    filters.value.order_date_after = start
+    filters.value.order_date_before = end
+  }
+})
+
+const deliveryDateRange = computed<[string, string]>({
+  get: (): [string, string] => [String(filters.value.delivery_date_after || ''), String(filters.value.delivery_date_before || '')],
+  set: ([start, end]: [string, string]) => {
+    filters.value.delivery_date_after = start
+    filters.value.delivery_date_before = end
+  }
+})
 
 const handleReset = () => {
   sortKey.value = 'created_at'

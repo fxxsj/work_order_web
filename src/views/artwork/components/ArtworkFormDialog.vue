@@ -151,6 +151,20 @@
         placeholder="请输入备注信息"
         class="w-full"
       />
+
+      <SectionDivider title="图稿图片" />
+      <ImageManager
+        :images="artworkImages"
+        :resource-id="props.artwork?.id"
+        :api="artworkAPI"
+        :allow-pending="!isEditMode"
+        :pending-reset-key="pendingResetKey"
+        :readonly="Boolean(props.artwork?.confirmed)"
+        disabled-reason="已确认的图稿不允许修改图片"
+        empty-text="暂无图稿图片"
+        @changed="loadArtworkImages"
+        @pending-change="files => pendingImages = files"
+      />
     </div>
     <template #footer>
       <div class="flex justify-end gap-3">
@@ -178,9 +192,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, InputNumber, TextArea, CheckboxGroup, Select, SectionDivider, LineItemsTable } from '@/components/common'
+import { Icon, Input, InputNumber, TextArea, CheckboxGroup, Select, SectionDivider, LineItemsTable, ImageManager } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
+import { artworkAPI } from '@/api/modules'
+import { normalizeImageListResponse } from '@/utils/imageListResponse'
 import ProductSelector from '@/views/product/components/ProductSelector.vue'
 import QuickProductCreateDialog from '@/views/product/components/QuickProductCreateDialog.vue'
 
@@ -200,6 +216,9 @@ const productItems = ref<any[]>([])
 const localProductList = ref<any[]>([])
 const showQuickProductCreate = ref(false)
 const pendingProductCreateIndex = ref<number | null>(null)
+const artworkImages = ref<any[]>([])
+const pendingImages = ref<File[]>([])
+const pendingResetKey = ref(0)
 
 const FORM_INITIAL = { base_code: '', version: 1, name: '', cmyk_colors: [] as any[], other_colors: [] as any[], imposition_size: '', dies: [] as any[], foiling_plates: [] as any[], embossing_plates: [] as any[], notes: '' }
 const form = reactive({ ...FORM_INITIAL })
@@ -228,6 +247,19 @@ const productColumns: Column[] = [
 
 watch(() => props.visible, (val: any) => { if (val) initForm() })
 
+const loadArtworkImages = async () => {
+  if (!props.artwork?.id) {
+    artworkImages.value = []
+    return
+  }
+  try {
+    const response = await artworkAPI.getImages(props.artwork.id)
+    artworkImages.value = normalizeImageListResponse(response)
+  } catch (_) {
+    artworkImages.value = []
+  }
+}
+
 const initForm = () => {
   if (props.artwork) {
     Object.assign(form, {
@@ -243,6 +275,7 @@ const initForm = () => {
       notes: props.artwork.notes || ''
     })
     productItems.value = (props.artwork.products || []).map((p: any) => ({ id: p.id, product: p.product, imposition_quantity: p.imposition_quantity, sort_order: p.sort_order || 0 }))
+    loadArtworkImages()
   } else {
     resetForm()
   }
@@ -251,6 +284,9 @@ const initForm = () => {
 const resetForm = () => {
   Object.assign(form, FORM_INITIAL)
   productItems.value = []
+  artworkImages.value = []
+  pendingImages.value = []
+  pendingResetKey.value += 1
 }
 
 const addProductItem = () => { productItems.value.push({ product: null, imposition_quantity: 1, sort_order: productItems.value.length }) }
@@ -281,7 +317,7 @@ const handleConfirm = () => {
   if (!isEditMode.value && !data.base_code) delete (data as any).base_code
   if (!isEditMode.value) delete (data as any).version
   data.products_data = productItems.value.filter((item: any) => item.product).map((item: any) => ({ product: item.product, imposition_quantity: item.imposition_quantity || 1 }))
-  emit('confirm', data)
+  emit('confirm', { ...data, pendingImages: [...pendingImages.value] })
 }
 
 const handleClose = () => { resetForm(); emit('update:visible', false) }

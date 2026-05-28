@@ -76,7 +76,7 @@ class SystemNotificationAPI extends BaseAPI {
     super('/system-notifications/', request)
   }
 
-  private requestWithFallback(config: Record<string, unknown>) {
+  private requestWithFallback<T = unknown>(config: Record<string, unknown>): Promise<T> {
     return this.request(config as any).catch((error: any) => {
       if (error?.response?.status !== 404) throw error
       const url = String(config.url || '')
@@ -84,10 +84,10 @@ class SystemNotificationAPI extends BaseAPI {
         ...config,
         url: url.replace('/system-notifications/', '/notification-admin/')
       } as any)
-    })
+    }) as Promise<T>
   }
 
-  getList(params?: Record<string, unknown>, config?: { signal?: AbortSignal }) {
+  getList<T = unknown>(params?: Record<string, unknown>, config?: { signal?: AbortSignal }): Promise<T> {
     const requestConfig: Record<string, unknown> = {
       url: this.baseUrl,
       method: 'get',
@@ -96,7 +96,7 @@ class SystemNotificationAPI extends BaseAPI {
     if (config?.signal) {
       requestConfig.signal = config.signal
     }
-    return this.requestWithFallback(requestConfig).then(response => this._unwrap(response))
+    return this.requestWithFallback(requestConfig).then(response => this._unwrap<T>(response))
   }
 
   createAnnouncement(data: Record<string, unknown>) {
