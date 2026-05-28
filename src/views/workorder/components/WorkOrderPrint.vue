@@ -2,6 +2,17 @@
   <div class="work-order-print">
     <div class="print-actions no-print">
       <button
+        class="btn btn-secondary"
+        type="button"
+        @click="handleExportImage"
+      >
+        <Icon
+          name="download"
+          class="h-4 w-4"
+        />
+        导出图片
+      </button>
+      <button
         class="btn btn-primary"
         type="button"
         @click="handlePrint"
@@ -14,10 +25,47 @@
       </button>
     </div>
 
-    <article
-      id="print-area"
-      class="print-page"
+    <div
+      v-if="mobilePreviewUrl"
+      class="mobile-zoom-actions no-print"
     >
+      <button
+        class="btn btn-secondary"
+        type="button"
+        @click="zoomMobilePreview(-0.25)"
+      >
+        缩小
+      </button>
+      <button
+        class="btn btn-secondary"
+        type="button"
+        @click="resetMobilePreviewZoom"
+      >
+        {{ Math.round(mobilePreviewZoom * 100) }}%
+      </button>
+      <button
+        class="btn btn-secondary"
+        type="button"
+        @click="zoomMobilePreview(0.25)"
+      >
+        放大
+      </button>
+    </div>
+
+    <div
+      :class="['print-preview', { 'has-image-preview': mobilePreviewUrl }]"
+      :style="previewStyle"
+    >
+      <img
+        v-if="mobilePreviewUrl"
+        class="mobile-preview-image"
+        :src="mobilePreviewUrl"
+        alt="施工单图片预览"
+      >
+      <article
+        id="print-area"
+        class="print-page"
+      >
       <header class="print-header">
         <div class="print-title-block">
           <h1>{{ printableCompanyName }}</h1>
@@ -275,12 +323,13 @@
         <div class="footer-note">注：请各相关部门严格按照本施工单安排生产，如有变更请及时反馈。</div>
         <div class="page-number">第 1 页 / 共 1 页</div>
       </footer>
-    </article>
+      </article>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { Icon } from '@/components/common'
 
 const props = defineProps({
@@ -296,8 +345,159 @@ const props = defineProps({
 const productRows = 3
 const materialRows = 8
 const processSlots = 12
+const a4WidthPx = 793.7008
+const a4HeightPx = 1122.5197
+const viewportWidth = ref(typeof window === 'undefined' ? 1024 : window.innerWidth)
+const mobilePreviewUrl = ref('')
+const mobilePreviewZoom = ref(1)
+
+const updateViewportWidth = () => {
+  viewportWidth.value = window.innerWidth
+}
+
+onMounted(() => {
+  updateViewportWidth()
+  window.addEventListener('resize', updateViewportWidth)
+  refreshMobilePreview()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateViewportWidth)
+  revokeMobilePreview()
+})
+
+const isMobilePreview = computed(() => viewportWidth.value <= 860)
+const previewScale = computed(() => Math.min(1, Math.max(0.1, (viewportWidth.value - 24) / a4WidthPx)))
+const previewStyle = computed(() => ({
+  '--print-preview-scale': String(previewScale.value),
+  '--print-preview-width': `${a4WidthPx * previewScale.value}px`,
+  '--print-preview-height': `${a4HeightPx * previewScale.value}px`,
+  '--mobile-image-width': `${mobilePreviewZoom.value * 100}%`
+}))
 
 const handlePrint = () => window.print()
+
+const zoomMobilePreview = (delta: number) => {
+  mobilePreviewZoom.value = Math.min(3, Math.max(0.75, Number((mobilePreviewZoom.value + delta).toFixed(2))))
+}
+
+const resetMobilePreviewZoom = () => {
+  mobilePreviewZoom.value = 1
+}
+
+const inlineComputedStyles = (source: Element, target: Element) => {
+  const computedStyle = window.getComputedStyle(source)
+  const cssText = Array.from(computedStyle)
+    .map((property) => `${property}:${computedStyle.getPropertyValue(property)};`)
+    .join('')
+  ;(target as HTMLElement).setAttribute('style', cssText)
+
+  Array.from(source.children).forEach((child, index) => {
+    const targetChild = target.children[index]
+    if (targetChild) inlineComputedStyles(child, targetChild)
+  })
+}
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
+const loadImage = (url: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+  const image = new Image()
+  image.onload = () => resolve(image)
+  image.onerror = reject
+  image.src = url
+})
+
+const createPrintImageBlob = async (scale = 2) => {
+  const printArea = document.getElementById('print-area')
+  if (!printArea) return null
+
+  const width = printArea.offsetWidth
+  const height = printArea.offsetHeight
+  const clone = printArea.cloneNode(true) as HTMLElement
+  inlineComputedStyles(printArea, clone)
+  clone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml')
+  clone.style.left = '0'
+  clone.style.margin = '0'
+  clone.style.opacity = '1'
+  clone.style.position = 'static'
+  clone.style.top = '0'
+  clone.style.transform = 'none'
+  clone.style.visibility = 'visible'
+  clone.style.width = `${width}px`
+  clone.style.height = `${height}px`
+
+  const serialized = new XMLSerializer().serializeToString(clone)
+  const svg = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+    '<foreignObject width="100%" height="100%">',
+    serialized,
+    '</foreignObject>',
+    '</svg>'
+  ].join('')
+  const svgUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
+
+  try {
+    const image = await loadImage(svgUrl)
+    const canvas = document.createElement('canvas')
+    canvas.width = width * scale
+    canvas.height = height * scale
+    const context = canvas.getContext('2d')
+    if (!context) return null
+    context.fillStyle = '#fff'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
+    return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
+  } finally {
+    URL.revokeObjectURL(svgUrl)
+  }
+}
+
+const handleExportImage = async () => {
+  const blob = await createPrintImageBlob(2)
+  if (!blob) return
+  const orderNumber = textValue(props.workOrder?.order_number || props.workOrder?.order_no, '施工单')
+  downloadBlob(blob, `${orderNumber}.png`)
+}
+
+const revokeMobilePreview = () => {
+  if (!mobilePreviewUrl.value) return
+  URL.revokeObjectURL(mobilePreviewUrl.value)
+  mobilePreviewUrl.value = ''
+}
+
+const refreshMobilePreview = async () => {
+  if (!isMobilePreview.value) {
+    revokeMobilePreview()
+    return
+  }
+  await nextTick()
+  const blob = await createPrintImageBlob(2)
+  if (!blob || !isMobilePreview.value) return
+  const nextUrl = URL.createObjectURL(blob)
+  revokeMobilePreview()
+  mobilePreviewUrl.value = nextUrl
+}
+
+watch(
+  () => [
+    isMobilePreview.value,
+    props.workOrder,
+    props.products.length,
+    props.materials.length,
+    props.processes.length
+  ],
+  () => refreshMobilePreview(),
+  { flush: 'post' }
+)
 
 const asArray = (value: any) => Array.isArray(value) ? value.filter((item: any) => item !== null && item !== undefined && item !== '') : []
 const textValue = (value: any, fallback = '-') => {
@@ -407,6 +607,7 @@ const businessPersonName = computed(() =>
 <style scoped>
 .work-order-print {
   background: #eef0f2;
+  overflow-x: hidden;
   padding: 18px 0 28px;
 }
 
@@ -417,9 +618,29 @@ const businessPersonName = computed(() =>
 
 .print-actions {
   display: flex;
+  gap: 10px;
   justify-content: flex-end;
   margin: 0 auto 14px;
   width: 210mm;
+}
+
+.print-actions button {
+  min-height: 40px;
+}
+
+.mobile-zoom-actions {
+  display: none;
+}
+
+.print-preview {
+  height: 297mm;
+  margin: 0 auto;
+  position: relative;
+  width: 210mm;
+}
+
+.mobile-preview-image {
+  display: none;
 }
 
 .print-page {
@@ -435,6 +656,89 @@ const businessPersonName = computed(() =>
   overflow: hidden;
   padding: 6mm;
   width: 210mm;
+}
+
+@media screen and (max-width: 860px) {
+  .work-order-print {
+    padding: 12px;
+  }
+
+  .print-actions {
+    gap: 8px;
+    justify-content: stretch;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+
+  .print-actions button {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    padding-left: 10px;
+    padding-right: 10px;
+    white-space: nowrap;
+  }
+
+  .mobile-zoom-actions {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0 0 12px;
+    width: 100%;
+  }
+
+  .mobile-zoom-actions button {
+    justify-content: center;
+    min-height: 40px;
+    padding-left: 8px;
+    padding-right: 8px;
+    white-space: nowrap;
+  }
+
+  .print-preview {
+    background: #dfe3e8;
+    border: 1px solid #d6dbe1;
+    height: auto;
+    max-height: min(72vh, 760px);
+    max-width: 100%;
+    overflow: auto;
+    padding: 8px;
+    touch-action: pan-x pan-y;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-preview-image {
+    background: #fff;
+    display: block;
+    height: auto;
+    margin: 0 auto;
+    max-width: none;
+    position: static;
+    width: var(--mobile-image-width);
+    z-index: 1;
+  }
+
+  .print-page {
+    left: 0;
+    margin: 0;
+    position: absolute;
+    top: 0;
+    transform: none;
+    transform-origin: top left;
+  }
+
+  .print-preview.has-image-preview .print-page {
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+@media screen and (max-width: 420px) {
+  .print-actions {
+    flex-direction: column;
+  }
 }
 
 .print-header {
@@ -735,6 +1039,7 @@ const businessPersonName = computed(() =>
   }
 
   :global(.no-print),
+  :global(.mobile-preview-image),
   :global(.modal-header),
   :global(.modal-footer) {
     display: none !important;
@@ -763,15 +1068,26 @@ const businessPersonName = computed(() =>
     padding: 0 !important;
   }
 
+  .print-preview {
+    height: 297mm !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    position: static !important;
+    width: 210mm !important;
+  }
+
   .print-page {
     box-shadow: none !important;
     height: 297mm;
+    left: auto !important;
     margin: 0 !important;
     overflow: hidden;
     page-break-after: avoid;
     page-break-before: avoid;
     page-break-inside: avoid;
+    position: static !important;
     print-color-adjust: exact;
+    transform: none !important;
     -webkit-print-color-adjust: exact;
     width: 210mm;
   }
