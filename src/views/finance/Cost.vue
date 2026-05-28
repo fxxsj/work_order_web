@@ -15,18 +15,24 @@
             @search="searchAndRefreshStats"
             @clear="searchAndRefreshStats"
           />
-          <input
-            v-model="filters.period_start"
-            type="month"
-            class="input w-full sm:w-40"
-            @change="searchAndRefreshStats"
-          >
-          <input
-            v-model="filters.period_end"
-            type="month"
-            class="input w-full sm:w-40"
-            @change="searchAndRefreshStats"
-          >
+          <label class="flex w-full flex-col gap-1 sm:w-40">
+            <span class="input-label">开始月份</span>
+            <input
+              v-model="filters.period_start"
+              type="month"
+              class="input w-full"
+              @change="searchAndRefreshStats"
+            >
+          </label>
+          <label class="flex w-full flex-col gap-1 sm:w-40">
+            <span class="input-label">结束月份</span>
+            <input
+              v-model="filters.period_end"
+              type="month"
+              class="input w-full"
+              @change="searchAndRefreshStats"
+            >
+          </label>
         </div>
       </template>
 
