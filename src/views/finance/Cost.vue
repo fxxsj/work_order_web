@@ -15,24 +15,25 @@
             @search="searchAndRefreshStats"
             @clear="searchAndRefreshStats"
           />
-          <label class="flex w-full flex-col gap-1 sm:w-40">
-            <span class="input-label">开始月份</span>
+          <div class="flex w-full min-w-0 items-center gap-2 sm:w-auto">
             <input
               v-model="filters.period_start"
               type="month"
-              class="input w-full"
+              class="input min-w-0 flex-1 sm:w-40"
+              aria-label="开始月份"
+              title="开始月份"
               @change="searchAndRefreshStats"
             >
-          </label>
-          <label class="flex w-full flex-col gap-1 sm:w-40">
-            <span class="input-label">结束月份</span>
+            <span class="text-sm text-gray-400 dark:text-dark-400">至</span>
             <input
               v-model="filters.period_end"
               type="month"
-              class="input w-full"
+              class="input min-w-0 flex-1 sm:w-40"
+              aria-label="结束月份"
+              title="结束月份"
               @change="searchAndRefreshStats"
             >
-          </label>
+          </div>
         </div>
       </template>
 
