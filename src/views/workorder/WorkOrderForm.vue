@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="work-order-form-page pb-32 sm:pb-24">
     <div class="card">
       <div class="card-body space-y-4">
         <!-- Section: Basic Info -->
@@ -191,53 +191,6 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="card-footer flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <button
-          class="btn btn-secondary"
-          @click="handleCancel"
-        >
-          <Icon
-            name="arrowLeft"
-            size="md"
-          />
-          取消
-        </button>
-        <button
-          class="btn btn-primary"
-          :disabled="saving"
-          @click="handleSave"
-        >
-          <span
-            v-if="saving"
-            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-2"
-          />
-          <Icon
-            v-else
-            name="check"
-            size="md"
-          />
-          保存
-        </button>
-        <button
-          v-if="isEdit"
-          class="btn btn-success"
-          :disabled="submitting"
-          @click="handleSubmitForApproval"
-        >
-          <span
-            v-if="submitting"
-            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-2"
-          />
-          <Icon
-            v-else
-            name="upload"
-            size="md"
-          />
-          提交审核
-        </button>
-      </div>
-
       <!-- Submit Approval Dialog -->
       <ConfirmDialog
         :show="showSubmitApprovalDialog"
@@ -263,6 +216,56 @@
         v-model:visible="showQuickMaterialCreate"
         @created="handleMaterialCreated"
       />
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="work-order-form-actions fixed bottom-0 left-4 right-4 z-20 rounded-t-xl border border-b-0 border-gray-100 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-dark-700 dark:bg-dark-900/95 md:left-6 md:right-6 lg:left-[calc(16rem+2rem)] lg:right-8">
+      <div class="flex flex-row gap-3 sm:justify-end">
+        <button
+          class="btn btn-secondary btn-icon shrink-0"
+          aria-label="返回"
+          title="返回"
+          @click="handleCancel"
+        >
+          <Icon
+            name="arrowLeft"
+            size="md"
+          />
+        </button>
+        <button
+          class="btn btn-primary min-w-0 flex-1 sm:flex-none"
+          :disabled="saving"
+          @click="handleSave"
+        >
+          <span
+            v-if="saving"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-2"
+          />
+          <Icon
+            v-else
+            name="check"
+            size="md"
+          />
+          保存
+        </button>
+        <button
+          v-if="isEdit"
+          class="btn btn-success min-w-0 flex-1 sm:flex-none"
+          :disabled="submitting"
+          @click="handleSubmitForApproval"
+        >
+          <span
+            v-if="submitting"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-2"
+          />
+          <Icon
+            v-else
+            name="upload"
+            size="md"
+          />
+          提交审核
+        </button>
+      </div>
     </div>
   </div>
 </template>
