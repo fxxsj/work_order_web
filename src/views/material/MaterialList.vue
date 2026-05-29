@@ -114,8 +114,7 @@
         <Input
           v-model="form.code"
           label="物料编码"
-          required
-          placeholder="请输入物料编码"
+          placeholder="请输入编码（留空自动生成）"
           :disabled="showEditModal"
         />
       </div>
@@ -357,18 +356,20 @@ const handleSubmit = async () => {
   const trimmedName = form.name.trim()
   const trimmedUnit = form.unit.trim()
 
-  if (!trimmedCode || !trimmedName || !trimmedUnit) {
-    ErrorHandler.showWarning('请填写必填项')
+  if (!trimmedName || !trimmedUnit) {
+    ErrorHandler.showWarning('请填写必填项(名称、单位)')
     return
   }
 
-  if (trimmedCode.length < 2 || trimmedCode.length > 50) {
-    ErrorHandler.showWarning('物料编码长度应在 2-50 个字符之间')
-    return
-  }
-  if (!/^[A-Za-z0-9-]+$/.test(trimmedCode)) {
-    ErrorHandler.showWarning('物料编码只能包含字母、数字和连字符')
-    return
+  if (trimmedCode) {
+    if (trimmedCode.length < 2 || trimmedCode.length > 50) {
+      ErrorHandler.showWarning('物料编码长度应在 2-50 个字符之间')
+      return
+    }
+    if (!/^[A-Za-z0-9-]+$/.test(trimmedCode)) {
+      ErrorHandler.showWarning('物料编码只能包含字母、数字和连字符')
+      return
+    }
   }
 
   if (showEditModal.value && form.min_stock_quantity > form.stock_quantity) {

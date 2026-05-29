@@ -114,7 +114,7 @@
         <Input
           v-model="formData.code"
           label="供应商编码"
-          placeholder="请输入供应商编码"
+          placeholder="请输入编码（留空自动生成）"
           :disabled="showEditModal"
         />
         <div
@@ -390,9 +390,10 @@ const validateForm = () => {
   const phone = (formData.phone || '').trim()
   const email = (formData.email || '').trim()
 
-  if (!code) return '请输入供应商编码'
-  if (code.length < 2 || code.length > 50) return '供应商编码长度必须在2-50个字符之间'
-  if (!/^[\u4e00-\u9fa5A-Za-z0-9-]+$/.test(code)) return '编码只能包含中文、字母、数字和连字符'
+  if (code) {
+    if (code.length < 2 || code.length > 50) return '供应商编码长度必须在2-50个字符之间'
+    if (!/^[\u4e00-\u9fa5A-Za-z0-9-]+$/.test(code)) return '编码只能包含中文、字母、数字和连字符'
+  }
   if (!name) return '请输入供应商名称'
   if (name.length > 200) return '供应商名称不能超过200个字符'
   if (phone && !/^(1[3-9]\d{9}|0\d{2,3}-?\d{7,8})$/.test(phone)) return '请输入正确的联系电话（手机号或座机号）'

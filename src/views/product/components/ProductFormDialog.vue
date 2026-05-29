@@ -9,7 +9,7 @@
       <Input
         v-model="form.code"
         label="产品编码"
-        placeholder="请输入产品编码"
+        placeholder="请输入编码（留空自动生成）"
         :disabled="isEditMode"
       />
       <Input
@@ -299,9 +299,10 @@ const handleMaterialCreated = (material: any) => {
 const handleSubmit = () => {
   const code = (form.code || '').trim()
   const name = (form.name || '').trim()
-  if (!code) { useUIStore().showWarning('请输入产品编码'); return }
-  if (code.length < 2 || code.length > 50) { useUIStore().showWarning('产品编码长度需在2-50个字符之间'); return }
-  if (!/^[A-Za-z0-9-]+$/.test(code)) { useUIStore().showWarning('产品编码只能包含字母、数字和连字符'); return }
+  if (code) {
+    if (code.length < 2 || code.length > 50) { useUIStore().showWarning('产品编码长度需在2-50个字符之间'); return }
+    if (!/^[A-Za-z0-9-]+$/.test(code)) { useUIStore().showWarning('产品编码只能包含字母、数字和连字符'); return }
+  }
   if (!name) { useUIStore().showWarning('请输入产品名称'); return }
   if (form.product_type !== 'single' && !form.product_group) { useUIStore().showWarning('请选择产品组'); return }
   if (form.unit_price !== null && form.unit_price !== undefined && (form.unit_price < 0 || form.unit_price > 99999999.99)) { useUIStore().showWarning('单价需在0-99,999,999.99之间'); return }
