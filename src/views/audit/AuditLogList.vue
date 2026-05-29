@@ -1,157 +1,169 @@
 <template>
-  <div class="audit-log-list space-y-6">
-    <!-- Stats Cards -->
-    <div
-      v-if="stats"
-      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5"
-    >
-      <div class="card rounded-[10px]">
-        <div class="flex items-center gap-3">
-          <div class="flex h-[42px] w-[42px] items-center justify-center rounded-[10px] text-xl text-white bg-info-500">
-            <Icon name="document" />
-          </div>
-          <div>
-            <div class="text-[22px] font-semibold">
-              {{ (stats as any).total_count || 0 }}
-            </div>
-            <div class="text-xs text-[var(--ui-color-text-secondary)]">
-              总记录数
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card rounded-[10px]">
-        <div class="flex items-center gap-3">
-          <div class="flex h-[42px] w-[42px] items-center justify-center rounded-[10px] text-xl text-white bg-success-500">
-            <Icon name="plus" />
-          </div>
-          <div>
-            <div class="text-[22px] font-semibold">
-              {{ (stats as any).action_type_stats?.create || 0 }}
-            </div>
-            <div class="text-xs text-[var(--ui-color-text-secondary)]">
-              创建
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card rounded-[10px]">
-        <div class="flex items-center gap-3">
-          <div class="flex h-[42px] w-[42px] items-center justify-center rounded-[10px] text-xl text-white bg-warning-500">
-            <Icon name="edit" />
-          </div>
-          <div>
-            <div class="text-[22px] font-semibold">
-              {{ (stats as any).action_type_stats?.update || 0 }}
-            </div>
-            <div class="text-xs text-[var(--ui-color-text-secondary)]">
-              更新
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card rounded-[10px]">
-        <div class="flex items-center gap-3">
-          <div class="flex h-[42px] w-[42px] items-center justify-center rounded-[10px] text-xl text-white bg-danger-500">
-            <Icon name="trash" />
-          </div>
-          <div>
-            <div class="text-[22px] font-semibold">
-              {{ (stats as any).action_type_stats?.delete || 0 }}
-            </div>
-            <div class="text-xs text-[var(--ui-color-text-secondary)]">
-              删除
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
+  <div class="audit-log-list">
     <TablePageLayout>
-      <template #filters>
-        <div class="flex flex-col gap-3">
-          <div class="flex flex-wrap items-center gap-3">
+      <template #actions>
+        <div class="space-y-4">
+          <div class="flex justify-end gap-3">
+            <button
+              class="btn btn-secondary"
+              :disabled="loading"
+              title="刷新"
+              @click="handleAuditSearch"
+            >
+              <Icon
+                name="refresh"
+                size="md"
+                :class="loading ? 'animate-spin' : ''"
+              />
+            </button>
+            <button
+              v-if="canExportAuditLog"
+              class="btn btn-secondary"
+              @click="exportDialogVisible = true"
+            >
+              <Icon
+                name="download"
+                size="md"
+                class="mr-2"
+              />
+              导出日志
+            </button>
+            <button
+              v-if="canViewAuditExport"
+              class="btn btn-secondary"
+              @click="openExportList"
+            >
+              导出历史
+            </button>
+          </div>
+
+          <FilterRow>
+            <SearchInput
+              v-model="searchText"
+              class="w-full sm:w-56"
+              placeholder="搜索对象/用户名/IP"
+              @search="handleAuditSearch"
+              @clear="handleAuditSearch"
+            />
             <Select
               v-model="filters.action_type"
               :options="actionTypeOptions"
-              class="w-[min(100%,170px)] md:w-auto"
-              placeholder="操作类型"
+              class="w-full sm:w-36"
+              placeholder="全部操作"
               clearable
-              @change="handleSearch"
+              @change="handleAuditSearch"
             />
             <Select
               v-model="filters.model"
               :options="modelOptions"
-              class="w-[min(100%,170px)] md:w-auto"
-              placeholder="对象类型"
+              class="w-full sm:w-36"
+              placeholder="全部对象"
               clearable
-              @change="handleSearch"
+              @change="handleAuditSearch"
             />
-            <input
-              v-model="filters.user"
-              class="input w-[min(100%,170px)] md:w-auto"
-              placeholder="用户ID"
-              @keyup.enter="handleSearch"
+            <DateRangePicker
+              v-model="auditDateRange"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              @change="handleAuditSearch"
+            />
+            <button
+              class="btn btn-secondary"
+              @click="handleResetFilters"
             >
-            <input
-              v-model="filters.object_id"
-              class="input w-[min(100%,170px)] md:w-auto"
-              placeholder="对象ID"
-              @keyup.enter="handleSearch"
-            >
-            <input
-              v-model="filters.ip_address"
-              class="input w-[min(100%,170px)] md:w-auto"
-              placeholder="IP地址"
-              @keyup.enter="handleSearch"
-            >
-            <input
-              v-model="filters.start_date"
-              type="date"
-              class="input w-[min(100%,170px)] md:w-auto"
-              placeholder="开始日期"
-              @change="handleSearch"
-            >
-            <input
-              v-model="filters.end_date"
-              type="date"
-              class="input w-[min(100%,170px)] md:w-auto"
-              placeholder="结束日期"
-              @change="handleSearch"
-            >
-          </div>
-        </div>
-      </template>
+              重置
+            </button>
+          </FilterRow>
 
-      <template #actions>
-        <div class="flex justify-end gap-3 items-center">
-          <SearchInput
-            v-model="searchText"
-            class="w-[min(100%,280px)] md:w-auto"
-            placeholder="搜索对象/用户名/IP"
-            @search="handleSearch"
-            @clear="handleSearch"
-          />
-          <button
-            class="btn btn-secondary"
-            @click="resetFilters"
+          <div
+            v-if="stats"
+            class="grid grid-cols-2 gap-4 lg:grid-cols-4"
           >
-            重置
-          </button>
-          <button
-            v-if="canExportAuditLog"
-            class="btn btn-primary"
-            @click="exportDialogVisible = true"
-          >
-            导出
-          </button>
-          <button
-            v-if="canViewAuditExport"
-            class="btn btn-secondary"
-            @click="openExportList"
-          >
-            导出记录
-          </button>
+            <div class="card p-4">
+              <div class="flex items-center gap-3">
+                <div class="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                  <Icon
+                    name="document"
+                    size="md"
+                  />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    总记录数
+                  </p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">
+                    {{ formatCount((stats as any).total_count) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    当前统计范围
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="card p-4">
+              <div class="flex items-center gap-3">
+                <div class="rounded-lg bg-green-100 p-2 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                  <Icon
+                    name="plus"
+                    size="md"
+                  />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    创建
+                  </p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">
+                    {{ formatCount((stats as any).action_type_stats?.create) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    新增操作
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="card p-4">
+              <div class="flex items-center gap-3">
+                <div class="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                  <Icon
+                    name="edit"
+                    size="md"
+                  />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    更新
+                  </p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">
+                    {{ formatCount((stats as any).action_type_stats?.update) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    修改操作
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="card p-4">
+              <div class="flex items-center gap-3">
+                <div class="rounded-lg bg-rose-100 p-2 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
+                  <Icon
+                    name="trash"
+                    size="md"
+                  />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    删除
+                  </p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">
+                    {{ formatCount((stats as any).action_type_stats?.delete) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    删除操作
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </template>
 
@@ -167,38 +179,71 @@
           @sort="handleSort"
         >
           <template #cell-created_at="{ row }">
-            <span>{{ formatDateTime(row.created_at) }}</span>
+            <div class="space-y-0.5">
+              <div class="font-medium text-gray-900 dark:text-white">
+                {{ formatDateParts(row.created_at).date }}
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                {{ formatDateParts(row.created_at).time }}
+              </div>
+            </div>
           </template>
           <template #cell-action_type="{ row }">
-            <Tag
-              :type="actionTagType(row.action_type)"
-              size="small"
+            <span
+              class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium"
+              :class="actionBadgeClass(row.action_type)"
             >
               {{ actionTypeLabel(row.action_type) }}
-            </Tag>
+            </span>
           </template>
           <template #cell-username="{ row }">
-            <span>{{ row.username }}</span>
+            <div class="flex items-center gap-2">
+              <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 dark:bg-dark-700 dark:text-dark-300">
+                <Icon
+                  name="user"
+                  size="sm"
+                />
+              </div>
+              <div class="min-w-0">
+                <div class="truncate font-medium text-gray-900 dark:text-white">
+                  {{ row.username || '-' }}
+                </div>
+                <div
+                  v-if="row.user"
+                  class="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  ID: {{ row.user }}
+                </div>
+              </div>
+            </div>
           </template>
           <template #cell-content_type_name="{ row }">
-            <span>{{ row.content_type_name }}</span>
+            <span class="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              {{ row.content_type_name || '-' }}
+            </span>
           </template>
           <template #cell-object_repr="{ row }">
-            <span>{{ row.object_repr }}</span>
+            <span class="block max-w-[360px] whitespace-normal break-words font-medium text-gray-900 dark:text-white">
+              {{ row.object_repr || '-' }}
+            </span>
           </template>
           <template #cell-object_id="{ row }">
-            <span>{{ row.object_id }}</span>
+            <span class="font-mono text-xs text-gray-600 dark:text-gray-300">
+              {{ row.object_id || '-' }}
+            </span>
           </template>
           <template #cell-ip_address="{ row }">
-            <span>{{ row.ip_address || '-' }}</span>
+            <span class="font-mono text-xs text-gray-600 dark:text-gray-300">
+              {{ row.ip_address || '-' }}
+            </span>
           </template>
           <template #cell-changed_fields="{ row }">
             <span class="inline-flex flex-wrap gap-1">
-              <Tag
+              <span
                 v-for="field in row.changed_fields || []"
                 :key="field"
-                size="small"
-              >{{ field }}</Tag>
+                class="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:ring-blue-500/20"
+              >{{ field }}</span>
             </span>
             <span v-if="!row.changed_fields || row.changed_fields.length === 0">-</span>
           </template>
@@ -349,7 +394,7 @@
 
     <BaseDialog
       :show="exportListVisible"
-      title="导出记录"
+      title="导出历史"
       width="wide"
       @close="exportListVisible = false"
     >
@@ -449,7 +494,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList, useExportJob } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
-import { Icon, Select, SearchInput, Tag, Pagination, TablePageLayout, DataTable, EmptyState, BaseDialog, DescriptionGrid, DescriptionItem, RowActions } from '@/components/common'
+import { Icon, Select, SearchInput, DateRangePicker, Pagination, TablePageLayout, DataTable, EmptyState, BaseDialog, DescriptionGrid, DescriptionItem, RowActions, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 
 const userStore = useUserStore()
@@ -457,10 +502,26 @@ const userStore = useUserStore()
 const sortKey = ref('created_at')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
+const formatLocalDate = (date: Date) => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+const getDefaultDateFilters = () => {
+  const now = new Date()
+  const weekAgo = new Date(now)
+  weekAgo.setDate(weekAgo.getDate() - 6)
+  return {
+    start_date: formatLocalDate(weekAgo),
+    end_date: formatLocalDate(now)
+  }
+}
+
 const buildAuditParams = (params: any) => {
   const ordering = sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
   return { ...params, ordering }
 }
+
+const defaultDateFilters = getDefaultDateFilters()
 
 const {
   searchText,
@@ -472,22 +533,26 @@ const {
   pageSize,
   loadData,
   handleSearch,
-  handleSearchDebounced,
   handlePageChange,
   handleSizeChange,
-  resetFilters
+  resetFilters: resetCrudFilters
 } = useCrudList(auditLogAPI, 'getList', {
   initialFilters: {
     action_type: '',
     model: '',
-    user: '',
-    object_id: '',
-    ip_address: '',
-    start_date: '',
-    end_date: ''
+    start_date: defaultDateFilters.start_date,
+    end_date: defaultDateFilters.end_date
   },
   buildParams: buildAuditParams,
   errorContext: '加载审计日志失败'
+})
+
+const auditDateRange = computed<[string, string]>({
+  get: (): [string, string] => [String(filters.value.start_date || ''), String(filters.value.end_date || '')],
+  set: ([start, end]: [string, string]) => {
+    filters.value.start_date = start
+    filters.value.end_date = end
+  }
 })
 
 const columns: Column[] = [
@@ -576,11 +641,17 @@ const buildExportFilters = () => ({
   action_type: exportFilters.action_type,
   model: exportFilters.model,
   user_id: exportFilters.user_id,
-  object_id: filters.value.object_id,
-  ip_address: filters.value.ip_address,
   request_method: filters.value.request_method,
   search: searchText.value,
   ordering: sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
+})
+
+const buildStatsParams = () => ({
+  action_type: filters.value.action_type,
+  model: filters.value.model,
+  start_date: filters.value.start_date,
+  end_date: filters.value.end_date,
+  search: searchText.value
 })
 
 const formattedDiff = computed(() => {
@@ -595,11 +666,23 @@ const formattedDiff = computed(() => {
 
 const loadStats = async () => {
   try {
-    const response: any = await auditLogAPI.getStatistics()
+    const response: any = await auditLogAPI.getStatistics(buildStatsParams())
     stats.value = Array.isArray(response) ? response : (response?.results || response?.data || response || {})
   } catch (error: any) {
     ErrorHandler.handle(error, 'AuditLogList.loadStats')
   }
+}
+
+const handleAuditSearch = async () => {
+  await handleSearch()
+  loadStats()
+}
+
+const handleResetFilters = async () => {
+  sortKey.value = 'created_at'
+  sortOrder.value = 'desc'
+  await resetCrudFilters(getDefaultDateFilters())
+  loadStats()
 }
 
 const actionTypeLabel = (action: any) => {
@@ -607,20 +690,32 @@ const actionTypeLabel = (action: any) => {
   return option ? option.label : action || '-'
 }
 
-const actionTagType = (action: any) => {
-  const map = {
-    create: 'success',
-    update: 'warning',
-    delete: 'danger',
-    view: 'info',
-    export: 'info',
-    import: 'info',
-    approve: 'success',
-    reject: 'danger',
-    login: 'success',
-    logout: 'info'
+const formatCount = (value: any) => Number(value || 0).toLocaleString()
+
+const formatDateParts = (value: any) => {
+  const formatted = formatDateTime(value)
+  if (!formatted || formatted === '-') return { date: '-', time: '-' }
+  const [date, ...timeParts] = String(formatted).split(' ')
+  return {
+    date,
+    time: timeParts.join(' ') || '-'
   }
-  return (map as any)[action] || 'info'
+}
+
+const actionBadgeClass = (action: any) => {
+  const map = {
+    create: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    update: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    delete: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    view: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+    export: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    import: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    approve: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    reject: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    login: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    logout: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+  }
+  return (map as any)[action] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
 }
 
 const exportListColumns: Column[] = [
