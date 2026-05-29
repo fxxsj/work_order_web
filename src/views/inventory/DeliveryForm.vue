@@ -227,7 +227,7 @@ const salesOrderList = ref<any[]>([])
 const productList = ref<any[]>([])
 
 const ITEM_INITIAL = { product: null, sales_order_item: null, quantity: 1, unit: '件', unit_price: 0, stock_batch: '', notes: '' }
-const getFormInitialValues = () => ({ id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, package_count: 1, package_weight: '', notes: '', items_data: [] as any[] })
+const getFormInitialValues = () => ({ id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, package_count: 1, package_weight: 0, notes: '', items_data: [] as any[] })
 const form = reactive(getFormInitialValues())
 const deliveryEligibleSalesOrderStatuses = new Set(['approved', 'in_production', 'completed'])
 
@@ -281,19 +281,25 @@ const fetchCustomers = async () => {
   try {
     const response: any = await customerAPI.getList({ page_size: 50 })
     customerList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
-  } catch (error: any) {}
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载客户列表失败')
+  }
 }
 const fetchSalesOrders = async () => {
   try {
     const response: any = await salesOrderAPI.getList({ page_size: 50 })
     salesOrderList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
-  } catch (error: any) {}
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载客户订单列表失败')
+  }
 }
 const fetchProducts = async () => {
   try {
     const response: any = await productAPI.getList({ page_size: 50 })
     productList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
-  } catch (error: any) {}
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载产品列表失败')
+  }
 }
 
 const pickFirstText = (...values: any[]) => values.find(value => typeof value === 'string' && value.trim())?.trim() || ''
@@ -378,7 +384,7 @@ const mapDeliveryToForm = (delivery: any) => ({
   tracking_number: delivery.tracking_number || '',
   freight: Number(delivery.freight || 0),
   package_count: Number(delivery.package_count || 1),
-  package_weight: delivery.package_weight ?? '',
+  package_weight: Number(delivery.package_weight || 0),
   notes: delivery.notes || '',
   items_data: (delivery.items || []).map(mapDeliveryItemToForm)
 })

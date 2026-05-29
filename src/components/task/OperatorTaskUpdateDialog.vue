@@ -101,13 +101,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { BaseDialog, TextArea, InputNumber, RadioGroup, ProgressBar } from '@/components/common'
 import { workOrderTaskAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 import { useUIStore } from '@/stores/ui'
 
-const props = defineProps({ visible: Boolean, task: { type: Object, default: () => ({}) } })
+const props = defineProps({
+  visible: Boolean,
+  task: { type: Object, default: () => ({}) },
+  initialMode: { type: String, default: 'increment' }
+})
 const emit = defineEmits(['success', 'update:visible'])
 
 const updateMode = ref('increment')
@@ -127,7 +131,10 @@ const updateModeOptions = [
 
 watch(() => props.visible, (val: any) => { if (val) resetForm() })
 
-const resetForm = () => { updateMode.value = 'increment'; Object.assign(form, { quantity_increment: 1, quantity_defective: 0, completion_reason: '', notes: '' }) }
+const resetForm = () => {
+  updateMode.value = props.initialMode === 'complete' ? 'complete' : 'increment'
+  Object.assign(form, { quantity_increment: 1, quantity_defective: 0, completion_reason: '', notes: '' })
+}
 
 const handleSubmit = async () => {
   if (updateMode.value === 'increment') {
