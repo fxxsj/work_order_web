@@ -21,6 +21,6 @@ export const procurementRoutes: RouteRecordRaw[] = [
     path: 'purchase-orders/create',
     name: 'PurchaseOrderCreate',
     component: PurchaseForm,
-    meta: { title: '新建采购订单', requiresAuth: true, requiresPermission: ['workorder.view_purchaseorder'] }
+    meta: { title: '新建采购订单', requiresAuth: true, requiresPermission: ['workorder.add_purchaseorder'] }
   }
 ]

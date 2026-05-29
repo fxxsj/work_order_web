@@ -15,7 +15,7 @@ export const salesRoutes: RouteRecordRaw[] = [
     path: 'sales-orders/create',
     name: 'SalesOrderCreate',
     component: SalesForm,
-    meta: { title: '新建客户订单', requiresAuth: true, requiresPermission: ['workorder.view_salesorder'] }
+    meta: { title: '新建客户订单', requiresAuth: true, requiresPermission: ['workorder.add_salesorder'] }
   },
   {
     path: 'sales-orders/:id',
@@ -27,6 +27,6 @@ export const salesRoutes: RouteRecordRaw[] = [
     path: 'sales-orders/:id/edit',
     name: 'SalesOrderEdit',
     component: SalesForm,
-    meta: { title: '编辑客户订单', requiresAuth: true, requiresPermission: ['workorder.view_salesorder'] }
+    meta: { title: '编辑客户订单', requiresAuth: true, requiresPermission: ['workorder.change_salesorder'] }
   }
 ]

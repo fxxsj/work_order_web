@@ -24,13 +24,13 @@ export const inventoryRoutes: RouteRecordRaw[] = [
     path: 'inventory/delivery/create',
     name: 'DeliveryCreate',
     component: DeliveryForm,
-    meta: { title: '新建发货单', requiresAuth: true, requiresPermission: ['workorder.view_deliveryorder'] }
+    meta: { title: '新建发货单', requiresAuth: true, requiresPermission: ['workorder.add_deliveryorder'] }
   },
   {
     path: 'inventory/delivery/:id/edit',
     name: 'DeliveryEdit',
     component: DeliveryForm,
-    meta: { title: '编辑发货单', requiresAuth: true, requiresPermission: ['workorder.view_deliveryorder'] }
+    meta: { title: '编辑发货单', requiresAuth: true, requiresPermission: ['workorder.change_deliveryorder'] }
   },
   {
     path: 'inventory/quality',

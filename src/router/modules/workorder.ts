@@ -15,7 +15,7 @@ export const workorderRoutes: RouteRecordRaw[] = [
     path: 'workorders/create',
     name: 'WorkOrderCreate',
     component: WorkOrderForm,
-    meta: { title: '新建施工单', requiresAuth: true, requiresPermission: ['workorder.view_workorder'] }
+    meta: { title: '新建施工单', requiresAuth: true, requiresPermission: ['workorder.add_workorder'] }
   },
   {
     path: 'workorders/:id',
@@ -28,6 +28,6 @@ export const workorderRoutes: RouteRecordRaw[] = [
     name: 'WorkOrderEdit',
     component: WorkOrderForm,
     props: true,
-    meta: { title: '编辑施工单', requiresAuth: true, requiresPermission: ['workorder.view_workorder'] }
+    meta: { title: '编辑施工单', requiresAuth: true, requiresPermission: ['workorder.change_workorder'] }
   }
 ]

@@ -131,8 +131,8 @@
         <template #cell-actions="{ row }">
           <RowActions
             :actions="[
-              { key: 'edit', label: '编辑', icon: 'edit', visible: canCreate },
-              { key: 'toggle', label: row.is_active ? '禁用' : '启用', icon: row.is_active ? 'ban' : 'checkCircle', visible: canCreate },
+              { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
+              { key: 'toggle', label: row.is_active ? '禁用' : '启用', icon: row.is_active ? 'ban' : 'checkCircle', visible: canEdit },
               { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
             ]"
             @action="action => handleRowAction(action.key, row)"
@@ -298,7 +298,7 @@ import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
 const userStore = useUserStore()
-const { canCreate, canDelete } = useCrudPermission('assignmentrule')
+const { canCreate, canEdit, canDelete } = useCrudPermission('taskassignmentrule')
 
 // 表格列
 const columns: Column[] = [

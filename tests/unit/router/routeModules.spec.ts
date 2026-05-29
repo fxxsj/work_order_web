@@ -46,6 +46,7 @@ describe('WorkOrder Routes', () => {
     expect(create).toBeDefined()
     expect(create!.path).toBe('workorders/create')
     expect(create!.meta!.title).toBe('新建施工单')
+    expect(create!.meta!.requiresPermission).toContain('workorder.add_workorder')
   })
 
   it('should have detail route', () => {
@@ -61,12 +62,14 @@ describe('WorkOrder Routes', () => {
     expect(edit!.path).toBe('workorders/:id/edit')
     expect(edit!.props).toBe(true)
     expect(edit!.meta!.title).toBe('编辑施工单')
+    expect(edit!.meta!.requiresPermission).toContain('workorder.change_workorder')
   })
 
-  it('should have view permission on all routes', () => {
-    workorderRoutes.forEach(route => {
-      expect(route.meta!.requiresPermission).toContain('workorder.view_workorder')
-    })
+  it('should keep view permission on list and detail routes', () => {
+    const list = workorderRoutes.find(r => r.name === 'WorkOrderList')
+    const detail = workorderRoutes.find(r => r.name === 'WorkOrderDetail')
+    expect(list!.meta!.requiresPermission).toContain('workorder.view_workorder')
+    expect(detail!.meta!.requiresPermission).toContain('workorder.view_workorder')
   })
 })
 
@@ -115,6 +118,14 @@ describe('Procurement Routes', () => {
     const route = procurementRoutes.find(r => r.name === 'PurchaseOrderList')
     expect(route).toBeDefined()
     expect(route!.meta!.title).toBe('采购订单管理')
+    expect(route!.meta!.requiresPermission).toContain('workorder.view_purchaseorder')
+  })
+
+  it('should have purchase order create route requiring add permission', () => {
+    const route = procurementRoutes.find(r => r.name === 'PurchaseOrderCreate')
+    expect(route).toBeDefined()
+    expect(route!.meta!.title).toBe('新建采购订单')
+    expect(route!.meta!.requiresPermission).toContain('workorder.add_purchaseorder')
   })
 })
 
@@ -129,6 +140,14 @@ describe('Sales Routes', () => {
     const route = salesRoutes.find(r => r.name === 'SalesOrderCreate')
     expect(route).toBeDefined()
     expect(route!.meta!.title).toBe('新建客户订单')
+    expect(route!.meta!.requiresPermission).toContain('workorder.add_salesorder')
+  })
+
+  it('should have sales edit route requiring change permission', () => {
+    const route = salesRoutes.find(r => r.name === 'SalesOrderEdit')
+    expect(route).toBeDefined()
+    expect(route!.meta!.title).toBe('编辑客户订单')
+    expect(route!.meta!.requiresPermission).toContain('workorder.change_salesorder')
   })
 })
 
@@ -189,12 +208,14 @@ describe('Inventory Routes', () => {
     const route = inventoryRoutes.find(r => r.name === 'DeliveryCreate')
     expect(route).toBeDefined()
     expect(route!.meta!.title).toBe('新建发货单')
+    expect(route!.meta!.requiresPermission).toContain('workorder.add_deliveryorder')
   })
 
   it('should have delivery edit route', () => {
     const route = inventoryRoutes.find(r => r.name === 'DeliveryEdit')
     expect(route).toBeDefined()
     expect(route!.meta!.title).toBe('编辑发货单')
+    expect(route!.meta!.requiresPermission).toContain('workorder.change_deliveryorder')
   })
 
   it('should have quality route', () => {
