@@ -1,92 +1,86 @@
 <template>
   <div class="space-y-6">
-    <DeliveryStats
-      :stats="stats"
-      :loading="statsLoading"
-    />
-
     <TablePageLayout>
-      <template #filters>
-        <FilterRow>
-          <SearchInput
-            v-model="searchText"
-            placeholder="搜索单号/客户/物流"
-            class="w-full sm:w-64"
-            @search="searchAndRefreshStats"
-            @clear="searchAndRefreshStats"
-          />
-          <Select
-            v-model="filters.customer"
-            :options="customerOptions"
-            class="w-full sm:w-36"
-            placeholder="选择客户"
-            clearable
-            filterable
-            @change="searchAndRefreshStats"
-          />
-          <Select
-            v-model="filters.status"
-            :options="statusOptions"
-            class="w-full sm:w-36"
-            placeholder="发货状态"
-            clearable
-            @change="searchAndRefreshStats"
-          />
-          <Select
-            v-model="filters.todo"
-            :options="todoOptions"
-            class="w-full sm:w-40"
-            placeholder="待办事项"
-            clearable
-            @change="searchAndRefreshStats"
-          />
-          <input
-            v-model="filters.start_date"
-            type="date"
-            class="input w-full sm:w-40"
-            @change="searchAndRefreshStats"
-          >
-          <input
-            v-model="filters.end_date"
-            type="date"
-            class="input w-full sm:w-40"
-            @change="searchAndRefreshStats"
-          >
-        </FilterRow>
-      </template>
       <template #actions>
-        <div class="flex justify-end gap-3">
-          <button
-            v-if="hasFilters"
-            class="btn btn-secondary"
-            @click="handleReset"
-          >
-            重置筛选
-          </button>
-          <button
-            class="btn btn-secondary"
-            :disabled="loading"
-            title="刷新"
-            @click="reloadData"
-          >
-            <Icon
-              name="refresh"
-              size="md"
-              :class="loading ? 'animate-spin' : ''"
+        <div class="space-y-4">
+          <div class="flex justify-end gap-3">
+            <button
+              class="btn btn-secondary"
+              :disabled="loading"
+              title="刷新"
+              @click="reloadData"
+            >
+              <Icon
+                name="refresh"
+                size="md"
+                :class="loading ? 'animate-spin' : ''"
+              />
+            </button>
+            <button
+              v-if="canCreate"
+              class="btn btn-primary"
+              @click="handleCreate"
+            >
+              <Icon
+                name="plus"
+                size="md"
+                class="mr-2"
+              />
+              新建发货单
+            </button>
+          </div>
+
+          <FilterRow>
+            <SearchInput
+              v-model="searchText"
+              placeholder="搜索单号/客户/物流"
+              class="w-full sm:w-56"
+              @search="searchAndRefreshStats"
+              @clear="searchAndRefreshStats"
             />
-          </button>
-          <button
-            v-if="canCreate"
-            class="btn btn-primary"
-            @click="handleCreate"
-          >
-            <Icon
-              name="plus"
-              size="md"
-              class="mr-2"
+            <Select
+              v-model="filters.customer"
+              :options="customerOptions"
+              class="w-full sm:w-36"
+              placeholder="选择客户"
+              clearable
+              filterable
+              @change="searchAndRefreshStats"
             />
-            新建发货单
-          </button>
+            <Select
+              v-model="filters.status"
+              :options="statusOptions"
+              class="w-full sm:w-36"
+              placeholder="发货状态"
+              clearable
+              @change="searchAndRefreshStats"
+            />
+            <Select
+              v-model="filters.todo"
+              :options="todoOptions"
+              class="w-full sm:w-40"
+              placeholder="待办事项"
+              clearable
+              @change="searchAndRefreshStats"
+            />
+            <DateRangePicker
+              v-model="deliveryDateRange"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              @change="searchAndRefreshStats"
+            />
+            <button
+              class="btn btn-secondary"
+              @click="handleReset"
+            >
+              重置
+            </button>
+          </FilterRow>
+
+          <DeliveryStats
+            :stats="stats"
+            :loading="statsLoading"
+          />
         </div>
       </template>
 
@@ -225,7 +219,7 @@ import { deliveryOrderAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog, FilterRow, RowActions } from '@/components/common'
+import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog, FilterRow, RowActions, DateRangePicker } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { DeliveryStats } from '@/components/inventory'
 import DeliveryDetailDialog from './components/DeliveryDetailDialog.vue'
@@ -308,6 +302,14 @@ const {
 } = useCrudList(deliveryOrderAPI, 'getList', {
   initialFilters: { status: '', customer: '', todo: '', start_date: '', end_date: '' },
   buildParams: buildDeliveryParams
+})
+
+const deliveryDateRange = computed<[string, string]>({
+  get: (): [string, string] => [String(filters.value.start_date || ''), String(filters.value.end_date || '')],
+  set: ([start, end]: [string, string]) => {
+    filters.value.start_date = start
+    filters.value.end_date = end
+  }
 })
 
 const reloadData = async () => {

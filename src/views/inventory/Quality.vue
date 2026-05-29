@@ -1,18 +1,40 @@
 <template>
   <div class="space-y-6">
-    <QualityStats
-      :stats="stats"
-      :loading="statsLoading"
-    />
-
     <TablePageLayout>
-      <template #filters>
-        <div class="flex flex-col gap-3">
-          <div class="flex flex-wrap items-center gap-3">
+      <template #actions>
+        <div class="space-y-4">
+          <div class="flex justify-end gap-3">
+            <button
+              class="btn btn-secondary"
+              :disabled="loading"
+              title="刷新"
+              @click="reloadData"
+            >
+              <Icon
+                name="refresh"
+                size="md"
+                :class="loading ? 'animate-spin' : ''"
+              />
+            </button>
+            <button
+              v-if="canCreate"
+              class="btn btn-primary"
+              @click="handleCreate"
+            >
+              <Icon
+                name="plus"
+                size="md"
+                class="mr-2"
+              />
+              新建质检
+            </button>
+          </div>
+
+          <FilterRow>
             <SearchInput
               v-model="searchText"
               placeholder="搜索检验单/施工单/客户/产品"
-              class="w-full sm:w-64"
+              class="w-full sm:w-56"
               @search="searchAndRefreshStats"
               @clear="searchAndRefreshStats"
             />
@@ -40,54 +62,24 @@
               clearable
               @change="searchAndRefreshStats"
             />
-            <input
-              v-model="filters.start_date"
-              type="date"
-              class="input w-full sm:w-40"
+            <DateRangePicker
+              v-model="qualityDateRange"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
               @change="searchAndRefreshStats"
-            >
-            <input
-              v-model="filters.end_date"
-              type="date"
-              class="input w-full sm:w-40"
-              @change="searchAndRefreshStats"
-            >
-          </div>
-        </div>
-      </template>
-      <template #actions>
-        <div class="flex justify-end gap-3">
-          <button
-            v-if="hasFilters"
-            class="btn btn-secondary"
-            @click="handleReset"
-          >
-            重置筛选
-          </button>
-          <button
-            class="btn btn-secondary"
-            :disabled="loading"
-            title="刷新"
-            @click="reloadData"
-          >
-            <Icon
-              name="refresh"
-              size="md"
-              :class="loading ? 'animate-spin' : ''"
             />
-          </button>
-          <button
-            v-if="canCreate"
-            class="btn btn-primary"
-            @click="handleCreate"
-          >
-            <Icon
-              name="plus"
-              size="md"
-              class="mr-2"
-            />
-            新建质检
-          </button>
+            <button
+              class="btn btn-secondary"
+              @click="handleReset"
+            >
+              重置
+            </button>
+          </FilterRow>
+
+          <QualityStats
+            :stats="stats"
+            :loading="statsLoading"
+          />
         </div>
       </template>
 
@@ -215,12 +207,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { qualityInspectionAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog, RowActions } from '@/components/common'
+import { StatusTag, Select, Icon, TablePageLayout, DataTable, EmptyState, SearchInput, Pagination, ConfirmDialog, RowActions, FilterRow, DateRangePicker } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import QualityStats from './components/QualityStats.vue'
 import QualityDetailDialog from './components/QualityDetailDialog.vue'
@@ -324,6 +316,14 @@ const {
 } = useCrudList(qualityInspectionAPI, 'getList', {
   initialFilters: { type: '', result: '', todo: '', start_date: '', end_date: '' },
   buildParams: buildQualityParams
+})
+
+const qualityDateRange = computed<[string, string]>({
+  get: (): [string, string] => [String(filters.value.start_date || ''), String(filters.value.end_date || '')],
+  set: ([start, end]: [string, string]) => {
+    filters.value.start_date = start
+    filters.value.end_date = end
+  }
 })
 
 const reloadData = async () => {

@@ -1,17 +1,44 @@
 <template>
   <div class="space-y-6">
-    <StatementStats
-      :stats="stats"
-      :loading="statsLoading"
-    />
-
     <TablePageLayout>
-      <template #filters>
-        <div class="flex flex-col gap-3">
-          <div class="flex flex-wrap items-center gap-3">
+      <template #actions>
+        <div class="space-y-4">
+          <div class="flex justify-end gap-3">
+            <button
+              class="btn btn-secondary"
+              :disabled="loading"
+              title="刷新"
+              @click="reloadData"
+            >
+              <Icon
+                name="refresh"
+                size="md"
+                :class="loading ? 'animate-spin' : ''"
+              />
+            </button>
+            <button
+              class="btn btn-secondary"
+              @click="handlePrint"
+            >
+              打印
+            </button>
+            <button
+              class="btn btn-primary"
+              @click="handleCreate"
+            >
+              <Icon
+                name="plus"
+                size="md"
+                class="mr-2"
+              />
+              生成
+            </button>
+          </div>
+
+          <FilterRow>
             <SearchInput
               v-model="searchText"
-              class="w-full sm:w-72"
+              class="w-full sm:w-56"
               placeholder="搜索对账单号/周期/对方单位"
               @search="searchAndRefreshStats"
               @clear="searchAndRefreshStats"
@@ -40,60 +67,24 @@
               clearable
               @change="searchAndRefreshStats"
             />
-            <input
-              v-model="filters.period_start"
-              type="date"
-              class="input w-36"
+            <DateRangePicker
+              v-model="statementDateRange"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
               @change="searchAndRefreshStats"
+            />
+            <button
+              class="btn btn-secondary"
+              @click="handleReset"
             >
-            <input
-              v-model="filters.period_end"
-              type="date"
-              class="input w-36"
-              @change="searchAndRefreshStats"
-            >
-          </div>
-        </div>
-      </template>
+              重置
+            </button>
+          </FilterRow>
 
-      <template #actions>
-        <div class="flex justify-end gap-3">
-          <button
-            v-if="hasFilters"
-            class="btn btn-secondary"
-            @click="handleReset"
-          >
-            重置筛选
-          </button>
-          <button
-            class="btn btn-secondary"
-            :disabled="loading"
-            title="刷新"
-            @click="reloadData"
-          >
-            <Icon
-              name="refresh"
-              size="md"
-              :class="loading ? 'animate-spin' : ''"
-            />
-          </button>
-          <button
-            class="btn btn-secondary"
-            @click="handlePrint"
-          >
-            打印
-          </button>
-          <button
-            class="btn btn-primary"
-            @click="handleCreate"
-          >
-            <Icon
-              name="plus"
-              size="md"
-              class="mr-2"
-            />
-            生成
-          </button>
+          <StatementStats
+            :stats="stats"
+            :loading="statsLoading"
+          />
         </div>
       </template>
 
@@ -388,7 +379,7 @@ import { supplierAPI } from '@/api/modules/supplier'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { useUIStore } from '@/stores/ui'
-import { StatusTag, Select, TextArea, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, RowActions, SearchInput, DescriptionGrid, DescriptionItem } from '@/components/common'
+import { StatusTag, Select, TextArea, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, RowActions, SearchInput, DescriptionGrid, DescriptionItem, FilterRow, DateRangePicker } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import StatementStats from './components/StatementStats.vue'
 
@@ -484,6 +475,14 @@ const {
   initialFilters: { statement_type: '', status: '', todo: '', period_start: '', period_end: '' },
   buildParams: buildStatementParams,
   errorContext: '加载对账单失败'
+})
+
+const statementDateRange = computed<[string, string]>({
+  get: (): [string, string] => [String(filters.value.period_start || ''), String(filters.value.period_end || '')],
+  set: ([start, end]: [string, string]) => {
+    filters.value.period_start = start
+    filters.value.period_end = end
+  }
 })
 
 const fetchStats = async () => {

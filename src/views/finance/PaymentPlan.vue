@@ -1,67 +1,150 @@
 <template>
   <div class="space-y-6">
-    <StatsCards
-      title="收款计划统计"
-      :items="statItems"
-      :loading="statsLoading"
-      layout="media"
-    />
-
     <TablePageLayout>
-      <template #filters>
-        <FilterRow>
-          <SearchInput
-            v-model="searchText"
-            class="w-full sm:w-72"
-            placeholder="搜索客户订单/客户/计划日期"
-            @search="searchAndRefreshStats"
-            @clear="searchAndRefreshStats"
-          />
-          <Select
-            v-model="filters.status"
-            :options="statusOptions"
-            class="w-full sm:w-36"
-            placeholder="状态"
-            clearable
-            @change="searchAndRefreshStats"
-          />
-          <Select
-            v-model="filters.todo"
-            :options="todoOptions"
-            class="w-full sm:w-36"
-            placeholder="待办事项"
-            clearable
-            @change="searchAndRefreshStats"
-          />
-          <input
-            v-model="filters.start_date"
-            type="date"
-            class="input w-36"
-            @change="searchAndRefreshStats"
-          >
-          <input
-            v-model="filters.end_date"
-            type="date"
-            class="input w-36"
-            @change="searchAndRefreshStats"
-          >
-        </FilterRow>
-      </template>
-
       <template #actions>
-        <div class="flex justify-end gap-3">
-          <button
-            :disabled="loading"
-            class="btn btn-secondary"
-            title="刷新"
-            @click="reloadData"
-          >
-            <Icon
-              name="refresh"
-              size="md"
-              :class="loading ? 'animate-spin' : ''"
+        <div class="space-y-4">
+          <div class="flex justify-end gap-3">
+            <button
+              :disabled="loading"
+              class="btn btn-secondary"
+              title="刷新"
+              @click="reloadData"
+            >
+              <Icon
+                name="refresh"
+                size="md"
+                :class="loading ? 'animate-spin' : ''"
+              />
+            </button>
+          </div>
+
+          <FilterRow>
+            <SearchInput
+              v-model="searchText"
+              class="w-full sm:w-56"
+              placeholder="搜索客户订单/客户/计划日期"
+              @search="searchAndRefreshStats"
+              @clear="searchAndRefreshStats"
             />
-          </button>
+            <Select
+              v-model="filters.status"
+              :options="statusOptions"
+              class="w-full sm:w-36"
+              placeholder="状态"
+              clearable
+              @change="searchAndRefreshStats"
+            />
+            <Select
+              v-model="filters.todo"
+              :options="todoOptions"
+              class="w-full sm:w-36"
+              placeholder="待办事项"
+              clearable
+              @change="searchAndRefreshStats"
+            />
+            <DateRangePicker
+              v-model="planDateRange"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              @change="searchAndRefreshStats"
+            />
+            <button
+              class="btn btn-secondary"
+              @click="handleReset"
+            >
+              重置
+            </button>
+          </FilterRow>
+
+          <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div class="card p-4">
+              <div class="flex items-center gap-3">
+                <div class="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                  <Icon
+                    name="document"
+                    size="md"
+                  />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    计划金额
+                  </p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">
+                    {{ statsLoading ? '-' : formatCurrency(stats.planned_amount) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    当前筛选范围
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card p-4">
+              <div class="flex items-center gap-3">
+                <div class="rounded-lg bg-green-100 p-2 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                  <Icon
+                    name="checkCircle"
+                    size="md"
+                  />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    已收金额
+                  </p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">
+                    {{ statsLoading ? '-' : formatCurrency(stats.paid_amount) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    已完成收款
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card p-4">
+              <div class="flex items-center gap-3">
+                <div class="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                  <Icon
+                    name="clock"
+                    size="md"
+                  />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    待收金额
+                  </p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">
+                    {{ statsLoading ? '-' : formatCurrency(stats.remaining_amount) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    未完成计划
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card p-4">
+              <div class="flex items-center gap-3">
+                <div class="rounded-lg bg-rose-100 p-2 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
+                  <Icon
+                    name="exclamationTriangle"
+                    size="md"
+                  />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    逾期金额
+                  </p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">
+                    {{ statsLoading ? '-' : formatCurrency(stats.overdue_amount) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    逾期未收
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </template>
 
@@ -134,7 +217,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { paymentPlanAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, RowActions, FilterRow, Select, StatusTag, StatsCards } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, RowActions, FilterRow, Select, StatusTag, DateRangePicker } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
 import ErrorHandler from '@/utils/errorHandler'
@@ -205,12 +288,13 @@ const {
 
 const { canEdit } = useCrudPermission('paymentplan')
 
-const statItems = computed(() => [
-  { key: 'planned', label: '计划金额', value: stats.value.planned_amount, format: 'currency', iconName: 'document', tone: 'primary' },
-  { key: 'paid', label: '已收金额', value: stats.value.paid_amount, format: 'currency', iconName: 'checkCircle', tone: 'success' },
-  { key: 'remaining', label: '待收金额', value: stats.value.remaining_amount, format: 'currency', iconName: 'clock', tone: 'warning' },
-  { key: 'overdue', label: '逾期金额', value: stats.value.overdue_amount, format: 'currency', iconName: 'exclamationTriangle', tone: 'danger' }
-])
+const planDateRange = computed<[string, string]>({
+  get: (): [string, string] => [String(filters.value.start_date || ''), String(filters.value.end_date || '')],
+  set: ([start, end]: [string, string]) => {
+    filters.value.start_date = start
+    filters.value.end_date = end
+  }
+})
 
 const fetchStats = async () => {
   statsLoading.value = true
@@ -273,6 +357,8 @@ const formatAmount = (value: unknown) => Number(value || 0).toLocaleString(undef
   minimumFractionDigits: 2,
   maximumFractionDigits: 2
 })
+
+const formatCurrency = (value: unknown) => `¥${formatAmount(value)}`
 
 onMounted(() => { reloadData() })
 </script>

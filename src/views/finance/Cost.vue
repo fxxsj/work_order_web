@@ -1,61 +1,48 @@
 <template>
   <div class="space-y-6">
-    <CostStats
-      :stats="stats"
-      :loading="statsLoading"
-    />
-
     <TablePageLayout>
-      <template #filters>
-        <div class="flex flex-wrap items-center gap-3">
-          <SearchInput
-            v-model="searchText"
-            class="w-full sm:w-72"
-            placeholder="搜索施工单号/客户/周期"
-            @search="searchAndRefreshStats"
-            @clear="searchAndRefreshStats"
-          />
-          <MonthRangePicker
-            v-model="periodRange"
-            class="w-full sm:w-auto"
-            placeholder="选择时间范围"
-            @change="handlePeriodRangeChange"
-          />
-        </div>
-      </template>
-
       <template #actions>
-        <div class="flex justify-end gap-3">
-          <button
-            v-if="hasFilters"
-            class="btn btn-secondary"
-            @click="handleReset"
-          >
-            重置筛选
-          </button>
-          <button
-            class="btn btn-secondary"
-            :disabled="loading"
-            @click="reloadData"
-          >
-            <Icon
-              name="refresh"
-              size="md"
-              :class="loading ? 'animate-spin' : ''"
+        <div class="space-y-4">
+          <div class="flex justify-end gap-3">
+            <button
+              class="btn btn-secondary"
+              :disabled="loading"
+              title="刷新"
+              @click="reloadData"
+            >
+              <Icon
+                name="refresh"
+                size="md"
+                :class="loading ? 'animate-spin' : ''"
+              />
+            </button>
+          </div>
+
+          <FilterRow>
+            <SearchInput
+              v-model="searchText"
+              class="w-full sm:w-56"
+              placeholder="搜索施工单号/客户/周期"
+              @search="searchAndRefreshStats"
+              @clear="searchAndRefreshStats"
             />
-            刷新
-          </button>
-          <button
-            class="btn btn-primary"
-            @click="fetchStats"
-          >
-            <Icon
-              name="chart"
-              size="md"
-              class="mr-2"
+            <MonthRangePicker
+              v-model="periodRange"
+              placeholder="选择时间范围"
+              @change="handlePeriodRangeChange"
             />
-            成本统计
-          </button>
+            <button
+              class="btn btn-secondary"
+              @click="handleReset"
+            >
+              重置
+            </button>
+          </FilterRow>
+
+          <CostStats
+            :stats="stats"
+            :loading="statsLoading"
+          />
         </div>
       </template>
 
@@ -314,7 +301,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import CostStats from './components/CostStats.vue'
-import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions, SearchInput, MonthRangePicker } from '@/components/common'
+import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions, SearchInput, MonthRangePicker, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 
 const userStore = useUserStore()

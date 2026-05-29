@@ -1,98 +1,119 @@
 <template>
-  <TablePageLayout
-    title="入库单"
-    :loading="loading"
-  >
-    <template #filters>
-      <FilterRow>
-        <SearchInput
-          v-model="searchText"
-          class="w-full sm:w-72"
-          placeholder="搜索入库单号、客户、施工单"
-          @search="searchAndRefreshSummary"
-          @clear="searchAndRefreshSummary"
-        />
-        <Select
-          v-model="filters.status"
-          :options="statusOptions"
-          class="w-full sm:w-36"
-          placeholder="状态"
-          clearable
-          @change="searchAndRefreshSummary"
-        />
-        <input
-          v-model="filters.start_date"
-          type="date"
-          class="input w-full sm:w-40"
-          @change="searchAndRefreshSummary"
-        >
-        <input
-          v-model="filters.end_date"
-          type="date"
-          class="input w-full sm:w-40"
-          @change="searchAndRefreshSummary"
-        >
-      </FilterRow>
-    </template>
-
+  <TablePageLayout>
     <template #actions>
-      <div class="flex justify-end gap-3">
-        <button
-          v-if="hasFilters"
-          class="btn btn-secondary"
-          @click="handleReset"
-        >
-          重置筛选
-        </button>
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
-          title="刷新"
-          @click="reloadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
+      <div class="space-y-4">
+        <div class="flex justify-end gap-3">
+          <button
+            :disabled="loading"
+            class="btn btn-secondary"
+            title="刷新"
+            @click="reloadData"
+          >
+            <Icon
+              name="refresh"
+              size="md"
+              :class="loading ? 'animate-spin' : ''"
+            />
+          </button>
+          <button
+            v-if="canCreate"
+            class="btn btn-primary"
+            @click="showCreateDialog"
+          >
+            <Icon
+              name="plus"
+              size="md"
+              class="mr-2"
+            />
+            新建入库单
+          </button>
+        </div>
+
+        <FilterRow>
+          <SearchInput
+            v-model="searchText"
+            class="w-full sm:w-56"
+            placeholder="搜索入库单号、客户、施工单"
+            @search="searchAndRefreshSummary"
+            @clear="searchAndRefreshSummary"
           />
-        </button>
-        <button
-          v-if="canCreate"
-          class="btn btn-primary"
-          @click="showCreateDialog"
-        >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
+          <Select
+            v-model="filters.status"
+            :options="statusOptions"
+            class="w-full sm:w-36"
+            placeholder="状态"
+            clearable
+            @change="searchAndRefreshSummary"
           />
-          新建入库单
-        </button>
+          <DateRangePicker
+            v-model="stockInDateRange"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            @change="searchAndRefreshSummary"
+          />
+          <button
+            class="btn btn-secondary"
+            @click="handleReset"
+          >
+            重置
+          </button>
+        </FilterRow>
+
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div class="card p-4">
+            <div class="flex items-center gap-3">
+              <div class="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <Icon name="document" size="md" />
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">入库单总数</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.total_count) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">当前筛选范围</p>
+              </div>
+            </div>
+          </div>
+          <div class="card p-4">
+            <div class="flex items-center gap-3">
+              <div class="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                <Icon name="edit" size="md" />
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">待提交</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.draft_count) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">草稿入库单</p>
+              </div>
+            </div>
+          </div>
+          <div class="card p-4">
+            <div class="flex items-center gap-3">
+              <div class="rounded-lg bg-sky-100 p-2 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+                <Icon name="clock" size="md" />
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">待审核</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.submitted_count) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">已提交入库单</p>
+              </div>
+            </div>
+          </div>
+          <div class="card p-4">
+            <div class="flex items-center gap-3">
+              <div class="rounded-lg bg-green-100 p-2 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                <Icon name="checkCircle" size="md" />
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">已完成</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.completed_count) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">审核完成入库单</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
 
     <template #table>
-      <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-            <div class="text-2xl font-semibold">{{ summary.total_count || 0 }}</div>
-            <div class="text-xs text-gray-500">入库单总数</div>
-          </div>
-          <div class="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
-            <div class="text-2xl font-semibold">{{ summary.draft_count || 0 }}</div>
-            <div class="text-xs text-gray-500">待提交</div>
-          </div>
-          <div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-            <div class="text-2xl font-semibold">{{ summary.submitted_count || 0 }}</div>
-            <div class="text-xs text-gray-500">待审核</div>
-          </div>
-          <div class="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
-            <div class="text-2xl font-semibold">{{ summary.completed_count || 0 }}</div>
-            <div class="text-xs text-gray-500">已完成</div>
-          </div>
-        </div>
-
-        <DataTable
+      <DataTable
           :columns="columns"
           :data="tableData"
           :loading="loading"
@@ -128,8 +149,7 @@
               @action="showCreateDialog"
             />
           </template>
-        </DataTable>
-      </div>
+      </DataTable>
     </template>
 
     <template #pagination>
@@ -263,6 +283,7 @@ import {
   BaseDialog,
   ConfirmDialog,
   DataTable,
+  DateRangePicker,
   DescriptionGrid,
   DescriptionItem,
   EmptyState,
@@ -354,7 +375,15 @@ const form = reactive({
 })
 
 const summary = computed(() => summaryStats.value?.summary || {})
+const stockInDateRange = computed<[string, string]>({
+  get: (): [string, string] => [String(filters.value.start_date || ''), String(filters.value.end_date || '')],
+  set: ([start, end]: [string, string]) => {
+    filters.value.start_date = start
+    filters.value.end_date = end
+  }
+})
 const todayText = () => new Date().toISOString().slice(0, 10)
+const formatCount = (value: unknown) => Number(value || 0).toLocaleString()
 const formatDate = (value: string | null | undefined) => value ? String(value).slice(0, 10) : '-'
 const formatDateTime = (value: string | null | undefined) => value ? String(value).replace('T', ' ').slice(0, 19) : '-'
 

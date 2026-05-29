@@ -1,14 +1,43 @@
 <template>
   <div class="space-y-6">
-    <InvoiceStats
-      :stats="stats"
-      :loading="statsLoading"
-    />
-
     <TablePageLayout>
-      <template #filters>
-        <div class="flex flex-col gap-3">
-          <div class="flex flex-wrap items-center gap-3">
+      <template #actions>
+        <div class="space-y-4">
+          <div class="flex justify-end gap-3">
+            <button
+              class="btn btn-secondary"
+              :disabled="loading"
+              title="刷新"
+              @click="reloadData"
+            >
+              <Icon
+                name="refresh"
+                size="md"
+                :class="loading ? 'animate-spin' : ''"
+              />
+            </button>
+            <button
+              v-if="canCreate"
+              class="btn btn-primary"
+              @click="handleCreate"
+            >
+              <Icon
+                name="plus"
+                size="md"
+                class="mr-2"
+              />
+              新建发票
+            </button>
+          </div>
+
+          <FilterRow>
+            <SearchInput
+              v-model="filters.invoice_number"
+              class="w-full sm:w-56"
+              placeholder="搜索发票号码"
+              @search="searchAndRefreshStats"
+              @clear="searchAndRefreshStats"
+            />
             <Select
               v-model="filters.customer"
               :options="customerOptions"
@@ -34,42 +63,18 @@
               clearable
               @change="searchAndRefreshStats"
             />
-            <SearchInput
-              v-model="filters.invoice_number"
-              placeholder="搜索发票号码"
-              @search="searchAndRefreshStats"
-              @clear="searchAndRefreshStats"
-            />
-          </div>
-        </div>
-      </template>
+            <button
+              class="btn btn-secondary"
+              @click="handleReset"
+            >
+              重置
+            </button>
+          </FilterRow>
 
-      <template #actions>
-        <div class="flex justify-end gap-3">
-          <button
-            class="btn btn-secondary"
-            :disabled="loading"
-            @click="reloadData"
-          >
-            <Icon
-              name="refresh"
-              size="md"
-              :class="loading ? 'animate-spin' : ''"
-            />
-            刷新
-          </button>
-          <button
-            v-if="canCreate"
-            class="btn btn-primary"
-            @click="handleCreate"
-          >
-            <Icon
-              name="plus"
-              size="md"
-              class="mr-2"
-            />
-            新建发票
-          </button>
+          <InvoiceStats
+            :stats="stats"
+            :loading="statsLoading"
+          />
         </div>
       </template>
 
@@ -335,7 +340,7 @@ import { invoiceAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, SearchInput, Icon, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions } from '@/components/common'
+import { StatusTag, Select, SearchInput, Icon, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import InvoiceStats from './components/InvoiceStats.vue'
 import CustomerSelector from '@/views/customer/components/CustomerSelector.vue'
@@ -426,7 +431,6 @@ const {
   pageSize,
   loadData,
   handleSearch,
-  handleSearchDebounced,
   handlePageChange,
   handleSizeChange,
   resetFilters

@@ -1,14 +1,43 @@
 <template>
   <div class="space-y-6">
-    <PaymentStats
-      :stats="stats"
-      :loading="statsLoading"
-    />
-
     <TablePageLayout>
-      <template #filters>
-        <div class="flex flex-col gap-3">
-          <div class="flex flex-wrap items-center gap-3">
+      <template #actions>
+        <div class="space-y-4">
+          <div class="flex justify-end gap-3">
+            <button
+              class="btn btn-secondary"
+              :disabled="loading"
+              title="刷新"
+              @click="reloadData"
+            >
+              <Icon
+                name="refresh"
+                size="md"
+                :class="loading ? 'animate-spin' : ''"
+              />
+            </button>
+            <button
+              v-if="canCreate"
+              class="btn btn-primary"
+              @click="handleCreate"
+            >
+              <Icon
+                name="plus"
+                size="md"
+                class="mr-2"
+              />
+              新增收款
+            </button>
+          </div>
+
+          <FilterRow>
+            <SearchInput
+              v-model="searchText"
+              class="w-full sm:w-56"
+              placeholder="搜索收款单号/客户"
+              @search="searchAndRefreshStats"
+              @clear="searchAndRefreshStats"
+            />
             <Select
               v-model="filters.customer"
               :options="customerOptions"
@@ -34,56 +63,24 @@
               clearable
               @change="searchAndRefreshStats"
             />
-            <SearchInput
-              v-model="searchText"
-              class="w-full sm:w-72"
-              placeholder="搜索收款单号/客户"
-              @search="searchAndRefreshStats"
-              @clear="searchAndRefreshStats"
-            />
-            <input
-              v-model="filters.start_date"
-              type="date"
-              class="input w-36"
-              placeholder="开始日期"
+            <DateRangePicker
+              v-model="paymentDateRange"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
               @change="searchAndRefreshStats"
-            >
-            <input
-              v-model="filters.end_date"
-              type="date"
-              class="input w-36"
-              placeholder="结束日期"
-              @change="searchAndRefreshStats"
-            >
-          </div>
-        </div>
-      </template>
-      <template #actions>
-        <div class="flex justify-end gap-3">
-          <button
-            class="btn btn-secondary"
-            :disabled="loading"
-            title="刷新"
-            @click="reloadData"
-          >
-            <Icon
-              name="refresh"
-              size="md"
-              :class="loading ? 'animate-spin' : ''"
             />
-          </button>
-          <button
-            v-if="canCreate"
-            class="btn btn-primary"
-            @click="handleCreate"
-          >
-            <Icon
-              name="plus"
-              size="md"
-              class="mr-2"
-            />
-            新增收款
-          </button>
+            <button
+              class="btn btn-secondary"
+              @click="handleReset"
+            >
+              重置
+            </button>
+          </FilterRow>
+
+          <PaymentStats
+            :stats="stats"
+            :loading="statsLoading"
+          />
         </div>
       </template>
 
@@ -385,7 +382,7 @@ import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import PaymentStats from './components/PaymentStats.vue'
-import { Select, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions, SearchInput } from '@/components/common'
+import { Select, Input, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions, SearchInput, FilterRow, DateRangePicker } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import CustomerSelector from '@/views/customer/components/CustomerSelector.vue'
 import QuickCustomerCreateDialog from '@/views/customer/components/QuickCustomerCreateDialog.vue'
@@ -474,8 +471,16 @@ const {
   handleSizeChange,
   resetFilters
 } = useCrudList(paymentAPI, 'getList', {
-  initialFilters: { customer: '', payment_method: '', todo: '', start_date: '', end_date: '', date_range: null },
+  initialFilters: { customer: '', payment_method: '', todo: '', start_date: '', end_date: '' },
   buildParams: buildPaymentParams
+})
+
+const paymentDateRange = computed<[string, string]>({
+  get: (): [string, string] => [String(filters.value.start_date || ''), String(filters.value.end_date || '')],
+  set: ([start, end]: [string, string]) => {
+    filters.value.start_date = start
+    filters.value.end_date = end
+  }
 })
 
 const handleReset = async () => {
