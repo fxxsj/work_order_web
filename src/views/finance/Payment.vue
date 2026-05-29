@@ -215,7 +215,7 @@
         <DescriptionItem label="关联发票">
           {{ (currentPayment as any).invoice_number || '-' }}
         </DescriptionItem>
-        <DescriptionItem label="关联销售订单">
+        <DescriptionItem label="关联客户订单">
           {{ (currentPayment as any).sales_order_number || '-' }}
         </DescriptionItem>
         <DescriptionItem
@@ -421,7 +421,7 @@ const columns: Column[] = [
   { key: 'customer_name', label: '客户名称', width: 144, sortable: true },
   { key: 'payment_date', label: '收款日期', width: 112, sortable: true },
   { key: 'payment_method_display', label: '收款方式', width: 96, sortable: true },
-  { key: 'sales_order_number', label: '销售订单', width: 128, sortable: true },
+  { key: 'sales_order_number', label: '客户订单', width: 128, sortable: true },
   { key: 'invoice_number', label: '关联发票', width: 128, sortable: true },
   { key: 'amount', label: '收款金额', width: 112, align: 'right', sortable: true },
   { key: 'applied_amount', label: '已核销金额', width: 112, align: 'right', sortable: true },

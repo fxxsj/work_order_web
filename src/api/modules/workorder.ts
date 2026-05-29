@@ -53,7 +53,7 @@ class WorkOrderAPI extends BaseAPI {
     return this.customAction(`${this.baseUrl}summary/`, 'get', null, params)
   }
 
-  // 获取可关联的销售订单候选
+  // 获取可关联的客户订单候选
   getSalesOrderCandidates(params?: Record<string, unknown>) {
     return this.customAction(`${this.baseUrl}sales_order_candidates/`, 'get', null, params)
   }

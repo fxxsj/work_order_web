@@ -322,7 +322,7 @@ export interface PurchaseOrderSummary {
   status: PurchaseStatus
 }
 
-// ============ 销售订单 ============
+// ============ 客户订单 ============
 
 export type SalesStatus = 'draft' | 'confirmed' | 'in_production' | 'shipped' | 'completed' | 'cancelled'
 

@@ -1,6 +1,6 @@
 /**
  * WorkOrder Flow API Module
- * 施工单流程（从销售订单创建/提交/审核等）
+ * 施工单流程（从客户订单创建/提交/审核等）
  */
 import request from '@/api/index'
 import { BaseAPI } from '@/api/base/BaseAPI'
@@ -11,7 +11,7 @@ class WorkOrderFlowAPI extends BaseAPI {
   }
 
   /**
-   * 从销售订单创建施工单
+   * 从客户订单创建施工单
    * @param {Object} data - { sales_order_id, production_quantity?, delivery_date?, priority?, notes? }
    * @returns {Promise} 创建结果
    */
@@ -20,7 +20,7 @@ class WorkOrderFlowAPI extends BaseAPI {
   }
 
   /**
-   * 批量从销售订单创建施工单
+   * 批量从客户订单创建施工单
    * @param {Object} data - { sales_order_ids, production_quantity?, delivery_date?, priority?, notes? }
    * @returns {Promise} 创建结果
    */

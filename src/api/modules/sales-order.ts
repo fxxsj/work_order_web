@@ -1,6 +1,6 @@
 /**
  * Sales Order API Module
- * 销售订单管理 API
+ * 客户订单管理 API
  */
 import request from '@/api/index'
 import { BaseAPI } from '@/api/base/BaseAPI'
@@ -12,7 +12,7 @@ class SalesOrderAPI extends BaseAPI {
   }
 
   /**
-   * 提交销售订单
+   * 提交客户订单
    * @param {number} id - 订单ID
    * @returns {Promise} 提交结果
    */
@@ -24,7 +24,7 @@ class SalesOrderAPI extends BaseAPI {
   }
 
   /**
-   * 审核通过销售订单
+   * 审核通过客户订单
    * @param {number} id - 订单ID
    * @param {Object} data - 审核信息
    * @returns {Promise} 审核结果
@@ -38,7 +38,7 @@ class SalesOrderAPI extends BaseAPI {
   }
 
   /**
-   * 拒绝销售订单
+   * 拒绝客户订单
    * @param {number} id - 订单ID
    * @param {Object} data - 拒绝原因
    * @returns {Promise} 拒绝结果
@@ -104,7 +104,7 @@ class SalesOrderAPI extends BaseAPI {
   }
 
   /**
-   * 从销售订单创建施工单
+   * 从客户订单创建施工单
    */
   convertToWorkOrder(id: number | string, data: Record<string, unknown> = {}) {
     return workOrderFlowAPI.createFromSalesOrder({
@@ -114,7 +114,7 @@ class SalesOrderAPI extends BaseAPI {
   }
 
   /**
-   * 批量从销售订单创建施工单
+   * 批量从客户订单创建施工单
    */
   batchConvertToWorkOrder(ids: Array<number | string>, data: Record<string, unknown> = {}) {
     return workOrderFlowAPI.createFromSalesOrders({
