@@ -8,6 +8,7 @@ import { useUserStore } from '@/stores'
 import router from '@/router'
 import logger from '@/utils/logger'
 import type { ApiResponse } from '@/types'
+import { runtimeConfig } from '@/config/runtime'
 
 // Token 刷新提前量（秒）- 过期前 30 秒主动刷新
 const REFRESH_BEFORE_SECONDS = 30
@@ -99,7 +100,7 @@ async function doProactiveRefresh() {
   isRefreshing = true
 
   try {
-    const response = await axios.post('/api/v1/auth/refresh/', { refresh: refreshToken })
+    const response = await axios.post(`${runtimeConfig.API_BASE_URL}/v1/auth/refresh/`, { refresh: refreshToken })
     // 后端已统一返回标准格式: { success, code, message, data: { access, refresh, access_expires_at } }
     const payload = response?.data?.data || {}
     const { access, refresh: newRefresh, access_expires_at } = payload
@@ -159,7 +160,7 @@ function handleRefreshResponse(response: unknown, userStore: ReturnType<typeof u
 }
 
 const service: AxiosInstance = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${runtimeConfig.API_BASE_URL}/v1`,
   timeout: 30000,
   withCredentials: true,
   xsrfCookieName: 'csrftoken',
@@ -231,7 +232,7 @@ service.interceptors.response.use(
           throw new Error('No refresh token available')
         }
 
-        const response = await axios.post('/api/v1/auth/refresh/', { refresh: refreshToken })
+        const response = await axios.post(`${runtimeConfig.API_BASE_URL}/v1/auth/refresh/`, { refresh: refreshToken })
         // 后端已统一返回标准格式: { success, code, message, data: { access, refresh, access_expires_at } }
         const payload = response?.data?.data || {}
         const { access, refresh: newRefresh, access_expires_at } = payload

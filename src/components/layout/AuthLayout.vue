@@ -16,13 +16,14 @@
       <!-- Logo/Brand -->
       <div class="mb-8 text-center">
         <div class="mb-4 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl shadow-lg shadow-primary-500/30 bg-white/80 backdrop-blur-sm">
-          <span class="text-3xl font-bold text-primary-600">印</span>
+          <img v-if="branding.logoUrl" :src="branding.logoUrl" :alt="branding.appName" class="h-full w-full object-cover">
+          <span v-else class="text-3xl font-bold text-primary-600">{{ branding.logoText }}</span>
         </div>
         <h1 class="auth-title mb-2 text-3xl font-bold">
-          印刷施工单跟踪系统
+          {{ branding.appName }}
         </h1>
         <p class="text-sm text-gray-500 dark:text-dark-400">
-          高效管理施工单，提升生产效率
+          {{ branding.appTagline }}
         </p>
       </div>
 
@@ -38,7 +39,7 @@
 
       <!-- Copyright -->
       <div class="mt-8 text-center text-xs text-gray-400 dark:text-dark-500">
-        &copy; {{ currentYear }} 印刷施工单跟踪系统. All rights reserved.
+        &copy; {{ currentYear }} {{ branding.appName }}. All rights reserved.
       </div>
     </div>
   </div>
@@ -46,6 +47,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { branding } from '@/config/branding'
 
 const currentYear = computed(() => new Date().getFullYear())
 </script>

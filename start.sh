@@ -43,6 +43,17 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
+# 检查运行时配置
+if [ ! -f "public/env.js" ]; then
+    if [ -f "public/env.js.example" ]; then
+        echo -e "${YELLOW}从 env.js.example 生成 env.js...${NC}"
+        cp public/env.js.example public/env.js
+        echo -e "${GREEN}已生成 public/env.js，可按需修改${NC}"
+    else
+        echo -e "${RED}警告: public/env.js 和 public/env.js.example 均不存在${NC}"
+    fi
+fi
+
 # 解析参数
 MODE="${1:-dev}"
 

@@ -7,6 +7,7 @@
 import BaseService from './base/BaseService'
 import * as XLSX from 'xlsx'
 import logger from '@/utils/logger'
+import { branding } from '@/config/branding'
 
 export interface ExportColumn {
   field: string
@@ -56,7 +57,7 @@ class ExportService extends BaseService {
       sheetName = 'Sheet1',
       columns = [],
       title = null,
-      author = '印刷施工单系统'
+      author = branding.appShortName
     } = options
 
     try {
