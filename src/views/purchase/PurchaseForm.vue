@@ -107,20 +107,38 @@
           />
         </button>
         <button
-          class="btn btn-primary min-w-0 flex-1 sm:flex-none"
+          class="btn btn-secondary min-w-0 flex-1 sm:flex-none"
           :disabled="submitting"
-          @click="handleSubmit"
+          @click="handleSubmit(false)"
         >
           <span
             v-if="submitting"
-            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent align-middle mr-1"
           />
           <Icon
             v-else
-            name="check"
+            name="save"
             size="md"
+            class="mr-1"
           />
-          创建
+          存为草稿
+        </button>
+        <button
+          class="btn btn-primary min-w-0 flex-1 sm:flex-none"
+          :disabled="submitting"
+          @click="handleSubmit(true)"
+        >
+          <span
+            v-if="submitting"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-1"
+          />
+          <Icon
+            v-else
+            name="send"
+            size="md"
+            class="mr-1"
+          />
+          直接发布
         </button>
       </div>
     </div>
@@ -241,12 +259,12 @@ const validateForm = () => {
   return true
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (autoApprove: boolean = false) => {
   if (!validateForm()) return
 
   submitting.value = true
   try {
-    await purchaseOrderAPI.create({
+    const res: any = await purchaseOrderAPI.create({
       supplier: form.supplier,
       work_order: form.work_order,
       notes: form.notes.trim(),
@@ -257,7 +275,15 @@ const handleSubmit = async () => {
         work_order_material: item.work_order_material || undefined
       }))
     })
-    useUIStore().showSuccess('创建成功')
+    
+    let currentId = res.id
+    if (autoApprove && currentId) {
+      await purchaseOrderAPI.submit(currentId, { auto_approve: true })
+      useUIStore().showSuccess('发布成功')
+    } else {
+      useUIStore().showSuccess('创建成功')
+    }
+    
     router.push('/purchase-orders')
   } catch (error: any) {
     ErrorHandler.showMessage(error, '创建失败')

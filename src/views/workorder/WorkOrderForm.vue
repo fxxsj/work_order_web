@@ -233,37 +233,38 @@
           />
         </button>
         <button
-          class="btn btn-primary min-w-0 flex-1 sm:flex-none"
-          :disabled="saving"
-          @click="handleSave"
+          class="btn btn-secondary min-w-0 flex-1 sm:flex-none"
+          :disabled="saving || submitting"
+          @click="handleSave(false)"
         >
           <span
             v-if="saving"
-            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-2"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent align-middle mr-1"
           />
           <Icon
             v-else
-            name="check"
+            name="save"
             size="md"
+            class="mr-1"
           />
-          保存
+          {{ isEdit ? '保存草稿' : '存为草稿' }}
         </button>
         <button
-          v-if="isEdit"
-          class="btn btn-success min-w-0 flex-1 sm:flex-none"
-          :disabled="submitting"
-          @click="handleSubmitForApproval"
+          class="btn btn-primary min-w-0 flex-1 sm:flex-none"
+          :disabled="saving || submitting"
+          @click="handleSave(true)"
         >
           <span
-            v-if="submitting"
-            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-2"
+            v-if="saving || submitting"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-1"
           />
           <Icon
             v-else
-            name="upload"
+            name="send"
             size="md"
+            class="mr-1"
           />
-          提交审核
+          {{ isEdit ? '保存并发布' : '直接发布' }}
         </button>
       </div>
     </div>
@@ -788,24 +789,31 @@ const formatPayload = () => {
 }
 
 // Save
-const handleSave = async () => {
+const handleSave = async (autoApprove: boolean = false) => {
   if (!validateForm()) return
 
   saving.value = true
   try {
     const payload = formatPayload()
+    let currentId = id.value
 
     if (isEdit.value) {
-      await workOrderAPI.update(id.value!, payload)
+      await workOrderAPI.update(currentId!, payload)
       useUIStore().showSuccess('施工单更新成功')
-      router.back()
     } else {
       const res: any = await workOrderAPI.create(payload)
-      createdWorkOrderId = res.id || res.data?.id
+      currentId = res.id || res.data?.id
+      createdWorkOrderId = currentId
       useUIStore().showSuccess('施工单创建成功')
+    }
 
-      // Show submit approval dialog for new work orders in draft/pending status
-      if (form.status === 'pending' || form.status === 'draft') {
+    if (autoApprove && currentId) {
+      await workOrderFlowAPI.submitApproval(currentId, { auto_approve: true })
+      useUIStore().showSuccess('发布成功')
+      router.back()
+    } else {
+      // Show submit approval dialog for new work orders in draft/pending status if not auto-approved
+      if (!isEdit.value && (form.status === 'pending' || form.status === 'draft')) {
         showSubmitApprovalDialog.value = true
       } else {
         router.back()

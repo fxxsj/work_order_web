@@ -13,10 +13,11 @@ class PurchaseOrderAPI extends BaseAPI {
   /**
    * 提交采购单
    */
-  submit(id: number | string) {
+  submit(id: number | string, data?: unknown) {
     return this.request({
       url: `${this.baseUrl}${id}/submit/`,
-      method: 'post'
+      method: 'post',
+      data
     })
   }
 

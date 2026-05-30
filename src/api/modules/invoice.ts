@@ -15,10 +15,11 @@ class InvoiceAPI extends BaseAPI {
    * @param {number} id - 发票ID
    * @returns {Promise} 提交结果
    */
-  submit(id: number | string) {
+  submit(id: number | string, data?: unknown) {
     return this.request({
       url: `${this.baseUrl}${id}/submit/`,
-      method: 'post'
+      method: 'post',
+      data
     })
   }
 

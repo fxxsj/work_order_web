@@ -238,7 +238,7 @@
       <form
         id="invoice-form"
         class="space-y-5"
-        @submit.prevent="handleSave"
+        @submit.prevent="() => handleSave(false)"
       >
         <div>
           <label class="input-label mb-1.5 block">客户</label>
@@ -304,12 +304,40 @@
             取消
           </button>
           <button
-            class="btn btn-primary"
-            form="invoice-form"
-            type="submit"
+            class="btn btn-secondary min-w-0 flex-1 sm:flex-none"
+            type="button"
             :disabled="submitting"
+            @click="handleSave(false)"
           >
-            保存
+            <span
+              v-if="submitting"
+              class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent align-middle mr-1"
+            />
+            <Icon
+              v-else
+              name="save"
+              size="md"
+              class="mr-1"
+            />
+            存为草稿
+          </button>
+          <button
+            class="btn btn-primary min-w-0 flex-1 sm:flex-none"
+            type="button"
+            :disabled="submitting"
+            @click="handleSave(true)"
+          >
+            <span
+              v-if="submitting"
+              class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-1"
+            />
+            <Icon
+              v-else
+              name="send"
+              size="md"
+              class="mr-1"
+            />
+            直接发布
           </button>
         </div>
       </template>
@@ -572,7 +600,7 @@ const handleSubmit = async () => {
   }
 }
 
-const handleSave = async () => {
+const handleSave = async (autoApprove: boolean = false) => {
   if (!form.customer) { useUIStore().showWarning('请选择客户'); return }
   if (!form.invoice_type) { useUIStore().showWarning('请选择发票类型'); return }
   if (!form.issue_date) { useUIStore().showWarning('请选择开票日期'); return }
@@ -581,14 +609,22 @@ const handleSave = async () => {
   submitting.value = true
   try {
     const data = { ...form }
-    if (data.id) {
+    let currentId = data.id
+    if (currentId) {
       delete (data as any).id
-      await invoiceAPI.update(form.id!, data)
-      useUIStore().showSuccess('发票更新成功')
+      await invoiceAPI.update(currentId, data)
     } else {
-      await invoiceAPI.create(data)
-      useUIStore().showSuccess('发票创建成功')
+      const res: any = await invoiceAPI.create(data)
+      currentId = res.id
     }
+    
+    if (autoApprove && currentId) {
+      await invoiceAPI.submit(currentId, { auto_approve: true })
+      useUIStore().showSuccess('发布成功')
+    } else {
+      useUIStore().showSuccess(data.id ? '发票更新成功' : '发票创建成功')
+    }
+    
     formDialogVisible.value = false
     loadData()
     fetchStats()

@@ -324,20 +324,38 @@
           />
         </button>
         <button
-          class="btn btn-primary min-w-0 flex-1 sm:flex-none"
+          class="btn btn-secondary min-w-0 flex-1 sm:flex-none"
           :disabled="submitting"
-          @click="handleSubmit"
+          @click="handleSubmit(false)"
         >
           <span
             v-if="submitting"
-            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent align-middle mr-1"
           />
           <Icon
             v-else
-            name="check"
+            name="save"
             size="md"
+            class="mr-1"
           />
-          {{ isEdit ? '保存' : '创建' }}
+          {{ isEdit ? '保存草稿' : '存为草稿' }}
+        </button>
+        <button
+          class="btn btn-primary min-w-0 flex-1 sm:flex-none"
+          :disabled="submitting"
+          @click="handleSubmit(true)"
+        >
+          <span
+            v-if="submitting"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-1"
+          />
+          <Icon
+            v-else
+            name="send"
+            size="md"
+            class="mr-1"
+          />
+          {{ isEdit ? '保存并发布' : '直接发布' }}
         </button>
       </div>
     </div>
@@ -533,7 +551,7 @@ const handleProductCreated = (product: any) => {
   pendingProductCreateIndex.value = null
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (autoApprove: boolean = false) => {
   if (!form.customer) { useUIStore().showWarning('请选择客户'); return }
   if (!form.order_date) { useUIStore().showWarning('请选择订单日期'); return }
   if (!form.delivery_date) { useUIStore().showWarning('请选择交货日期'); return }
@@ -578,13 +596,21 @@ const handleSubmit = async () => {
       notes: form.notes.trim(),
       items,
     }
+    let currentId = id.value
     if (isEdit.value) {
-      await salesOrderAPI.update(id.value!, data)
-      useUIStore().showSuccess('保存成功')
+      await salesOrderAPI.update(currentId!, data)
     } else {
-      await salesOrderAPI.create(data)
-      useUIStore().showSuccess('创建成功')
+      const res: any = await salesOrderAPI.create(data)
+      currentId = res.id
     }
+    
+    if (autoApprove && currentId) {
+      await salesOrderAPI.submit(currentId, { auto_approve: true })
+      useUIStore().showSuccess('发布成功')
+    } else {
+      useUIStore().showSuccess('保存成功')
+    }
+    
     router.push('/sales-orders')
   } catch (error: any) {
     ErrorHandler.showMessage(error, isEdit.value ? '保存失败' : '创建失败')
