@@ -475,5 +475,9 @@ const goBack = () => router.back()
 onMounted(async () => {
   await Promise.all([fetchCustomers(), fetchSalesOrders(), fetchProducts()])
   await loadDetail()
+  // 从客户订单详情页跳转过来时，自动选中并填充
+  if (!isEdit.value && route.query.sales_order_id) {
+    await handleSalesOrderChange(route.query.sales_order_id)
+  }
 })
 </script>

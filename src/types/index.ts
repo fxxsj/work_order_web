@@ -324,25 +324,56 @@ export interface PurchaseOrderSummary {
 
 // ============ 客户订单 ============
 
-export type SalesStatus = 'draft' | 'confirmed' | 'in_production' | 'shipped' | 'completed' | 'cancelled'
+export type SalesStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'in_production' | 'completed' | 'cancelled'
+
+export type PaymentStatus = 'unpaid' | 'partial' | 'paid'
+
+export type ApprovalStatusType = 'draft' | 'submitted' | 'approved' | 'rejected'
 
 export interface SalesOrder {
   id: number
-  order_no: string
+  order_number: string
   customer: number
   customer_name?: string
-  salesperson: number
-  salesperson_name?: string
+  customer_code?: string
   status: SalesStatus
-  items?: SalesOrderItem[]
+  status_display?: string
+  payment_status: PaymentStatus
+  payment_status_display?: string
+  approval_status?: ApprovalStatusType
+  approval_comment?: string
+  rejection_reason?: string
+  contract_number?: string
+  contact_person?: string
+  contact_phone?: string
+  shipping_address?: string
   subtotal?: number
-  discount?: number
   tax_rate?: number
   tax_amount?: number
+  discount_amount?: number
   total_amount?: number
-  expected_date?: string
+  deposit_amount?: number
+  paid_amount?: number
+  payment_date?: string
+  order_date?: string
   delivery_date?: string
+  actual_delivery_date?: string
+  completion_reason?: string
   notes?: string
+  items_count?: number
+  work_order_count?: number
+  created_by?: number
+  items?: SalesOrderItem[]
+  work_order_numbers?: string[]
+  delivery_order_numbers?: string[]
+  invoice_numbers?: string[]
+  work_order_summaries?: WorkOrderSummary[]
+  delivery_order_summaries?: DeliveryOrderSummary[]
+  invoice_summaries?: InvoiceSummary[]
+  payment_count?: number
+  pending_payment_plan_count?: number
+  pending_payment_plan_amount?: number
+  unpaid_amount?: number
   created_at?: string
   updated_at?: string
 }
@@ -352,10 +383,36 @@ export interface SalesOrderItem {
   product: number
   product_name?: string
   product_code?: string
+  specification?: string
   quantity: number
+  delivered_quantity?: number
   unit?: string
   unit_price?: number
-  total_price?: number
+  tax_rate?: number
+  discount_amount?: number
+  subtotal?: number
+  notes?: string
+}
+
+export interface WorkOrderSummary {
+  id: number
+  number: string
+  status?: string
+  status_display?: string
+}
+
+export interface DeliveryOrderSummary {
+  id: number
+  number: string
+  status?: string
+  status_display?: string
+}
+
+export interface InvoiceSummary {
+  id: number
+  number: string
+  status?: string
+  status_display?: string
 }
 
 // ============ 库存 ============

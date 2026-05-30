@@ -15,8 +15,7 @@
       <Input
         v-model="form.code"
         label="供应商编码"
-        placeholder="请输入供应商编码"
-        required
+        placeholder="请输入供应商编码（留空自动生成）"
       />
       <Input
         v-model="form.contact_person"
@@ -49,7 +48,7 @@
       </button>
       <button
         class="btn btn-primary"
-        :disabled="loading || !form.name || !form.code"
+        :disabled="loading || !form.name"
         @click="handleSubmit"
       >
         <span
@@ -112,16 +111,11 @@ const handleSubmit = async () => {
     useUIStore().showWarning('请输入供应商名称')
     return
   }
-  if (!form.code) {
-    useUIStore().showWarning('请输入供应商编码')
-    return
-  }
-
   loading.value = true
   try {
     const created: any = await supplierAPI.create({
       name: form.name,
-      code: form.code,
+      code: form.code || undefined,
       contact_person: form.contact_person || undefined,
       phone: form.phone || undefined,
       email: form.email || undefined,

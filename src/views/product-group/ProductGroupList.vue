@@ -119,8 +119,7 @@
         <Input
           v-model="form.code"
           label="编码"
-          required
-          placeholder="请输入编码"
+          placeholder="请输入编码（留空自动生成）"
         />
       </div>
       <div>
@@ -264,17 +263,19 @@ const handleSubmit = async () => {
   const name = (form.name || '').trim()
   const description = (form.description || '').trim()
 
-  if (!code || !name) {
-    ErrorHandler.showMessage('请填写产品组编码和名称', '验证失败')
+  if (!name) {
+    ErrorHandler.showMessage('请填写产品组名称', '验证失败')
     return
   }
-  if (code.length > 50) {
-    ErrorHandler.showMessage('产品组编码不能超过50个字符', '验证失败')
-    return
-  }
-  if (!/^[A-Za-z0-9-]+$/.test(code)) {
-    ErrorHandler.showMessage('产品组编码只能包含字母、数字和连字符', '验证失败')
-    return
+  if (code) {
+    if (code.length > 50) {
+      ErrorHandler.showMessage('产品组编码不能超过50个字符', '验证失败')
+      return
+    }
+    if (!/^[A-Za-z0-9-]+$/.test(code)) {
+      ErrorHandler.showMessage('产品组编码只能包含字母、数字和连字符', '验证失败')
+      return
+    }
   }
   if (name.length > 200) {
     ErrorHandler.showMessage('产品组名称不能超过200个字符', '验证失败')

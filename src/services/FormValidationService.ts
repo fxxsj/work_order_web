@@ -316,9 +316,13 @@ class FormValidationService {
       errors.name = nameResult.message!
     }
 
-    const codeResult = this.required(formData.code, '产品编号')
-    if (!codeResult.valid) {
-      errors.code = codeResult.message!
+    const code = (formData.code as string)?.trim() ?? ''
+    if (code) {
+      if (code.length < 2 || code.length > 50) {
+        errors.code = '产品编码长度需在2-50个字符之间'
+      } else if (!/^[A-Za-z0-9-]+$/.test(code)) {
+        errors.code = '产品编码只能包含字母、数字和连字符'
+      }
     }
 
     const priceValue = formData.unit_price !== undefined ? formData.unit_price : formData.price
