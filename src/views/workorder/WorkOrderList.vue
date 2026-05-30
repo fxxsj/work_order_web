@@ -25,15 +25,6 @@
           class="w-full sm:w-36"
           @change="handleSearchDebounced"
         />
-        <Select
-          v-if="isSalesperson"
-          v-model="filters.approval_status"
-          :options="approvalStatusOptions"
-          placeholder="审核状态"
-          clearable
-          class="w-full sm:w-36"
-          @change="handleSearchDebounced"
-        />
         <DateRangePicker
           v-model="orderDateRange"
           class="w-full sm:w-[300px]"
@@ -135,9 +126,8 @@
         </template>
         <template #cell-status="{ row }">
           <StatusTag
-            :status="row.status"
+            :status="['draft', 'submitted', 'rejected'].includes(row.approval_status) ? row.approval_status : row.status"
             category="workOrder"
-            :label="row.status_display"
           />
         </template>
         <template #cell-priority="{ row }">
@@ -247,7 +237,18 @@ const sortFieldMap: Record<string, string> = {
 const buildWorkOrderParams = (params: any) => {
   const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
   const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
-  return { ...params, ordering }
+  
+  const nextParams = { ...params, ordering }
+  if (nextParams.status) {
+    if (nextParams.status === 'approval_draft') {
+      nextParams.approval_status = 'draft'
+      delete nextParams.status
+    } else if (['submitted', 'approved', 'rejected'].includes(nextParams.status)) {
+      nextParams.approval_status = nextParams.status
+      delete nextParams.status
+    }
+  }
+  return nextParams
 }
 
 const {
@@ -305,9 +306,18 @@ const columns: Column[] = [
   { key: 'actions', label: '操作', width: 176, fixed: 'right' }
 ]
 
-const statusOptions = computed(() => WorkOrderStatusChoices.map((c: any) => ({ value: c.value, label: c.label })))
+const statusOptions = [
+  { value: 'approval_draft', label: '草稿' },
+  { value: 'submitted', label: '待审核' },
+  { value: 'approved', label: '已审核' },
+  { value: 'rejected', label: '已拒绝' },
+  { value: 'pending', label: '待开始' },
+  { value: 'in_progress', label: '进行中' },
+  { value: 'paused', label: '已暂停' },
+  { value: 'completed', label: '已完成' },
+  { value: 'cancelled', label: '已取消' }
+]
 const priorityOptions = computed(() => PriorityChoices.map((c: any) => ({ value: c.value, label: c.label })))
-const approvalStatusOptions = computed(() => ApprovalStatusChoices.map((c: any) => ({ value: c.value, label: c.label })))
 
 const orderDateRange = computed<[string, string]>({
   get: (): [string, string] => [String(filters.value.order_date_after || ''), String(filters.value.order_date_before || '')],

@@ -113,7 +113,7 @@
 
         <template #cell-status="{ row }">
           <StatusTag
-            :status="row.status"
+            :status="['draft', 'submitted', 'rejected'].includes(row.approval_status) ? row.approval_status : row.status"
             category="salesOrder"
             effect="plain"
           />
@@ -350,6 +350,7 @@ const statusOptions = [
   { value: 'submitted', label: '已提交' },
   { value: 'approved', label: '已审核' },
   { value: 'rejected', label: '已拒绝' },
+  { value: 'pending', label: '待处理' },
   { value: 'in_production', label: '生产中' },
   { value: 'completed', label: '已完成' },
   { value: 'cancelled', label: '已取消' }
@@ -368,7 +369,12 @@ const {
   buildParams: (params) => {
     const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
     const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
-    return { ...params, ordering }
+    const apiParams = { ...params, ordering }
+    if (['draft', 'submitted', 'approved', 'rejected'].includes(apiParams.status)) {
+      apiParams.approval_status = apiParams.status
+      delete apiParams.status
+    }
+    return apiParams
   }
 })
 

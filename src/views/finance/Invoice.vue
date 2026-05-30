@@ -118,9 +118,9 @@
           </template>
           <template #cell-status="{ row }">
             <StatusTag
-              :status="row.status"
+              :status="['draft', 'submitted', 'rejected'].includes(row.approval_status) ? row.approval_status : row.status"
               category="invoice"
-              :label="row.status_display"
+              :label="['draft', 'submitted', 'rejected'].includes(row.approval_status) ? row.approval_status_display : row.status_display"
             />
           </template>
           <template #cell-actions="{ row }">
@@ -186,9 +186,9 @@
         </DescriptionItem>
         <DescriptionItem label="状态">
           <StatusTag
-            :status="(currentInvoice as any).status"
+            :status="['draft', 'submitted', 'rejected'].includes((currentInvoice as any).approval_status) ? (currentInvoice as any).approval_status : (currentInvoice as any).status"
             category="invoice"
-            :label="(currentInvoice as any).status_display"
+            :label="['draft', 'submitted', 'rejected'].includes((currentInvoice as any).approval_status) ? (currentInvoice as any).approval_status_display : (currentInvoice as any).status_display"
           />
         </DescriptionItem>
         <DescriptionItem label="金额(不含税)">
@@ -401,6 +401,10 @@ const invoiceTypeOptions = [
   { value: 'electronic', label: '电子发票' }
 ]
 const statusOptions = [
+  { value: 'approval_draft', label: '草稿' },
+  { value: 'submitted', label: '待审核' },
+  { value: 'approved', label: '已审核' },
+  { value: 'rejected', label: '已拒绝' },
   { value: 'draft', label: '待开具' },
   { value: 'issued', label: '已开具' },
   { value: 'sent', label: '已发送' },
@@ -417,6 +421,17 @@ const todoOptions = [
 const buildInvoiceParams = (params: any) => {
   const { invoice_number, ...nextParams } = params
   if (invoice_number) nextParams.search = invoice_number
+  
+  if (nextParams.status) {
+    if (nextParams.status === 'approval_draft') {
+      nextParams.approval_status = 'draft'
+      delete nextParams.status
+    } else if (['submitted', 'approved', 'rejected'].includes(nextParams.status)) {
+      nextParams.approval_status = nextParams.status
+      delete nextParams.status
+    }
+  }
+  
   const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
   nextParams.ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
   return nextParams

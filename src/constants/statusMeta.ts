@@ -1,5 +1,9 @@
 export const StatusMetaMaps = {
   workOrder: {
+    draft: { text: '草稿', type: 'info' },
+    submitted: { text: '待审核', type: 'primary' },
+    approved: { text: '已审核', type: 'success' },
+    rejected: { text: '已拒绝', type: 'danger' },
     pending: { text: '待开始', type: 'info' },
     in_progress: { text: '进行中', type: 'primary' },
     paused: { text: '已暂停', type: 'warning' },
@@ -38,6 +42,7 @@ export const StatusMetaMaps = {
     cancelled: { text: '已取消', type: 'danger' }
   },
   salesOrder: {
+    pending: { text: '待处理', type: 'info' },
     draft: { text: '草稿', type: 'info' },
     submitted: { text: '已提交', type: 'primary' },
     approved: { text: '已审核', type: 'success' },
@@ -84,6 +89,9 @@ export const StatusMetaMaps = {
   },
   invoice: {
     draft: { text: '待开具', type: 'info' },
+    submitted: { text: '待审核', type: 'primary' },
+    approved: { text: '已审核', type: 'success' },
+    rejected: { text: '已拒绝', type: 'danger' },
     issued: { text: '已开具', type: 'warning' },
     sent: { text: '已发送', type: 'primary' },
     received: { text: '已收到', type: 'success' },
