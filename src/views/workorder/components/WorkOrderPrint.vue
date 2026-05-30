@@ -75,7 +75,7 @@
             <tbody>
               <tr>
                 <th>施工单号：</th>
-                <td>{{ textValue(workOrder?.order_number || workOrder?.order_no) }}</td>
+                <td class="text-red">{{ textValue(workOrder?.order_number || workOrder?.order_no) }}</td>
               </tr>
               <tr>
                 <th>状态：</th>
@@ -369,6 +369,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { Icon } from '@/components/common'
+import { branding } from '@/config/branding'
 
 const props = defineProps({
   workOrder: { type: Object, default: null },
@@ -618,7 +619,7 @@ const productQuantityText = (product: any) => {
 }
 
 const printableCompanyName = computed(() =>
-  textValue(props.workOrder?.company_name || props.companyName, '')
+  textValue(props.workOrder?.company_name || props.companyName || branding.companyName, '')
 )
 
 const sourceSalesOrderText = computed(() => {
@@ -1054,6 +1055,22 @@ const businessPersonName = computed(() =>
 
 .text-center {
   text-align: center;
+}
+
+.text-red {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.print-table th {
+  background: #f0f0f0;
+}
+
+.signature-cell > div:first-child,
+.process-note > span:first-child,
+.plate-note,
+.print-footer .footer-note {
+  color: #555;
 }
 
 @page {
