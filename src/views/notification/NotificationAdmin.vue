@@ -198,14 +198,30 @@
       v-if="currentRow"
       :columns="2"
     >
-      <DescriptionItem label="标题">{{ currentRow.title || '-' }}</DescriptionItem>
-      <DescriptionItem label="发布类型">{{ kindLabel(currentRow.data?.kind) }}</DescriptionItem>
-      <DescriptionItem label="优先级">{{ currentRow.priority_display || priorityLabel(currentRow.priority) }}</DescriptionItem>
-      <DescriptionItem label="接收人数">{{ currentRow.recipient_count ?? 0 }}</DescriptionItem>
-      <DescriptionItem label="已读">{{ currentRow.read_count ?? 0 }}</DescriptionItem>
-      <DescriptionItem label="未读">{{ currentRow.unread_count ?? 0 }}</DescriptionItem>
-      <DescriptionItem label="发布时间">{{ formatDateTime(currentRow.created_at) }}</DescriptionItem>
-      <DescriptionItem label="过期时间">{{ formatDateTime(currentRow.expires_at) }}</DescriptionItem>
+      <DescriptionItem label="标题">
+        {{ currentRow.title || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="发布类型">
+        {{ kindLabel(currentRow.data?.kind) }}
+      </DescriptionItem>
+      <DescriptionItem label="优先级">
+        {{ currentRow.priority_display || priorityLabel(currentRow.priority) }}
+      </DescriptionItem>
+      <DescriptionItem label="接收人数">
+        {{ currentRow.recipient_count ?? 0 }}
+      </DescriptionItem>
+      <DescriptionItem label="已读">
+        {{ currentRow.read_count ?? 0 }}
+      </DescriptionItem>
+      <DescriptionItem label="未读">
+        {{ currentRow.unread_count ?? 0 }}
+      </DescriptionItem>
+      <DescriptionItem label="发布时间">
+        {{ formatDateTime(currentRow.created_at) }}
+      </DescriptionItem>
+      <DescriptionItem label="过期时间">
+        {{ formatDateTime(currentRow.expires_at) }}
+      </DescriptionItem>
       <DescriptionItem
         label="内容"
         :span="2"

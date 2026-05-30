@@ -24,8 +24,12 @@
         <div class="text-2xl mb-2">
           <Icon name="clock" />
         </div>
-        <div class="text-2xl font-bold">{{ statistics.pending_orders || 0 }}</div>
-        <div class="text-xs opacity-90">待开始</div>
+        <div class="text-2xl font-bold">
+          {{ statistics.pending_orders || 0 }}
+        </div>
+        <div class="text-xs opacity-90">
+          待开始
+        </div>
       </div>
       <div
         class="flex cursor-pointer flex-col rounded-xl bg-gradient-to-br from-warning-500 to-warning-300 p-[var(--ui-control-gap)] text-white min-h-[var(--ui-touch-target-min)]"
@@ -34,8 +38,12 @@
         <div class="text-2xl mb-2">
           <Icon name="loading" />
         </div>
-        <div class="text-2xl font-bold">{{ statistics.in_progress_orders || 0 }}</div>
-        <div class="text-xs opacity-90">进行中</div>
+        <div class="text-2xl font-bold">
+          {{ statistics.in_progress_orders || 0 }}
+        </div>
+        <div class="text-xs opacity-90">
+          进行中
+        </div>
       </div>
       <div
         class="flex cursor-pointer flex-col rounded-xl bg-gradient-to-br from-danger-500 to-danger-300 p-[var(--ui-control-gap)] text-white min-h-[var(--ui-touch-target-min)]"
@@ -44,8 +52,12 @@
         <div class="text-2xl mb-2">
           <Icon name="exclamationTriangle" />
         </div>
-        <div class="text-2xl font-bold">{{ statistics.urgent_orders || 0 }}</div>
-        <div class="text-xs opacity-90">紧急</div>
+        <div class="text-2xl font-bold">
+          {{ statistics.urgent_orders || 0 }}
+        </div>
+        <div class="text-xs opacity-90">
+          紧急
+        </div>
       </div>
       <div
         class="flex cursor-pointer flex-col rounded-xl bg-gradient-to-br from-info-500 to-info-300 p-[var(--ui-control-gap)] text-white min-h-[var(--ui-touch-target-min)]"
@@ -54,8 +66,12 @@
         <div class="text-2xl mb-2">
           <Icon name="checkCircle" />
         </div>
-        <div class="text-2xl font-bold">{{ statistics.pending_approval || 0 }}</div>
-        <div class="text-xs opacity-90">待审核</div>
+        <div class="text-2xl font-bold">
+          {{ statistics.pending_approval || 0 }}
+        </div>
+        <div class="text-xs opacity-90">
+          待审核
+        </div>
       </div>
     </div>
     <div class="card">

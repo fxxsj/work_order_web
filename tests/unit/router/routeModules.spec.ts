@@ -207,14 +207,14 @@ describe('Inventory Routes', () => {
   it('should have delivery create route', () => {
     const route = inventoryRoutes.find(r => r.name === 'DeliveryCreate')
     expect(route).toBeDefined()
-    expect(route!.meta!.title).toBe('新建发货单')
+    expect(route!.meta!.title).toBe('新建送货单')
     expect(route!.meta!.requiresPermission).toContain('workorder.add_deliveryorder')
   })
 
   it('should have delivery edit route', () => {
     const route = inventoryRoutes.find(r => r.name === 'DeliveryEdit')
     expect(route).toBeDefined()
-    expect(route!.meta!.title).toBe('编辑发货单')
+    expect(route!.meta!.title).toBe('编辑送货单')
     expect(route!.meta!.requiresPermission).toContain('workorder.change_deliveryorder')
   })
 

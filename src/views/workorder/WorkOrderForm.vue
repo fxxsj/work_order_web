@@ -275,7 +275,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon, Input, TextArea, InputNumber, Select, CheckboxGroup, SectionDivider } from '@/components/common'
 import { useUIStore } from '@/stores/ui'
-import { workOrderAPI, productAPI, materialAPI, artworkAPI, dieAPI, foilingPlateAPI, embossingPlateAPI } from '@/api/modules'
+import { workOrderAPI, productAPI, materialAPI, artworkAPI, dieAPI, foilingPlateAPI, embossingPlateAPI, salesOrderAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
 import { ProductListEditor, ProcessSelector, MaterialListEditor, MultiSelect } from '@/components/workorder'
@@ -445,6 +445,12 @@ onMounted(async () => {
     form.delivery_date = nextWeek.toISOString().split('T')[0]
     handleAddProduct()
     handleAddMaterial()
+
+    // Pre-fill from sales order if navigated with ?sales_order_id=X
+    const querySalesOrderId = route.query.sales_order_id
+    if (querySalesOrderId) {
+      await prefillFromSalesOrder(Number(querySalesOrderId))
+    }
   }
 })
 
@@ -575,8 +581,33 @@ const loadDetail = async (workOrderId: string) => {
   }
 }
 
+// Pre-fill form from sales order (used when navigating with ?sales_order_id=X)
+const prefillFromSalesOrder = async (salesOrderId: number) => {
+  try {
+    const res: any = await salesOrderAPI.getDetail(String(salesOrderId))
+    form.sales_order_id = res.id
+    if (res.customer) form.customer_id = typeof res.customer === 'object' ? res.customer.id : res.customer
+    if (res.order_date) form.order_date = res.order_date.split('T')[0]
+    if (res.delivery_date) form.delivery_date = res.delivery_date.split('T')[0]
+    if (res.notes) form.notes = res.notes
+
+    // Pre-fill products from sales order items
+    if (res.items && res.items.length > 0) {
+      form.products = res.items.map((item: any) => ({
+        product: item.product,
+        quantity: item.quantity || 1,
+        unit: item.unit || '件',
+        specification: item.specification || '',
+        sales_order_item: item.id
+      }))
+    }
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  }
+}
+
 // Handlers
-const handleSalesOrderChange = (value: any) => {
+const handleSalesOrderChange = async (value: any) => {
   if (!value) {
     form.sales_order_id = undefined
     return
@@ -595,6 +626,25 @@ const handleSalesOrderChange = (value: any) => {
     if (selected.delivery_date) {
       form.delivery_date = selected.delivery_date.split('T')[0]
     }
+  }
+
+  // Fetch full detail to pre-fill products
+  try {
+    const detail: any = await salesOrderAPI.getDetail(String(value))
+    if (detail.items && detail.items.length > 0) {
+      form.products = detail.items.map((item: any) => ({
+        product: item.product,
+        quantity: item.quantity || 1,
+        unit: item.unit || '件',
+        specification: item.specification || '',
+        sales_order_item: item.id
+      }))
+    }
+    if (detail.notes) {
+      form.notes = detail.notes
+    }
+  } catch {
+    // Silently ignore — basic info already filled from candidate list
   }
 }
 

@@ -106,12 +106,24 @@
       v-if="currentRow"
       :columns="2"
     >
-      <DescriptionItem label="施工单">{{ currentRow.work_order_number || '-' }}</DescriptionItem>
-      <DescriptionItem label="工序">{{ currentRow.process_name || currentRow.work_order_process_label || '-' }}</DescriptionItem>
-      <DescriptionItem label="日志类型">{{ currentRow.log_type_display || getActionLabel(currentRow.log_type) }}</DescriptionItem>
-      <DescriptionItem label="操作人">{{ currentRow.operator_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="记录时间">{{ formatDateTime(currentRow.created_at) }}</DescriptionItem>
-      <DescriptionItem label="工序编码">{{ currentRow.process_code || '-' }}</DescriptionItem>
+      <DescriptionItem label="施工单">
+        {{ currentRow.work_order_number || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="工序">
+        {{ currentRow.process_name || currentRow.work_order_process_label || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="日志类型">
+        {{ currentRow.log_type_display || getActionLabel(currentRow.log_type) }}
+      </DescriptionItem>
+      <DescriptionItem label="操作人">
+        {{ currentRow.operator_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="记录时间">
+        {{ formatDateTime(currentRow.created_at) }}
+      </DescriptionItem>
+      <DescriptionItem label="工序编码">
+        {{ currentRow.process_code || '-' }}
+      </DescriptionItem>
       <DescriptionItem
         label="内容"
         :span="2"

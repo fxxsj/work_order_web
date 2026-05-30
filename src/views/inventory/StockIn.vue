@@ -63,48 +63,84 @@
           <div class="card p-4">
             <div class="flex items-center gap-3">
               <div class="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                <Icon name="document" size="md" />
+                <Icon
+                  name="document"
+                  size="md"
+                />
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">入库单总数</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.total_count) }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">当前筛选范围</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  入库单总数
+                </p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                  {{ loading ? '-' : formatCount(summary.total_count) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  当前筛选范围
+                </p>
               </div>
             </div>
           </div>
           <div class="card p-4">
             <div class="flex items-center gap-3">
               <div class="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-                <Icon name="edit" size="md" />
+                <Icon
+                  name="edit"
+                  size="md"
+                />
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">待提交</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.draft_count) }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">草稿入库单</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  待提交
+                </p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                  {{ loading ? '-' : formatCount(summary.draft_count) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  草稿入库单
+                </p>
               </div>
             </div>
           </div>
           <div class="card p-4">
             <div class="flex items-center gap-3">
               <div class="rounded-lg bg-sky-100 p-2 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
-                <Icon name="clock" size="md" />
+                <Icon
+                  name="clock"
+                  size="md"
+                />
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">待审核</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.submitted_count) }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">已提交入库单</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  待审核
+                </p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                  {{ loading ? '-' : formatCount(summary.submitted_count) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  已提交入库单
+                </p>
               </div>
             </div>
           </div>
           <div class="card p-4">
             <div class="flex items-center gap-3">
               <div class="rounded-lg bg-green-100 p-2 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                <Icon name="checkCircle" size="md" />
+                <Icon
+                  name="checkCircle"
+                  size="md"
+                />
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">已完成</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.completed_count) }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">审核完成入库单</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  已完成
+                </p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                  {{ loading ? '-' : formatCount(summary.completed_count) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  审核完成入库单
+                </p>
               </div>
             </div>
           </div>
@@ -114,41 +150,41 @@
 
     <template #table>
       <DataTable
-          :columns="columns"
-          :data="tableData"
-          :loading="loading"
-          :row-key="(row: any) => row.id"
-          :server-side-sort="true"
-          default-sort-key="created_at"
-          default-sort-order="desc"
-          @sort="handleSort"
-        >
-          <template #cell-status="{ row }">
-            <StatusTag
-              :status="row.status"
-              category="stock"
-              :label="row.status_display"
-            />
-          </template>
-          <template #cell-stock_in_date="{ row }">
-            {{ formatDate(row.stock_in_date) }}
-          </template>
-          <template #cell-created_at="{ row }">
-            {{ formatDateTime(row.created_at) }}
-          </template>
-          <template #cell-actions="{ row }">
-            <RowActions
-              :actions="getRowActions(row)"
-              @action="action => handleRowAction(action.key, row)"
-            />
-          </template>
-          <template #empty>
-            <EmptyState
-              :description="hasFilters ? '未找到匹配的入库单' : '暂无入库单数据'"
-              :action-text="canCreate && !hasFilters ? '创建第一个入库单' : undefined"
-              @action="showCreateDialog"
-            />
-          </template>
+        :columns="columns"
+        :data="tableData"
+        :loading="loading"
+        :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="created_at"
+        default-sort-order="desc"
+        @sort="handleSort"
+      >
+        <template #cell-status="{ row }">
+          <StatusTag
+            :status="row.status"
+            category="stock"
+            :label="row.status_display"
+          />
+        </template>
+        <template #cell-stock_in_date="{ row }">
+          {{ formatDate(row.stock_in_date) }}
+        </template>
+        <template #cell-created_at="{ row }">
+          {{ formatDateTime(row.created_at) }}
+        </template>
+        <template #cell-actions="{ row }">
+          <RowActions
+            :actions="getRowActions(row)"
+            @action="action => handleRowAction(action.key, row)"
+          />
+        </template>
+        <template #empty>
+          <EmptyState
+            :description="hasFilters ? '未找到匹配的入库单' : '暂无入库单数据'"
+            :action-text="canCreate && !hasFilters ? '创建第一个入库单' : undefined"
+            @action="showCreateDialog"
+          />
+        </template>
       </DataTable>
     </template>
 
@@ -218,17 +254,42 @@
       v-if="currentStockIn"
       :columns="2"
     >
-      <DescriptionItem label="入库单号">{{ currentStockIn.order_number || '-' }}</DescriptionItem>
-      <DescriptionItem label="状态">{{ currentStockIn.status_display || currentStockIn.status || '-' }}</DescriptionItem>
-      <DescriptionItem label="客户">{{ currentStockIn.customer_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="施工单">{{ currentStockIn.work_order_number || '-' }}</DescriptionItem>
-      <DescriptionItem label="入库日期">{{ formatDate(currentStockIn.stock_in_date) }}</DescriptionItem>
-      <DescriptionItem label="操作员">{{ currentStockIn.operator_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="提交人">{{ currentStockIn.submitted_by_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="提交时间">{{ formatDateTime(currentStockIn.submitted_at) }}</DescriptionItem>
-      <DescriptionItem label="审核人">{{ currentStockIn.approved_by_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="审核时间">{{ formatDateTime(currentStockIn.approved_at) }}</DescriptionItem>
-      <DescriptionItem label="备注" :span="2">{{ currentStockIn.notes || '-' }}</DescriptionItem>
+      <DescriptionItem label="入库单号">
+        {{ currentStockIn.order_number || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="状态">
+        {{ currentStockIn.status_display || currentStockIn.status || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="客户">
+        {{ currentStockIn.customer_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="施工单">
+        {{ currentStockIn.work_order_number || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="入库日期">
+        {{ formatDate(currentStockIn.stock_in_date) }}
+      </DescriptionItem>
+      <DescriptionItem label="操作员">
+        {{ currentStockIn.operator_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="提交人">
+        {{ currentStockIn.submitted_by_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="提交时间">
+        {{ formatDateTime(currentStockIn.submitted_at) }}
+      </DescriptionItem>
+      <DescriptionItem label="审核人">
+        {{ currentStockIn.approved_by_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="审核时间">
+        {{ formatDateTime(currentStockIn.approved_at) }}
+      </DescriptionItem>
+      <DescriptionItem
+        label="备注"
+        :span="2"
+      >
+        {{ currentStockIn.notes || '-' }}
+      </DescriptionItem>
     </DescriptionGrid>
     <template #footer>
       <button

@@ -294,7 +294,7 @@
           </div>
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label class="input-label mb-1.5 block">关联发货单</label>
+              <label class="input-label mb-1.5 block">关联送货单</label>
               <div class="leading-10 text-sm">
                 {{ (editContext.delivery_order_numbers || []).length > 0 ? editContext.delivery_order_numbers.join('、') : '暂无' }}
               </div>
@@ -308,7 +308,6 @@
           </div>
         </template>
       </div>
-
     </div>
 
     <div class="fixed bottom-0 left-4 right-4 z-20 rounded-t-xl border border-b-0 border-gray-100 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-dark-700 dark:bg-dark-900/95 md:left-6 md:right-6 lg:left-[calc(16rem+2rem)] lg:right-8">

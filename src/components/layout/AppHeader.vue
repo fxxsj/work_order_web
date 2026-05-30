@@ -292,7 +292,7 @@ const quickActionGroups = [
   {
     label: '库存',
     items: [
-      { key: 'delivery', label: '发货单', description: '登记客户订单发货', icon: 'truck' as const, path: '/inventory/delivery/create' }
+      { key: 'delivery', label: '送货单', description: '登记客户订单发货', icon: 'truck' as const, path: '/inventory/delivery/create' }
     ]
   }
 ]

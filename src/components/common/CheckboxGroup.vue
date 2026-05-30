@@ -12,7 +12,10 @@
     </div>
     <div class="flex flex-wrap gap-2">
       <slot>
-        <template v-for="option in options" :key="getOptionValue(option)">
+        <template
+          v-for="option in options"
+          :key="getOptionValue(option)"
+        >
           <button
             v-if="useChipMode(option)"
             type="button"

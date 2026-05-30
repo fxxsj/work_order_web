@@ -62,7 +62,7 @@ defineProps({ data: { type: Array as any, default: () => [] }, loading: { type: 
 const emit = defineEmits(['view', 'edit', 'ship'])
 
 const columns: Column[] = [
-  { key: 'order_number', label: '发货单号', width: 160 },
+  { key: 'order_number', label: '送货单号', width: 160 },
   { key: 'customer_name', label: '客户名称', width: 160 },
   { key: 'sales_order_number', label: '客户订单', width: 160 },
   { key: 'receiver_name', label: '收货人', width: 112 },

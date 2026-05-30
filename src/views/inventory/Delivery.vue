@@ -26,7 +26,7 @@
                 size="md"
                 class="mr-2"
               />
-              新建发货单
+              新建送货单
             </button>
           </div>
 
@@ -139,7 +139,7 @@
             />
           </template>
           <template #empty>
-            <EmptyState description="暂无发货单数据">
+            <EmptyState description="暂无送货单数据">
               <template #action>
                 <button
                   v-if="hasFilters"
@@ -153,7 +153,7 @@
                   class="btn btn-primary"
                   @click="handleCreate"
                 >
-                  创建第一个发货单
+                  创建第一个送货单
                 </button>
               </template>
             </EmptyState>
@@ -187,7 +187,7 @@
     <ConfirmDialog
       :show="showShipDialog"
       title="发货确认"
-      :message="`确定要将发货单「${selectedRowAction?.order_number}」状态更新为发货吗？`"
+      :message="`确定要将送货单「${selectedRowAction?.order_number}」状态更新为发货吗？`"
       confirm-text="确认发货"
       cancel-text="取消"
       :loading="shipping"
@@ -199,7 +199,7 @@
     <ConfirmDialog
       :show="showDeleteDialog"
       title="删除确认"
-      :message="`确定要删除发货单「${selectedRowAction?.order_number}」吗？此操作不可撤销。`"
+      :message="`确定要删除送货单「${selectedRowAction?.order_number}」吗？此操作不可撤销。`"
       confirm-text="删除"
       cancel-text="取消"
       :danger="true"
@@ -258,7 +258,7 @@ const todoOptions = [
   { value: 'rejected_followup', label: '拒收待处理' }
 ]
 const columns: Column[] = [
-  { key: 'order_number', label: '发货单号', width: 144, sortable: true },
+  { key: 'order_number', label: '送货单号', width: 144, sortable: true },
   { key: 'customer_name', label: '客户名称', width: 144, sortable: true },
   { key: 'sales_order_number', label: '客户订单', width: 144, sortable: true },
   { key: 'items_count', label: '明细数', width: 80 },

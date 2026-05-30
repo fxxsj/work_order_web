@@ -1,7 +1,7 @@
 <template>
   <BaseDialog
     :show="localVisible"
-    title="发货单详情"
+    title="送货单详情"
     width="extra-wide"
     @close="handleClose; localVisible = false;"
   >
@@ -9,7 +9,7 @@
       v-if="data"
       :columns="2"
     >
-      <DescriptionItem label="发货单号">
+      <DescriptionItem label="送货单号">
         {{ data.order_number }}
       </DescriptionItem>
       <DescriptionItem label="客户名称">

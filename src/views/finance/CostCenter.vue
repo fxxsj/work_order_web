@@ -189,15 +189,36 @@
       v-if="currentRow"
       :columns="2"
     >
-      <DescriptionItem label="编码">{{ currentRow.code || '-' }}</DescriptionItem>
-      <DescriptionItem label="名称">{{ currentRow.name || '-' }}</DescriptionItem>
-      <DescriptionItem label="类型">{{ currentRow.type_display || typeLabel(currentRow.type) }}</DescriptionItem>
-      <DescriptionItem label="负责人">{{ currentRow.manager_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="上级">{{ currentRow.parent_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="子级数量">{{ currentRow.children_count ?? 0 }}</DescriptionItem>
-      <DescriptionItem label="状态">{{ currentRow.is_active ? '启用' : '禁用' }}</DescriptionItem>
-      <DescriptionItem label="创建时间">{{ formatDateTime(currentRow.created_at) }}</DescriptionItem>
-      <DescriptionItem label="描述" :span="2">{{ currentRow.description || '-' }}</DescriptionItem>
+      <DescriptionItem label="编码">
+        {{ currentRow.code || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="名称">
+        {{ currentRow.name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="类型">
+        {{ currentRow.type_display || typeLabel(currentRow.type) }}
+      </DescriptionItem>
+      <DescriptionItem label="负责人">
+        {{ currentRow.manager_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="上级">
+        {{ currentRow.parent_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="子级数量">
+        {{ currentRow.children_count ?? 0 }}
+      </DescriptionItem>
+      <DescriptionItem label="状态">
+        {{ currentRow.is_active ? '启用' : '禁用' }}
+      </DescriptionItem>
+      <DescriptionItem label="创建时间">
+        {{ formatDateTime(currentRow.created_at) }}
+      </DescriptionItem>
+      <DescriptionItem
+        label="描述"
+        :span="2"
+      >
+        {{ currentRow.description || '-' }}
+      </DescriptionItem>
     </DescriptionGrid>
     <template #footer>
       <button

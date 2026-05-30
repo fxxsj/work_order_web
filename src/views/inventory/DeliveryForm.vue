@@ -394,7 +394,7 @@ const loadDetail = async () => {
     const detail: any = await deliveryOrderAPI.getDetail(id.value)
     Object.assign(form, getFormInitialValues(), mapDeliveryToForm(detail))
   } catch (error: any) {
-    ErrorHandler.showMessage(error, '加载发货单失败')
+    ErrorHandler.showMessage(error, '加载送货单失败')
   }
 }
 

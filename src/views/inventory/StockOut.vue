@@ -33,7 +33,7 @@
           <SearchInput
             v-model="searchText"
             class="w-full sm:w-56"
-            placeholder="搜索出库单号、客户、发货单"
+            placeholder="搜索出库单号、客户、送货单"
             @search="searchAndRefreshSummary"
             @clear="searchAndRefreshSummary"
           />
@@ -71,48 +71,84 @@
           <div class="card p-4">
             <div class="flex items-center gap-3">
               <div class="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                <Icon name="document" size="md" />
+                <Icon
+                  name="document"
+                  size="md"
+                />
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">出库单总数</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.total_count) }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">当前筛选范围</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  出库单总数
+                </p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                  {{ loading ? '-' : formatCount(summary.total_count) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  当前筛选范围
+                </p>
               </div>
             </div>
           </div>
           <div class="card p-4">
             <div class="flex items-center gap-3">
               <div class="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-                <Icon name="edit" size="md" />
+                <Icon
+                  name="edit"
+                  size="md"
+                />
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">待提交</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.draft_count) }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">草稿出库单</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  待提交
+                </p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                  {{ loading ? '-' : formatCount(summary.draft_count) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  草稿出库单
+                </p>
               </div>
             </div>
           </div>
           <div class="card p-4">
             <div class="flex items-center gap-3">
               <div class="rounded-lg bg-sky-100 p-2 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
-                <Icon name="clock" size="md" />
+                <Icon
+                  name="clock"
+                  size="md"
+                />
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">待审核</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.submitted_count) }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">已提交出库单</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  待审核
+                </p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                  {{ loading ? '-' : formatCount(summary.submitted_count) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  已提交出库单
+                </p>
               </div>
             </div>
           </div>
           <div class="card p-4">
             <div class="flex items-center gap-3">
               <div class="rounded-lg bg-green-100 p-2 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                <Icon name="checkCircle" size="md" />
+                <Icon
+                  name="checkCircle"
+                  size="md"
+                />
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">已完成</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ loading ? '-' : formatCount(summary.completed_count) }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">审核完成出库单</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  已完成
+                </p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                  {{ loading ? '-' : formatCount(summary.completed_count) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  审核完成出库单
+                </p>
               </div>
             </div>
           </div>
@@ -122,47 +158,47 @@
 
     <template #table>
       <DataTable
-          :columns="columns"
-          :data="tableData"
-          :loading="loading"
-          :row-key="(row: any) => row.id"
-          :server-side-sort="true"
-          default-sort-key="created_at"
-          default-sort-order="desc"
-          @sort="handleSort"
-        >
-          <template #cell-out_type="{ row }">
-            {{ row.out_type_display || outTypeLabel(row.out_type) }}
-          </template>
-          <template #cell-related_order="{ row }">
-            {{ row.delivery_order_number || '-' }}
-          </template>
-          <template #cell-status="{ row }">
-            <StatusTag
-              :status="row.status"
-              category="stock"
-              :label="row.status_display"
-            />
-          </template>
-          <template #cell-stock_out_date="{ row }">
-            {{ formatDate(row.stock_out_date) }}
-          </template>
-          <template #cell-created_at="{ row }">
-            {{ formatDateTime(row.created_at) }}
-          </template>
-          <template #cell-actions="{ row }">
-            <RowActions
-              :actions="getRowActions(row)"
-              @action="action => handleRowAction(action.key, row)"
-            />
-          </template>
-          <template #empty>
-            <EmptyState
-              :description="hasFilters ? '未找到匹配的出库单' : '暂无出库单数据'"
-              :action-text="canCreate && !hasFilters ? '创建第一个出库单' : undefined"
-              @action="showCreateDialog"
-            />
-          </template>
+        :columns="columns"
+        :data="tableData"
+        :loading="loading"
+        :row-key="(row: any) => row.id"
+        :server-side-sort="true"
+        default-sort-key="created_at"
+        default-sort-order="desc"
+        @sort="handleSort"
+      >
+        <template #cell-out_type="{ row }">
+          {{ row.out_type_display || outTypeLabel(row.out_type) }}
+        </template>
+        <template #cell-related_order="{ row }">
+          {{ row.delivery_order_number || '-' }}
+        </template>
+        <template #cell-status="{ row }">
+          <StatusTag
+            :status="row.status"
+            category="stock"
+            :label="row.status_display"
+          />
+        </template>
+        <template #cell-stock_out_date="{ row }">
+          {{ formatDate(row.stock_out_date) }}
+        </template>
+        <template #cell-created_at="{ row }">
+          {{ formatDateTime(row.created_at) }}
+        </template>
+        <template #cell-actions="{ row }">
+          <RowActions
+            :actions="getRowActions(row)"
+            @action="action => handleRowAction(action.key, row)"
+          />
+        </template>
+        <template #empty>
+          <EmptyState
+            :description="hasFilters ? '未找到匹配的出库单' : '暂无出库单数据'"
+            :action-text="canCreate && !hasFilters ? '创建第一个出库单' : undefined"
+            @action="showCreateDialog"
+          />
+        </template>
       </DataTable>
     </template>
 
@@ -194,8 +230,8 @@
       <Select
         v-model="form.delivery_order"
         :options="deliveryOrderOptions"
-        label="发货单"
-        placeholder="选择待发货发货单"
+        label="送货单"
+        placeholder="选择待发货送货单"
         searchable
         clearable
         :disabled="submitting || form.out_type !== 'delivery'"
@@ -239,18 +275,45 @@
       v-if="currentStockOut"
       :columns="2"
     >
-      <DescriptionItem label="出库单号">{{ currentStockOut.order_number || '-' }}</DescriptionItem>
-      <DescriptionItem label="状态">{{ currentStockOut.status_display || currentStockOut.status || '-' }}</DescriptionItem>
-      <DescriptionItem label="出库类型">{{ currentStockOut.out_type_display || outTypeLabel(currentStockOut.out_type) }}</DescriptionItem>
-      <DescriptionItem label="发货单">{{ currentStockOut.delivery_order_number || '-' }}</DescriptionItem>
-      <DescriptionItem label="客户">{{ currentStockOut.customer_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="出库日期">{{ formatDate(currentStockOut.stock_out_date) }}</DescriptionItem>
-      <DescriptionItem label="操作员">{{ currentStockOut.operator_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="提交人">{{ currentStockOut.submitted_by_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="提交时间">{{ formatDateTime(currentStockOut.submitted_at) }}</DescriptionItem>
-      <DescriptionItem label="审核人">{{ currentStockOut.approved_by_name || '-' }}</DescriptionItem>
-      <DescriptionItem label="审核时间">{{ formatDateTime(currentStockOut.approved_at) }}</DescriptionItem>
-      <DescriptionItem label="备注" :span="2">{{ currentStockOut.notes || '-' }}</DescriptionItem>
+      <DescriptionItem label="出库单号">
+        {{ currentStockOut.order_number || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="状态">
+        {{ currentStockOut.status_display || currentStockOut.status || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="出库类型">
+        {{ currentStockOut.out_type_display || outTypeLabel(currentStockOut.out_type) }}
+      </DescriptionItem>
+      <DescriptionItem label="送货单">
+        {{ currentStockOut.delivery_order_number || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="客户">
+        {{ currentStockOut.customer_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="出库日期">
+        {{ formatDate(currentStockOut.stock_out_date) }}
+      </DescriptionItem>
+      <DescriptionItem label="操作员">
+        {{ currentStockOut.operator_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="提交人">
+        {{ currentStockOut.submitted_by_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="提交时间">
+        {{ formatDateTime(currentStockOut.submitted_at) }}
+      </DescriptionItem>
+      <DescriptionItem label="审核人">
+        {{ currentStockOut.approved_by_name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="审核时间">
+        {{ formatDateTime(currentStockOut.approved_at) }}
+      </DescriptionItem>
+      <DescriptionItem
+        label="备注"
+        :span="2"
+      >
+        {{ currentStockOut.notes || '-' }}
+      </DescriptionItem>
     </DescriptionGrid>
     <template #footer>
       <button
@@ -340,7 +403,7 @@ const columns: Column[] = [
   { key: 'order_number', label: '出库单号', sortable: true, class: 'w-32' },
   { key: 'customer_name', label: '客户', sortable: true, class: 'w-40' },
   { key: 'out_type', label: '出库类型', sortable: true, class: 'w-28' },
-  { key: 'related_order', label: '发货单号', sortable: true, class: 'w-32' },
+  { key: 'related_order', label: '送货单号', sortable: true, class: 'w-32' },
   { key: 'stock_out_date', label: '出库日期', sortable: true, class: 'w-32' },
   { key: 'status', label: '状态', sortable: true, class: 'w-24 text-center' },
   { key: 'operator_name', label: '操作员', sortable: true, class: 'w-24' },
@@ -500,7 +563,7 @@ const showEditDialog = async (row: any) => {
   if (row.delivery_order && !deliveryOrderOptions.value.some(option => option.value === row.delivery_order)) {
     deliveryOrderOptions.value.unshift({
       value: row.delivery_order,
-      label: row.delivery_order_number || `发货单 #${row.delivery_order}`
+      label: row.delivery_order_number || `送货单 #${row.delivery_order}`
     })
   }
   formDialogVisible.value = true
@@ -508,7 +571,7 @@ const showEditDialog = async (row: any) => {
 
 const handleFormSubmit = async () => {
   if (form.out_type === 'delivery' && !form.delivery_order) {
-    useUIStore().showWarning('发货出库必须选择发货单')
+    useUIStore().showWarning('发货出库必须选择送货单')
     return
   }
   if (!form.stock_out_date) {

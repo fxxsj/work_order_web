@@ -127,22 +127,22 @@
           class="mt-3"
           @delete="removeProductItem"
         >
-            <template #cell-product="{ row, index }">
-              <ProductSelector
-                :model-value="row.product"
-                :products="localProductList"
-                @update:model-value="value => row.product = value"
-                @create="openQuickProductCreate(index)"
-              />
-            </template>
-            <template #cell-imposition_quantity="{ row }">
-              <InputNumber
-                v-model="row.imposition_quantity"
-                :min="1"
-                class="w-full"
-              />
-            </template>
-          </LineItemsTable>
+          <template #cell-product="{ row, index }">
+            <ProductSelector
+              :model-value="row.product"
+              :products="localProductList"
+              @update:model-value="value => row.product = value"
+              @create="openQuickProductCreate(index)"
+            />
+          </template>
+          <template #cell-imposition_quantity="{ row }">
+            <InputNumber
+              v-model="row.imposition_quantity"
+              :min="1"
+              class="w-full"
+            />
+          </template>
+        </LineItemsTable>
       </div>
       <TextArea
         v-model="form.notes"

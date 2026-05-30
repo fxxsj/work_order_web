@@ -139,7 +139,10 @@
               class="btn btn-primary btn-sm"
               @click="handleSubmitOrder"
             >
-              <Icon name="upload" class="h-3 w-3" />
+              <Icon
+                name="upload"
+                class="h-3 w-3"
+              />
               重新提交
             </button>
             <button
@@ -147,7 +150,10 @@
               class="btn btn-secondary btn-sm"
               @click="handleEdit"
             >
-              <Icon name="edit" class="h-3 w-3" />
+              <Icon
+                name="edit"
+                class="h-3 w-3"
+              />
               先去修改
             </button>
           </div>
@@ -424,7 +430,7 @@
             </div>
             <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
               <div class="mb-2 text-xs font-medium text-gray-500 dark:text-dark-400">
-                关联发货单
+                关联送货单
               </div>
               <template v-if="getRelatedNumbers('delivery_order').length > 0">
                 <div
@@ -513,7 +519,10 @@
               class="btn btn-primary"
               @click="handleSubmitOrder"
             >
-              <Icon name="upload" class="h-4 w-4" />
+              <Icon
+                name="upload"
+                class="h-4 w-4"
+              />
               提交审核
             </button>
             <template v-if="detailData.status === 'submitted'">
@@ -521,14 +530,20 @@
                 class="btn btn-success"
                 @click="handleApproveOrder"
               >
-                <Icon name="check" class="h-4 w-4" />
+                <Icon
+                  name="check"
+                  class="h-4 w-4"
+                />
                 审核通过
               </button>
               <button
                 class="btn btn-warning"
                 @click="handleRejectOrder"
               >
-                <Icon name="x" class="h-4 w-4" />
+                <Icon
+                  name="x"
+                  class="h-4 w-4"
+                />
                 审核拒绝
               </button>
             </template>
@@ -537,14 +552,20 @@
                 class="btn btn-secondary"
                 @click="handleUpdatePayment"
               >
-                <Icon name="creditCard" class="h-4 w-4" />
+                <Icon
+                  name="creditCard"
+                  class="h-4 w-4"
+                />
                 更新付款
               </button>
               <button
                 class="btn btn-success"
                 @click="handleCompleteOrder"
               >
-                <Icon name="checkCircle" class="h-4 w-4" />
+                <Icon
+                  name="checkCircle"
+                  class="h-4 w-4"
+                />
                 完成订单
               </button>
             </template>
@@ -553,7 +574,10 @@
               class="btn btn-danger"
               @click="handleCancelOrder"
             >
-              <Icon name="xCircle" class="h-4 w-4" />
+              <Icon
+                name="xCircle"
+                class="h-4 w-4"
+              />
               取消订单
             </button>
             <button
@@ -561,7 +585,10 @@
               class="btn btn-danger"
               @click="handleDeleteOrder"
             >
-              <Icon name="trash" class="h-4 w-4" />
+              <Icon
+                name="trash"
+                class="h-4 w-4"
+              />
               删除
             </button>
           </div>
@@ -574,19 +601,6 @@
     >
       未找到订单信息
     </div>
-
-    <!-- 对话框：转换施工单 -->
-    <ConfirmDialog
-      :show="showConvertDialog"
-      title="转换施工单"
-      :message="`确定要将订单「${detailData.order_number}」转换为施工单？`"
-      confirm-text="转换"
-      cancel-text="取消"
-      :loading="converting"
-      loading-text="转换中..."
-      @confirm="confirmConvert"
-      @cancel="cancelConvert"
-    />
 
     <!-- 对话框：审核拒绝 -->
     <ConfirmDialog
@@ -717,8 +731,6 @@ const loading = ref(false)
 const detailData = reactive<any>({})
 const operationHistory = ref<any[]>([])
 
-const showConvertDialog = ref(false)
-const converting = ref(false)
 const showRejectDialog = ref(false)
 const rejectReason = ref('')
 const rejecting = ref(false)
@@ -786,17 +798,7 @@ const formatAmount = (value: any) => {
   return `¥${Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-const handleConvert = () => { showConvertDialog.value = true }
-const cancelConvert = () => { showConvertDialog.value = false }
-const confirmConvert = async () => {
-  converting.value = true
-  try {
-    const response: any = await salesOrderAPI.convertToWorkOrder(String(route.params.id))
-    useUIStore().showSuccess('转换成功')
-    cancelConvert()
-    router.push(`/workorders/${response.work_order_id || response.id}`)
-  } catch (error: any) { ErrorHandler.showMessage(error, '转换失败') } finally { converting.value = false }
-}
+const handleConvert = () => { router.push(`/workorders/create?sales_order_id=${route.params.id}`) }
 
 const handleCreateDeliveryOrder = () => {
   router.push(`/inventory/delivery/create?sales_order_id=${route.params.id}`)

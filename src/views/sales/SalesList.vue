@@ -57,18 +57,6 @@
           />
         </button>
         <button
-          class="btn btn-secondary"
-          :disabled="!canBatchConvert"
-          @click="handleBatchConvertRequest"
-        >
-          <Icon
-            name="list"
-            size="md"
-            class="mr-2"
-          />
-          批量转换
-        </button>
-        <button
           v-if="canCreate"
           class="btn btn-primary"
           @click="handleAdd"
@@ -95,13 +83,6 @@
         @sort="handleSort"
         @row-click="handleView"
       >
-        <template #cell-selection="{ row }">
-          <Checkbox
-            :model-value="isSelected(row)"
-            @change="toggleSelect(row)"
-          />
-        </template>
-
         <template #cell-order_number="{ row }">
           <span
             class="cursor-pointer font-medium text-primary-600 hover:underline dark:text-primary-400"
@@ -148,9 +129,15 @@
 
         <template #cell-work_order_count="{ row }">
           <span v-if="row.work_order_count > 0">
-            <Tag size="small" type="info">{{ row.work_order_count }} 张</Tag>
+            <Tag
+              size="small"
+              type="info"
+            >{{ row.work_order_count }} 张</Tag>
           </span>
-          <span v-else class="text-gray-400">-</span>
+          <span
+            v-else
+            class="text-gray-400"
+          >-</span>
         </template>
 
         <template #cell-next_step="{ row }">
@@ -184,56 +171,16 @@
     </template>
 
     <template #pagination>
-      <div class="flex items-center justify-between w-full">
-        <div class="flex items-center gap-2 text-sm text-gray-500">
-          <label
-            v-if="selectedRows.length > 0"
-            class="flex items-center gap-2 cursor-pointer"
-          >
-            <Checkbox
-              :model-value="allSelected"
-              @change="toggleSelectAll"
-            />
-            <span>已选择 {{ selectedRows.length }} 项</span>
-          </label>
-        </div>
-        <Pagination
-          v-if="total > 0"
-          :total="total"
-          :page="currentPage"
-          :page-size="pageSize"
-          @update:page="handlePageChange"
-          @update:page-size="handleSizeChange"
-        />
-      </div>
+      <Pagination
+        v-if="total > 0"
+        :total="total"
+        :page="currentPage"
+        :page-size="pageSize"
+        @update:page="handlePageChange"
+        @update:page-size="handleSizeChange"
+      />
     </template>
   </TablePageLayout>
-
-  <!-- 转换施工单 -->
-  <ConfirmDialog
-    :show="showConvertDialog"
-    title="转换确认"
-    :message="`确定要将订单「${currentRow?.order_number}」转换为施工单？`"
-    confirm-text="确定"
-    cancel-text="取消"
-    :loading="converting"
-    loading-text="转换中..."
-    @confirm="executeConvert"
-    @cancel="showConvertDialog = false"
-  />
-
-  <!-- 批量转换 -->
-  <ConfirmDialog
-    :show="showBatchConvertDialog"
-    title="批量转换确认"
-    :message="`确定要将已选的 ${selectedRows.length} 个订单转换为施工单？`"
-    confirm-text="确定"
-    cancel-text="取消"
-    :loading="batchConverting"
-    loading-text="转换中..."
-    @confirm="executeBatchConvert"
-    @cancel="showBatchConvertDialog = false"
-  />
 
   <!-- 审核拒绝 -->
   <ConfirmDialog
@@ -351,26 +298,20 @@ import { useUIStore } from '@/stores/ui'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
-import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow, Checkbox, TextArea, Input, InputNumber } from '@/components/common'
+import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow, TextArea, Input, InputNumber } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
 const router = useRouter()
 const userStore = useUserStore()
 
-const selectedRows = ref<any[]>([])
-
 // 操作对话框状态
-const converting = ref(false)
-const batchConverting = ref(false)
 const rejecting = ref(false)
 const paymentLoading = ref(false)
 const completeLoading = ref(false)
 const cancelLoading = ref(false)
 const deleteLoading = ref(false)
 
-const showConvertDialog = ref(false)
-const showBatchConvertDialog = ref(false)
 const showRejectDialog = ref(false)
 const showPaymentDialog = ref(false)
 const showCompleteDialog = ref(false)
@@ -385,7 +326,6 @@ const completionReason = ref('')
 const cancelReason = ref('')
 
 const columns: Column[] = [
-  { key: 'selection', label: '', width: 48, align: 'center' },
   { key: 'order_number', label: '订单号', width: 144, sortable: true },
   { key: 'customer_name', label: '客户名称', width: 144, sortable: true },
   { key: 'order_date', label: '订单日期', width: 112, sortable: true },
@@ -433,19 +373,6 @@ const {
 })
 
 const canCreate = computed(() => userStore.hasPermission('workorder.add_salesorder'))
-const canBatchConvert = computed(() => selectedRows.value.some((row: any) => canConvert(row)))
-
-const allSelected = computed(() => tableData.value.length > 0 && tableData.value.every((row: any) => selectedRows.value.some((r: any) => r.id === row.id)))
-const isSelected = (row: any) => selectedRows.value.some((r: any) => r.id === row.id)
-const toggleSelect = (row: any) => {
-  const idx = selectedRows.value.findIndex(r => r.id === row.id)
-  if (idx >= 0) selectedRows.value.splice(idx, 1)
-  else selectedRows.value.push(row)
-}
-const toggleSelectAll = () => {
-  if (allSelected.value) selectedRows.value = []
-  else selectedRows.value = [...tableData.value]
-}
 
 const handleReset = () => {
   sortKey.value = 'created_at'
@@ -471,12 +398,10 @@ const canConvert = (row: any) => ['approved', 'in_production'].includes(row.stat
 const getRowActions = (row: any) => {
   const status = row.status
   const canChange = userStore.hasPermission('workorder.change_salesorder')
-  const canCreateWO = userStore.hasPermission('workorder.add_workorder')
-  const canCreateDelivery = userStore.hasPermission('workorder.add_deliveryorder')
 
   return [
     { key: 'edit', label: '编辑', icon: 'edit', visible: status === 'draft' && canChange },
-    { key: 'convert', label: '转换', icon: 'list', tone: 'success', visible: canConvert(row) },
+    { key: 'convert', label: '生成施工单', icon: 'list', tone: 'success', visible: canConvert(row) },
     { key: 'submit', label: '提交', icon: 'upload', tone: 'primary', visible: status === 'draft' },
     { key: 'approve', label: '审核', icon: 'check', tone: 'success', visible: status === 'submitted' },
     { key: 'reject', label: '拒绝', icon: 'x', tone: 'danger', visible: status === 'submitted' },
@@ -490,7 +415,7 @@ const getRowActions = (row: any) => {
 
 const handleRowAction = (action: string, row: any) => {
   if (action === 'edit') handleEdit(row)
-  else if (action === 'convert') handleConvertRequest(row)
+  else if (action === 'convert') router.push(`/workorders/create?sales_order_id=${row.id}`)
   else if (action === 'submit') handleSubmit(row)
   else if (action === 'approve') handleApprove(row)
   else if (action === 'reject') handleReject(row)
@@ -499,61 +424,6 @@ const handleRowAction = (action: string, row: any) => {
   else if (action === 'cancel') handleCancel(row)
   else if (action === 'delete') handleDelete(row)
   else if (action === 'view') handleView(row)
-}
-
-// 已有操作
-const handleConvertRequest = (row: any) => {
-  currentRow.value = row;
-  showConvertDialog.value = true;
-}
-
-const executeConvert = async () => {
-  if (!currentRow.value) return;
-  try {
-    converting.value = true
-    const response: any = await salesOrderAPI.convertToWorkOrder(currentRow.value.id)
-    useUIStore().showSuccess('转换成功')
-    showConvertDialog.value = false;
-    router.push(`/workorders/${response.work_order_id || response.id}`)
-  } catch (error: any) {
-    ErrorHandler.showMessage(error, '转换失败')
-  } finally {
-    converting.value = false
-  }
-}
-
-const handleBatchConvertRequest = () => {
-  showBatchConvertDialog.value = true;
-}
-
-const executeBatchConvert = async () => {
-  if (selectedRows.value.length === 0) return;
-  const convertibleRows = selectedRows.value.filter((row: any) => canConvert(row))
-  if (convertibleRows.length === 0) {
-    useUIStore().showWarning('请选择已审核或生产中的订单')
-    return
-  }
-  try {
-    batchConverting.value = true
-    const orderIds = convertibleRows.map((r: any) => r.id)
-    const response: any = await salesOrderAPI.batchConvertToWorkOrder(orderIds)
-    const createdCount = Array.isArray(response?.created) ? response.created.length : Number(response?.success_count || 0)
-    const failedCount = Array.isArray(response?.failed) ? response.failed.length : Number(response?.failed_count || 0)
-    if (createdCount > 0 && failedCount > 0) {
-      useUIStore().showWarning(`已转换 ${createdCount} 个订单，${failedCount} 个失败`)
-    } else if (createdCount > 0) {
-      useUIStore().showSuccess(`成功转换 ${createdCount} 个订单`)
-    } else {
-      useUIStore().showWarning('没有订单被转换')
-    }
-    showBatchConvertDialog.value = false;
-    selectedRows.value = []
-    loadData()
-  } catch (error: any) {
-    ErrorHandler.showMessage(error, '批量转换失败')
-  } finally {
-    batchConverting.value = false
-  }
 }
 
 const handleSubmit = async (row: any) => {
@@ -595,7 +465,6 @@ const executeReject = async () => {
   }
 }
 
-// 新增操作：更新付款
 const handleUpdatePayment = (row: any) => {
   currentRow.value = row
   paymentAmount.value = row.paid_amount || 0
@@ -621,7 +490,6 @@ const executePayment = async () => {
   }
 }
 
-// 新增操作：完成订单
 const handleComplete = (row: any) => {
   currentRow.value = row
   completionReason.value = ''
@@ -645,7 +513,6 @@ const executeComplete = async () => {
   }
 }
 
-// 新增操作：取消订单
 const handleCancel = (row: any) => {
   currentRow.value = row
   cancelReason.value = ''
@@ -669,7 +536,6 @@ const executeCancel = async () => {
   }
 }
 
-// 新增操作：删除
 const handleDelete = (row: any) => {
   currentRow.value = row
   showDeleteDialog.value = true

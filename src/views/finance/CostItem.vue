@@ -191,13 +191,27 @@
       v-if="currentRow"
       :columns="2"
     >
-      <DescriptionItem label="编码">{{ currentRow.code || '-' }}</DescriptionItem>
-      <DescriptionItem label="名称">{{ currentRow.name || '-' }}</DescriptionItem>
-      <DescriptionItem label="类型">{{ currentRow.type_display || typeLabel(currentRow.type) }}</DescriptionItem>
-      <DescriptionItem label="分摊方法">{{ currentRow.allocation_method_display || allocationLabel(currentRow.allocation_method) }}</DescriptionItem>
-      <DescriptionItem label="状态">{{ currentRow.is_active ? '启用' : '禁用' }}</DescriptionItem>
-      <DescriptionItem label="创建时间">{{ formatDateTime(currentRow.created_at) }}</DescriptionItem>
-      <DescriptionItem label="更新时间">{{ formatDateTime(currentRow.updated_at) }}</DescriptionItem>
+      <DescriptionItem label="编码">
+        {{ currentRow.code || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="名称">
+        {{ currentRow.name || '-' }}
+      </DescriptionItem>
+      <DescriptionItem label="类型">
+        {{ currentRow.type_display || typeLabel(currentRow.type) }}
+      </DescriptionItem>
+      <DescriptionItem label="分摊方法">
+        {{ currentRow.allocation_method_display || allocationLabel(currentRow.allocation_method) }}
+      </DescriptionItem>
+      <DescriptionItem label="状态">
+        {{ currentRow.is_active ? '启用' : '禁用' }}
+      </DescriptionItem>
+      <DescriptionItem label="创建时间">
+        {{ formatDateTime(currentRow.created_at) }}
+      </DescriptionItem>
+      <DescriptionItem label="更新时间">
+        {{ formatDateTime(currentRow.updated_at) }}
+      </DescriptionItem>
       <DescriptionItem
         label="描述"
         :span="2"

@@ -1,6 +1,6 @@
 /**
  * Delivery Order API Module
- * 发货管理 API
+ * 送货管理 API
  */
 import request from '@/api/index'
 import { BaseAPI } from '@/api/base/BaseAPI'
@@ -12,7 +12,7 @@ class DeliveryOrderAPI extends BaseAPI {
 
   /**
    * 发货
-   * @param {number} id - 发货单ID
+   * @param {number} id - 送货单ID
    * @param {Object} data - 发货信息
    * @returns {Promise} 发货结果
    */
@@ -26,7 +26,7 @@ class DeliveryOrderAPI extends BaseAPI {
 
   /**
    * 签收
-   * @param {number} id - 发货单ID
+   * @param {number} id - 送货单ID
    * @param {Object} data - 签收信息
    * @returns {Promise} 签收结果
    */
@@ -40,7 +40,7 @@ class DeliveryOrderAPI extends BaseAPI {
 
   /**
    * 拒收
-   * @param {number} id - 发货单ID
+   * @param {number} id - 送货单ID
    * @param {Object} data - 拒收信息（包含 reject_reason）
    * @returns {Promise} 拒收结果
    */
@@ -66,7 +66,7 @@ class DeliveryOrderAPI extends BaseAPI {
 
   /**
    * 解决异常
-   * @param {number} id - 发货单ID
+   * @param {number} id - 送货单ID
    * @param {Object} data - 异常处理信息
    * @returns {Promise} 处理结果
    */

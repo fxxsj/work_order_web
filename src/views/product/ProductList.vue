@@ -66,7 +66,7 @@
           accept=".xlsx,.xls"
           class="hidden"
           @change="handleImportFile"
-        />
+        >
         <button
           v-if="canCreate && tableData.length > 0"
           class="btn btn-primary"

@@ -10,7 +10,7 @@
         </div>
         <div class="min-w-0">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
-            总发货单
+            总送货单
           </p>
           <p class="text-xl font-bold text-gray-900 dark:text-white">
             {{ loading ? '-' : formatCount(summary.total_count) }}
@@ -38,7 +38,7 @@
             {{ loading ? '-' : formatCount(summary.pending_count) }}
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            待处理发货单
+            待处理送货单
           </p>
         </div>
       </div>
@@ -82,7 +82,7 @@
             {{ loading ? '-' : formatCount(summary.received_count) }}
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            已签收发货单
+            已签收送货单
           </p>
         </div>
       </div>

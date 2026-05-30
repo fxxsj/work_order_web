@@ -4,7 +4,10 @@
       v-if="label"
       class="input-label mb-1.5 block"
     >
-      {{ label }}<span v-if="required" class="text-red-500">*</span>
+      {{ label }}<span
+        v-if="required"
+        class="text-red-500"
+      >*</span>
     </label>
     <Select
       :model-value="modelValue"

@@ -1,7 +1,7 @@
 <template>
   <BaseDialog
     :show="dialogVisible"
-    :title="isEdit ? '编辑发货单' : '新建发货单'"
+    :title="isEdit ? '编辑送货单' : '新建送货单'"
     width="extra-wide"
     @close="handleClose"
   >
