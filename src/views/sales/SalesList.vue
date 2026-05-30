@@ -391,24 +391,26 @@ const handleAdd = () => { router.push('/sales-orders/create') }
 const handleView = (row: any) => { router.push(`/sales-orders/${row.id}`) }
 const handleEdit = (row: any) => { router.push(`/sales-orders/${row.id}/edit`) }
 
-const canEdit = (row: any) => row.status === 'draft' && userStore.hasPermission('workorder.change_salesorder')
-const canConvert = (row: any) => ['approved', 'in_production'].includes(row.status) && userStore.hasPermission('workorder.add_workorder')
+const canEdit = (row: any) => row.approval_status === 'draft' && userStore.hasPermission('workorder.change_salesorder')
+const canConvert = (row: any) => row.approval_status === 'approved' && !['completed', 'cancelled'].includes(row.status) && userStore.hasPermission('workorder.add_workorder')
 
 // 行操作配置
 const getRowActions = (row: any) => {
   const status = row.status
+  const approval_status = row.approval_status
   const canChange = userStore.hasPermission('workorder.change_salesorder')
+  const canApprove = userStore.hasPermission('workorder.approve_salesorder')
 
   return [
-    { key: 'edit', label: '编辑', icon: 'edit', visible: status === 'draft' && canChange },
+    { key: 'edit', label: '编辑', icon: 'edit', visible: approval_status === 'draft' && canChange },
     { key: 'convert', label: '生成施工单', icon: 'list', tone: 'success', visible: canConvert(row) },
-    { key: 'submit', label: '提交', icon: 'upload', tone: 'primary', visible: status === 'draft' },
-    { key: 'approve', label: '审核', icon: 'check', tone: 'success', visible: status === 'submitted' },
-    { key: 'reject', label: '拒绝', icon: 'x', tone: 'danger', visible: status === 'submitted' },
-    { key: 'updatePayment', label: '更新付款', icon: 'creditCard', tone: 'primary', visible: canChange && ['approved', 'in_production'].includes(status) },
-    { key: 'complete', label: '完成', icon: 'checkCircle', tone: 'success', visible: canChange && ['approved', 'in_production'].includes(status) },
-    { key: 'cancel', label: '取消', icon: 'xCircle', tone: 'danger', visible: canChange && !['completed', 'cancelled', ''].includes(status) },
-    { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: status === 'draft' && canChange },
+    { key: 'submit', label: '提交', icon: 'upload', tone: 'primary', visible: approval_status === 'draft' },
+    { key: 'approve', label: '审核', icon: 'check', tone: 'success', visible: approval_status === 'submitted' && canApprove },
+    { key: 'reject', label: '拒绝', icon: 'x', tone: 'danger', visible: approval_status === 'submitted' && canApprove },
+    { key: 'updatePayment', label: '更新付款', icon: 'creditCard', tone: 'primary', visible: canChange && approval_status === 'approved' && !['completed', 'cancelled'].includes(status) },
+    { key: 'complete', label: '完成', icon: 'checkCircle', tone: 'success', visible: canChange && approval_status === 'approved' && !['completed', 'cancelled'].includes(status) },
+    { key: 'cancel', label: '取消', icon: 'xCircle', tone: 'danger', visible: canChange && !['completed', 'cancelled'].includes(status) },
+    { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: approval_status === 'draft' && canChange },
     { key: 'view', label: '查看', icon: 'eye' },
   ]
 }

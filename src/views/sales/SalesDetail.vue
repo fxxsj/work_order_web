@@ -17,7 +17,7 @@
           </button>
           <div class="flex flex-wrap items-center gap-3">
             <button
-              v-if="canEdit && detailData.status === 'draft'"
+              v-if="canEdit && detailData.approval_status === 'draft'"
               class="btn btn-primary"
               @click="handleEdit"
             >
@@ -28,7 +28,7 @@
               编辑
             </button>
             <button
-              v-if="canConvert && ['approved', 'in_production'].includes(detailData.status)"
+              v-if="canConvert && detailData.approval_status === 'approved' && !['completed', 'cancelled'].includes(detailData.status)"
               class="btn btn-success"
               @click="handleConvert"
             >
@@ -39,7 +39,7 @@
               生成施工单
             </button>
             <button
-              v-if="canCreateDelivery && ['approved', 'in_production', 'completed'].includes(detailData.status)"
+              v-if="canCreateDelivery && detailData.approval_status === 'approved'"
               class="btn btn-secondary"
               @click="handleCreateDeliveryOrder"
             >
@@ -515,7 +515,7 @@
           </div>
           <div class="flex flex-wrap gap-3">
             <button
-              v-if="detailData.status === 'draft'"
+              v-if="detailData.approval_status === 'draft'"
               class="btn btn-primary"
               @click="handleSubmitOrder"
             >
@@ -525,8 +525,9 @@
               />
               提交审核
             </button>
-            <template v-if="detailData.status === 'submitted'">
+            <template v-if="detailData.approval_status === 'submitted'">
               <button
+                v-if="canApprove"
                 class="btn btn-success"
                 @click="handleApproveOrder"
               >
@@ -547,7 +548,7 @@
                 审核拒绝
               </button>
             </template>
-            <template v-if="canChange && ['approved', 'in_production'].includes(detailData.status)">
+            <template v-if="canChange && detailData.approval_status === 'approved' && !['completed', 'cancelled'].includes(detailData.status)">
               <button
                 class="btn btn-secondary"
                 @click="handleUpdatePayment"
@@ -581,7 +582,7 @@
               取消订单
             </button>
             <button
-              v-if="detailData.status === 'draft' && canChange"
+              v-if="detailData.approval_status === 'draft' && canChange"
               class="btn btn-danger"
               @click="handleDeleteOrder"
             >
@@ -750,6 +751,7 @@ const deleteLoading = ref(false)
 const canEdit = computed(() => userStore.hasPermission('workorder.change_salesorder'))
 const canConvert = computed(() => userStore.hasPermission('workorder.add_workorder'))
 const canChange = computed(() => userStore.hasPermission('workorder.change_salesorder'))
+const canApprove = computed(() => userStore.hasPermission('workorder.approve_salesorder'))
 const canCreateDelivery = computed(() => userStore.hasPermission('workorder.add_deliveryorder'))
 
 const loadData = async () => {

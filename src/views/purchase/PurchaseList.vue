@@ -152,25 +152,25 @@
                 更多
               </option>
               <option
-                v-if="row.status === 'draft'"
+                v-if="row.approval_status === 'draft'"
                 value="submit"
               >
                 提交
               </option>
               <option
-                v-if="row.status === 'submitted'"
+                v-if="row.approval_status === 'submitted'"
                 value="approve"
               >
                 批准
               </option>
               <option
-                v-if="row.status === 'submitted'"
+                v-if="row.approval_status === 'submitted'"
                 value="reject"
               >
                 拒绝
               </option>
               <option
-                v-if="row.status === 'approved'"
+                v-if="row.approval_status === 'approved' && row.status === 'pending'"
                 value="placeOrder"
               >
                 下单
@@ -188,7 +188,7 @@
                 质检
               </option>
               <option
-                v-if="['draft', 'submitted', 'approved'].includes(row.status)"
+                v-if="['draft', 'submitted', 'approved'].includes(row.approval_status) && !['cancelled', 'received'].includes(row.status)"
                 value="cancel"
               >
                 取消
@@ -404,7 +404,7 @@ const closeFormDialog = () => {
   resetForm()
 }
 
-const hasStatusActions = (row: any) => ['draft', 'submitted', 'approved', 'ordered'].includes(row.status)
+const hasStatusActions = (row: any) => ['draft', 'submitted', 'approved'].includes(row.approval_status) || ['ordered'].includes(row.status)
 
 const handleStatusAction = async (cmd: any, row: any) => {
   if (!cmd) return
@@ -451,7 +451,7 @@ const cancelCancelDialog = () => {
 
 const getRowActions = (row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
-  { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: row.status === 'draft' && canEdit.value }
+  { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: row.approval_status === 'draft' && canEdit.value }
 ]
 
 const handleRowAction = (action: RowAction, row: any) => {
