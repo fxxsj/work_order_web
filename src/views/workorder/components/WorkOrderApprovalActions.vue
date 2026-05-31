@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      v-if="canApprove && workOrder?.approval_status === 'pending'"
+      v-if="canApprove && workOrder?.approval_status === 'submitted'"
       class="card mt-6"
     >
       <div class="mb-4 border-b border-gray-200 pb-2 font-bold dark:border-dark-700">

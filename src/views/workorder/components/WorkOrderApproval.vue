@@ -13,7 +13,7 @@
       </div>
     </div>
     <div
-      v-if="canApprove && workOrder?.approval_status === 'pending'"
+      v-if="canApprove && workOrder?.approval_status === 'submitted'"
       class="card p-6"
     >
       <div class="mb-4 font-bold">

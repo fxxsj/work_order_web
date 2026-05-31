@@ -24,8 +24,9 @@
           />
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <!-- Status -->
+          <!-- Status: 仅编辑模式显示，新建时固定 pending -->
           <Select
+            v-if="isEdit"
             v-model="form.status"
             :options="statusOptions"
             label="状态"

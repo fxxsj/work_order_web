@@ -125,5 +125,5 @@ onMounted(async () => {
 const createWorkOrder = () => router.push('/workorders/create')
 const goToOrders = (status: any) => router.push({ path: '/workorders', query: status ? { status } : {} })
 const goToUrgentPriority = () => router.push({ path: '/workorders', query: { priority: 'urgent' } })
-const goToApprovals = () => router.push('/workorders?approval_status=pending')
+const goToApprovals = () => router.push('/workorders?approval_status=submitted')
 </script>

@@ -54,22 +54,10 @@
 
         <!-- 基本信息 -->
         <section class="card p-6">
-          <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-4 dark:border-dark-700">
+          <div class="mb-4 border-b border-gray-200 pb-4 dark:border-dark-700">
             <span class="text-lg font-bold text-gray-900 dark:text-white">
               客户订单 · {{ detailData.order_number }}
             </span>
-            <div class="flex flex-wrap items-center gap-2">
-              <StatusTag
-                :status="detailData.status"
-                :label="detailData.status_display"
-                category="salesOrder"
-              />
-              <StatusTag
-                :status="detailData.payment_status"
-                :label="detailData.payment_status_display"
-                category="payment"
-              />
-            </div>
           </div>
           <DescriptionGrid :columns="3">
             <DescriptionItem label="订单号">
@@ -173,209 +161,234 @@
           </div>
         </section>
 
-        <!-- 金额信息 -->
-        <section class="card p-6">
-          <div class="mb-4 text-lg font-bold text-gray-900 dark:text-white">
-            金额信息
-          </div>
-          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                小计
-              </div>
-              <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
-                {{ formatAmount(detailData.subtotal) }}
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                税额 ({{ detailData.tax_rate || 0 }}%)
-              </div>
-              <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
-                {{ formatAmount(detailData.tax_amount) }}
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                折扣
-              </div>
-              <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
-                -{{ formatAmount(detailData.discount_amount) }}
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                合计
-              </div>
-              <div class="mt-2 text-base font-semibold text-primary-600">
-                {{ formatAmount(detailData.total_amount) }}
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                已付款
-              </div>
-              <div class="mt-2 text-base font-semibold text-success-600">
-                {{ formatAmount(detailData.paid_amount) }}
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                未付款
-              </div>
-              <div
-                class="mt-2 text-base font-semibold"
-                :class="(detailData.unpaid_amount || 0) > 0 ? 'text-danger-600' : 'text-gray-900 dark:text-white'"
+        <!-- Tab 切换 -->
+        <div class="rounded-lg border border-gray-100 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-800">
+          <div class="border-b border-gray-100 px-4 py-3 dark:border-dark-700">
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                v-for="tab in detailTabs"
+                :key="tab.key"
+                class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
+                :class="activeDetailTab === tab.key ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-white'"
+                @click="activeDetailTab = tab.key"
               >
-                {{ formatAmount(detailData.unpaid_amount) }}
-              </div>
+                {{ tab.label }}
+              </button>
             </div>
           </div>
-          <div class="mt-4 grid gap-4 sm:grid-cols-3">
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                定金
-              </div>
-              <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
-                {{ formatAmount(detailData.deposit_amount) }}
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                付款日期
-              </div>
-              <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
-                {{ formatDate(detailData.payment_date) || '-' }}
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                收款次数
-              </div>
-              <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
-                {{ detailData.payment_count ?? '-' }}
-              </div>
-            </div>
-          </div>
-        </section>
 
-        <!-- 财务摘要 -->
-        <section class="card p-6">
-          <div class="mb-4 text-lg font-bold text-gray-900 dark:text-white">
-            财务摘要
-          </div>
-          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                订单金额
-              </div>
-              <div class="mt-1 text-base font-semibold text-primary-600">
-                {{ formatAmount(detailData.total_amount) }}
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                已回款
-              </div>
-              <div class="mt-1 text-base font-semibold text-success-600">
-                {{ formatAmount(detailData.paid_amount) }}
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                未回款
-              </div>
-              <div
-                class="mt-1 text-base font-semibold"
-                :class="(detailData.unpaid_amount || 0) > 0 ? 'text-danger-600' : 'text-gray-900 dark:text-white'"
-              >
-                {{ formatAmount(detailData.unpaid_amount) }}
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                付款状态
-              </div>
-              <div class="mt-1">
-                <StatusTag
-                  :status="detailData.payment_status"
-                  :label="detailData.payment_status_display"
-                  category="payment"
-                  size="small"
-                />
-              </div>
-            </div>
-          </div>
-          <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                关联发票
-              </div>
-              <div class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
-                {{ getRelatedNumbers('invoice').length }} 张
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                收款记录
-              </div>
-              <div class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
-                {{ detailData.payment_count ?? 0 }} 次
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                待收款计划
-              </div>
-              <div class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
-                {{ detailData.pending_payment_plan_count ?? 0 }} 笔
-              </div>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
-              <div class="text-xs text-gray-500 dark:text-dark-400">
-                待收金额
-              </div>
-              <div
-                class="mt-1 text-base font-semibold"
-                :class="(detailData.pending_payment_plan_amount || 0) > 0 ? 'text-warning-600' : 'text-gray-900 dark:text-white'"
-              >
-                {{ formatAmount(detailData.pending_payment_plan_amount) }}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- 订单明细 -->
-        <section class="card p-6">
-          <div class="mb-4 text-lg font-bold text-gray-900 dark:text-white">
-            订单明细
-          </div>
-          <SummaryTable
-            :columns="itemColumns"
-            :data="detailData.items || []"
-            row-key="id"
+          <!-- 订单明细 Tab -->
+          <div
+            v-show="activeDetailTab === 'detail'"
+            class="p-4 sm:p-6"
           >
-            <template #cell-product_name="{ row }">
-              {{ row.product_name }}
-              <span
-                v-if="row.product_code"
-                class="text-xs text-gray-400"
-              >({{ row.product_code }})</span>
-            </template>
-            <template #cell-unit_price="{ row }">
-              {{ formatAmount(row.unit_price) }}
-            </template>
-            <template #cell-tax_rate="{ row }">
-              {{ row.tax_rate != null ? row.tax_rate + '%' : '-' }}
-            </template>
-            <template #cell-discount_amount="{ row }">
-              {{ (row.discount_amount || 0) > 0 ? formatAmount(row.discount_amount) : '-' }}
-            </template>
-            <template #cell-amount="{ row }">
-              <span class="font-medium">{{ formatAmount((row.quantity || 0) * (row.unit_price || 0) - (row.discount_amount || 0)) }}</span>
-            </template>
-          </SummaryTable>
-        </section>
+            <div class="card p-6">
+              <SummaryTable
+                :columns="itemColumns"
+                :data="detailData.items || []"
+                row-key="id"
+              >
+                <template #cell-product_name="{ row }">
+                  {{ row.product_name }}
+                  <span
+                    v-if="row.product_code"
+                    class="text-xs text-gray-400"
+                  >({{ row.product_code }})</span>
+                </template>
+                <template #cell-unit_price="{ row }">
+                  {{ formatAmount(row.unit_price) }}
+                </template>
+                <template #cell-tax_rate="{ row }">
+                  {{ row.tax_rate != null ? row.tax_rate + '%' : '-' }}
+                </template>
+                <template #cell-discount_amount="{ row }">
+                  {{ (row.discount_amount || 0) > 0 ? formatAmount(row.discount_amount) : '-' }}
+                </template>
+                <template #cell-amount="{ row }">
+                  <span class="font-medium">{{ formatAmount((row.quantity || 0) * (row.unit_price || 0) - (row.discount_amount || 0)) }}</span>
+                </template>
+              </SummaryTable>
+            </div>
+          </div>
+
+          <!-- 金额信息 Tab -->
+          <div
+            v-show="activeDetailTab === 'finance'"
+            class="space-y-6 p-4 sm:p-6"
+          >
+            <!-- 金额明细 -->
+            <div>
+              <div class="mb-4 text-lg font-bold text-gray-900 dark:text-white">
+                金额明细
+              </div>
+              <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    小计
+                  </div>
+                  <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
+                    {{ formatAmount(detailData.subtotal) }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    税额 ({{ detailData.tax_rate || 0 }}%)
+                  </div>
+                  <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
+                    {{ formatAmount(detailData.tax_amount) }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    折扣
+                  </div>
+                  <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
+                    -{{ formatAmount(detailData.discount_amount) }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    合计
+                  </div>
+                  <div class="mt-2 text-base font-semibold text-primary-600">
+                    {{ formatAmount(detailData.total_amount) }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    已付款
+                  </div>
+                  <div class="mt-2 text-base font-semibold text-success-600">
+                    {{ formatAmount(detailData.paid_amount) }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    未付款
+                  </div>
+                  <div
+                    class="mt-2 text-base font-semibold"
+                    :class="(detailData.unpaid_amount || 0) > 0 ? 'text-danger-600' : 'text-gray-900 dark:text-white'"
+                  >
+                    {{ formatAmount(detailData.unpaid_amount) }}
+                  </div>
+                </div>
+              </div>
+              <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    定金
+                  </div>
+                  <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
+                    {{ formatAmount(detailData.deposit_amount) }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    付款日期
+                  </div>
+                  <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
+                    {{ formatDate(detailData.payment_date) || '-' }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    收款次数
+                  </div>
+                  <div class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
+                    {{ detailData.payment_count ?? '-' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 财务摘要 -->
+            <div>
+              <div class="mb-4 text-lg font-bold text-gray-900 dark:text-white">
+                财务摘要
+              </div>
+              <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    订单金额
+                  </div>
+                  <div class="mt-1 text-base font-semibold text-primary-600">
+                    {{ formatAmount(detailData.total_amount) }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    已回款
+                  </div>
+                  <div class="mt-1 text-base font-semibold text-success-600">
+                    {{ formatAmount(detailData.paid_amount) }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    未回款
+                  </div>
+                  <div
+                    class="mt-1 text-base font-semibold"
+                    :class="(detailData.unpaid_amount || 0) > 0 ? 'text-danger-600' : 'text-gray-900 dark:text-white'"
+                  >
+                    {{ formatAmount(detailData.unpaid_amount) }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    付款状态
+                  </div>
+                  <div class="mt-1">
+                    <StatusTag
+                      :status="detailData.payment_status"
+                      :label="detailData.payment_status_display"
+                      category="payment"
+                      size="small"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    关联发票
+                  </div>
+                  <div class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+                    {{ getRelatedNumbers('invoice').length }} 张
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    收款记录
+                  </div>
+                  <div class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+                    {{ detailData.payment_count ?? 0 }} 次
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    待收款计划
+                  </div>
+                  <div class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+                    {{ detailData.pending_payment_plan_count ?? 0 }} 笔
+                  </div>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-800">
+                  <div class="text-xs text-gray-500 dark:text-dark-400">
+                    待收金额
+                  </div>
+                  <div
+                    class="mt-1 text-base font-semibold"
+                    :class="(detailData.pending_payment_plan_amount || 0) > 0 ? 'text-warning-600' : 'text-gray-900 dark:text-white'"
+                  >
+                    {{ formatAmount(detailData.pending_payment_plan_amount) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- 备注 -->
         <section
@@ -747,6 +760,12 @@ const cancelReason = ref('')
 const cancelLoading = ref(false)
 const showDeleteDialog = ref(false)
 const deleteLoading = ref(false)
+const activeDetailTab = ref<'detail' | 'finance'>('detail')
+
+const detailTabs = [
+  { key: 'detail', label: '订单明细' },
+  { key: 'finance', label: '金额信息' },
+]
 
 const canEdit = computed(() => userStore.hasPermission('workorder.change_salesorder'))
 const canConvert = computed(() => userStore.hasPermission('workorder.add_workorder'))

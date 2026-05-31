@@ -173,13 +173,31 @@ const props = defineProps({
   canEdit: { type: Boolean, default: false }
 })
 const emit = defineEmits(['status-change'])
-const statusOptions = [
+const ALL_STATUS_OPTIONS = [
   { value: 'pending', label: '待开始' },
   { value: 'in_progress', label: '进行中' },
   { value: 'paused', label: '已暂停' },
   { value: 'completed', label: '已完成' },
   { value: 'cancelled', label: '已取消' }
 ]
+
+// 生产状态转换规则（与后端 WorkOrderService.ALLOWED_STATUS_TRANSITIONS 对齐）
+const STATUS_TRANSITIONS: Record<string, string[]> = {
+  pending: ['in_progress'],
+  in_progress: ['paused', 'cancelled'],
+  paused: ['in_progress', 'cancelled'],
+  completed: [],
+  cancelled: [],
+}
+
+const statusOptions = computed(() => {
+  const current = props.workOrder?.status
+  if (!current) return ALL_STATUS_OPTIONS
+  const allowed = STATUS_TRANSITIONS[current] || []
+  // 总是包含当前状态（显示勾选标记）
+  const values = allowed.includes(current) ? allowed : [current, ...allowed]
+  return ALL_STATUS_OPTIONS.filter(opt => values.includes(opt.value))
+})
 
 const statusMenuOpen = ref(false)
 const statusTriggerRef = ref<HTMLElement | null>(null)

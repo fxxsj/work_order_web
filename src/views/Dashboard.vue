@@ -167,7 +167,7 @@ const loadData = async () => {
 }
 
 const goToPendingApprovals = () => {
-  router.push({ path: '/workorders', query: { approval_status: 'pending' } })
+  router.push({ path: '/workorders', query: { approval_status: 'submitted' } })
 }
 
 const goToWorkOrderList = (filters = {}) => {

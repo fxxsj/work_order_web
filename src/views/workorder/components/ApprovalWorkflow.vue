@@ -98,7 +98,7 @@ const emit = defineEmits(['approve', 'resubmit', 'update:approvalForm', 'update:
 const approvalFormRef = ref(null)
 const resubmitFormRef = ref(null)
 
-const isPendingApproval = computed(() => props.workOrder?.approval_status === 'pending')
+const isPendingApproval = computed(() => props.workOrder?.approval_status === 'submitted')
 const isRejected = computed(() => props.workOrder?.approval_status === 'rejected')
 
 const handleApprove = (status: any) => emit('approve', status)
