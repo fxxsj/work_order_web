@@ -4,6 +4,15 @@
       <div class="card-body space-y-4">
         <!-- Section: Basic Info -->
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- Customer Selector with Quick Create -->
+          <CustomerSelector
+            ref="customerSelectorRef"
+            v-model="form.customer_id"
+            label="客户"
+            required
+            @create="showQuickCustomerCreate = true"
+            @update:model-value="handleCustomerChange"
+          />
           <!-- Sales Order Selector -->
           <Select
             v-model="form.sales_order_id"
@@ -13,14 +22,6 @@
             clearable
             searchable
             @change="handleSalesOrderChange"
-          />
-          <!-- Customer Selector with Quick Create -->
-          <CustomerSelector
-            ref="customerSelectorRef"
-            v-model="form.customer_id"
-            label="客户"
-            required
-            @create="showQuickCustomerCreate = true"
           />
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -58,12 +59,11 @@
           <InputNumber
             v-model="form.production_quantity"
             :min="1"
-            label="生产数量"
+            label="生产数量（车次）"
             class="w-full"
           />
-          <!-- Defective Quantity (edit mode) -->
+          <!-- Defective Quantity -->
           <InputNumber
-            v-if="isEdit"
             v-model="form.defective_quantity"
             :min="0"
             label="预损数量"
@@ -109,14 +109,19 @@
             @add="handleAddProduct"
             @remove="handleRemoveProduct"
             @create="showQuickProductCreate = true"
+            @product-selected="handleProductSelected"
           />
         </div>
 
         <!-- Section: Process Configuration -->
         <div>
           <SectionDivider title="工序配置" />
+          <div class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+            选择产品后自动填充默认工序，可根据需要调整
+          </div>
           <ProcessSelector
             v-model="form.process_ids"
+            :process-list="processList"
           />
         </div>
 
@@ -136,6 +141,9 @@
         <!-- Section: Prepress Resources -->
         <div>
           <SectionDivider title="印前资源" />
+          <div class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+            根据所选工序显示相关资源
+          </div>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Select
               v-model="form.printing_type"
@@ -156,15 +164,25 @@
               placeholder="选择图稿（可多选）"
               :loading="artworkLoading"
             />
-            <div class="space-y-2">
-              <label class="input-label block text-sm text-gray-600 dark:text-gray-400">CMYK颜色</label>
-              <CheckboxGroup
-                v-model="form.printing_cmyk"
-                :options="cmykOptions"
+            <div class="space-y-3">
+              <div class="space-y-2">
+                <label class="input-label block text-sm text-gray-600 dark:text-gray-400">CMYK颜色</label>
+                <CheckboxGroup
+                  v-model="form.printing_cmyk"
+                  :options="cmykOptions"
+                />
+              </div>
+              <Input
+                v-model="form.printing_other_colors"
+                label="其他颜色（专色）"
+                placeholder="如：877C, 金色（逗号分隔）"
               />
             </div>
           </div>
-          <div class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2">
+          <div
+            v-if="requiredResources.die"
+            class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2"
+          >
             <MultiSelect
               v-model="form.die_ids"
               :options="dieOptions"
@@ -172,6 +190,11 @@
               placeholder="选择刀模（可多选）"
               :loading="dieLoading"
             />
+          </div>
+          <div
+            v-if="requiredResources.foilingPlate"
+            class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2"
+          >
             <MultiSelect
               v-model="form.foiling_plate_ids"
               :options="foilingPlateOptions"
@@ -180,7 +203,10 @@
               :loading="foilingPlateLoading"
             />
           </div>
-          <div class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2">
+          <div
+            v-if="requiredResources.embossingPlate"
+            class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2"
+          >
             <MultiSelect
               v-model="form.embossing_plate_ids"
               :options="embossingPlateOptions"
@@ -202,6 +228,17 @@
         :loading="submitting"
         @confirm="confirmSubmitApproval"
         @cancel="cancelSubmitApproval"
+      />
+
+      <!-- Process Difference Dialog -->
+      <ConfirmDialog
+        :show="showProcessDiffDialog"
+        title="工序配置不一致"
+        message="当前工序与产品默认工序不一致，是否继续提交？"
+        confirm-text="继续提交"
+        cancel-text="取消"
+        @confirm="handleProcessDiffConfirm"
+        @cancel="showProcessDiffDialog = false"
       />
 
       <!-- Quick Create Dialogs -->
@@ -277,7 +314,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon, Input, TextArea, InputNumber, Select, CheckboxGroup, SectionDivider } from '@/components/common'
 import { useUIStore } from '@/stores/ui'
-import { workOrderAPI, productAPI, materialAPI, artworkAPI, dieAPI, foilingPlateAPI, embossingPlateAPI, salesOrderAPI } from '@/api/modules'
+import { workOrderAPI, productAPI, processAPI, materialAPI, artworkAPI, dieAPI, foilingPlateAPI, embossingPlateAPI, salesOrderAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
 import { ProductListEditor, ProcessSelector, MaterialListEditor, MultiSelect } from '@/components/workorder'
@@ -300,12 +337,15 @@ const showQuickCustomerCreate = ref(false)
 const showQuickProductCreate = ref(false)
 const showQuickMaterialCreate = ref(false)
 const pendingMaterialCreateIndex = ref<number | null>(null)
+const showProcessDiffDialog = ref(false)
+const pendingAutoApprove = ref(false)
 
 const customerSelectorRef = ref<any>(null)
 
 // Lists for dropdown options
 const salesOrderList = ref<any[]>([])
 const productList = ref<any[]>([])
+const processList = ref<any[]>([])
 const materialList = ref<any[]>([])
 const artworkList = ref<any[]>([])
 const dieList = ref<any[]>([])
@@ -351,40 +391,89 @@ const cmykOptions = [
 ]
 
 // Computed options for selectors
-const salesOrderOptions = computed(() =>
-  salesOrderList.value.map((so: any) => ({
+const salesOrderOptions = computed(() => {
+  const list = form.customer_id
+    ? salesOrderList.value.filter((so: any) => so.customer === form.customer_id)
+    : salesOrderList.value
+  return list.map((so: any) => ({
     value: so.id,
     label: `${so.order_number || ''} - ${so.customer_name || ''}`.trim()
   }))
-)
+})
 
-const artworkOptions = computed(() =>
-  artworkList.value.map((a: any) => ({
-    value: a.id,
-    label: a.code ? `${a.code} - ${a.name}` : a.name
-  }))
-)
+// Computed: artworks filtered by selected products
+const selectedProductIds = computed(() => {
+  const ids = new Set<number>()
+  for (const p of form.products) {
+    const productId = typeof p.product === 'object' ? p.product?.id : p.product
+    if (productId) ids.add(productId)
+  }
+  return ids
+})
 
-const dieOptions = computed(() =>
-  dieList.value.map((d: any) => ({
+const artworkOptions = computed(() => {
+  const productIds = selectedProductIds.value
+  // If products selected, only show artworks that contain at least one of them
+  const filtered = productIds.size > 0
+    ? artworkList.value.filter((a: any) => {
+        if (!a.products || a.products.length === 0) return false
+        return a.products.some((ap: any) => productIds.has(ap.product))
+      })
+    : artworkList.value
+  return filtered.map((a: any) => {
+    const productNames = (a.products || [])
+      .filter((ap: any) => productIds.size === 0 || productIds.has(ap.product))
+      .map((ap: any) => ap.product_name || '')
+      .filter(Boolean)
+    const suffix = productNames.length > 0 ? ` (${productNames.join(', ')})` : ''
+    return {
+      value: a.id,
+      label: a.code ? `${a.code} - ${a.name}${suffix}` : `${a.name}${suffix}`,
+    }
+  })
+})
+
+const dieOptions = computed(() => {
+  const productIds = selectedProductIds.value
+  const filtered = productIds.size > 0
+    ? dieList.value.filter((d: any) => {
+        if (!d.products || d.products.length === 0) return true
+        return d.products.some((dp: any) => productIds.has(dp.product))
+      })
+    : dieList.value
+  return filtered.map((d: any) => ({
     value: d.id,
     label: d.code ? `${d.name} (${d.code})` : d.name
   }))
-)
+})
 
-const foilingPlateOptions = computed(() =>
-  foilingPlateList.value.map((f: any) => ({
+const foilingPlateOptions = computed(() => {
+  const productIds = selectedProductIds.value
+  const filtered = productIds.size > 0
+    ? foilingPlateList.value.filter((f: any) => {
+        if (!f.products || f.products.length === 0) return true
+        return f.products.some((fp: any) => productIds.has(fp.product))
+      })
+    : foilingPlateList.value
+  return filtered.map((f: any) => ({
     value: f.id,
     label: f.code ? `${f.name} (${f.code})` : f.name
   }))
-)
+})
 
-const embossingPlateOptions = computed(() =>
-  embossingPlateList.value.map((e: any) => ({
+const embossingPlateOptions = computed(() => {
+  const productIds = selectedProductIds.value
+  const filtered = productIds.size > 0
+    ? embossingPlateList.value.filter((e: any) => {
+        if (!e.products || e.products.length === 0) return true
+        return e.products.some((ep: any) => productIds.has(ep.product))
+      })
+    : embossingPlateList.value
+  return filtered.map((e: any) => ({
     value: e.id,
     label: e.code ? `${e.name} (${e.code})` : e.name
   }))
-)
+})
 
 // Form data
 const form = reactive({
@@ -403,6 +492,7 @@ const form = reactive({
   materials: [] as any[],
   printing_type: 'none',
   printing_cmyk: [] as string[],
+  printing_other_colors: '' as string,
   artwork_ids: [] as number[],
   die_ids: [] as number[],
   foiling_plate_ids: [] as number[],
@@ -412,23 +502,162 @@ const form = reactive({
 // Track created work order ID for submit approval
 let createdWorkOrderId: number | null = null
 
-// Calculate total quantity
+// Calculate total quantity from products
 const calculatedTotalQuantity = computed(() => {
   return form.products.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
 })
 
-// Auto-fill production quantity when products change
-watch(calculatedTotalQuantity, (newTotal) => {
-  if (newTotal > 0) {
-    form.production_quantity = newTotal
-  }
+// Auto-calculate product quantity when production_quantity or imposition changes
+watch(() => form.production_quantity, () => {
+  recalcProductQuantities()
 })
+
+function recalcProductQuantities() {
+  for (const p of form.products) {
+    if (!p.manual_quantity && p.product) {
+      const imposition = p.imposition_quantity || 1
+      p.quantity = form.production_quantity * imposition
+    }
+  }
+}
+
+// Collect default process IDs from all selected products
+const productDefaultProcessIds = computed(() => {
+  const ids = new Set<number>()
+  for (const p of form.products) {
+    const productId = typeof p.product === 'object' ? p.product?.id : p.product
+    if (!productId) continue
+    const productData = productList.value.find((pr: any) => pr.id === productId)
+    if (productData?.default_processes) {
+      for (const id of productData.default_processes) {
+        ids.add(typeof id === 'object' ? id.id : id)
+      }
+    }
+  }
+  return [...ids]
+})
+
+// Track previous default process IDs to detect changes
+let prevDefaultProcessIds: number[] = []
+
+// Auto-merge default processes when products change
+watch(productDefaultProcessIds, (newIds) => {
+  const added = newIds.filter(id => !prevDefaultProcessIds.includes(id))
+
+  for (const id of added) {
+    if (!form.process_ids.includes(id)) {
+      form.process_ids.push(id)
+    }
+  }
+
+  prevDefaultProcessIds = [...newIds]
+}, { immediate: true })
+
+// Sync materials from product default_materials
+function syncMaterialsFromProducts() {
+  const existingMaterialIds = new Set(
+    form.materials.filter((m: any) => m.material).map((m: any) => m.material)
+  )
+
+  for (const p of form.products) {
+    const productId = typeof p.product === 'object' ? p.product?.id : p.product
+    if (!productId) continue
+    const productData = productList.value.find((pr: any) => pr.id === productId)
+    if (!productData?.default_materials) continue
+
+    for (const dm of productData.default_materials) {
+      const materialId = dm.material?.id || dm.material
+      if (!existingMaterialIds.has(materialId)) {
+        form.materials.push({
+          material: materialId,
+          material_size: dm.material_size || '',
+          material_usage: dm.material_usage || '',
+          need_cutting: dm.need_cutting || false,
+          notes: dm.notes || '',
+          auto_filled: true,
+        })
+        existingMaterialIds.add(materialId)
+      }
+    }
+  }
+}
+
+// Computed: which prepress resources are needed based on selected processes
+const requiredResources = computed(() => {
+  const result = { artwork: false, die: false, foilingPlate: false, embossingPlate: false }
+  for (const processId of form.process_ids) {
+    const process = processList.value.find((p: any) => p.id === processId)
+    if (!process) continue
+    if (process.requires_artwork) result.artwork = true
+    if (process.requires_die) result.die = true
+    if (process.requires_foiling_plate) result.foilingPlate = true
+    if (process.requires_embossing_plate) result.embossingPlate = true
+  }
+  return result
+})
+
+// Auto-fill CMYK, other colors, and imposition_quantity from selected artworks
+watch(() => form.artwork_ids, () => {
+  syncColorsFromArtworks()
+  syncImpositionFromArtworks()
+}, { deep: true })
+
+function syncColorsFromArtworks() {
+  const cmykSet = new Set<string>()
+  const otherSet = new Set<string>()
+
+  for (const artworkId of form.artwork_ids) {
+    const artwork = artworkList.value.find((a: any) => a.id === artworkId)
+    if (!artwork) continue
+    if (artwork.cmyk_colors) {
+      for (const c of artwork.cmyk_colors) cmykSet.add(c)
+    }
+    if (artwork.other_colors) {
+      for (const c of artwork.other_colors) otherSet.add(c)
+    }
+  }
+
+  // Only auto-fill if user hasn't manually changed colors, or if currently empty
+  if (form.printing_cmyk.length === 0 || form.printing_cmyk.every(c => cmykSet.has(c))) {
+    form.printing_cmyk = [...cmykSet]
+  }
+  if (!form.printing_other_colors || form.printing_other_colors.split(',').every(s => otherSet.has(s.trim()))) {
+    form.printing_other_colors = [...otherSet].join(', ')
+  }
+}
+
+// Update imposition_quantity from artwork-product relationships, then recalc product quantities
+function syncImpositionFromArtworks() {
+  if (form.artwork_ids.length === 0) return
+
+  for (const productItem of form.products) {
+    if (!productItem.product) continue
+    const productId = typeof productItem.product === 'object' ? productItem.product?.id : productItem.product
+    if (!productId) continue
+
+    // Find the first artwork that has this product and get its imposition_quantity
+    for (const artworkId of form.artwork_ids) {
+      const artwork = artworkList.value.find((a: any) => a.id === artworkId)
+      if (!artwork || !artwork.products) continue
+      const ap = artwork.products.find((p: any) => p.product === productId)
+      if (ap && ap.imposition_quantity) {
+        productItem.imposition_quantity = ap.imposition_quantity
+        // Recalculate quantity if user hasn't manually overridden
+        if (!productItem.manual_quantity) {
+          productItem.quantity = form.production_quantity * ap.imposition_quantity
+        }
+        break
+      }
+    }
+  }
+}
 
 // Load initial data
 onMounted(async () => {
   await Promise.all([
     loadSalesOrders(),
     loadProducts(),
+    loadProcesses(),
     loadMaterials(),
     loadArtworks(),
     loadDies(),
@@ -469,6 +698,15 @@ const loadProducts = async () => {
   try {
     const res: any = await productAPI.getList({ page_size: 50 })
     productList.value = res?.results || res || []
+  } catch (error: any) {
+    ErrorHandler.handle(error)
+  }
+}
+
+const loadProcesses = async () => {
+  try {
+    const res: any = await processAPI.getList({ is_active: true, page_size: 100 })
+    processList.value = res?.results || res || []
   } catch (error: any) {
     ErrorHandler.handle(error)
   }
@@ -548,6 +786,7 @@ const loadDetail = async (workOrderId: string) => {
       process_ids: res.process_ids || [],
       printing_type: res.printing_type || 'none',
       printing_cmyk: res.printing_cmyk || [],
+      printing_other_colors: (res.printing_other_colors || []).join(', '),
       artwork_ids: res.artwork_ids || [],
       die_ids: res.die_ids || [],
       foiling_plate_ids: res.foiling_plate_ids || [],
@@ -556,15 +795,21 @@ const loadDetail = async (workOrderId: string) => {
 
     // Load products
     if (res.products && Array.isArray(res.products)) {
-      form.products = res.products.map((p: any) => ({
-        product: p.product?.id || p.product,
-        quantity: p.quantity || 1,
-        unit: p.unit || '件',
-        specification: p.specification || '',
-        source_type: p.source_type || 'stock',
-        sales_order_item: p.sales_order_item || undefined,
-        sort_order: p.sort_order || 0
-      }))
+      form.products = res.products.map((p: any) => {
+        const productId = p.product?.id || p.product
+        const productData = productList.value.find((pr: any) => pr.id === productId)
+        return {
+          product: productId,
+          imposition_quantity: p.imposition_quantity || 1,
+          quantity: p.quantity || 1,
+          unit: productData?.unit || p.unit || '件',
+          specification: p.specification || '',
+          source_type: p.source_type || 'stock',
+          sales_order_item: p.sales_order_item || undefined,
+          sort_order: p.sort_order || 0,
+          manual_quantity: true, // Edit mode: preserve existing quantities
+        }
+      })
     }
 
     // Load materials
@@ -595,13 +840,21 @@ const prefillFromSalesOrder = async (salesOrderId: number) => {
 
     // Pre-fill products from sales order items
     if (res.items && res.items.length > 0) {
-      form.products = res.items.map((item: any) => ({
-        product: item.product,
-        quantity: item.quantity || 1,
-        unit: item.unit || '件',
-        specification: item.specification || '',
-        sales_order_item: item.id
-      }))
+      form.products = res.items.map((item: any) => {
+        // Look up product data to get unit and default processes
+        const productData = productList.value.find((p: any) => p.id === item.product)
+        return {
+          product: item.product,
+          imposition_quantity: 1,
+          quantity: item.quantity || form.production_quantity,
+          unit: productData?.unit || item.unit || '件',
+          specification: item.specification || '',
+          sales_order_item: item.id,
+          manual_quantity: false,
+        }
+      })
+      // Sync materials from products
+      syncMaterialsFromProducts()
     }
   } catch (error: any) {
     ErrorHandler.handle(error)
@@ -609,6 +862,16 @@ const prefillFromSalesOrder = async (salesOrderId: number) => {
 }
 
 // Handlers
+const handleCustomerChange = () => {
+  // Clear sales order if it doesn't belong to the new customer
+  if (form.sales_order_id) {
+    const so = salesOrderList.value.find((s: any) => s.id === form.sales_order_id)
+    if (so && so.customer !== form.customer_id) {
+      form.sales_order_id = undefined
+    }
+  }
+}
+
 const handleSalesOrderChange = async (value: any) => {
   if (!value) {
     form.sales_order_id = undefined
@@ -634,13 +897,20 @@ const handleSalesOrderChange = async (value: any) => {
   try {
     const detail: any = await salesOrderAPI.getDetail(String(value))
     if (detail.items && detail.items.length > 0) {
-      form.products = detail.items.map((item: any) => ({
-        product: item.product,
-        quantity: item.quantity || 1,
-        unit: item.unit || '件',
-        specification: item.specification || '',
-        sales_order_item: item.id
-      }))
+      form.products = detail.items.map((item: any) => {
+        const productData = productList.value.find((p: any) => p.id === item.product)
+        return {
+          product: item.product,
+          imposition_quantity: 1,
+          quantity: item.quantity || form.production_quantity,
+          unit: productData?.unit || item.unit || '件',
+          specification: item.specification || '',
+          sales_order_item: item.id,
+          manual_quantity: false,
+        }
+      })
+      // Sync materials from products
+      syncMaterialsFromProducts()
     }
     if (detail.notes) {
       form.notes = detail.notes
@@ -652,14 +922,100 @@ const handleSalesOrderChange = async (value: any) => {
 
 const handleProductsChange = (newItems: any[]) => {
   form.products = newItems
+  // Recalculate quantities when items change (imposition_quantity may have changed)
+  recalcProductQuantities()
+  // Clear prepress resources that no longer match the selected products
+  cleanupPrepressSelections()
+}
+
+function cleanupPrepressSelections() {
+  const productIds = selectedProductIds.value
+  if (productIds.size === 0) return
+
+  // Clear artworks that don't contain any selected product
+  if (form.artwork_ids.length > 0) {
+    form.artwork_ids = form.artwork_ids.filter((id: number) => {
+      const artwork = artworkList.value.find((a: any) => a.id === id)
+      if (!artwork || !artwork.products) return false
+      return artwork.products.some((ap: any) => productIds.has(ap.product))
+    })
+  }
+
+  // Clear dies that don't contain any selected product
+  if (form.die_ids.length > 0) {
+    form.die_ids = form.die_ids.filter((id: number) => {
+      const die = dieList.value.find((d: any) => d.id === id)
+      if (!die || !die.products || die.products.length === 0) return true
+      return die.products.some((dp: any) => productIds.has(dp.product))
+    })
+  }
+
+  // Clear foiling plates
+  if (form.foiling_plate_ids.length > 0) {
+    form.foiling_plate_ids = form.foiling_plate_ids.filter((id: number) => {
+      const plate = foilingPlateList.value.find((f: any) => f.id === id)
+      if (!plate || !plate.products || plate.products.length === 0) return true
+      return plate.products.some((fp: any) => productIds.has(fp.product))
+    })
+  }
+
+  // Clear embossing plates
+  if (form.embossing_plate_ids.length > 0) {
+    form.embossing_plate_ids = form.embossing_plate_ids.filter((id: number) => {
+      const plate = embossingPlateList.value.find((e: any) => e.id === id)
+      if (!plate || !plate.products || plate.products.length === 0) return true
+      return plate.products.some((ep: any) => productIds.has(ep.product))
+    })
+  }
 }
 
 const handleAddProduct = () => {
-  form.products.push({ product: null, quantity: 1, unit: '件' })
+  form.products.push({ product: null, imposition_quantity: 1, quantity: form.production_quantity, unit: '件', manual_quantity: false })
 }
 
 const handleRemoveProduct = (index: number) => {
   form.products.splice(index, 1)
+}
+
+// Handle product selection - auto-fill unit, calculate quantity, sync processes & materials
+const handleProductSelected = (index: number, productValue: any) => {
+  const productId = typeof productValue === 'object' ? productValue?.id : productValue
+  if (!productId) return
+
+  const productData = productList.value.find((p: any) => p.id === productId)
+  if (!productData) return
+
+  const item = form.products[index]
+  if (!item) return
+
+  // Auto-fill unit from product
+  item.unit = productData.unit || '件'
+
+  // Auto-calculate quantity based on production_quantity × imposition_quantity
+  const imposition = item.imposition_quantity || 1
+  item.quantity = form.production_quantity * imposition
+  item.manual_quantity = false
+
+  // Sync materials from this product's defaults
+  const existingMaterialIds = new Set(
+    form.materials.filter((m: any) => m.material).map((m: any) => m.material)
+  )
+  if (productData.default_materials) {
+    for (const dm of productData.default_materials) {
+      const materialId = dm.material?.id || dm.material
+      if (!existingMaterialIds.has(materialId)) {
+        form.materials.push({
+          material: materialId,
+          material_size: dm.material_size || '',
+          material_usage: dm.material_usage || '',
+          need_cutting: dm.need_cutting || false,
+          notes: dm.notes || '',
+          auto_filled: true,
+        })
+        existingMaterialIds.add(materialId)
+      }
+    }
+  }
 }
 
 const handleMaterialsChange = (newItems: any[]) => {
@@ -667,7 +1023,7 @@ const handleMaterialsChange = (newItems: any[]) => {
 }
 
 const handleAddMaterial = () => {
-  form.materials.push({ material: null, quantity: 1, notes: '' })
+  form.materials.push({ material: null, material_size: '', material_usage: '', need_cutting: false, notes: '', auto_filled: false })
 }
 
 const handleRemoveMaterial = (index: number) => {
@@ -729,8 +1085,10 @@ const validateForm = () => {
     useUIStore().showWarning('产品数量必须大于 0')
     return false
   }
-  if (form.materials.some(m => m.material && (Number(m.quantity) || 0) <= 0)) {
-    useUIStore().showWarning('物料数量必须大于 0')
+
+  // Validate processes
+  if (form.process_ids.length === 0) {
+    useUIStore().showWarning('请至少选择一个工序')
     return false
   }
 
@@ -752,6 +1110,9 @@ const formatPayload = () => {
     processes: form.process_ids,
     printing_type: form.printing_type || 'none',
     printing_cmyk_colors: form.printing_cmyk,
+    printing_other_colors: form.printing_other_colors
+      ? form.printing_other_colors.split(',').map(s => s.trim()).filter(Boolean)
+      : [],
     artworks: form.artwork_ids,
     dies: form.die_ids,
     foiling_plates: form.foiling_plate_ids,
@@ -772,7 +1133,7 @@ const formatPayload = () => {
       specification: p.specification || '',
       source_type: p.source_type || 'stock',
       sales_order_item: p.sales_order_item || undefined,
-      sort_order: p.sort_order || 0
+      sort_order: p.sort_order || 0,
     }))
 
   // Format materials
@@ -780,8 +1141,8 @@ const formatPayload = () => {
     .filter(m => m.material)
     .map(m => ({
       material: typeof m.material === 'object' ? m.material.id : m.material,
-      material_size: m.material_size || m.size || '',
-      material_usage: m.material_usage || m.usage || '',
+      material_size: m.material_size || '',
+      material_usage: m.material_usage || '',
       need_cutting: !!m.need_cutting,
       notes: m.notes?.trim() || undefined
     }))
@@ -793,6 +1154,20 @@ const formatPayload = () => {
 const handleSave = async (autoApprove: boolean = false) => {
   if (!validateForm()) return
 
+  // Check process difference with product defaults
+  const defaultIds = [...productDefaultProcessIds.value].sort()
+  const currentIds = [...form.process_ids].sort()
+  const hasDiff = JSON.stringify(defaultIds) !== JSON.stringify(currentIds)
+  if (hasDiff && defaultIds.length > 0) {
+    pendingAutoApprove.value = autoApprove
+    showProcessDiffDialog.value = true
+    return
+  }
+
+  doSave(autoApprove)
+}
+
+const doSave = async (autoApprove: boolean) => {
   saving.value = true
   try {
     const payload = formatPayload()
@@ -804,12 +1179,12 @@ const handleSave = async (autoApprove: boolean = false) => {
     } else {
       const res: any = await workOrderAPI.create(payload)
       currentId = res.id || res.data?.id
-      createdWorkOrderId = currentId
+      createdWorkOrderId = currentId ? Number(currentId) : null
       useUIStore().showSuccess('施工单创建成功')
     }
 
     if (autoApprove && currentId) {
-      await workOrderFlowAPI.submitApproval(currentId, { auto_approve: true })
+      await workOrderAPI.submitApproval(currentId, { auto_approve: true })
       useUIStore().showSuccess('发布成功')
       router.back()
     } else {
@@ -849,6 +1224,12 @@ const handleSubmitForApproval = async () => {
   } finally {
     submitting.value = false
   }
+}
+
+// Confirm process diff dialog — proceed with current config
+const handleProcessDiffConfirm = () => {
+  showProcessDiffDialog.value = false
+  doSave(pendingAutoApprove.value)
 }
 
 // Confirm submit approval from dialog
