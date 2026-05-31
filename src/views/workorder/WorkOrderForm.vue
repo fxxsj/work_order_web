@@ -416,7 +416,7 @@ const artworkOptions = computed(() => {
   // If products selected, only show artworks that contain at least one of them
   const filtered = productIds.size > 0
     ? artworkList.value.filter((a: any) => {
-        if (!a.products || a.products.length === 0) return false
+        if (!a.products || a.products.length === 0) return true
         return a.products.some((ap: any) => productIds.has(ap.product))
       })
     : artworkList.value
@@ -441,10 +441,12 @@ const dieOptions = computed(() => {
         return d.products.some((dp: any) => productIds.has(dp.product))
       })
     : dieList.value
-  return filtered.map((d: any) => ({
-    value: d.id,
-    label: d.code ? `${d.name} (${d.code})` : d.name
-  }))
+  return filtered.map((d: any) => {
+    const base = d.code ? `${d.name} (${d.code})` : d.name
+    const names = (d.products || []).map((dp: any) => dp.product_name).filter(Boolean)
+    const suffix = names.length > 0 ? ` [${names.join(', ')}]` : ''
+    return { value: d.id, label: `${base}${suffix}` }
+  })
 })
 
 const foilingPlateOptions = computed(() => {
@@ -455,10 +457,12 @@ const foilingPlateOptions = computed(() => {
         return f.products.some((fp: any) => productIds.has(fp.product))
       })
     : foilingPlateList.value
-  return filtered.map((f: any) => ({
-    value: f.id,
-    label: f.code ? `${f.name} (${f.code})` : f.name
-  }))
+  return filtered.map((f: any) => {
+    const base = f.code ? `${f.name} (${f.code})` : f.name
+    const names = (f.products || []).map((fp: any) => fp.product_name).filter(Boolean)
+    const suffix = names.length > 0 ? ` [${names.join(', ')}]` : ''
+    return { value: f.id, label: `${base}${suffix}` }
+  })
 })
 
 const embossingPlateOptions = computed(() => {
@@ -469,10 +473,12 @@ const embossingPlateOptions = computed(() => {
         return e.products.some((ep: any) => productIds.has(ep.product))
       })
     : embossingPlateList.value
-  return filtered.map((e: any) => ({
-    value: e.id,
-    label: e.code ? `${e.name} (${e.code})` : e.name
-  }))
+  return filtered.map((e: any) => {
+    const base = e.code ? `${e.name} (${e.code})` : e.name
+    const names = (e.products || []).map((ep: any) => ep.product_name).filter(Boolean)
+    const suffix = names.length > 0 ? ` [${names.join(', ')}]` : ''
+    return { value: e.id, label: `${base}${suffix}` }
+  })
 })
 
 // Form data
@@ -599,6 +605,7 @@ const requiredResources = computed(() => {
 // Auto-fill CMYK, other colors, and imposition_quantity from selected artworks
 watch(() => form.artwork_ids, () => {
   syncColorsFromArtworks()
+  syncPrepressFromArtworks()
   syncImpositionFromArtworks()
 }, { deep: true })
 
@@ -624,6 +631,37 @@ function syncColorsFromArtworks() {
   if (!form.printing_other_colors || form.printing_other_colors.split(',').every(s => otherSet.has(s.trim()))) {
     form.printing_other_colors = [...otherSet].join(', ')
   }
+}
+
+// Sync die_ids / foiling_plate_ids / embossing_plate_ids from selected artworks' M2M fields
+function syncPrepressFromArtworks() {
+  const dieIdSet = new Set<number>(form.die_ids)
+  const foilingIdSet = new Set<number>(form.foiling_plate_ids)
+  const embossingIdSet = new Set<number>(form.embossing_plate_ids)
+
+  for (const artworkId of form.artwork_ids) {
+    const artwork = artworkList.value.find((a: any) => a.id === artworkId)
+    if (!artwork) continue
+    if (Array.isArray(artwork.dies)) {
+      for (const dieId of artwork.dies) {
+        dieIdSet.add(dieId)
+      }
+    }
+    if (Array.isArray(artwork.foiling_plates)) {
+      for (const fpId of artwork.foiling_plates) {
+        foilingIdSet.add(fpId)
+      }
+    }
+    if (Array.isArray(artwork.embossing_plates)) {
+      for (const epId of artwork.embossing_plates) {
+        embossingIdSet.add(epId)
+      }
+    }
+  }
+
+  form.die_ids = [...dieIdSet]
+  form.foiling_plate_ids = [...foilingIdSet]
+  form.embossing_plate_ids = [...embossingIdSet]
 }
 
 // Update imposition_quantity from artwork-product relationships, then recalc product quantities
@@ -936,7 +974,8 @@ function cleanupPrepressSelections() {
   if (form.artwork_ids.length > 0) {
     form.artwork_ids = form.artwork_ids.filter((id: number) => {
       const artwork = artworkList.value.find((a: any) => a.id === id)
-      if (!artwork || !artwork.products) return false
+      if (!artwork) return false
+      if (!artwork.products || artwork.products.length === 0) return true
       return artwork.products.some((ap: any) => productIds.has(ap.product))
     })
   }
@@ -990,6 +1029,21 @@ const handleProductSelected = (index: number, productValue: any) => {
 
   // Auto-fill unit from product
   item.unit = productData.unit || '件'
+
+  // Sync imposition from artworks if available (handles case where artwork was selected before product)
+  if (form.artwork_ids.length > 0) {
+    const productId = typeof item.product === 'object' ? item.product?.id : item.product
+    for (const artworkId of form.artwork_ids) {
+      const artwork = artworkList.value.find((a: any) => a.id === artworkId)
+      if (!artwork || !artwork.products) continue
+      const ap = artwork.products.find((p: any) => p.product === productId)
+      if (ap && ap.imposition_quantity) {
+        item.imposition_quantity = ap.imposition_quantity
+        break
+      }
+    }
+  }
+
 
   // Auto-calculate quantity based on production_quantity × imposition_quantity
   const imposition = item.imposition_quantity || 1
