@@ -11,6 +11,20 @@
       <div class="mt-1 text-sm text-gray-600 dark:text-dark-300">
         {{ approvalGuide.message }}
       </div>
+      <div
+        v-if="taskGenerationSummary"
+        class="mt-3 grid gap-2 text-sm sm:grid-cols-3"
+      >
+        <div class="rounded-md bg-white/70 p-2 dark:bg-dark-900/60">
+          生成任务：{{ taskGenerationSummary.created_count || 0 }}
+        </div>
+        <div class="rounded-md bg-white/70 p-2 dark:bg-dark-900/60">
+          已有任务：{{ taskGenerationSummary.existing_count || 0 }}
+        </div>
+        <div class="rounded-md bg-white/70 p-2 dark:bg-dark-900/60">
+          自动分派：{{ taskGenerationSummary.dispatched_count || 0 }}
+        </div>
+      </div>
     </div>
     <div
       v-if="canApprove && workOrder?.approval_status === 'submitted'"
@@ -146,7 +160,8 @@ const props = defineProps({
   approvalForm: { type: Object, default: () => ({}) },
   resubmitForm: { type: Object, default: () => ({}) },
   approvalRules: { type: Object, default: () => ({}) },
-  showRejectionReason: { type: Boolean, default: false }
+  showRejectionReason: { type: Boolean, default: false },
+  taskGenerationSummary: { type: Object, default: null }
 })
 
 const emit = defineEmits(['approve', 'resubmit'])

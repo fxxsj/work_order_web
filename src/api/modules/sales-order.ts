@@ -69,10 +69,11 @@ class SalesOrderAPI extends BaseAPI {
    * @param {number} id - 订单ID
    * @returns {Promise} 完成结果
    */
-  complete(id: number | string) {
+  complete(id: number | string, data?: unknown) {
     return this.request({
       url: `${this.baseUrl}${id}/complete/`,
-      method: 'post'
+      method: 'post',
+      data
     })
   }
 

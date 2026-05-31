@@ -22,7 +22,7 @@ class WorkOrderAPI extends BaseAPI {
 
   // 业务员审核施工单
   approve(id: number | string, data?: unknown) {
-    return this.customAction(`${this.baseUrl}${id}/approve/`, 'post', data)
+    return this.customAction(`/workorders-flow/${id}/approve/`, 'post', data)
   }
 
   // 重新提交审核（审核拒绝后使用）
@@ -70,22 +70,22 @@ class WorkOrderAPI extends BaseAPI {
 
   // 提交审批
   submitApproval(id: number | string, data: unknown) {
-    return this.customAction(`${this.baseUrl}${id}/submit_approval/`, 'post', data)
+    return this.customAction(`/workorders-flow/${id}/submit_approval/`, 'post', data)
   }
 
   // 拒绝施工单
   reject(id: number | string, data?: unknown) {
-    return this.customAction(`${this.baseUrl}${id}/reject/`, 'post', data)
+    return this.customAction(`/workorders-flow/${id}/reject/`, 'post', data)
   }
 
   // 检查完成状态
   checkCompletion(id: number | string) {
-    return this.customAction(`${this.baseUrl}${id}/check_completion/`, 'post')
+    return this.customAction(`/workorders-flow/${id}/check_completion/`, 'post')
   }
 
   // 标记紧急
   markUrgent(id: number | string, data: unknown) {
-    return this.customAction(`${this.baseUrl}${id}/mark_urgent/`, 'post', data)
+    return this.customAction(`/workorders-flow/${id}/mark_urgent/`, 'post', data)
   }
 
   // 检查是否需要同步任务

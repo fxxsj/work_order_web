@@ -424,7 +424,7 @@
                 >
                   <span
                     class="cursor-pointer text-primary-600 hover:underline dark:text-primary-400"
-                    @click="navigateToRelated('workorder', getRelatedId('work_order', idx))"
+                    @click="navigateToRelated('workorder', Number(getRelatedId('work_order', Number(idx))))"
                   >
                     {{ num }}
                     <Icon
@@ -762,7 +762,7 @@ const showDeleteDialog = ref(false)
 const deleteLoading = ref(false)
 const activeDetailTab = ref<'detail' | 'finance'>('detail')
 
-const detailTabs = [
+const detailTabs: Array<{ key: 'detail' | 'finance'; label: string }> = [
   { key: 'detail', label: '订单明细' },
   { key: 'finance', label: '金额信息' },
 ]

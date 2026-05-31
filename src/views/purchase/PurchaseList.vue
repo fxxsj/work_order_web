@@ -339,7 +339,7 @@ const {
   buildParams: (params) => {
     const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
     const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
-    const apiParams = { ...params, ordering }
+    const apiParams: Record<string, any> = { ...params, ordering }
     if (['draft', 'submitted', 'approved', 'rejected'].includes(apiParams.status)) {
       apiParams.approval_status = apiParams.status
       delete apiParams.status

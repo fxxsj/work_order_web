@@ -5,6 +5,7 @@
       <button
         v-if="hasPendingMaterials"
         class="btn btn-primary btn-sm"
+        title="按待采购物料创建采购单，创建后仍需提交、审核并下单"
         @click="emit('create-purchase')"
       >
         <Icon
@@ -12,6 +13,16 @@
           class="h-3 w-3"
         /> 创建采购单
       </button>
+    </div>
+    <div
+      v-if="materials?.length"
+      class="mb-4 flex flex-wrap gap-2 text-xs text-gray-600 dark:text-dark-300"
+    >
+      <span class="rounded-md bg-warning-50 px-2 py-1 text-warning-700">待采购 {{ pendingMaterialCount }}</span>
+      <span
+        v-if="missingSupplierCount"
+        class="rounded-md bg-danger-50 px-2 py-1 text-danger-700"
+      >缺默认供应商 {{ missingSupplierCount }}</span>
     </div>
 
     <div
@@ -92,6 +103,10 @@ const props = defineProps({
 
 const emit = defineEmits(['create-purchase', 'view-purchase'])
 const hasPendingMaterials = computed(() => props.materials.some((m: any) => !m.purchase_status || m.purchase_status === 'pending'))
+const pendingMaterialCount = computed(() => props.materials.filter((m: any) => !m.purchase_status || m.purchase_status === 'pending').length)
+const missingSupplierCount = computed(() =>
+  props.materials.filter((m: any) => (!m.purchase_status || m.purchase_status === 'pending') && !m.default_supplier && !m.default_supplier_id && !m.supplier_name).length
+)
 
 const materialColumns: Column[] = [
   { key: 'material_name', label: '物料', minWidth: 176 },

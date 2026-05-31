@@ -204,7 +204,7 @@ const statusTriggerRef = ref<HTMLElement | null>(null)
 const statusMenuRef = ref<HTMLElement | null>(null)
 const statusMenuPosition = ref({ top: 0, left: 0, width: 128 })
 const currentStatusLabel = computed(() =>
-  statusOptions.find(option => option.value === props.workOrder?.status)?.label || props.statusText || '-'
+  statusOptions.value.find((option: { value: string; label: string }) => option.value === props.workOrder?.status)?.label || props.statusText || '-'
 )
 const productionQuantity = computed(() =>
   props.workOrder?.production_quantity ?? props.workOrder?.quantity ?? props.displayQuantity ?? '-'

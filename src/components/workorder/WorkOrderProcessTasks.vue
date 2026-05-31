@@ -15,6 +15,16 @@
           /> 同步工序任务
         </button>
         <button
+          v-if="unassignedTasks.length"
+          class="btn btn-secondary btn-sm"
+          @click="emit('open-task-assignment')"
+        >
+          <Icon
+            name="user"
+            class="h-3 w-3"
+          /> 未分派 {{ unassignedTasks.length }}
+        </button>
+        <button
           class="btn btn-primary btn-sm"
           @click="emit('add-process')"
         >
@@ -24,6 +34,17 @@
           /> 添加工序
         </button>
       </div>
+    </div>
+    <div
+      v-if="taskStatusSummary.total > 0"
+      class="mb-4 flex flex-wrap gap-2 text-xs text-gray-600 dark:text-dark-300"
+    >
+      <span class="rounded-md bg-gray-100 px-2 py-1 dark:bg-dark-800">任务 {{ taskStatusSummary.total }}</span>
+      <span class="rounded-md bg-success-50 px-2 py-1 text-success-700">已分派 {{ taskStatusSummary.assigned }}</span>
+      <span
+        v-if="taskStatusSummary.unassigned"
+        class="rounded-md bg-warning-50 px-2 py-1 text-warning-700"
+      >未分派 {{ taskStatusSummary.unassigned }}</span>
     </div>
     <SummaryTable
       v-if="viewMode === 'list'"
@@ -74,6 +95,7 @@
             </div>
             <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-dark-400">
               <span>状态：{{ task.status_display || task.status || '-' }}</span>
+              <span>部门：{{ task.assigned_department_name || '-' }}</span>
               <span>操作员：{{ task.assigned_operator_name || '-' }}</span>
               <span>进度：{{ task.completed_quantity ?? 0 }}/{{ task.quantity ?? task.planned_quantity ?? '-' }}</span>
             </div>
@@ -97,7 +119,7 @@ const props = defineProps({
   canSyncTasks: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['add-process', 'process-click', 'sync-tasks'])
+const emit = defineEmits(['add-process', 'process-click', 'sync-tasks', 'open-task-assignment'])
 
 const columns: Column[] = [
   { key: 'sequence', label: '序号', width: 64, align: 'center' },
@@ -119,4 +141,15 @@ const processTaskGroups = computed(() =>
     }))
     .filter((group: any) => group.tasks.length > 0)
 )
+const allProcessTasks = computed(() => processTaskGroups.value.flatMap((group: any) => group.tasks))
+const unassignedTasks = computed(() => allProcessTasks.value.filter((task: any) => !task.assigned_operator && !task.assigned_operator_name))
+const taskStatusSummary = computed(() => {
+  const total = allProcessTasks.value.length
+  const unassigned = unassignedTasks.value.length
+  return {
+    total,
+    unassigned,
+    assigned: total - unassigned
+  }
+})
 </script>

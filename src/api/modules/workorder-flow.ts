@@ -30,47 +30,37 @@ class WorkOrderFlowAPI extends BaseAPI {
 
   /**
    * 提交审批
-   * @param {Object} data - { work_order_id, ... }
-   * @returns {Promise} 提交结果
    */
-  submitApproval(data: unknown) {
-    return this.customAction(`${this.baseUrl}submit_approval/`, 'post', data)
+  submitApproval(id: number | string, data?: unknown) {
+    return this.customAction(`${this.baseUrl}${id}/submit_approval/`, 'post', data)
   }
 
   /**
    * 审批通过
-   * @param {Object} data - { work_order_id, ... }
-   * @returns {Promise} 审批结果
    */
-  approve(data: unknown) {
-    return this.customAction(`${this.baseUrl}approve/`, 'post', data)
+  approve(id: number | string, data?: unknown) {
+    return this.customAction(`${this.baseUrl}${id}/approve/`, 'post', data)
   }
 
   /**
    * 拒绝施工单
-   * @param {Object} data - { work_order_id, ... }
-   * @returns {Promise} 拒绝结果
    */
-  reject(data: unknown) {
-    return this.customAction(`${this.baseUrl}reject/`, 'post', data)
+  reject(id: number | string, data?: unknown) {
+    return this.customAction(`${this.baseUrl}${id}/reject/`, 'post', data)
   }
 
   /**
    * 检查完成状态
-   * @param {Object} data - { work_order_id }
-   * @returns {Promise} 检查结果
    */
-  checkCompletion(data: unknown) {
-    return this.customAction(`${this.baseUrl}check_completion/`, 'post', data)
+  checkCompletion(id: number | string) {
+    return this.customAction(`${this.baseUrl}${id}/check_completion/`, 'post')
   }
 
   /**
    * 标记紧急
-   * @param {Object} data - { work_order_id, reason? }
-   * @returns {Promise} 标记结果
    */
-  markUrgent(data: unknown) {
-    return this.customAction(`${this.baseUrl}mark_urgent/`, 'post', data)
+  markUrgent(id: number | string, data: unknown) {
+    return this.customAction(`${this.baseUrl}${id}/mark_urgent/`, 'post', data)
   }
 }
 

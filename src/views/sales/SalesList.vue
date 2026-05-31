@@ -299,7 +299,7 @@ import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow, TextArea, Input, InputNumber } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import type { Column, RowAction } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
 const router = useRouter()
@@ -369,7 +369,7 @@ const {
   buildParams: (params) => {
     const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
     const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
-    const apiParams = { ...params, ordering }
+    const apiParams: Record<string, any> = { ...params, ordering }
     if (['draft', 'submitted', 'approved', 'rejected'].includes(apiParams.status)) {
       apiParams.approval_status = apiParams.status
       delete apiParams.status
@@ -401,7 +401,7 @@ const canEdit = (row: any) => row.approval_status === 'draft' && userStore.hasPe
 const canConvert = (row: any) => row.approval_status === 'approved' && !['completed', 'cancelled'].includes(row.status) && userStore.hasPermission('workorder.add_workorder')
 
 // 行操作配置
-const getRowActions = (row: any) => {
+const getRowActions = (row: any): RowAction[] => {
   const status = row.status
   const approval_status = row.approval_status
   const canChange = userStore.hasPermission('workorder.change_salesorder')

@@ -33,6 +33,7 @@
         :work-order="workOrder"
         :can-approve="canApprove"
         :can-resubmit="canResubmit"
+        :task-generation-summary="taskGenerationSummary"
         @approve="handleApprove"
         @resubmit="handleResubmit"
       />
@@ -63,6 +64,7 @@
         @add-process="addProcessDialog = true"
         @process-click="handleProcessClick"
         @sync-tasks="handleSyncTasks"
+        @open-task-assignment="router.push('/tasks')"
       />
       <WorkOrderNotes
         v-if="workOrder.notes"
@@ -114,7 +116,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { BaseDialog, LoadingOverlay } from '@/components/common'
-import { materialAPI, processAPI, workOrderAPI } from '@/api/modules'
+import { materialAPI, processAPI, workOrderAPI, workOrderFlowAPI } from '@/api/modules'
 import { purchaseOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
@@ -142,10 +144,12 @@ const addMaterialDialog = ref(false)
 const addProcessDialog = ref(false)
 const printDialog = ref(false)
 const purchaseOrders = ref<any[]>([])
+const syncCheck = ref<any>(null)
+const taskGenerationSummary = ref<any>(null)
 const canEdit = computed(() => userStore.hasPermission('workorder.change_workorder'))
 const canApprove = computed(() => userStore.hasPermission('workorder.approve_workorder') && workOrder.value?.approval_status === 'submitted')
 const canResubmit = computed(() => workOrder.value?.approval_status === 'rejected')
-const canSyncTasks = computed(() => Boolean(userStore.isSuperuser) && !['approved', 'submitted'].includes(workOrder.value?.approval_status))
+const canSyncTasks = computed(() => Boolean(userStore.isSuperuser) && Boolean(syncCheck.value?.sync_needed))
 const showApprovalSection = computed(() => canApprove.value || canResubmit.value || workOrder.value?.approval_logs?.length || ['draft', 'submitted', 'rejected', 'approved'].includes(workOrder.value?.approval_status))
 const listField = (value: any) => Array.isArray(value) ? value.filter(Boolean) : []
 const artworkCodes = computed(() => listField(workOrder.value?.artwork_codes))
@@ -173,19 +177,8 @@ const hasTraceFinance = computed(() =>
 onMounted(async () => {
   loading.value = true
   try {
-    const res: any = await workOrderAPI.getDetail(String(route.params.id))
-    workOrder.value = res
-    productList.value = res.products || []
-    processList.value = res.order_processes || []
-    materialList.value = res.materials || []
+    await loadData()
     loadSelectionOptions()
-    // 加载关联的采购单
-    if (res.purchase_order_summaries?.length) {
-      purchaseOrders.value = res.purchase_order_summaries
-    } else {
-      // 兼容：如果 API 没返回，通过 work_order_id 查询
-      loadPurchaseOrders(String(route.params.id))
-    }
   } catch (e: any) { useUIStore().showError('加载失败') } finally { loading.value = false }
 })
 
@@ -215,27 +208,40 @@ const handleStatusChange = async (status: any) => { try { await workOrderAPI.upd
 const handleApprove = async (payload: any) => {
   try {
     const status = typeof payload === 'string' ? payload : payload?.status
+    let result: any
     if (status === 'rejected') {
-      await workOrderAPI.reject(String(route.params.id), payload)
+      result = await workOrderFlowAPI.reject(String(route.params.id), payload)
     } else {
-      await workOrderAPI.approve(String(route.params.id), payload)
+      result = await workOrderFlowAPI.approve(String(route.params.id), payload)
     }
-    useUIStore().showSuccess('审核完成')
+    const generation = result?.task_generation
+    if (generation) taskGenerationSummary.value = generation
+    const suffix = generation
+      ? `，生成 ${generation.created_count || 0} 个任务，分派 ${generation.dispatched_count || 0} 个任务`
+      : ''
+    useUIStore().showSuccess(`审核完成${suffix}`)
     loadData()
   } catch (e: any) { ErrorHandler.showMessage(e) }
 }
-const handleResubmit = async () => { try { await workOrderAPI.resubmit(String(route.params.id)); useUIStore().showSuccess('已重新提交'); loadData() } catch (e: any) { ErrorHandler.showMessage(e) } }
+const handleResubmit = async () => { try { await workOrderAPI.resubmitForApproval(String(route.params.id)); useUIStore().showSuccess('已重新提交'); loadData() } catch (e: any) { ErrorHandler.showMessage(e) } }
 const handleProcessClick = (process: any) => console.log('Process clicked', process)
 const handleSyncTasks = async () => {
   try {
     const processIds = processList.value.map((item: any) => item.id).filter(Boolean)
     if (!processIds.length) return
-    const preview: any = await workOrderAPI.syncTasksPreview(String(route.params.id), processIds)
-    const message = preview?.message || '确认同步工序任务？同步后将按当前工序配置更新任务。'
+    const response: any = await workOrderAPI.syncTasksPreview(String(route.params.id), processIds)
+    const preview: any = response?.preview || response || {}
+    const blockedCount = Number(preview.tasks_blocked || preview.blocked_task_ids?.length || 0)
+    const message = formatSyncPreviewMessage(preview)
     if (!window.confirm(message)) return
-    await workOrderAPI.syncTasksExecute(String(route.params.id), processIds)
-    useUIStore().showSuccess('任务同步完成')
-    loadData()
+    if (blockedCount > 0) {
+      useUIStore().showError(`存在 ${blockedCount} 个已开始或已完成任务，不能自动同步删除`)
+      return
+    }
+    const result: any = await workOrderAPI.syncTasksExecute(String(route.params.id), processIds)
+    const payload = result?.result || result || {}
+    useUIStore().showSuccess(payload.message || `任务同步完成，新增 ${payload.added_count || 0} 个，删除 ${payload.deleted_count || 0} 个，分派 ${payload.dispatched_count || 0} 个`)
+    await loadData()
   } catch (e: any) { ErrorHandler.showMessage(e, '同步任务失败') }
 }
 const handleAddMaterial = async (data: any) => { try { await workOrderAPI.addMaterial(String(route.params.id), data); useUIStore().showSuccess('添加成功'); addMaterialDialog.value = false; loadData() } catch (e: any) { ErrorHandler.showMessage(e) } }
@@ -243,9 +249,11 @@ const handleAddProcess = async (data: any) => { try { await workOrderAPI.addProc
 const loadData = async () => {
   const res: any = await workOrderAPI.getDetail(String(route.params.id))
   workOrder.value = res
+  if (res.task_generation) taskGenerationSummary.value = res.task_generation
   productList.value = res.products || []
   processList.value = res.order_processes || []
   materialList.value = res.materials || []
+  await loadSyncCheck()
   if (res.purchase_order_summaries?.length) {
     purchaseOrders.value = res.purchase_order_summaries
   } else {
@@ -253,16 +261,42 @@ const loadData = async () => {
     loadPurchaseOrders(String(route.params.id))
   }
 }
+const loadSyncCheck = async () => {
+  syncCheck.value = null
+  if (!userStore.isSuperuser || ['approved', 'submitted'].includes(workOrder.value?.approval_status)) return
+  try {
+    const processIds = processList.value.map((item: any) => item.id).filter(Boolean)
+    syncCheck.value = await workOrderAPI.checkSyncNeeded(String(route.params.id), processIds)
+  } catch (e: any) {
+    syncCheck.value = null
+  }
+}
+const formatSyncPreviewMessage = (preview: any) => {
+  const parts = [
+    '确认同步工序任务？',
+    `将新增任务：${preview.tasks_to_add || 0}`,
+    `将删除未开始任务：${preview.tasks_to_remove || 0}`,
+    `阻断任务：${preview.tasks_blocked || preview.blocked_task_ids?.length || 0}`,
+    `缺失任务工序：${(preview.missing_process_ids || []).join(', ') || '无'}`,
+    `移除工序：${(preview.removed_process_ids || []).join(', ') || '无'}`
+  ]
+  return parts.join('\n')
+}
 const handleCreatePurchaseOrder = async () => {
   try {
     const result: any = await purchaseOrderAPI.createFromWorkOrder(String(route.params.id))
     const poList = result.purchase_orders || []
-    if (poList.length > 0) {
-      useUIStore().showSuccess(`已创建 ${poList.length} 个采购单`)
-      // 刷新采购单列表
-      loadPurchaseOrders(String(route.params.id))
+    const createdItemCount = result.created_item_count || 0
+    const skippedItemCount = result.skipped_item_count || 0
+    useUIStore().showSuccess(`已创建 ${poList.length} 个采购单，包含 ${createdItemCount} 个物料明细${skippedItemCount ? `，跳过 ${skippedItemCount} 项` : ''}`)
+    await loadData()
+  } catch (e: any) {
+    ErrorHandler.showMessage(e, '创建采购单失败')
+    const text = `${e?.message || ''} ${e?.response?.data?.message || ''}`
+    if (text.includes('供应商') && window.confirm('存在物料缺少默认供应商，是否前往物料档案维护？')) {
+      router.push('/materials')
     }
-  } catch (e: any) { ErrorHandler.showMessage(e, '创建采购单失败') }
+  }
 }
 const handleViewPurchaseOrder = (id: any) => { router.push(id ? `/purchase-orders?purchase_order=${id}` : '/purchase-orders') }
 </script>
