@@ -64,7 +64,7 @@ export const StatusMetaMaps = {
     completed: { text: '已完成', type: 'success' }
   },
   purchaseOrder: {
-    pending: { text: '待处理', type: 'info' },
+    pending: { text: '待下单', type: 'info' },
     draft: { text: '草稿', type: 'info' },
     submitted: { text: '已提交', type: 'primary' },
     approved: { text: '已批准', type: 'success' },

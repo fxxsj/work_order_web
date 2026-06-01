@@ -314,7 +314,7 @@ const statusOptions = [
   { value: 'draft', label: '草稿' },
   { value: 'submitted', label: '已提交' },
   { value: 'approved', label: '已批准' },
-  { value: 'pending', label: '待处理' },
+  { value: 'pending', label: '待下单' },
   { value: 'ordered', label: '已下单' },
   { value: 'received', label: '已收货' },
   { value: 'cancelled', label: '已取消' }
