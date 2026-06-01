@@ -339,7 +339,7 @@ const fetchNotifications = async () => {
 
 const markAllAsRead = async () => {
   try {
-    await notificationAPI.markAllRead()
+    await notificationAPI.markAllAsRead()
     notifications.value = notifications.value.map((n: any) => ({ ...n, is_read: true }))
     useUIStore().showSuccess('已全部标记为已读')
   } catch (error: any) {

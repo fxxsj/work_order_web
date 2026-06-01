@@ -90,7 +90,7 @@ const handleDepartmentChange = async (departmentId: any) => {
   form.assigned_operator = null
   if (!departmentId) { operatorList.value = []; return }
   loadingOperators.value = true
-  try { operatorList.value = ((await authAPI.getUserList({ department: departmentId })) as any)?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载操作员列表') } finally { loadingOperators.value = false }
+  try { operatorList.value = ((await authAPI.getUsersByDepartment(departmentId)) as any)?.results || [] } catch (error: any) { ErrorHandler.showMessage(error, '加载操作员列表') } finally { loadingOperators.value = false }
 }
 
 const handleClose = () => { resetForm(); emit('update:visible', false) }

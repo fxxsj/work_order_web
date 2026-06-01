@@ -317,12 +317,12 @@ class FormValidationService {
     }
 
     const code = (formData.code as string)?.trim() ?? ''
-    if (code) {
-      if (code.length < 2 || code.length > 50) {
-        errors.code = '产品编码长度需在2-50个字符之间'
-      } else if (!/^[A-Za-z0-9-]+$/.test(code)) {
-        errors.code = '产品编码只能包含字母、数字和连字符'
-      }
+    if (!code) {
+      errors.code = '产品编号不能为空'
+    } else if (code.length < 2 || code.length > 50) {
+      errors.code = '产品编码长度需在2-50个字符之间'
+    } else if (!/^[A-Za-z0-9-]+$/.test(code)) {
+      errors.code = '产品编码只能包含字母、数字和连字符'
     }
 
     const priceValue = formData.unit_price !== undefined ? formData.unit_price : formData.price

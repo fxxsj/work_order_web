@@ -9,11 +9,6 @@ class NotificationAPI extends BaseAPI {
     super('/notifications/', request)
   }
 
-  // 兼容旧调用名
-  list(params?: Record<string, unknown>, config?: { signal?: AbortSignal }) {
-    return this.getList(params, config)
-  }
-
   // 标记单个通知为已读
   markAsRead(id: number | string) {
     return this.request({
@@ -28,11 +23,6 @@ class NotificationAPI extends BaseAPI {
       url: `${this.baseUrl}mark_all_read/`,
       method: 'post'
     })
-  }
-
-  // 兼容旧调用名，实际后端动作仍是 mark_all_read
-  markAllRead() {
-    return this.markAllAsRead()
   }
 
   // 获取未读数量
@@ -76,17 +66,6 @@ class SystemNotificationAPI extends BaseAPI {
     super('/system-notifications/', request)
   }
 
-  private requestWithFallback<T = unknown>(config: Record<string, unknown>): Promise<T> {
-    return this.request(config as any).catch((error: any) => {
-      if (error?.response?.status !== 404) throw error
-      const url = String(config.url || '')
-      return this.request({
-        ...config,
-        url: url.replace('/system-notifications/', '/notification-admin/')
-      } as any)
-    }) as Promise<T>
-  }
-
   getList<T = unknown>(params?: Record<string, unknown>, config?: { signal?: AbortSignal }): Promise<T> {
     const requestConfig: Record<string, unknown> = {
       url: this.baseUrl,
@@ -96,11 +75,11 @@ class SystemNotificationAPI extends BaseAPI {
     if (config?.signal) {
       requestConfig.signal = config.signal
     }
-    return this.requestWithFallback(requestConfig).then(response => this._unwrap<T>(response))
+    return this.request(requestConfig as any).then(response => this._unwrap<T>(response))
   }
 
   createAnnouncement(data: Record<string, unknown>) {
-    return this.requestWithFallback({
+    return this.request({
       url: `${this.baseUrl}create_announcement/`,
       method: 'post',
       data
@@ -108,7 +87,7 @@ class SystemNotificationAPI extends BaseAPI {
   }
 
   sendUrgentAlert(data: Record<string, unknown>) {
-    return this.requestWithFallback({
+    return this.request({
       url: `${this.baseUrl}send_urgent_alert/`,
       method: 'post',
       data
@@ -116,7 +95,7 @@ class SystemNotificationAPI extends BaseAPI {
   }
 
   revoke(id: number | string) {
-    return this.requestWithFallback({
+    return this.request({
       url: `${this.baseUrl}${id}/revoke/`,
       method: 'delete'
     })

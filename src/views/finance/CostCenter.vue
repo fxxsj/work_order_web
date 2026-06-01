@@ -359,7 +359,7 @@ const loadOptions = async () => {
   try {
     const [centersRes, usersRes] = await Promise.all([
       costCenterAPI.getList({ page_size: 200, ordering: 'code' }),
-      authAPI.getUserList({ page_size: 200 })
+      authAPI.getUsersByDepartment()
     ])
     parentOptions.value = ((centersRes as any)?.results || []).map((item: any) => ({
       value: item.id,

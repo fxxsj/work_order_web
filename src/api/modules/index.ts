@@ -43,7 +43,6 @@ export { deliveryOrderAPI } from './delivery-order'
 export { qualityInspectionAPI } from './quality-inspection'
 export { stockInAPI } from './stock-in'
 export { stockOutAPI } from './stock-out'
-// stockAPI 已废弃，请使用 productStockAPI
 
 // Sales API (销售管理)
 export { salesOrderAPI } from './sales-order'
@@ -65,4 +64,3 @@ export { systemNotificationAPI } from './notification'
 export { taskAssignmentRuleAPI } from './task-assignment-rule'
 export { supervisorAPI } from './supervisor'
 export { taskAssignmentHistoryAPI } from './task-assignment-history'
-export { assignmentRuleAPI } from './task-assignment-rule'

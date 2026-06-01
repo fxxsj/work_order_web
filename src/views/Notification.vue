@@ -54,7 +54,7 @@
             v-if="unreadCount > 0"
             class="btn btn-primary btn-sm"
             :disabled="markingAll"
-            @click="markAllRead"
+            @click="markAllAsRead"
           >
             <Icon
               name="checkCircle"
@@ -318,7 +318,7 @@ const markRead = async (row: NotificationRow) => {
   }
 }
 
-const markAllRead = async () => {
+const markAllAsRead = async () => {
   markingAll.value = true
   try {
     await notificationAPI.markAllAsRead()

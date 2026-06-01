@@ -287,7 +287,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useUserStore } from '@/stores'
-import { assignmentRuleAPI, processAPI, departmentAPI } from '@/api/modules'
+import { taskAssignmentRuleAPI, processAPI, departmentAPI } from '@/api/modules'
 import { useCrudPermission } from '@/composables'
 import {
   Icon, SearchInput, Select, InputNumber, TextArea, Toggle,
@@ -416,7 +416,7 @@ const loadData = async () => {
     if (filters.department) params.department = filters.department
     if (filters.is_active !== null) params.is_active = filters.is_active
 
-    const res: any = await assignmentRuleAPI.getList(params)
+    const res: any = await taskAssignmentRuleAPI.getList(params)
     tableData.value = res?.results || res?.data || []
     total.value = res?.count || res?.total || tableData.value.length
   } catch (error: any) {
@@ -449,7 +449,7 @@ const loadDepartments = async () => {
 
 const loadGlobalState = async () => {
   try {
-    const res: any = await assignmentRuleAPI.getGlobalState()
+    const res: any = await taskAssignmentRuleAPI.getGlobalState()
     globalDispatchEnabled.value = res?.enabled || false
   } catch (error: any) {
     // 忽略错误，使用默认值
@@ -459,7 +459,7 @@ const loadGlobalState = async () => {
 // 全局开关
 const handleGlobalToggle = async (enabled: any) => {
   try {
-    await assignmentRuleAPI.setGlobalState(enabled)
+    await taskAssignmentRuleAPI.setGlobalState(enabled)
     useUIStore().showSuccess(enabled ? '自动分派已启用' : '自动分派已禁用')
   } catch (error: any) {
     globalDispatchEnabled.value = !enabled
@@ -498,7 +498,7 @@ const showPreviewDialog = async () => {
   previewDialogVisible.value = true
   previewLoading.value = true
   try {
-    const res: any = await assignmentRuleAPI.preview()
+    const res: any = await taskAssignmentRuleAPI.preview()
     previewData.value = res?.data?.preview || res?.preview || []
   } catch (error: any) {
     ErrorHandler.showMessage(error, '加载预览失败')
@@ -578,10 +578,10 @@ const handleSubmit = async () => {
     }
 
     if (isEdit.value) {
-      await assignmentRuleAPI.patch(currentRuleId.value, payload)
+      await taskAssignmentRuleAPI.patch(currentRuleId.value, payload)
       useUIStore().showSuccess('更新成功')
     } else {
-      await assignmentRuleAPI.create(payload)
+      await taskAssignmentRuleAPI.create(payload)
       useUIStore().showSuccess('创建成功')
     }
     dialogVisible.value = false
@@ -596,7 +596,7 @@ const handleSubmit = async () => {
 // 切换启用状态
 const handleToggleActive = async (rule: any) => {
   try {
-    await assignmentRuleAPI.patch(rule.id, { is_active: !rule.is_active })
+    await taskAssignmentRuleAPI.patch(rule.id, { is_active: !rule.is_active })
     useUIStore().showSuccess(rule.is_active ? '已禁用' : '已启用')
     loadData()
   } catch (error: any) {
@@ -614,7 +614,7 @@ const executeDelete = async () => {
   if (!pendingDeleteRule.value) return
   deleting.value = true
   try {
-    await assignmentRuleAPI.delete(pendingDeleteRule.value.id)
+    await taskAssignmentRuleAPI.delete(pendingDeleteRule.value.id)
     useUIStore().showSuccess('删除成功')
     showDeleteDialog.value = false
     pendingDeleteRule.value = null
