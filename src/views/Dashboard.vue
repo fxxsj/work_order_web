@@ -76,7 +76,6 @@ import {
   foilingPlateAPI,
   embossingPlateAPI
 } from '@/api/modules'
-import { hasRole, hasAnyRole } from '@/utils/userRole'
 import { useUserStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import { LoadingSpinner } from '@/components/common'
@@ -102,10 +101,10 @@ const pendingEmbossingPlates = ref<any[]>([])
 const confirmingItem = ref<string | null>(null)
 const loading = ref(false)
 
-const isSalesperson = computed(() => hasRole({ getters: userStore }, '业务员'))
-const isSupervisor = computed(() => hasAnyRole({ getters: userStore }, ['主管', '经理', '管理员']))
-const isOperator = computed(() => hasAnyRole({ getters: userStore }, ['操作员', '主管', '经理']))
-const isDesigner = computed(() => hasRole({ getters: userStore }, '设计员'))
+const isSalesperson = computed(() => userStore.hasRole('业务员'))
+const isSupervisor = computed(() => userStore.hasAnyRole(['主管', '经理', '管理员']))
+const isOperator = computed(() => userStore.hasAnyRole(['操作员', '主管', '经理']))
+const isDesigner = computed(() => userStore.hasRole('设计员'))
 const isAdmin = computed(() => userStore.isSuperuser)
 const businessAnalysis = computed(() => (statistics.value as any).business_analysis || {})
 const departmentStatistics = computed(() => taskStatistics.value.department_statistics || [])
@@ -289,4 +288,3 @@ const handlePlateConfirm = async (payload: any) => {
   }
 }
 </script>
-

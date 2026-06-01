@@ -78,7 +78,7 @@ const columns: Column[] = [
   { key: 'actions', label: '操作', width: 200, fixed: 'right' },
 ]
 
-const getTaskDeadline = (task: any) => task.deadline || task.due_date || null;
+const getTaskDeadline = (task: any) => task.deadline || null;
 const calculateProgress = (task: any) => task.production_quantity ? Math.round(((task.quantity_completed || 0) / task.production_quantity) * 100) : 0;
 const getProgressStatus = (task: any) => calculateProgress(task) === 100 ? 'success' : 'active';
 const isOverdue = (task: any) => { const dl = getTaskDeadline(task); return dl && new Date(dl) < new Date() };

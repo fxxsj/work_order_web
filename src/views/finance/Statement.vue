@@ -44,7 +44,7 @@
               @clear="searchAndRefreshStats"
             />
             <Select
-              v-model="filters.statement_type"
+              v-model="filters.type"
               :options="statementTypeOptions"
               class="w-full sm:w-36"
               placeholder="对账类型"
@@ -105,20 +105,20 @@
           <template #cell-period="{ row }">
             <span>{{ row.period || '-' }}</span>
           </template>
-          <template #cell-period_start="{ row }">
-            <span>{{ row.period_start || row.start_date || '-' }}</span>
+          <template #cell-start_date="{ row }">
+            <span>{{ row.start_date || '-' }}</span>
           </template>
-          <template #cell-period_end="{ row }">
-            <span>{{ row.period_end || row.end_date || '-' }}</span>
+          <template #cell-end_date="{ row }">
+            <span>{{ row.end_date || '-' }}</span>
           </template>
           <template #cell-opening_balance="{ row }">
             <span>¥{{ formatAmount(row.opening_balance) }}</span>
           </template>
-          <template #cell-debit_amount="{ row }">
-            <span>¥{{ formatAmount(row.debit_amount ?? row.total_debit) }}</span>
+          <template #cell-total_debit="{ row }">
+            <span>¥{{ formatAmount(row.total_debit) }}</span>
           </template>
-          <template #cell-credit_amount="{ row }">
-            <span>¥{{ formatAmount(row.credit_amount ?? row.total_credit) }}</span>
+          <template #cell-total_credit="{ row }">
+            <span>¥{{ formatAmount(row.total_credit) }}</span>
           </template>
           <template #cell-closing_balance="{ row }">
             <span class="text-strong">¥{{ formatAmount(row.closing_balance) }}</span>
@@ -184,19 +184,19 @@
           {{ (currentStatement as any).period || '-' }}
         </DescriptionItem>
         <DescriptionItem label="期间开始">
-          {{ (currentStatement as any).period_start || (currentStatement as any).start_date || '-' }}
+          {{ (currentStatement as any).start_date || '-' }}
         </DescriptionItem>
         <DescriptionItem label="期间结束">
-          {{ (currentStatement as any).period_end || (currentStatement as any).end_date || '-' }}
+          {{ (currentStatement as any).end_date || '-' }}
         </DescriptionItem>
         <DescriptionItem label="期初余额">
           ¥{{ formatAmount((currentStatement as any).opening_balance) }}
         </DescriptionItem>
         <DescriptionItem label="本期借方">
-          ¥{{ formatAmount((currentStatement as any).debit_amount ?? (currentStatement as any).total_debit) }}
+          ¥{{ formatAmount((currentStatement as any).total_debit) }}
         </DescriptionItem>
         <DescriptionItem label="本期贷方">
-          ¥{{ formatAmount((currentStatement as any).credit_amount ?? (currentStatement as any).total_credit) }}
+          ¥{{ formatAmount((currentStatement as any).total_credit) }}
         </DescriptionItem>
         <DescriptionItem label="期末余额">
           ¥{{ formatAmount((currentStatement as any).closing_balance) }}
@@ -409,11 +409,7 @@ const form = reactive({
 
 const sortFieldMap: Record<string, string> = {
   partner_name: 'customer__name',
-  statement_type_display: 'statement_type',
-  debit_amount: 'total_debit',
-  credit_amount: 'total_credit',
-  period_start: 'start_date',
-  period_end: 'end_date'
+  statement_type_display: 'statement_type'
 }
 
 const columns: Column[] = [
@@ -421,10 +417,10 @@ const columns: Column[] = [
   { key: 'statement_type_display', label: '类型', width: 112, sortable: true },
   { key: 'partner_name', label: '对方单位', width: 160, sortable: true },
   { key: 'period', label: '周期', width: 96, sortable: true },
-  { key: 'period_start', label: '期间开始', width: 112, sortable: true },
-  { key: 'period_end', label: '期间结束', width: 112, sortable: true },
-  { key: 'debit_amount', label: '本期借方', width: 112, align: 'right', sortable: true },
-  { key: 'credit_amount', label: '本期贷方', width: 112, align: 'right', sortable: true },
+  { key: 'start_date', label: '期间开始', width: 112, sortable: true },
+  { key: 'end_date', label: '期间结束', width: 112, sortable: true },
+  { key: 'total_debit', label: '本期借方', width: 112, align: 'right', sortable: true },
+  { key: 'total_credit', label: '本期贷方', width: 112, align: 'right', sortable: true },
   { key: 'closing_balance', label: '期末余额', width: 112, align: 'right', sortable: true },
   { key: 'status', label: '状态', width: 96, sortable: true },
   { key: 'follow_up_text', label: '下一步', width: 144 },
@@ -472,7 +468,7 @@ const {
   resetFilters,
   hasFilters
 } = useCrudList(statementAPI, 'getList', {
-  initialFilters: { statement_type: '', status: '', todo: '', period_start: '', period_end: '' },
+  initialFilters: { type: '', status: '', todo: '', period_start: '', period_end: '' },
   buildParams: buildStatementParams,
   errorContext: '加载对账单失败'
 })
@@ -490,7 +486,7 @@ const fetchStats = async () => {
   try {
     const response: any = await statementAPI.getSummary(buildStatementParams({
       search: searchText.value,
-      statement_type: filters.value.statement_type,
+      type: filters.value.type,
       status: filters.value.status,
       todo: filters.value.todo,
       period_start: filters.value.period_start,

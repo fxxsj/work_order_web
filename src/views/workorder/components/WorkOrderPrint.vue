@@ -370,6 +370,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { Icon } from '@/components/common'
 import { branding } from '@/config/branding'
+import { formatDate as formatDateValue, formatDateTime as formatDateTimeValue } from '@/utils/filter'
 
 const props = defineProps({
   workOrder: { type: Object, default: null },
@@ -544,20 +545,13 @@ const textValue = (value: any, fallback = '-') => {
   return String(value)
 }
 
-const padDatePart = (value: number) => String(value).padStart(2, '0')
-
 const formatDate = (value: any, fallback = '-') => {
-  if (!value) return fallback
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`
+  const formatted = formatDateValue(value)
+  return formatted === '-' ? fallback : formatted
 }
 
 const formatDateTime = (value: any) => {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  return `${formatDate(value)} ${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`
+  return formatDateTimeValue(value)
 }
 
 const quantityWithUnit = (value: any, unit: string) => {

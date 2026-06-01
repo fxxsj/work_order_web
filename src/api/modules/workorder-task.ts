@@ -52,7 +52,7 @@ class WorkOrderTaskAPI extends BaseAPI {
   // 分配任务给指定操作员（主管分配）
   assignToOperator(id: number | string, data: Record<string, unknown>) {
     return this.customAction(`${this.baseUrl}${id}/assign/`, 'post', {
-      assigned_operator: data.operator_id,
+      assigned_operator: data.assigned_operator,
       notes: data.notes || ''
     })
   }

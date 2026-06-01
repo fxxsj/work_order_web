@@ -197,7 +197,7 @@ const approvalGuide = computed(() => {
   if (status === 'draft') {
     return { title: '待提交审核', message: '补齐资料后提交审核，审核通过后将生成部门任务。', class: 'border-primary-500' }
   }
-  if (status === 'pending' || status === 'submitted') {
+  if (status === 'submitted') {
     return { title: '等待审核', message: '审核通过后将进入生产任务流转。', class: 'border-warning-500' }
   }
   if (status === 'rejected') {

@@ -33,11 +33,6 @@
                 v-if="layout === 'stacked'"
                 class="stat-label"
               >
-                <Icon
-                  v-if="item.labelIcon"
-                  :name="toIconName(item.labelIcon)"
-                  size="sm"
-                />
                 {{ item.label }}
               </div>
               <div class="stat-value">
@@ -91,12 +86,7 @@
             v-if="layout === 'stacked'"
             class="stat-label"
           >
-            <Icon
-              v-if="item.labelIcon"
-              :name="toIconName(item.labelIcon)"
-              size="sm"
-            />
-            {{ item.label }}
+                {{ item.label }}
           </div>
           <div class="stat-value">
             {{ formatValue(item.value, item.format) }}
@@ -137,25 +127,6 @@ const props = defineProps({
 })
 
 const layoutClass = computed(() => `is-${props.layout}`)
-
-// Legacy icon component to Icon name mapping
-const iconMap = {
-  Document: 'document',
-  Clock: 'clock',
-  Loading: 'loading',
-  CircleCheck: 'checkCircle',
-  List: 'list',
-  Goods: 'cube',
-  User: 'user',
-  Money: 'dollar',
-  Edit: 'edit'
-}
-
-const toIconName = (iconComponent: any) => {
-  if (!iconComponent) return null
-  const name = iconComponent.name || ''
-  return (iconMap as any)[name] || null
-}
 
 const formatValue = (value: any, format: any) => {
   const normalizedValue = value ?? 0

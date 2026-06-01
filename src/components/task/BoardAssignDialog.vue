@@ -12,7 +12,7 @@
         disabled
       />
       <Select
-        v-model="form.operator_id"
+        v-model="form.assigned_operator"
         label="操作员"
         :options="users.map((u: any) => ({ value: u.id, label: u.username }))"
         placeholder="请选择操作员"
@@ -57,15 +57,15 @@ const props = defineProps({
 const emit = defineEmits(['confirm', 'update:visible'])
 
 const formRef = ref<any>(null)
-const FORM_INITIAL = { operator_id: null, notes: '' }
+const FORM_INITIAL = { assigned_operator: null, notes: '' }
 const form = reactive({ ...FORM_INITIAL })
-const rules = { operator_id: [{ required: true, message: '请选择操作员', trigger: 'change' }] }
+const rules = { assigned_operator: [{ required: true, message: '请选择操作员', trigger: 'change' }] }
 
 const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
 
 watch(() => props.visible, (val: any) => { if (val && props.task) initForm() })
 
-const initForm = () => { Object.assign(form, { operator_id: props.task?.assigned_operator || null, notes: '' }); nextTick(() => { formRef.value?.clearValidate() }) }
+const initForm = () => { Object.assign(form, { assigned_operator: props.task?.assigned_operator || null, notes: '' }); nextTick(() => { formRef.value?.clearValidate() }) }
 const resetForm = () => { Object.assign(form, FORM_INITIAL); formRef.value?.resetFields() }
 const handleConfirm = () => { formRef.value?.validate((valid: any) => { if (valid) emit('confirm', { ...form }) }) }
 const handleClose = () => { resetForm(); emit('update:visible', false) }

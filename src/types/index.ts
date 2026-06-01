@@ -259,7 +259,7 @@ export interface Task {
   assignee_department_name?: string
   status: TaskStatus
   priority?: 'low' | 'normal' | 'high' | 'urgent'
-  due_date?: string
+  deadline?: string
   started_at?: string
   completed_at?: string
   created_at?: string
@@ -507,16 +507,21 @@ export interface Payment {
 
 export interface Statement {
   id: number
-  statement_no: string
-  customer: number
+  statement_number: string
+  statement_type: 'customer' | 'supplier'
+  customer?: number
   customer_name?: string
-  period_start: string
-  period_end: string
+  supplier?: number
+  supplier_name?: string
+  partner_name?: string
+  period: string
+  start_date: string
+  end_date: string
   opening_balance?: number
   closing_balance?: number
-  total_sales?: number
-  total_payments?: number
-  status: 'draft' | 'confirmed' | 'settled'
+  total_debit?: number
+  total_credit?: number
+  status: 'draft' | 'sent' | 'confirmed' | 'disputed'
   notes?: string
 }
 

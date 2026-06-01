@@ -3,9 +3,9 @@
 > 基于与 sub2api/frontend 最佳实践的对比分析
 
 **创建日期:** 2026-05-23
-**更新日期:** 2026-05-23
-**状态:** ✅ 第四轮激进优化完成
-**版本:** v4.0
+**更新日期:** 2026-06-01
+**状态:** ✅ 第五轮技术债清理完成
+**版本:** v5.0
 
 ---
 
@@ -100,6 +100,9 @@
 |------|------|
 | SearchBar | ⚠️ 已移除导出 |
 | StatusBadge | ⚠️ 已移除导出，已迁移到 StatusTag |
+| userRole.ts | ⚠️ 已删除 Vuex 兼容层，Dashboard 直接使用 Pinia userStore |
+| StatsCards labelIcon 映射 | ⚠️ 已删除旧 Element Plus 图标映射 |
+| 任务 due_date fallback | ⚠️ 已删除，任务统一使用 deadline |
 
 ---
 
@@ -167,3 +170,4 @@
 | 2026-05-23 | v2.0 | FormDialog 修复、SearchBar 清理 |
 | 2026-05-23 | v3.0 | ElMessageBox → ConfirmDialog 迁移 |
 | 2026-05-23 | v4.0 | StatusBadge → StatusTag 迁移，StatusTag 增强 |
+| 2026-06-01 | v5.0 | 删除 Vuex 角色兼容层、任务 due_date fallback、StatsCards 旧图标映射，并迁移对账单字段到正式 API |
