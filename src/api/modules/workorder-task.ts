@@ -151,18 +151,8 @@ class WorkOrderTaskAPI extends BaseAPI {
     })
   }
 
-  // 导出任务列表（旧方法，保留兼容性）
-  export(params?: Record<string, unknown>) {
-    return this.request({
-      url: `${this.baseUrl}export/`,
-      method: 'get',
-      params,
-      responseType: 'blob'
-    })
-  }
-
   /**
-   * 导出任务列表到Excel（新方法，支持批量导出和筛选）
+   * 导出任务列表到Excel（支持批量导出和筛选）
    * @param {Object} options
    * @param {Array<number>} options.task_ids - 指定导出的任务ID列表（可选）
    * @param {Object} options.filters - 筛选条件（可选）

@@ -1,12 +1,9 @@
 /**
  * Common components barrel export.
  *
- * New pages should prefer the SUB2API-aligned exports below. Legacy exports are
- * kept for migrated-in-progress pages and should not be used in new simple CRUD
- * implementations.
+ * Shared UI primitives for application pages.
  */
 
-// Preferred SUB2API-aligned primitives
 export { default as Icon } from '@/components/icons/Icon.vue'
 export { default as TablePageLayout } from './TablePageLayout.vue'
 export { default as DataTable } from './DataTable.vue'
@@ -48,10 +45,6 @@ export { default as StatusTag } from './StatusTag.vue'
 export { default as ImageViewer } from './ImageViewer.vue'
 export { default as ImageManager } from './ImageManager.vue'
 
-// Legacy migration exports
-export { default as DataSelector } from './DataSelector.vue'
-export { default as FormDialog } from './FormDialog.vue'
 export { default as StatsCards } from './StatsCards.vue'
-export { default as BaseSelect } from './BaseSelect.vue'
 
 export type { Column, RowAction, RowActionTone } from './types'

@@ -618,7 +618,7 @@ const handleExport = async () => {
     exporting.value = true
     const params: Record<string, any> = buildTaskParams({ ...filters.value })
     Object.entries(params).forEach(([k, v]: [string, any]) => { if (!v) delete params[k] })
-    const response: any = await workOrderTaskAPI.export(params)
+    const response: any = await workOrderTaskAPI.exportExcel({ filters: params, params })
     const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')

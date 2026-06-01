@@ -27,7 +27,7 @@ class WorkOrderAPI extends BaseAPI {
 
   // 重新提交审核（审核拒绝后使用）
   resubmitForApproval(id: number | string) {
-    return this.customAction(`${this.baseUrl}${id}/resubmit_for_approval/`, 'post')
+    return this.customAction(`/workorders-flow/${id}/submit_approval/`, 'post')
   }
 
   // 请求重新审核（审核通过后发现错误需要修改）
