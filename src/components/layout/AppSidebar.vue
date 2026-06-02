@@ -12,8 +12,16 @@
       :class="{ 'sidebar-header-collapsed': collapsed }"
     >
       <div class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-primary-500 shadow-md shadow-primary-500/25">
-        <img v-if="branding.logoUrl" :src="branding.logoUrl" :alt="branding.appName" class="h-full w-full object-cover">
-        <span v-else class="text-sm font-bold text-white">{{ branding.logoText }}</span>
+        <img
+          v-if="branding.logoUrl"
+          :src="branding.logoUrl"
+          :alt="branding.appName"
+          class="h-full w-full object-cover"
+        >
+        <span
+          v-else
+          class="text-sm font-bold text-white"
+        >{{ branding.logoText }}</span>
       </div>
       <div
         class="sidebar-brand"

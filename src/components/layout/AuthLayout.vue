@@ -16,8 +16,16 @@
       <!-- Logo/Brand -->
       <div class="mb-8 text-center">
         <div class="mb-4 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl shadow-lg shadow-primary-500/30 bg-white/80 backdrop-blur-sm">
-          <img v-if="branding.logoUrl" :src="branding.logoUrl" :alt="branding.appName" class="h-full w-full object-cover">
-          <span v-else class="text-3xl font-bold text-primary-600">{{ branding.logoText }}</span>
+          <img
+            v-if="branding.logoUrl"
+            :src="branding.logoUrl"
+            :alt="branding.appName"
+            class="h-full w-full object-cover"
+          >
+          <span
+            v-else
+            class="text-3xl font-bold text-primary-600"
+          >{{ branding.logoText }}</span>
         </div>
         <h1 class="auth-title mb-2 text-3xl font-bold">
           {{ branding.appName }}

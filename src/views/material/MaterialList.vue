@@ -38,6 +38,36 @@
           />
         </button>
         <button
+          class="btn btn-secondary"
+          :disabled="exporting"
+          @click="handleExport"
+        >
+          <Icon
+            name="download"
+            size="md"
+            class="mr-2"
+          />
+          {{ exporting ? '导出中...' : '导出' }}
+        </button>
+        <button
+          class="btn btn-secondary"
+          @click="handleImportClick"
+        >
+          <Icon
+            name="upload"
+            size="md"
+            class="mr-2"
+          />
+          导入
+        </button>
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".xlsx,.xls"
+          class="hidden"
+          @change="handleImportFile"
+        >
+        <button
           v-if="canCreate"
           class="btn btn-primary"
           @click="showCreateDialog"
@@ -229,8 +259,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useUIStore } from '@/stores/ui'
 import { materialAPI, supplierAPI } from '@/api/modules'
-import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD, useExport } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, SearchInput, BaseDialog, ConfirmDialog, Pagination, Input, InputNumber, Select, TextArea, Toggle, Icon, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
@@ -276,6 +307,42 @@ const submitting = ref(false)
 const deleting = ref(false)
 const selectedRow = ref<any>(null)
 const supplierList = ref<any[]>([])
+const fileInput = ref<HTMLInputElement | null>(null)
+
+// Export
+const { exporting, exportData } = useExport(
+  (params) => materialAPI.exportMaterials(params),
+  { fileNamePrefix: 'materials', fileExtension: 'xlsx' }
+)
+
+const handleExport = async () => {
+  try { await exportData({}) } catch (error: any) { ErrorHandler.showMessage(error, '导出失败') }
+}
+
+// Import
+const handleImportClick = () => { fileInput.value?.click() }
+
+const handleImportFile = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  try {
+    const result: any = await materialAPI.importMaterials(file)
+    const created = result.created_count || 0
+    const updated = result.updated_count || 0
+    const errors = result.error_count || 0
+    if (errors === 0) {
+      useUIStore().showSuccess(`导入成功: 新增 ${created} 条, 更新 ${updated} 条`)
+    } else {
+      useUIStore().showWarning(`导入完成: 新增 ${created} 条, 更新 ${updated} 条, 失败 ${errors} 条`)
+    }
+    await loadData()
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '导入失败')
+  } finally {
+    target.value = ''
+  }
+}
 
 type MaterialForm = {
   code: string

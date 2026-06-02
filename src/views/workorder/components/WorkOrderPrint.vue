@@ -75,7 +75,9 @@
             <tbody>
               <tr>
                 <th>施工单号：</th>
-                <td class="text-red">{{ textValue(workOrder?.order_number || workOrder?.order_no) }}</td>
+                <td class="text-red">
+                  {{ textValue(workOrder?.order_number || workOrder?.order_no) }}
+                </td>
               </tr>
               <tr>
                 <th>状态：</th>

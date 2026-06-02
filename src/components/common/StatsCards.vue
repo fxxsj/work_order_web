@@ -86,7 +86,7 @@
             v-if="layout === 'stacked'"
             class="stat-label"
           >
-                {{ item.label }}
+            {{ item.label }}
           </div>
           <div class="stat-value">
             {{ formatValue(item.value, item.format) }}

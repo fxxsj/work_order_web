@@ -6,11 +6,26 @@
       class="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20"
     >
       <div class="mb-2 flex items-center gap-2 font-medium text-amber-700 dark:text-amber-400">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <svg
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        ><path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        /></svg>
         <span>以下信息待完善（{{ formWarnings.length }}项）</span>
       </div>
       <ul class="ml-7 list-disc space-y-0.5 text-sm text-amber-700 dark:text-amber-300/80">
-        <li v-for="(warning, index) in formWarnings" :key="index">{{ warning }}</li>
+        <li
+          v-for="(warning, index) in formWarnings"
+          :key="index"
+        >
+          {{ warning }}
+        </li>
       </ul>
     </div>
     <div class="card">

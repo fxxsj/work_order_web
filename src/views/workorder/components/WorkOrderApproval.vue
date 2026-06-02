@@ -16,7 +16,12 @@
         class="mt-2"
       >
         <ul class="ml-4 list-disc space-y-0.5 text-sm text-gray-500 dark:text-dark-400">
-          <li v-for="(err, idx) in completenessErrors" :key="idx">{{ err }}</li>
+          <li
+            v-for="(err, idx) in completenessErrors"
+            :key="idx"
+          >
+            {{ err }}
+          </li>
         </ul>
       </div>
       <div
