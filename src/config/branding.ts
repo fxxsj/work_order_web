@@ -19,7 +19,7 @@ export interface BrandingConfig {
 
 /** 代码默认值 - 所有字段兜底 */
 export const defaultBranding: BrandingConfig = {
-  appName: '印刷施工单跟踪系统',
+  appName: '印刷生产管理系统',
   appShortName: '施工单系统',
   appTagline: '高效管理施工单，提升生产效率',
   logoText: '印',

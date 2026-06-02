@@ -54,12 +54,12 @@ describe('Router Guards', () => {
   describe('document title', () => {
     it('should set title with site name prefix', async () => {
       await router.push('/login')
-      expect(document.title).toBe('登录 - 印刷施工单跟踪系统')
+      expect(document.title).toBe('登录 - 印刷生产管理系统')
     })
 
     it('should set default site name when no meta title', async () => {
       await router.push('/404-not-exists')
-      expect(document.title).toBe('404 未找到 - 印刷施工单跟踪系统')
+      expect(document.title).toBe('404 未找到 - 印刷生产管理系统')
     })
   })
 

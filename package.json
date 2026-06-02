@@ -1,7 +1,7 @@
 {
   "name": "work-order-frontend",
   "version": "2.0.0",
-  "description": "印刷施工单跟踪系统 - 前端 (Vue 3)",
+  "description": "印刷生产管理系统 - 前端 (Vue 3)",
   "private": true,
   "type": "module",
   "scripts": {

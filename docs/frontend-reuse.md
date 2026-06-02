@@ -107,7 +107,7 @@ const handleMaterialCreated = (material: any) => {
 快速新建弹窗契约：
 
 - 标准使用 `visible/update:visible`。
-- 可兼容默认 `v-model`，方便旧代码迁移。
+- 同时支持 `modelValue/update:modelValue` 和 `visible/update:visible`，方便不同父组件接入。
 - 创建成功后只 emit `created`，由父组件决定是否回填、追加列表、刷新数据。
 
 ```ts

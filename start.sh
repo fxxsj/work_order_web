@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 印刷施工单跟踪系统 - Web 前端启动脚本
+# 印刷生产管理系统 - Web 前端启动脚本
 # Vue 3 + Vite + Element Plus
 
 set -e
@@ -17,7 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo -e "${BLUE}====================================${NC}"
-echo -e "${BLUE}  印刷施工单跟踪系统 - Web 前端${NC}"
+echo -e "${BLUE}  印刷生产管理系统 - Web 前端${NC}"
 echo -e "${BLUE}====================================${NC}"
 
 # 检查 Node.js

@@ -1,11 +1,12 @@
-# 印刷施工单跟踪系统 - Web 前端
+# 印刷生产管理系统 - Web 前端
 
-> Vue 3 + Element Plus + Vite Web 前端
+> Vue 3 + Pinia + Vite Web 前端
 
 ## 技术栈
 
-- Vue 3.5, Element Plus 2.9, Vue Router 4, Pinia 2.3, TypeScript
+- Vue 3.5, Vue Router 4, Pinia 2.3, TypeScript
 - 构建工具: Vite 6
+- 样式: Tailwind CSS 3 + SCSS + 自研通用组件
 - 国际化: 无 (中文单语言)
 
 ## 关键文件
@@ -20,7 +21,7 @@
 ## 架构模式
 
 - **Composition API** - `<script setup>` 语法
-- **Pinia Store** - 状态管理 (原 Vuex)
+- **Pinia Store** - 状态管理
 - **Composables** - 逻辑复用 (替代 Mixin)
 - **统一错误处理** - errorHandler.js
 - **模块化 API** - BaseAPI 基类 + 各业务模块
@@ -52,4 +53,4 @@ npm run test:unit
 
 ## Skill Activation
 
-本项目为 Vue 3 迁移中阶段，可按需激活相关 Skill。
+按当前 Vue 3 + Vite 架构补齐页面和组件即可。

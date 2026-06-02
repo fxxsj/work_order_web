@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Teal Glass
-description: "A modern enterprise SaaS aesthetic inspired by sub2api: teal primary (#14b8a6), glass-morphism surfaces, soft shadows, and rounded-xl components. Built on Element Plus with custom theming. Dark mode ready with class strategy."
+description: "A modern enterprise SaaS aesthetic inspired by sub2api: teal primary (#14b8a6), glass-morphism surfaces, soft shadows, and rounded-xl components. Built with Tailwind CSS and custom Vue components. Dark mode ready with class strategy."
 
 colors:
   primary:
@@ -198,7 +198,7 @@ components:
 
 ## Overview
 
-This design system is adapted from **sub2api** (Wei-Shaw/sub2api) for the work-order-frontend project. It replaces the original Element Plus styling with a modern **Teal Glass** aesthetic featuring:
+This design system is adapted from **sub2api** (Wei-Shaw/sub2api) for the work-order-frontend project. It uses Tailwind CSS tokens and custom Vue components to provide a modern **Teal Glass** aesthetic featuring:
 
 - **Teal Primary** (#14b8a6) — the single brand accent
 - **Glass Morphism** — frosted glass panels with `backdrop-blur-xl`
@@ -206,10 +206,10 @@ This design system is adapted from **sub2api** (Wei-Shaw/sub2api) for the work-o
 - **Dark Mode** — `class` strategy with full dark palette support
 - **Rounded-xl** — 12px border radius for cards, buttons, and inputs
 
-**Tech Stack:** Vue 3.5 + Vite 6 + Element Plus 2.9 + Pinia + TypeScript
+**Tech Stack:** Vue 3.5 + Vite 6 + Tailwind CSS 3 + Pinia + TypeScript
 
 **Key Characteristics:**
-- Sub2api's glass-morphism with Element Plus components
+- Sub2api's glass-morphism with project-owned Vue components
 - Teal/Cyan primary color system (primary-500: #14b8a6)
 - Soft rounded corners (rounded-xl / rounded-2xl)
 - CSS custom properties for theming
@@ -315,7 +315,7 @@ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
 ## Border Radius
 
-Sub2api uses **rounded-xl (12px)** as default for most components, not the sharper Element Plus defaults.
+Sub2api uses **rounded-xl (12px)** as default for most components; keep the same radius across project-owned controls.
 
 | Token | Value | Use |
 |-------|-------|-----|
@@ -328,10 +328,10 @@ Sub2api uses **rounded-xl (12px)** as default for most components, not the sharp
 | `2xl` | 24px | Hero cards, major containers |
 | `full` | 9999px | Pills, avatars |
 
-**Element Plus Override:** Apply `border-radius-lg` class or use CSS override:
+**Component CSS:** Apply the shared radius utility or component class:
 ```scss
-.el-button, .el-card, .el-input__wrapper {
-  border-radius: var(--el-border-radius-round, 12px);
+.btn, .card, .input {
+  border-radius: 12px;
 }
 ```
 
@@ -355,13 +355,13 @@ Sub2api uses **rounded-xl (12px)** as default for most components, not the sharp
 | `slide-in-right` | 300ms | ease-out | Toast notifications |
 | `scale-in` | 200ms | ease-out | Dialogs, popovers |
 
-**Element Plus Transition Override:**
+**Transition CSS:**
 ```scss
-.el-dialog, .el-drawer {
+.modal, .drawer {
   animation: scale-in 0.2s ease-out;
 }
 
-.el-fade-in {
+.fade-in {
   animation: fade-in 0.3s ease-out;
 }
 ```
@@ -372,30 +372,30 @@ Sub2api uses **rounded-xl (12px)** as default for most components, not the sharp
 
 **Primary Button** — Teal gradient CTA
 ```vue
-<el-button type="primary" class="btn btn-primary">
+<button class="btn btn-primary">
   Primary Action
-</el-button>
+</button>
 ```
 
 **Secondary Button** — White with border
 ```vue
-<el-button class="btn btn-secondary">
+<button class="btn btn-secondary">
   Secondary
-</el-button>
+</button>
 ```
 
 **Ghost Button** — Text only
 ```vue
-<el-button class="btn btn-ghost">
+<button class="btn btn-ghost">
   Ghost
-</el-button>
+</button>
 ```
 
 **Danger Button** — Red gradient
 ```vue
-<el-button class="btn btn-danger">
+<button class="btn btn-danger">
   Delete
-</el-button>
+</button>
 ```
 
 **Button Sizes:**
@@ -408,18 +408,18 @@ Sub2api uses **rounded-xl (12px)** as default for most components, not the sharp
 
 **Standard Input:**
 ```vue
-<el-input class="input" placeholder="Enter value" />
+<input class="input" placeholder="Enter value" />
 ```
 
 **Input with Error:**
 ```vue
-<el-input class="input input-error" placeholder="Invalid" />
+<input class="input input-error" placeholder="Invalid" />
 ```
 
 **Input Group with Label:**
 ```html
 <label class="input-label">Email</label>
-<el-input class="input" placeholder="your@email.com" />
+<input class="input" placeholder="your@email.com" />
 <span class="input-hint">We'll never share your email</span>
 ```
 
@@ -427,21 +427,19 @@ Sub2api uses **rounded-xl (12px)** as default for most components, not the sharp
 
 **Standard Card:**
 ```vue
-<el-card class="card" :body-style="{ padding: '24px' }">
-  <template #header>
-    <div class="card-header">Card Title</div>
-  </template>
+<section class="card">
+  <div class="card-header">Card Title</div>
   <div class="card-body">
     Card content goes here
   </div>
-</el-card>
+</section>
 ```
 
 **Hoverable Card:**
 ```vue
-<el-card class="card card-hover">
+<section class="card card-hover">
   Hover me
-</el-card>
+</section>
 ```
 
 **Glass Card:**
@@ -469,14 +467,11 @@ Sub2api uses **rounded-xl (12px)** as default for most components, not the sharp
 **Table Container:**
 ```vue
 <div class="table-container">
-  <el-table class="table" :data="data">
-    <el-table-column prop="name" label="Name" />
-    <el-table-column prop="status" label="Status">
-      <template #default="{ row }">
-        <span class="badge badge-success">{{ row.status }}</span>
-      </template>
-    </el-table-column>
-  </el-table>
+  <DataTable :columns="columns" :data="data">
+    <template #status="{ row }">
+      <span class="badge badge-success">{{ row.status }}</span>
+    </template>
+  </DataTable>
 </div>
 ```
 
@@ -494,21 +489,20 @@ Sub2api uses **rounded-xl (12px)** as default for most components, not the sharp
 
 **Standard Dialog:**
 ```vue
-<el-dialog
-  class="modal-content"
-  title="Confirm Action"
-  width="500px"
->
-  <div class="modal-body">
-    Are you sure?
-  </div>
-  <template #footer>
-    <div class="modal-footer">
-      <el-button @click="close">Cancel</el-button>
-      <el-button type="primary" @click="confirm">Confirm</el-button>
+<div class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Confirm Action</h2>
     </div>
-  </template>
-</el-dialog>
+    <div class="modal-body">
+      Are you sure?
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" @click="close">Cancel</button>
+      <button class="btn btn-primary" @click="confirm">Confirm</button>
+    </div>
+  </div>
+</div>
 ```
 
 ### Sidebar Navigation
@@ -591,62 +585,42 @@ Standard list page with filters + table + pagination:
 └─────────────────────────────────────────────┘
 ```
 
-## Element Plus Overrides
+## Component Styles
 
-To achieve sub2api's aesthetic with Element Plus, add these CSS overrides:
+To achieve sub2api's aesthetic with project-owned components, keep shared classes aligned with the design tokens:
 
 ```scss
-// Global Element Plus overrides
 :root {
-  --el-color-primary: #14b8a6;
-  --el-color-primary-light-3: #5eead4;
-  --el-color-primary-light-5: #99f6e4;
-  --el-color-primary-light-7: #ccfbf1;
-  --el-color-primary-light-8: #f0fdfa;
-  --el-color-primary-light-9: #f0fdfa;
-  --el-color-primary-dark-2: #0d9488;
-
-  --el-border-radius-base: 12px;
-  --el-border-radius-small: 8px;
-  --el-border-radius-round: 9999px;
-
-  --el-shadow-light: 0 8px 32px rgba(0, 0, 0, 0.08);
-  --el-shadow-lighter: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --color-primary: #14b8a6;
+  --color-primary-dark: #0d9488;
+  --radius-control: 12px;
+  --radius-panel: 16px;
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-// Button overrides
-.el-button {
-  border-radius: 12px;
-
-  &--primary {
-    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-    border-color: transparent;
-  }
+.btn-primary {
+  border-radius: var(--radius-control);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: #fff;
 }
 
-// Card overrides
-.el-card {
-  border-radius: 16px;
+.card {
+  border-radius: var(--radius-panel);
   border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card);
 }
 
-// Input overrides
-.el-input__wrapper {
-  border-radius: 12px;
+.input {
+  border-radius: var(--radius-control);
 }
 
-// Dialog overrides
-.el-dialog {
-  border-radius: 16px;
+.modal {
+  border-radius: var(--radius-panel);
 }
 
-// Dark mode
 .dark {
-  --el-color-primary: #2dd4bf;
-  --el-bg-color: #0f172a;
-  --el-bg-color-overlay: #1e293b;
-  --el-border-color: #334155;
+  --color-primary: #2dd4bf;
 }
 ```
 
@@ -679,7 +653,7 @@ Dark mode palette is automatically applied via `dark:` prefixed selectors.
 - Don't use `rounded-none` — sharp corners are deprecated
 - Don't use `primary-300` or brighter for text — too light
 - Don't add `border-radius-small` (4px) to cards — use 12px instead
-- Don't use Element Plus default shadows — use custom glass/card shadows
+- Don't use browser/default component shadows — use custom glass/card shadows
 - Don't use hardcoded color values — use design tokens
 - Don't mix border styles — all cards use `border-gray-100` or `border-dark-700`
 
@@ -702,7 +676,7 @@ src/
 ├── assets/
 │   └── styles/
 │       ├── variables.scss      # Design tokens
-│       └── overrides.scss     # Element Plus overrides
+│       └── global.scss         # Global component styles
 ├── components/
 │   ├── layout/
 │   │   ├── AppLayout.vue
@@ -717,8 +691,8 @@ src/
 
 ## Implementation Notes
 
-1. **Element Plus Theme**: Configure via `element-plus/theme-chalk` and CSS variables
-2. **TailwindCSS**: Not used — custom SCSS with design tokens instead (sub2api uses Tailwind but we adapt to Element Plus)
+1. **Tailwind CSS**: Use tokens from `tailwind.config.js` and shared component classes
+2. **SCSS**: Keep global resets and cross-component styles in `src/assets/styles/`
 3. **Dark Mode**: Via `.dark` class on root element, controlled by Pinia store
-4. **Icons**: @element-plus/icons-vue + custom SVG icons
+4. **Icons**: Project SVG/icon components
 5. **Animations**: CSS keyframes defined in `variables.scss`
