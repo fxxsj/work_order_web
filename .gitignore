@@ -31,3 +31,6 @@ pnpm-debug.log*
 .codex/
 .opencode/
 .github/prompts/
+
+# Planning documents (hosted in main repo)
+.planning/
