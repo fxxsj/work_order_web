@@ -83,6 +83,11 @@ class WorkOrderAPI extends BaseAPI {
     return this.customAction(`/workorders-flow/${id}/check_completion/`, 'post')
   }
 
+  // 检查数据完整性（提交审核前预校验）
+  checkCompleteness(id: number | string) {
+    return this.customAction(`/workorders-flow/${id}/check_completeness/`, 'get')
+  }
+
   // 标记紧急
   markUrgent(id: number | string, data: unknown) {
     return this.customAction(`/workorders-flow/${id}/mark_urgent/`, 'post', data)

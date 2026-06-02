@@ -12,6 +12,14 @@
         {{ approvalGuide.message }}
       </div>
       <div
+        v-if="completenessErrors.length > 0 && (workOrder?.approval_status === 'draft' || workOrder?.approval_status === 'rejected')"
+        class="mt-2"
+      >
+        <ul class="ml-4 list-disc space-y-0.5 text-sm text-gray-500 dark:text-dark-400">
+          <li v-for="(err, idx) in completenessErrors" :key="idx">{{ err }}</li>
+        </ul>
+      </div>
+      <div
         v-if="taskGenerationSummary"
         class="mt-3 grid gap-2 text-sm sm:grid-cols-3"
       >
@@ -161,7 +169,8 @@ const props = defineProps({
   resubmitForm: { type: Object, default: () => ({}) },
   approvalRules: { type: Object, default: () => ({}) },
   showRejectionReason: { type: Boolean, default: false },
-  taskGenerationSummary: { type: Object, default: null }
+  taskGenerationSummary: { type: Object, default: null },
+  completenessErrors: { type: Array as () => string[], default: () => [] }
 })
 
 const emit = defineEmits(['approve', 'resubmit'])

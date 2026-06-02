@@ -1,5 +1,18 @@
 <template>
   <div class="work-order-form-page pb-32 sm:pb-24">
+    <!-- Real-time validation hints -->
+    <div
+      v-if="formWarnings.length > 0"
+      class="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20"
+    >
+      <div class="mb-2 flex items-center gap-2 font-medium text-amber-700 dark:text-amber-400">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <span>以下信息待完善（{{ formWarnings.length }}项）</span>
+      </div>
+      <ul class="ml-7 list-disc space-y-0.5 text-sm text-amber-700 dark:text-amber-300/80">
+        <li v-for="(warning, index) in formWarnings" :key="index">{{ warning }}</li>
+      </ul>
+    </div>
     <div class="card">
       <div class="card-body space-y-4">
         <!-- Section: Basic Info -->
@@ -1108,46 +1121,88 @@ const handleMaterialCreated = (material: any) => {
 
 // Validation
 const validateForm = () => {
-  if (!form.customer_id) {
-    useUIStore().showWarning('请选择客户')
+  const warnings = formWarnings.value
+  if (warnings.length > 0) {
+    useUIStore().showWarning(warnings.join('；'))
     return false
   }
-  if (!form.delivery_date) {
-    useUIStore().showWarning('请选择交货日期')
-    return false
-  }
-  if (form.order_date && form.delivery_date && new Date(form.delivery_date) < new Date(form.order_date)) {
-    useUIStore().showWarning('交货日期不能早于下单日期')
-    return false
-  }
-  if ((Number(form.production_quantity) || 0) <= 0) {
-    useUIStore().showWarning('生产数量必须大于 0')
-    return false
-  }
-  if ((Number(form.defective_quantity) || 0) < 0) {
-    useUIStore().showWarning('预损数量不能小于 0')
-    return false
-  }
-
-  // Validate products
-  const validProducts = form.products.filter(p => p.product)
-  if (validProducts.length === 0) {
-    useUIStore().showWarning('请至少添加一个产品')
-    return false
-  }
-  if (validProducts.some(p => (Number(p.quantity) || 0) <= 0)) {
-    useUIStore().showWarning('产品数量必须大于 0')
-    return false
-  }
-
-  // Validate processes
-  if (form.process_ids.length === 0) {
-    useUIStore().showWarning('请至少选择一个工序')
-    return false
-  }
-
   return true
 }
+
+// Real-time form completeness check
+const formWarnings = computed(() => {
+  const errors: string[] = []
+
+  // Basic info
+  if (!form.customer_id) {
+    errors.push('缺少客户信息')
+  }
+  if (!form.delivery_date) {
+    errors.push('缺少交货日期')
+  }
+  if (form.order_date && form.delivery_date && new Date(form.delivery_date) < new Date(form.order_date)) {
+    errors.push('交货日期不能早于下单日期')
+  }
+  if ((Number(form.production_quantity) || 0) <= 0) {
+    errors.push('缺少生产数量')
+  }
+  if ((Number(form.defective_quantity) || 0) < 0) {
+    errors.push('预损数量不能小于 0')
+  }
+
+  // Products
+  const validProducts = form.products.filter((p: any) => p.product)
+  if (validProducts.length === 0) {
+    errors.push('缺少产品信息')
+  } else {
+    const totalQuantity = validProducts.reduce((sum: number, p: any) => sum + (Number(p.quantity) || 0), 0)
+    if (totalQuantity <= 0) {
+      errors.push('产品数量总和必须大于0')
+    }
+  }
+
+  // Processes
+  if (form.process_ids.length === 0) {
+    errors.push('缺少工序信息')
+  }
+
+  // Asset-process match
+  const selectedProcesses = processList.value.filter((p: any) => form.process_ids.includes(p.id))
+
+  const artworkProcesses = selectedProcesses.filter((p: any) => p.requires_artwork)
+  if (artworkProcesses.length > 0 && form.artwork_ids.length === 0) {
+    const names = artworkProcesses.map((p: any) => p.name).join(', ')
+    errors.push(`选择了需要图稿的工序（${names}），请至少选择一个图稿`)
+  }
+
+  const dieProcesses = selectedProcesses.filter((p: any) => p.requires_die)
+  if (dieProcesses.length > 0 && form.die_ids.length === 0) {
+    const names = dieProcesses.map((p: any) => p.name).join(', ')
+    errors.push(`选择了需要刀模的工序（${names}），请至少选择一个刀模`)
+  }
+
+  const foilingProcesses = selectedProcesses.filter((p: any) => p.requires_foiling_plate)
+  if (foilingProcesses.length > 0 && form.foiling_plate_ids.length === 0) {
+    const names = foilingProcesses.map((p: any) => p.name).join(', ')
+    errors.push(`选择了需要烫金版的工序（${names}），请至少选择一个烫金版`)
+  }
+
+  const embossingProcesses = selectedProcesses.filter((p: any) => p.requires_embossing_plate)
+  if (embossingProcesses.length > 0 && form.embossing_plate_ids.length === 0) {
+    const names = embossingProcesses.map((p: any) => p.name).join(', ')
+    errors.push(`选择了需要压凸版的工序（${names}），请至少选择一个压凸版`)
+  }
+
+  // Materials needing cutting
+  for (const m of form.materials) {
+    if (m.material && m.need_cutting && !m.material_usage) {
+      errors.push('需要开料的物料请填写物料用量')
+      break
+    }
+  }
+
+  return errors
+})
 
 // Format payload
 const formatPayload = () => {

@@ -34,6 +34,7 @@
         :can-approve="canApprove"
         :can-resubmit="canResubmit"
         :task-generation-summary="taskGenerationSummary"
+        :completeness-errors="completenessErrors"
         @approve="handleApprove"
         @resubmit="handleResubmit"
       />
@@ -146,6 +147,7 @@ const printDialog = ref(false)
 const purchaseOrders = ref<any[]>([])
 const syncCheck = ref<any>(null)
 const taskGenerationSummary = ref<any>(null)
+const completenessErrors = ref<string[]>([])
 const canEdit = computed(() => userStore.hasPermission('workorder.change_workorder'))
 const canApprove = computed(() => userStore.hasPermission('workorder.approve_workorder') && workOrder.value?.approval_status === 'submitted')
 const canResubmit = computed(() => workOrder.value?.approval_status === 'rejected')
@@ -254,6 +256,15 @@ const loadData = async () => {
   processList.value = res.order_processes || []
   materialList.value = res.materials || []
   await loadSyncCheck()
+  // Load completeness errors for draft/rejected work orders
+  if (res.approval_status === 'draft' || res.approval_status === 'rejected') {
+    try {
+      const checkRes: any = await workOrderAPI.checkCompleteness(String(route.params.id))
+      completenessErrors.value = Array.isArray(checkRes?.errors) ? checkRes.errors : []
+    } catch { completenessErrors.value = [] }
+  } else {
+    completenessErrors.value = []
+  }
   if (res.purchase_order_summaries?.length) {
     purchaseOrders.value = res.purchase_order_summaries
   } else {
