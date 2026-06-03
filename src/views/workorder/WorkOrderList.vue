@@ -4,7 +4,7 @@
       <FilterRow>
         <SearchInput
           v-model="filters.search"
-          class="w-full sm:w-72"
+          class="w-full sm:w-64"
           placeholder="搜索施工单号、产品名称、客户"
           @search="handleSearch"
           @clear="handleSearch"
@@ -12,32 +12,32 @@
         <Select
           v-model="filters.status"
           :options="statusOptions"
-          placeholder="状态"
+          placeholder="施工单状态"
           clearable
-          class="w-full sm:w-36"
-          @change="handleSearchDebounced"
+          class="w-full sm:w-32"
+          @change="handleSearch"
         />
         <Select
           v-model="filters.priority"
           :options="priorityOptions"
           placeholder="优先级"
           clearable
-          class="w-full sm:w-36"
-          @change="handleSearchDebounced"
+          class="w-full sm:w-32"
+          @change="handleSearch"
         />
         <DateRangePicker
           v-model="orderDateRange"
-          class="w-full sm:w-[300px]"
+          class="w-full sm:w-[200px]"
           start-placeholder="下单起"
           end-placeholder="下单止"
-          @change="handleSearchDebounced"
+          @change="handleSearch"
         />
         <DateRangePicker
           v-model="deliveryDateRange"
-          class="w-full sm:w-[300px]"
+          class="w-full sm:w-[200px]"
           start-placeholder="交货起"
           end-placeholder="交货止"
-          @change="handleSearchDebounced"
+          @change="handleSearch"
         />
         <BaseButton
           variant="secondary"
@@ -242,7 +242,6 @@ const {
   pageSize,
   loadData,
   handleSearch,
-  handleSearchDebounced,
   handlePageChange,
   handleSizeChange,
   resetFilters: resetCrudFilters
