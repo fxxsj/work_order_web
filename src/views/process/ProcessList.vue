@@ -30,30 +30,21 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
+        />
+        <BaseButton
           v-if="canCreate"
-          class="btn btn-primary"
+          variant="primary"
+          icon="plus"
           @click="showCreateModal = true"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
-          />
           新建工序
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -239,41 +230,21 @@
     </form>
     <template #footer>
       <div class="flex justify-end gap-3">
-        <button
+        <BaseButton
           type="button"
-          class="btn btn-secondary"
+          variant="secondary"
           @click="closeModals"
         >
           取消
-        </button>
-        <button
+        </BaseButton>
+        <BaseButton
           form="process-form"
           type="submit"
-          :disabled="submitting"
-          class="btn btn-primary"
+          variant="primary"
+          :loading="submitting"
         >
-          <svg
-            v-if="submitting"
-            class="-ml-1 mr-2 h-4 w-4 animate-spin"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            />
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-          {{ submitting ? '保存中...' : showEditModal ? '更新' : '创建' }}
-        </button>
+          {{ showEditModal ? '更新' : '创建' }}
+        </BaseButton>
       </div>
     </template>
   </BaseDialog>
@@ -376,7 +347,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { processAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Toggle, Icon, Tag, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Toggle, BaseButton, Tag, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'

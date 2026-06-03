@@ -25,30 +25,21 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
+        />
+        <BaseButton
           v-if="canCreate"
-          class="btn btn-primary"
+          variant="primary"
+          icon="plus"
           @click="handleAdd"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
-          />
           新增产品组
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -146,27 +137,21 @@
 
     <template #footer>
       <div class="flex justify-end gap-3">
-        <button
+        <BaseButton
           type="button"
-          class="btn btn-secondary"
+          variant="secondary"
           @click="closeModals"
         >
           取消
-        </button>
-        <button
+        </BaseButton>
+        <BaseButton
           form="entity-form"
           type="submit"
-          :disabled="submitting"
-          class="btn btn-primary"
+          variant="primary"
+          :loading="submitting"
         >
-          <Icon
-            v-if="submitting"
-            name="refresh"
-            size="sm"
-            class="-ml-1 mr-2 animate-spin"
-          />
-          {{ submitting ? '保存中...' : (showEditModal ? '更新' : '创建') }}
-        </button>
+          {{ showEditModal ? '更新' : '创建' }}
+        </BaseButton>
       </div>
     </template>
   </BaseDialog>
@@ -189,7 +174,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { productGroupAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, BaseDialog, ConfirmDialog, Pagination, Input, TextArea, Toggle, Icon, Tag, RowActions, FilterRow } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, BaseDialog, ConfirmDialog, Pagination, Input, TextArea, Toggle, BaseButton, Tag, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 

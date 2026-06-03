@@ -4,30 +4,21 @@
       <template #actions>
         <div class="space-y-4">
           <div class="flex justify-end gap-3">
-            <button
-              class="btn btn-secondary"
-              :disabled="loading"
+            <BaseButton
+              variant="secondary"
+              icon="refresh"
               title="刷新"
+              :loading="loading"
               @click="reloadData"
-            >
-              <Icon
-                name="refresh"
-                size="md"
-                :class="loading ? 'animate-spin' : ''"
-              />
-            </button>
-            <button
+            />
+            <BaseButton
               v-if="canCreate"
-              class="btn btn-primary"
+              variant="primary"
+              icon="plus"
               @click="handleCreate"
             >
-              <Icon
-                name="plus"
-                size="md"
-                class="mr-2"
-              />
               新建发票
-            </button>
+            </BaseButton>
           </div>
 
           <FilterRow>
@@ -63,12 +54,13 @@
               clearable
               @change="searchAndRefreshStats"
             />
-            <button
-              class="btn btn-secondary"
+            <BaseButton
+              variant="secondary"
+              icon="rotateCcw"
               @click="handleReset"
             >
               重置
-            </button>
+            </BaseButton>
           </FilterRow>
 
           <InvoiceStats
@@ -132,20 +124,21 @@
           <template #empty>
             <EmptyState description="暂无发票数据">
               <template #action>
-                <button
+                <BaseButton
                   v-if="hasFilters"
-                  class="btn btn-primary"
+                  variant="primary"
                   @click="handleReset"
                 >
                   重置筛选
-                </button>
-                <button
+                </BaseButton>
+                <BaseButton
                   v-else-if="canCreate"
-                  class="btn btn-primary"
+                  variant="primary"
+                  icon="plus"
                   @click="handleCreate"
                 >
                   创建第一个发票
-                </button>
+                </BaseButton>
               </template>
             </EmptyState>
           </template>
@@ -220,12 +213,12 @@
         </DescriptionItem>
       </DescriptionGrid>
       <template #footer>
-        <button
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
           @click="detailDialogVisible = false"
         >
           关闭
-        </button>
+        </BaseButton>
       </template>
     </BaseDialog>
 
@@ -296,49 +289,31 @@
       </form>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button
-            class="btn btn-secondary"
+          <BaseButton
             type="button"
+            variant="secondary"
             @click="formDialogVisible = false"
           >
             取消
-          </button>
-          <button
-            class="btn btn-secondary min-w-0 flex-1 sm:flex-none"
-            type="button"
-            :disabled="submitting"
+          </BaseButton>
+          <BaseButton
+            variant="secondary"
+            class="min-w-0 flex-1 sm:flex-none"
+            icon="save"
+            :loading="submitting"
             @click="handleSave(false)"
           >
-            <span
-              v-if="submitting"
-              class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent align-middle mr-1"
-            />
-            <Icon
-              v-else
-              name="save"
-              size="md"
-              class="mr-1"
-            />
             存为草稿
-          </button>
-          <button
-            class="btn btn-primary min-w-0 flex-1 sm:flex-none"
-            type="button"
-            :disabled="submitting"
+          </BaseButton>
+          <BaseButton
+            variant="primary"
+            class="min-w-0 flex-1 sm:flex-none"
+            icon="send"
+            :loading="submitting"
             @click="handleSave(true)"
           >
-            <span
-              v-if="submitting"
-              class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-1"
-            />
-            <Icon
-              v-else
-              name="send"
-              size="md"
-              class="mr-1"
-            />
             直接发布
-          </button>
+          </BaseButton>
         </div>
       </template>
     </BaseDialog>
@@ -368,7 +343,7 @@ import { invoiceAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { StatusTag, Select, SearchInput, Icon, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions, FilterRow } from '@/components/common'
+import { StatusTag, Select, SearchInput, BaseButton, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import InvoiceStats from './components/InvoiceStats.vue'
 import CustomerSelector from '@/views/customer/components/CustomerSelector.vue'

@@ -4,18 +4,13 @@
       <template #actions>
         <div class="space-y-4">
           <div class="flex justify-end gap-3">
-            <button
-              class="btn btn-secondary"
-              :disabled="loading"
+            <BaseButton
+              variant="secondary"
+              icon="refresh"
               title="刷新"
+              :loading="loading"
               @click="reloadData"
-            >
-              <Icon
-                name="refresh"
-                size="md"
-                :class="loading ? 'animate-spin' : ''"
-              />
-            </button>
+            />
           </div>
 
           <FilterRow>
@@ -31,12 +26,13 @@
               placeholder="选择时间范围"
               @change="handlePeriodRangeChange"
             />
-            <button
-              class="btn btn-secondary"
+            <BaseButton
+              variant="secondary"
+              icon="rotateCcw"
               @click="handleReset"
             >
               重置
-            </button>
+            </BaseButton>
           </FilterRow>
 
           <CostStats
@@ -183,12 +179,12 @@
         </div>
       </div>
       <template #footer>
-        <button
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
           @click="detailDialogVisible = false"
         >
           关闭
-        </button>
+        </BaseButton>
       </template>
     </BaseDialog>
 
@@ -260,21 +256,21 @@
       </form>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button
-            class="btn btn-secondary"
+          <BaseButton
             type="button"
+            variant="secondary"
             @click="adjustDialogVisible = false"
           >
             取消
-          </button>
-          <button
-            class="btn btn-primary"
+          </BaseButton>
+          <BaseButton
             form="adjust-form"
             type="submit"
-            :disabled="submitting"
+            variant="primary"
+            :loading="submitting"
           >
             保存
-          </button>
+          </BaseButton>
         </div>
       </template>
     </BaseDialog>
@@ -301,7 +297,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import CostStats from './components/CostStats.vue'
-import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, Icon, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions, SearchInput, MonthRangePicker, FilterRow } from '@/components/common'
+import { InputNumber, TextArea, TablePageLayout, DataTable, EmptyState, BaseButton, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, SummaryTable, RowActions, SearchInput, MonthRangePicker, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 
 const userStore = useUserStore()

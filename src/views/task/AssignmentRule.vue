@@ -36,12 +36,14 @@
           clearable
           @change="handleSearch"
         />
-        <button
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="rotateCcw"
+          title="重置"
           @click="handleReset"
         >
           重置
-        </button>
+        </BaseButton>
       </FilterRow>
     </template>
 
@@ -57,42 +59,29 @@
         </div>
         <div class="flex-1" />
         <div class="flex gap-3">
-          <button
-            :disabled="loading"
-            class="btn btn-secondary"
+          <BaseButton
+            variant="secondary"
+            icon="refresh"
             title="刷新"
+            :loading="loading"
             @click="loadData"
-          >
-            <Icon
-              name="refresh"
-              size="md"
-              :class="loading ? 'animate-spin' : ''"
-            />
-          </button>
-          <button
-            class="btn btn-secondary"
-            :disabled="previewLoading"
+          />
+          <BaseButton
+            variant="secondary"
+            icon="eye"
+            :loading="previewLoading"
             @click="showPreviewDialog"
           >
-            <Icon
-              name="eye"
-              size="md"
-              class="mr-2"
-            />
             预览
-          </button>
-          <button
+          </BaseButton>
+          <BaseButton
             v-if="canCreate"
-            class="btn btn-primary"
+            variant="primary"
+            icon="plus"
             @click="showDialog(null)"
           >
-            <Icon
-              name="plus"
-              size="md"
-              class="mr-2"
-            />
             新建规则
-          </button>
+          </BaseButton>
         </div>
       </div>
     </template>
@@ -219,19 +208,19 @@
       />
     </div>
     <template #footer>
-      <button
-        class="btn btn-secondary"
+      <BaseButton
+        variant="secondary"
         @click="dialogVisible = false"
       >
         取消
-      </button>
-      <button
-        class="btn btn-primary"
-        :disabled="submitting"
+      </BaseButton>
+      <BaseButton
+        variant="primary"
+        :loading="submitting"
         @click="handleSubmit"
       >
-        {{ submitting ? '提交中...' : '确定' }}
-      </button>
+        确定
+      </BaseButton>
     </template>
   </BaseDialog>
 
@@ -259,12 +248,12 @@
       </template>
     </DataTable>
     <template #footer>
-      <button
-        class="btn btn-secondary"
+      <BaseButton
+        variant="secondary"
         @click="previewDialogVisible = false"
       >
         关闭
-      </button>
+      </BaseButton>
     </template>
   </BaseDialog>
 
@@ -290,7 +279,7 @@ import { useUserStore } from '@/stores'
 import { taskAssignmentRuleAPI, processAPI, departmentAPI } from '@/api/modules'
 import { useCrudPermission } from '@/composables'
 import {
-  Icon, SearchInput, Select, InputNumber, TextArea, Toggle,
+  BaseButton, SearchInput, Select, InputNumber, TextArea, Toggle,
   ConfirmDialog, DataTable, EmptyState, ProgressBar, BaseDialog,
   TablePageLayout, FilterRow, Pagination, Tag, RowActions
 } from '@/components/common'

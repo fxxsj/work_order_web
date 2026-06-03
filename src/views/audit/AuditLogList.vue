@@ -4,30 +4,21 @@
       <template #actions>
         <div class="space-y-4">
           <div class="flex justify-end gap-3">
-            <button
-              class="btn btn-secondary"
-              :disabled="loading"
+            <BaseButton
+              variant="secondary"
+              icon="refresh"
               title="刷新"
+              :loading="loading"
               @click="handleAuditSearch"
-            >
-              <Icon
-                name="refresh"
-                size="md"
-                :class="loading ? 'animate-spin' : ''"
-              />
-            </button>
-            <button
+            />
+            <BaseButton
               v-if="canExportAuditLog"
-              class="btn btn-secondary"
+              variant="secondary"
+              icon="download"
               @click="exportDialogVisible = true"
             >
-              <Icon
-                name="download"
-                size="md"
-                class="mr-2"
-              />
               导出日志
-            </button>
+            </BaseButton>
             <button
               v-if="canViewAuditExport"
               class="btn btn-secondary"
@@ -494,7 +485,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList, useExportJob } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
-import { Icon, Select, SearchInput, DateRangePicker, Pagination, TablePageLayout, DataTable, EmptyState, BaseDialog, DescriptionGrid, DescriptionItem, RowActions, FilterRow } from '@/components/common'
+import { BaseButton, Icon, Select, SearchInput, DateRangePicker, Pagination, TablePageLayout, DataTable, EmptyState, BaseDialog, DescriptionGrid, DescriptionItem, RowActions, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 
 const userStore = useUserStore()

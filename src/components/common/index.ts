@@ -5,6 +5,7 @@
  */
 
 export { default as Icon } from '@/components/icons/Icon.vue'
+export { default as BaseButton } from './BaseButton.vue'
 export { default as TablePageLayout } from './TablePageLayout.vue'
 export { default as DataTable } from './DataTable.vue'
 export { default as Pagination } from './Pagination.vue'

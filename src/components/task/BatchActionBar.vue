@@ -7,63 +7,60 @@
       /><span>已选择 <strong>{{ selectedCount }}</strong> 项</span>
     </div>
     <div class="flex flex-wrap items-center gap-3">
-      <button
+      <BaseButton
         v-if="canBatchAssign"
-        class="btn btn-primary btn-sm"
+        variant="primary"
+        size="sm"
+        icon="user"
         :disabled="loading"
         @click="emit('batch-assign')"
       >
-        <Icon
-          name="user"
-          class="h-4 w-4"
-        /> 批量分派
-      </button>
-      <button
+        批量分派
+      </BaseButton>
+      <BaseButton
         v-if="canBatchComplete"
-        class="btn btn-success btn-sm"
+        variant="success"
+        size="sm"
+        icon="checkCircle"
         :disabled="loading"
         @click="emit('batch-complete')"
       >
-        <Icon
-          name="checkCircle"
-          class="h-4 w-4"
-        /> 批量完成
-      </button>
-      <button
+        批量完成
+      </BaseButton>
+      <BaseButton
         v-if="canBatchDelete"
-        class="btn btn-danger btn-sm"
+        variant="danger"
+        size="sm"
+        icon="trash"
         :disabled="loading"
         @click="handleBatchDelete"
       >
-        <Icon
-          name="trash"
-          class="h-4 w-4"
-        /> 批量删除
-      </button>
-      <button
+        批量删除
+      </BaseButton>
+      <BaseButton
         v-if="canBatchCancel"
-        class="btn btn-warning btn-sm"
+        variant="warning"
+        size="sm"
+        icon="xCircle"
         :disabled="loading"
         @click="emit('batch-cancel')"
       >
-        <Icon
-          name="xCircle"
-          class="h-4 w-4"
-        /> 批量取消
-      </button>
-      <button
-        class="btn btn-secondary btn-sm"
+        批量取消
+      </BaseButton>
+      <BaseButton
+        variant="secondary"
+        size="sm"
         :disabled="loading"
         @click="emit('clear-selection')"
       >
         取消选择
-      </button>
+      </BaseButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Icon } from '@/components/common'
+import { Icon, BaseButton } from '@/components/common'
 
 const props = defineProps({
   selectedCount: { type: Number, default: 0 },

@@ -25,41 +25,28 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
-          class="btn btn-secondary"
-          :disabled="exporting"
+        />
+        <BaseButton
+          variant="secondary"
+          icon="download"
+          :loading="exporting"
           @click="handleExport"
         >
-          <Icon
-            name="download"
-            size="md"
-            class="mr-2"
-          />
           {{ exporting ? '导出中...' : '导出' }}
-        </button>
-        <button
-          class="btn btn-secondary"
+        </BaseButton>
+        <BaseButton
+          variant="secondary"
+          icon="upload"
           @click="handleImportClick"
         >
-          <Icon
-            name="upload"
-            size="md"
-            class="mr-2"
-          />
           导入
-        </button>
+        </BaseButton>
         <input
           ref="fileInput"
           type="file"
@@ -67,18 +54,14 @@
           class="hidden"
           @change="handleImportFile"
         >
-        <button
+        <BaseButton
           v-if="canCreate && tableData.length > 0"
-          class="btn btn-primary"
+          variant="primary"
+          icon="plus"
           @click="showCreateDialog"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
-          />
           新建产品
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -179,7 +162,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { productAPI, processAPI, materialAPI, productMaterialAPI, productGroupAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD, useExport } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, Icon, Tag, ConfirmDialog, Pagination, RowActions, FilterRow } from '@/components/common'
+import { BaseButton, TablePageLayout, DataTable, EmptyState, SearchInput, Select, Tag, ConfirmDialog, Pagination, RowActions, FilterRow } from '@/components/common'
 import ProductFormDialog from './components/ProductFormDialog.vue'
 import ProductDetailDialog from './components/ProductDetailDialog.vue'
 import type { Column } from '@/components/common/types'

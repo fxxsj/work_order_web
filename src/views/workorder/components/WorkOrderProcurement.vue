@@ -2,17 +2,16 @@
   <div class="card p-6">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <span class="text-lg font-bold">采购信息</span>
-      <button
+      <BaseButton
         v-if="hasPendingMaterials"
-        class="btn btn-primary btn-sm"
+        variant="primary"
+        size="sm"
+        icon="plus"
         title="按待采购物料创建采购单，创建后仍需提交、审核并下单"
         @click="emit('create-purchase')"
       >
-        <Icon
-          name="plus"
-          class="h-3 w-3"
-        /> 创建采购单
-      </button>
+        创建采购单
+      </BaseButton>
     </div>
     <div
       v-if="materials?.length"
@@ -92,7 +91,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Icon, StatusTag, EmptyState, SummaryTable } from '@/components/common'
+import { BaseButton, Icon, StatusTag, EmptyState, SummaryTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { formatDate } from '@/utils/filter'
 

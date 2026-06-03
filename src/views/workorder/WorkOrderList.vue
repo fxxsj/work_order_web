@@ -39,61 +39,43 @@
           end-placeholder="交货止"
           @change="handleSearchDebounced"
         />
-        <button
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="rotateCcw"
           title="重置筛选"
           @click="handleReset"
         >
-          <Icon
-            name="rotateCcw"
-            size="md"
-            class="mr-1"
-          />
           重置
-        </button>
+        </BaseButton>
       </FilterRow>
     </template>
     <template #actions>
       <div class="flex justify-end gap-3 items-center w-full">
-        <button
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
-          :disabled="loading"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
+        />
+        <BaseButton
           v-if="canExport"
-          class="btn btn-success"
-          :disabled="exporting"
+          variant="success"
+          icon="download"
+          :loading="exporting"
           title="导出Excel"
           @click="handleExport"
         >
-          <Icon
-            name="download"
-            size="md"
-            :class="exporting ? 'animate-spin' : ''"
-            class="mr-1"
-          />
           导出
-        </button>
-        <button
-          class="btn btn-primary"
+        </BaseButton>
+        <BaseButton
+          variant="primary"
+          icon="plus"
           title="新建施工单"
           @click="handleCreate"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-1"
-          />
           新建
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -209,7 +191,7 @@ import { useUserStore } from '@/stores'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
-import { StatusTag, SearchInput, Select, DateRangePicker, Icon, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
+import { BaseButton, StatusTag, SearchInput, Select, DateRangePicker, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { WorkOrderStatusChoices, PriorityChoices, ApprovalStatusChoices } from '@/constants'
 import { formatDate } from '@/utils/filter'

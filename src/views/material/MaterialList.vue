@@ -25,41 +25,28 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
-          class="btn btn-secondary"
-          :disabled="exporting"
+        />
+        <BaseButton
+          variant="secondary"
+          icon="download"
+          :loading="exporting"
           @click="handleExport"
         >
-          <Icon
-            name="download"
-            size="md"
-            class="mr-2"
-          />
           {{ exporting ? '导出中...' : '导出' }}
-        </button>
-        <button
-          class="btn btn-secondary"
+        </BaseButton>
+        <BaseButton
+          variant="secondary"
+          icon="upload"
           @click="handleImportClick"
         >
-          <Icon
-            name="upload"
-            size="md"
-            class="mr-2"
-          />
           导入
-        </button>
+        </BaseButton>
         <input
           ref="fileInput"
           type="file"
@@ -67,18 +54,14 @@
           class="hidden"
           @change="handleImportFile"
         >
-        <button
+        <BaseButton
           v-if="canCreate"
-          class="btn btn-primary"
+          variant="primary"
+          icon="plus"
           @click="showCreateDialog"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
-          />
           新建物料
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -225,20 +208,14 @@
         >
           取消
         </button>
-        <button
+        <BaseButton
           form="entity-form"
           type="submit"
-          :disabled="submitting"
-          class="btn btn-primary"
+          variant="primary"
+          :loading="submitting"
         >
-          <Icon
-            v-if="submitting"
-            name="refresh"
-            size="sm"
-            class="-ml-1 mr-2 animate-spin"
-          />
-          {{ submitting ? '保存中...' : (showEditModal ? '更新' : '创建') }}
-        </button>
+          {{ showEditModal ? '更新' : '创建' }}
+        </BaseButton>
       </div>
     </template>
   </BaseDialog>
@@ -262,7 +239,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { materialAPI, supplierAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD, useExport } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, BaseDialog, ConfirmDialog, Pagination, Input, InputNumber, Select, TextArea, Toggle, Icon, RowActions, FilterRow } from '@/components/common'
+import { BaseButton, TablePageLayout, DataTable, EmptyState, SearchInput, BaseDialog, ConfirmDialog, Pagination, Input, InputNumber, Select, TextArea, Toggle, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 

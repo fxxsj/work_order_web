@@ -4,18 +4,13 @@
       <template #actions>
         <div class="space-y-4">
           <div class="flex justify-end gap-3">
-            <button
-              :disabled="loading"
-              class="btn btn-secondary"
+            <BaseButton
+              variant="secondary"
+              icon="refresh"
               title="刷新"
+              :loading="loading"
               @click="reloadData"
-            >
-              <Icon
-                name="refresh"
-                size="md"
-                :class="loading ? 'animate-spin' : ''"
-              />
-            </button>
+            />
           </div>
 
           <FilterRow>
@@ -48,12 +43,13 @@
               end-placeholder="结束日期"
               @change="searchAndRefreshStats"
             />
-            <button
-              class="btn btn-secondary"
+            <BaseButton
+              variant="secondary"
+              icon="rotateCcw"
               @click="handleReset"
             >
               重置
-            </button>
+            </BaseButton>
           </FilterRow>
 
           <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -217,7 +213,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { paymentPlanAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, Pagination, RowActions, FilterRow, Select, StatusTag, DateRangePicker } from '@/components/common'
+import { TablePageLayout, DataTable, EmptyState, SearchInput, Icon, BaseButton, Pagination, RowActions, FilterRow, Select, StatusTag, DateRangePicker } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
 import ErrorHandler from '@/utils/errorHandler'

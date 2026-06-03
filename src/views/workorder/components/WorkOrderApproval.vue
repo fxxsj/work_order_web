@@ -61,26 +61,22 @@
           placeholder="请填写拒绝原因（必填）"
         />
         <div class="flex flex-wrap items-center gap-3">
-          <button
-            class="btn btn-success"
-            :disabled="approving"
+          <BaseButton
+            variant="success"
+            icon="check"
+            :loading="approving"
             @click="handleApprove"
           >
-            <Icon
-              name="check"
-              size="sm"
-            /> 通过审核
-          </button>
-          <button
-            class="btn btn-danger"
-            :disabled="approving"
+            通过审核
+          </BaseButton>
+          <BaseButton
+            variant="danger"
+            icon="x"
+            :loading="approving"
             @click="handleReject"
           >
-            <Icon
-              name="x"
-              size="sm"
-            /> 拒绝审核
-          </button>
+            拒绝审核
+          </BaseButton>
         </div>
       </div>
     </div>
@@ -98,16 +94,14 @@
           :rows="3"
           placeholder="请说明修改了什么内容（可选）"
         />
-        <button
-          class="btn btn-primary"
-          :disabled="resubmitting"
+        <BaseButton
+          variant="primary"
+          icon="upload"
+          :loading="resubmitting"
           @click="emit('resubmit')"
         >
-          <Icon
-            name="upload"
-            size="sm"
-          /> 提交审核
-        </button>
+          提交审核
+        </BaseButton>
       </div>
     </div>
     <div class="card mt-6 p-6">
@@ -161,7 +155,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { Icon, TextArea, StatusTag } from '@/components/common'
+import { BaseButton, TextArea, StatusTag } from '@/components/common'
 import { formatDate } from '@/utils/filter'
 
 const props = defineProps({

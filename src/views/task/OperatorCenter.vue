@@ -9,20 +9,14 @@
           认领部门任务，填报生产进度，处理我的待办。
         </p>
       </div>
-      <button
-        class="btn btn-secondary self-start lg:self-auto"
-        :disabled="loading"
-        title="刷新数据"
+      <BaseButton
+        variant="secondary"
+        class="self-start lg:self-auto"
+        icon="refresh"
+        title="刷新"
+        :loading="loading"
         @click="loadOperatorCenter"
-      >
-        <Icon
-          name="refresh"
-          size="md"
-          :class="loading ? 'animate-spin' : ''"
-          class="mr-1"
-        />
-        刷新
-      </button>
+      />
     </div>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -83,17 +77,14 @@
         v-if="hasFilters"
         class="mt-3 flex justify-end"
       >
-        <button
-          class="btn btn-secondary btn-sm"
+        <BaseButton
+          variant="secondary"
+          size="sm"
+          icon="rotateCcw"
           @click="resetFilters"
         >
-          <Icon
-            name="rotateCcw"
-            size="sm"
-            class="mr-1"
-          />
           重置筛选
-        </button>
+        </BaseButton>
       </div>
     </div>
 
@@ -217,70 +208,54 @@
                 更新：{{ formatTaskTime(task.updated_at || task.created_at) }}
               </div>
               <div class="flex flex-wrap items-center gap-2">
-                <button
+                <BaseButton
                   v-if="getWorkOrderId(task)"
-                  class="btn btn-secondary btn-sm"
+                  variant="secondary"
+                  size="sm"
+                  icon="document"
                   @click="goToWorkOrder(task)"
                 >
-                  <Icon
-                    name="document"
-                    size="sm"
-                    class="mr-1"
-                  />
                   施工单
-                </button>
-                <button
+                </BaseButton>
+                <BaseButton
                   v-if="task.logs?.length"
-                  class="btn btn-secondary btn-sm"
+                  variant="secondary"
+                  size="sm"
+                  icon="list"
                   @click="toggleLogs(task)"
                 >
-                  <Icon
-                    name="list"
-                    size="sm"
-                    class="mr-1"
-                  />
                   {{ expandedLogIds.has(task.id) ? '收起记录' : '操作记录' }}
-                </button>
+                </BaseButton>
                 <template v-if="activeTab === 'mine'">
-                  <button
+                  <BaseButton
                     v-if="canUpdateTask(task)"
-                    class="btn btn-primary btn-sm"
+                    variant="primary"
+                    size="sm"
+                    icon="edit"
                     @click="showUpdateDialog(task)"
                   >
-                    <Icon
-                      name="edit"
-                      size="sm"
-                      class="mr-1"
-                    />
                     更新进度
-                  </button>
-                  <button
+                  </BaseButton>
+                  <BaseButton
                     v-if="canCompleteTask(task)"
-                    class="btn btn-success btn-sm"
+                    variant="success"
+                    size="sm"
+                    icon="check"
                     @click="showCompleteDialog(task)"
                   >
-                    <Icon
-                      name="check"
-                      size="sm"
-                      class="mr-1"
-                    />
                     完成
-                  </button>
+                  </BaseButton>
                 </template>
-                <button
+                <BaseButton
                   v-else
-                  class="btn btn-primary btn-sm"
-                  :disabled="claimingTaskId === task.id"
+                  variant="primary"
+                  size="sm"
+                  icon="user"
+                  :loading="claimingTaskId === task.id"
                   @click="claimTask(task)"
                 >
-                  <Icon
-                    name="user"
-                    size="sm"
-                    :class="claimingTaskId === task.id ? 'animate-spin' : ''"
-                    class="mr-1"
-                  />
                   认领
-                </button>
+                </BaseButton>
               </div>
             </div>
 
@@ -299,18 +274,15 @@
             <span class="text-gray-500 dark:text-gray-400">
               已显示 {{ currentListMeta.returned }} / {{ currentListMeta.total }} 条
             </span>
-            <button
-              class="btn btn-secondary btn-sm self-start sm:self-auto"
-              :disabled="loading"
+            <BaseButton
+              variant="secondary"
+              size="sm"
+              icon="chevronDown"
+              :loading="loading"
               @click="loadMoreCurrentTab"
             >
-              <Icon
-                name="chevronDown"
-                size="sm"
-                class="mr-1"
-              />
               加载更多
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>
@@ -331,7 +303,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { workOrderTaskAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
-import { EmptyState, Icon, ProgressBar, SearchInput, Select, StatusTag, Tag } from '@/components/common'
+import { BaseButton, EmptyState, Icon, ProgressBar, SearchInput, Select, StatusTag, Tag } from '@/components/common'
 import { OperatorTaskUpdateDialog, TaskLogs, TaskRelatedInfo } from '@/components/task'
 import { useUIStore } from '@/stores/ui'
 

@@ -63,35 +63,40 @@
       />
     </div>
     <div class="flex gap-2 border-t border-gray-200 pt-2 dark:border-dark-700">
-      <button
+      <BaseButton
         v-if="canUpdate"
-        class="btn btn-primary btn-sm flex-1"
+        variant="primary"
+        size="sm"
+        class="flex-1"
         @click.stop="emit('update', task)"
       >
         更新
-      </button>
-      <button
+      </BaseButton>
+      <BaseButton
         v-if="canAssign"
-        class="btn btn-warning btn-sm flex-1"
+        variant="warning"
+        size="sm"
+        class="flex-1"
         @click.stop="emit('assign', task)"
       >
         分派
-      </button>
-      <button
+      </BaseButton>
+      <BaseButton
         v-if="canComplete"
-        class="btn btn-success btn-sm flex-1"
+        variant="success"
+        size="sm"
+        class="flex-1"
         @click.stop="emit('complete', task)"
       >
         完成
-      </button>
+      </BaseButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Icon } from '@/components/common'
-import { StatusTag } from '@/components/common'
+import { BaseButton, Icon, StatusTag } from '@/components/common'
 
 const props = defineProps({ task: { type: Object, required: true }, editable: { type: Boolean, default: false } })
 const emit = defineEmits(['click', 'update', 'assign', 'complete'])

@@ -30,30 +30,21 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
+        />
+        <BaseButton
           v-if="canCreate"
-          class="btn btn-primary"
+          variant="primary"
+          icon="plus"
           @click="showCreateDialog"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
-          />
           新建烫金版
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -175,7 +166,7 @@ import { ref, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { foilingPlateAPI, productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Select, Icon, Tag, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
+import { BaseButton, TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Select, Tag, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'

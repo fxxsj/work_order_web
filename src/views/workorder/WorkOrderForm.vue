@@ -287,51 +287,34 @@
     <!-- Action Buttons -->
     <div class="work-order-form-actions fixed bottom-0 left-4 right-4 z-20 rounded-t-xl border border-b-0 border-gray-100 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-dark-700 dark:bg-dark-900/95 md:left-6 md:right-6 lg:left-[calc(16rem+2rem)] lg:right-8">
       <div class="flex flex-row gap-3 sm:justify-end">
-        <button
-          class="btn btn-secondary btn-icon shrink-0"
+        <BaseButton
+          variant="secondary"
+          class="btn-icon shrink-0"
+          icon="arrowLeft"
           aria-label="返回"
           title="返回"
           @click="handleCancel"
-        >
-          <Icon
-            name="arrowLeft"
-            size="md"
-          />
-        </button>
-        <button
-          class="btn btn-secondary min-w-0 flex-1 sm:flex-none"
+        />
+        <BaseButton
+          variant="secondary"
+          class="min-w-0 flex-1 sm:flex-none"
+          icon="save"
+          :loading="saving"
           :disabled="saving || submitting"
           @click="handleSave(false)"
         >
-          <span
-            v-if="saving"
-            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent align-middle mr-1"
-          />
-          <Icon
-            v-else
-            name="save"
-            size="md"
-            class="mr-1"
-          />
           {{ isEdit ? '保存草稿' : '存为草稿' }}
-        </button>
-        <button
-          class="btn btn-primary min-w-0 flex-1 sm:flex-none"
+        </BaseButton>
+        <BaseButton
+          variant="primary"
+          class="min-w-0 flex-1 sm:flex-none"
+          icon="send"
+          :loading="saving || submitting"
           :disabled="saving || submitting"
           @click="handleSave(true)"
         >
-          <span
-            v-if="saving || submitting"
-            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-1"
-          />
-          <Icon
-            v-else
-            name="send"
-            size="md"
-            class="mr-1"
-          />
           {{ isEdit ? '保存并发布' : '直接发布' }}
-        </button>
+        </BaseButton>
       </div>
     </div>
   </div>
@@ -340,7 +323,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Icon, Input, TextArea, InputNumber, Select, CheckboxGroup, SectionDivider } from '@/components/common'
+import { BaseButton, Input, TextArea, InputNumber, Select, CheckboxGroup, SectionDivider } from '@/components/common'
 import { useUIStore } from '@/stores/ui'
 import { workOrderAPI, productAPI, processAPI, materialAPI, artworkAPI, dieAPI, foilingPlateAPI, embossingPlateAPI, salesOrderAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'

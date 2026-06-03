@@ -4,18 +4,13 @@
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
         主管看板
       </h1>
-      <button
-        class="btn btn-secondary"
-        :disabled="loading"
+      <BaseButton
+        variant="secondary"
+        icon="refresh"
         title="刷新数据"
+        :loading="loading"
         @click="loadData"
-      >
-        <Icon
-          name="refresh"
-          size="md"
-          :class="loading ? 'animate-spin' : ''"
-        />
-      </button>
+      />
     </div>
 
     <!-- 总体进度卡片 -->
@@ -109,7 +104,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { supervisorAPI } from '@/api/modules'
-import { Icon } from '@/components/common'
+import { BaseButton, Icon } from '@/components/common'
 import { useUIStore } from '@/stores/ui'
 
 const loading = ref(false)

@@ -28,46 +28,34 @@
           clearable
           @change="handleSearch"
         />
-        <button
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="rotateCcw"
+          title="重置筛选"
           @click="handleReset"
         >
-          <Icon
-            name="rotateCcw"
-            size="md"
-            class="mr-1"
-          />
           重置
-        </button>
+        </BaseButton>
       </FilterRow>
     </template>
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
+        />
+        <BaseButton
           v-if="canCreate"
-          class="btn btn-primary"
+          variant="primary"
+          icon="plus"
           @click="handleAdd"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
-          />
           新建客户订单
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -298,7 +286,7 @@ import { useUIStore } from '@/stores/ui'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
-import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow, TextArea, Input, InputNumber } from '@/components/common'
+import { BaseButton, StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow, TextArea, Input, InputNumber } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 

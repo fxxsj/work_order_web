@@ -38,41 +38,28 @@
     
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
-          class="btn btn-secondary"
+        />
+        <BaseButton
+          variant="secondary"
+          icon="bell"
           @click="showLowStockDialog"
         >
-          <Icon
-            name="bell"
-            size="md"
-            class="mr-2"
-          />
           库存预警
-        </button>
-        <button
+        </BaseButton>
+        <BaseButton
           v-if="canCreate"
-          class="btn btn-primary"
+          variant="primary"
+          icon="plus"
           @click="showCreateDialog"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
-          />
           新建采购订单
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -269,7 +256,7 @@ import { useUIStore } from '@/stores/ui'
 import { purchaseOrderAPI, workOrderAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
-import { TablePageLayout, DataTable, EmptyState, SearchInput, Select, Icon, StatusTag, Pagination, ConfirmDialog, FilterRow, RowActions } from '@/components/common'
+import { BaseButton, TablePageLayout, DataTable, EmptyState, SearchInput, Select, Icon, StatusTag, Pagination, ConfirmDialog, FilterRow, RowActions } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { PurchaseFormDialog, PurchaseDetailDialog, LowStockAlertDialog, ReceiveDialog, InspectionDialog } from './components'
 

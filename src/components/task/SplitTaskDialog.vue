@@ -21,15 +21,14 @@
       </div>
       <div>
         <div class="mb-3 flex flex-wrap items-center gap-3">
-          <button
-            class="btn btn-primary btn-sm"
+          <BaseButton
+            variant="primary"
+            size="sm"
+            icon="plus"
             @click="addSplitItem"
           >
-            <Icon
-              name="plus"
-              class="h-3 w-3"
-            /> 添加子任务
-          </button>
+            添加子任务
+          </BaseButton>
           <span class="text-sm text-gray-400">至少需要2个子任务，子任务数量总和不能超过父任务数量</span>
         </div>
         <LineItemsTable
@@ -85,26 +84,26 @@
       </div>
     </div>
     <template #footer>
-      <button
-        class="btn btn-secondary"
+      <BaseButton
+        variant="secondary"
         @click="handleClose"
       >
         取消
-      </button>
-      <button
-        class="btn btn-primary"
-        :disabled="submitting"
+      </BaseButton>
+      <BaseButton
+        variant="primary"
+        :loading="submitting"
         @click="handleConfirm"
       >
         确定拆分
-      </button>
+      </BaseButton>
     </template>
   </BaseDialog>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { Icon, Input, InputNumber, Select, LineItemsTable } from '@/components/common'
+import { BaseButton, Input, InputNumber, Select, LineItemsTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
 

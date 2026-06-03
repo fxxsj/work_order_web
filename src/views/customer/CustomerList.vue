@@ -21,53 +21,36 @@
           accept=".xlsx,.xls"
           @change="handleImportFile"
         >
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
-          class="btn btn-secondary"
-          :disabled="exporting"
+        />
+        <BaseButton
+          variant="secondary"
+          icon="download"
+          :loading="exporting"
           @click="handleExport"
         >
-          <Icon
-            name="download"
-            size="md"
-            class="mr-2"
-          />
           导出
-        </button>
-        <button
-          class="btn btn-secondary"
+        </BaseButton>
+        <BaseButton
+          variant="secondary"
+          icon="upload"
           @click="handleImportClick"
         >
-          <Icon
-            name="upload"
-            size="md"
-            class="mr-2"
-          />
           导入
-        </button>
-        <button
+        </BaseButton>
+        <BaseButton
           v-if="canCreate"
-          class="btn btn-primary"
+          variant="primary"
+          icon="plus"
           @click="showCreateModal = true"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
-          />
           新建客户
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -338,7 +321,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { authAPI } from '@/api/modules'
 import { customerAPI } from '@/api/modules/customer'
 import { useCrudList, useCrudPermission, useCRUD, useExport } from '@/composables'
-import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Icon, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
+import { BaseButton, TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'

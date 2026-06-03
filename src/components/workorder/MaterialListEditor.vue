@@ -1,17 +1,15 @@
 <template>
   <div>
     <div class="mb-4 flex gap-2">
-      <button
+      <BaseButton
         v-if="!disabled"
-        class="btn btn-primary btn-sm"
+        variant="primary"
+        size="sm"
+        icon="plus"
         @click="emit('add')"
       >
-        <Icon
-          name="plus"
-          class="h-3 w-3"
-        />
         添加物料
-      </button>
+      </BaseButton>
     </div>
     <LineItemsTable
       :columns="columns"
@@ -77,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { Icon, Input, LineItemsTable } from '@/components/common'
+import { BaseButton, Input, LineItemsTable } from '@/components/common'
 import MaterialSelector from '@/views/material/components/MaterialSelector.vue'
 
 const props = defineProps({

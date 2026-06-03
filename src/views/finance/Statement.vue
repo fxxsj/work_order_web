@@ -4,35 +4,26 @@
       <template #actions>
         <div class="space-y-4">
           <div class="flex justify-end gap-3">
-            <button
-              class="btn btn-secondary"
-              :disabled="loading"
+            <BaseButton
+              variant="secondary"
+              icon="refresh"
               title="刷新"
+              :loading="loading"
               @click="reloadData"
-            >
-              <Icon
-                name="refresh"
-                size="md"
-                :class="loading ? 'animate-spin' : ''"
-              />
-            </button>
-            <button
-              class="btn btn-secondary"
+            />
+            <BaseButton
+              variant="secondary"
               @click="handlePrint"
             >
               打印
-            </button>
-            <button
-              class="btn btn-primary"
+            </BaseButton>
+            <BaseButton
+              variant="primary"
+              icon="plus"
               @click="handleCreate"
             >
-              <Icon
-                name="plus"
-                size="md"
-                class="mr-2"
-              />
               生成
-            </button>
+            </BaseButton>
           </div>
 
           <FilterRow>
@@ -73,12 +64,13 @@
               end-placeholder="结束日期"
               @change="searchAndRefreshStats"
             />
-            <button
-              class="btn btn-secondary"
+            <BaseButton
+              variant="secondary"
+              icon="rotateCcw"
               @click="handleReset"
             >
               重置
-            </button>
+            </BaseButton>
           </FilterRow>
 
           <StatementStats
@@ -231,12 +223,12 @@
         </DescriptionItem>
       </DescriptionGrid>
       <template #footer>
-        <button
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
           @click="detailDialogVisible = false"
         >
           关闭
-        </button>
+        </BaseButton>
       </template>
     </BaseDialog>
 
@@ -305,35 +297,29 @@
       </form>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button
+          <BaseButton
             type="button"
-            class="btn btn-secondary"
+            variant="secondary"
             @click="showCreateModal = false"
           >
             取消
-          </button>
-          <button
+          </BaseButton>
+          <BaseButton
             type="button"
-            class="btn btn-secondary"
-            :disabled="submitting"
+            variant="secondary"
+            :loading="submitting"
             @click="handlePreview"
           >
             预览
-          </button>
-          <button
+          </BaseButton>
+          <BaseButton
             form="statement-form"
             type="submit"
-            class="btn btn-primary"
-            :disabled="submitting"
+            variant="primary"
+            :loading="submitting"
           >
-            <Icon
-              v-if="submitting"
-              name="refresh"
-              size="sm"
-              class="-ml-1 mr-2 animate-spin"
-            />
-            {{ submitting ? '生成中...' : '生成' }}
-          </button>
+            生成
+          </BaseButton>
         </div>
       </template>
     </BaseDialog>
@@ -352,19 +338,19 @@
       />
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button
-            class="btn btn-secondary"
+          <BaseButton
+            variant="secondary"
             @click="confirmDialogVisible = false"
           >
             取消
-          </button>
-          <button
-            class="btn btn-primary"
-            :disabled="confirmSubmitting"
+          </BaseButton>
+          <BaseButton
+            variant="primary"
+            :loading="confirmSubmitting"
             @click="submitConfirm"
           >
             确认
-          </button>
+          </BaseButton>
         </div>
       </template>
     </BaseDialog>
@@ -379,7 +365,7 @@ import { supplierAPI } from '@/api/modules/supplier'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { useUIStore } from '@/stores/ui'
-import { StatusTag, Select, TextArea, TablePageLayout, DataTable, EmptyState, Pagination, Icon, BaseDialog, RowActions, SearchInput, DescriptionGrid, DescriptionItem, FilterRow, DateRangePicker } from '@/components/common'
+import { StatusTag, Select, TextArea, TablePageLayout, DataTable, EmptyState, Pagination, BaseButton, BaseDialog, RowActions, SearchInput, DescriptionGrid, DescriptionItem, FilterRow, DateRangePicker } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import StatementStats from './components/StatementStats.vue'
 

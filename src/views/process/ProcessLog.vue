@@ -25,25 +25,20 @@
     
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button
+        <BaseButton
           v-if="hasFilters"
-          class="btn btn-secondary"
+          variant="secondary"
           @click="resetFilters"
         >
           重置筛选
-        </button>
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        </BaseButton>
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
+        />
       </div>
     </template>
 
@@ -132,12 +127,12 @@
       </DescriptionItem>
     </DescriptionGrid>
     <template #footer>
-      <button
-        class="btn"
+      <BaseButton
+        variant="secondary"
         @click="detailDialogVisible = false"
       >
         关闭
-      </button>
+      </BaseButton>
     </template>
   </BaseDialog>
 </template>
@@ -153,7 +148,7 @@ import {
   DescriptionItem,
   EmptyState,
   FilterRow,
-  Icon,
+  BaseButton,
   Pagination,
   RowActions,
   SearchInput,

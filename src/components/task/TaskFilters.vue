@@ -32,41 +32,38 @@
       @search="emit('search')"
     />
     <div class="flex flex-wrap items-center gap-2 md:col-span-5 md:justify-end">
-      <button
-        class="btn btn-secondary btn-sm"
+      <BaseButton
+        variant="secondary"
+        size="sm"
+        icon="refresh"
         @click="emit('reset')"
       >
-        <Icon
-          name="refresh"
-          class="h-3 w-3"
-        /> 重置
-      </button>
-      <button
-        class="btn btn-secondary btn-sm"
-        :disabled="loading"
+        重置
+      </BaseButton>
+      <BaseButton
+        variant="secondary"
+        size="sm"
+        icon="refresh"
+        :loading="loading"
         @click="emit('refresh')"
       >
-        <Icon
-          name="refresh"
-          class="h-3 w-3"
-        /> 刷新
-      </button>
-      <button
-        class="btn btn-primary btn-sm"
+        刷新
+      </BaseButton>
+      <BaseButton
+        variant="primary"
+        size="sm"
+        icon="eye"
         @click="emit('view-toggle')"
       >
-        <Icon
-          name="eye"
-          class="h-3 w-3"
-        /> {{ isListView ? '看板视图' : '列表视图' }}
-      </button>
+        {{ isListView ? '看板视图' : '列表视图' }}
+      </BaseButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { SearchInput, Select, Icon } from '@/components/common'
+import { SearchInput, Select, BaseButton } from '@/components/common'
 
 const props = defineProps({ departments: { type: Array as any, default: () => [] }, selectedDepartment: { type: [Number, null], default: null }, selectedStatus: { type: String, default: '' }, selectedTaskType: { type: String, default: '' }, searchText: { type: String, default: '' }, isListView: { type: Boolean, default: false }, loading: { type: Boolean, default: false } })
 const emit = defineEmits(['department-change', 'status-change', 'task-type-change', 'search-input', 'search', 'clear', 'reset', 'refresh', 'view-toggle'])

@@ -1,17 +1,15 @@
 <template>
   <div>
     <div class="mb-4 flex gap-2">
-      <button
+      <BaseButton
         v-if="!disabled"
-        class="btn btn-primary btn-sm"
+        variant="primary"
+        size="sm"
+        icon="plus"
         @click="emit('add')"
       >
-        <Icon
-          name="plus"
-          class="h-3 w-3"
-        />
         添加产品
-      </button>
+      </BaseButton>
     </div>
     <LineItemsTable
       :columns="columns"
@@ -53,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { Icon, InputNumber, LineItemsTable } from '@/components/common'
+import { BaseButton, InputNumber, LineItemsTable } from '@/components/common'
 import ProductSelector from '@/views/product/components/ProductSelector.vue'
 
 const props = defineProps({

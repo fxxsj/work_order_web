@@ -22,30 +22,21 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
+        />
+        <BaseButton
           v-if="canCreate"
-          class="btn btn-primary"
+          variant="primary"
+          icon="plus"
           @click="openCreateModal"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
-          />
           新建部门
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -222,20 +213,14 @@
         >
           取消
         </button>
-        <button
+        <BaseButton
           form="department-form"
           type="submit"
-          :disabled="submitting"
-          class="btn btn-primary"
+          variant="primary"
+          :loading="submitting"
         >
-          <Icon
-            v-if="submitting"
-            name="refresh"
-            size="sm"
-            class="-ml-1 mr-2 animate-spin"
-          />
           {{ submitting ? '保存中...' : showEditModal ? '更新' : '创建' }}
-        </button>
+        </BaseButton>
       </div>
     </template>
   </BaseDialog>
@@ -322,7 +307,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { departmentAPI, processAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { TablePageLayout, DataTable, BaseDialog, ConfirmDialog, EmptyState, Pagination, SearchInput, Icon, Input, Select, InputNumber, CheckboxGroup, Toggle, Tag, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
+import { BaseButton, TablePageLayout, DataTable, BaseDialog, ConfirmDialog, EmptyState, Pagination, SearchInput, Input, Select, InputNumber, CheckboxGroup, Toggle, Tag, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'

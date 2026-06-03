@@ -50,30 +50,25 @@
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-          <button
+          <BaseButton
             v-if="unreadCount > 0"
-            class="btn btn-primary btn-sm"
-            :disabled="markingAll"
+            variant="primary"
+            size="sm"
+            icon="checkCircle"
+            :loading="markingAll"
             @click="markAllAsRead"
           >
-            <Icon
-              name="checkCircle"
-              class="h-4 w-4"
-            />
             全部已读
-          </button>
-          <button
-            class="btn btn-secondary btn-sm"
-            :disabled="loading"
+          </BaseButton>
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            icon="refresh"
+            :loading="loading"
             @click="refreshData"
           >
-            <Icon
-              name="refresh"
-              class="h-4 w-4"
-              :class="loading ? 'animate-spin' : ''"
-            />
             刷新
-          </button>
+          </BaseButton>
         </div>
       </div>
     </template>
@@ -163,7 +158,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { notificationAPI } from '@/api/modules'
 import { useCrudList } from '@/composables'
-import { TablePageLayout, DataTable, RowActions, EmptyState, Icon, FilterRow, SearchInput, Select, Tag, Pagination } from '@/components/common'
+import { TablePageLayout, DataTable, RowActions, EmptyState, BaseButton, FilterRow, SearchInput, Select, Tag, Pagination } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { formatDateTime } from '@/utils/filter'
 import ErrorHandler from '@/utils/errorHandler'

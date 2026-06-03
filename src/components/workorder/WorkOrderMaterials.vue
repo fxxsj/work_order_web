@@ -2,15 +2,14 @@
   <div class="card p-6">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <span class="text-lg font-bold">物料信息</span>
-      <button
-        class="btn btn-primary btn-sm"
+      <BaseButton
+        variant="primary"
+        size="sm"
+        icon="plus"
         @click="emit('add-material')"
       >
-        <Icon
-          name="plus"
-          class="h-3 w-3"
-        /> 添加物料
-      </button>
+        添加物料
+      </BaseButton>
     </div>
     <SummaryTable
       v-if="materials?.length"
@@ -49,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { Icon, StatusTag, EmptyState, SummaryTable } from '@/components/common'
+import { BaseButton, StatusTag, EmptyState, SummaryTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { formatDate } from '@/utils/filter'
 

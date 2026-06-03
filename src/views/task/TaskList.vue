@@ -52,17 +52,14 @@
           class="w-full sm:w-36"
           @change="handleSearchDebounced"
         />
-        <button
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="rotateCcw"
           title="重置"
           @click="handleReset"
         >
-          <Icon
-            name="rotateCcw"
-            size="md"
-            class="mr-1"
-          />重置
-        </button>
+          重置
+        </BaseButton>
       </FilterRow>
     </template>
     <template #actions>
@@ -80,31 +77,22 @@
             label="看板视图"
           />
         </RadioGroup>
-        <button
-          class="btn btn-secondary"
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
-          :disabled="loading"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
+        />
+        <BaseButton
           v-if="canExport"
-          class="btn btn-success"
-          :disabled="exporting"
+          variant="success"
+          icon="download"
+          :loading="exporting"
           @click="handleExport"
         >
-          <Icon
-            name="download"
-            size="md"
-            :class="exporting ? 'animate-spin' : ''"
-            class="mr-1"
-          />导出
-        </button>
+          导出
+        </BaseButton>
       </div>
     </template>
 
@@ -313,7 +301,7 @@ import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import taskService from '@/services/TaskService'
 import { PriorityChoices } from '@/constants'
-import { StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, RadioGroup, RadioButton, TablePageLayout, DataTable, ConfirmDialog, RowActions, Tag, ProgressBar, FilterRow, Checkbox } from '@/components/common'
+import { BaseButton, StatusTag, EmptyState, Pagination, SearchInput, Select, RadioGroup, RadioButton, TablePageLayout, DataTable, ConfirmDialog, RowActions, Tag, ProgressBar, FilterRow, Checkbox } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import TaskKanban from '@/components/TaskKanban.vue'

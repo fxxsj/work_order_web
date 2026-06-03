@@ -14,6 +14,7 @@ declare module 'vue' {
     AppSidebar: typeof import('./components/layout/AppSidebar.vue')['default']
     AssignTaskDialog: typeof import('./components/task/AssignTaskDialog.vue')['default']
     AuthLayout: typeof import('./components/layout/AuthLayout.vue')['default']
+    BaseButton: typeof import('./components/common/BaseButton.vue')['default']
     BaseDialog: typeof import('./components/common/BaseDialog.vue')['default']
     BatchActionBar: typeof import('./components/task/BatchActionBar.vue')['default']
     BatchAssignDialog: typeof import('./components/task/BatchAssignDialog.vue')['default']

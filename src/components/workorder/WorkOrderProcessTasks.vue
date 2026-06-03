@@ -3,36 +3,33 @@
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <span class="text-lg font-bold">工序和任务管理</span>
       <div class="flex flex-wrap items-center gap-3">
-        <button
+        <BaseButton
           v-if="canSyncTasks"
-          class="btn btn-secondary btn-sm"
+          variant="secondary"
+          size="sm"
+          icon="refresh"
           :disabled="!processes?.length"
           @click="emit('sync-tasks')"
         >
-          <Icon
-            name="refresh"
-            class="h-3 w-3"
-          /> 同步工序任务
-        </button>
-        <button
+          同步工序任务
+        </BaseButton>
+        <BaseButton
           v-if="unassignedTasks.length"
-          class="btn btn-secondary btn-sm"
+          variant="secondary"
+          size="sm"
+          icon="user"
           @click="emit('open-task-assignment')"
         >
-          <Icon
-            name="user"
-            class="h-3 w-3"
-          /> 未分派 {{ unassignedTasks.length }}
-        </button>
-        <button
-          class="btn btn-primary btn-sm"
+          未分派 {{ unassignedTasks.length }}
+        </BaseButton>
+        <BaseButton
+          variant="primary"
+          size="sm"
+          icon="plus"
           @click="emit('add-process')"
         >
-          <Icon
-            name="plus"
-            class="h-3 w-3"
-          /> 添加工序
-        </button>
+          添加工序
+        </BaseButton>
       </div>
     </div>
     <div
@@ -108,7 +105,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Icon, StatusTag, SummaryTable } from '@/components/common'
+import { BaseButton, StatusTag, SummaryTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 
 const props = defineProps({

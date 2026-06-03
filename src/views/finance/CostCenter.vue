@@ -33,37 +33,28 @@
 
     <template #actions>
       <div class="flex justify-end gap-3">
-        <button
+        <BaseButton
           v-if="hasFilters"
-          class="btn btn-secondary"
+          variant="secondary"
           @click="resetFilters"
         >
           重置筛选
-        </button>
-        <button
-          :disabled="loading"
-          class="btn btn-secondary"
+        </BaseButton>
+        <BaseButton
+          variant="secondary"
+          icon="refresh"
           title="刷新"
+          :loading="loading"
           @click="loadData"
-        >
-          <Icon
-            name="refresh"
-            size="md"
-            :class="loading ? 'animate-spin' : ''"
-          />
-        </button>
-        <button
+        />
+        <BaseButton
           v-if="canCreate"
-          class="btn btn-primary"
+          variant="primary"
+          icon="plus"
           @click="showCreateDialog"
         >
-          <Icon
-            name="plus"
-            size="md"
-            class="mr-2"
-          />
           新建成本中心
-        </button>
+        </BaseButton>
       </div>
     </template>
 
@@ -162,20 +153,19 @@
       />
     </div>
     <template #footer>
-      <button
-        class="btn"
-        :disabled="submitting"
+      <BaseButton
+        variant="secondary"
         @click="formDialogVisible = false"
       >
         取消
-      </button>
-      <button
-        class="btn btn-primary"
-        :disabled="submitting"
+      </BaseButton>
+      <BaseButton
+        variant="primary"
+        :loading="submitting"
         @click="handleFormSubmit"
       >
-        {{ submitting ? '保存中...' : '保存' }}
-      </button>
+        保存
+      </BaseButton>
     </template>
   </BaseDialog>
 
@@ -221,12 +211,12 @@
       </DescriptionItem>
     </DescriptionGrid>
     <template #footer>
-      <button
-        class="btn"
+      <BaseButton
+        variant="secondary"
         @click="detailDialogVisible = false"
       >
         关闭
-      </button>
+      </BaseButton>
     </template>
   </BaseDialog>
 
@@ -255,7 +245,7 @@ import {
   DescriptionItem,
   EmptyState,
   FilterRow,
-  Icon,
+  BaseButton,
   Input,
   Pagination,
   RowActions,

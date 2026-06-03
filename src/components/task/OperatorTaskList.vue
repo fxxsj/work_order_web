@@ -45,37 +45,36 @@
           v-if="showClaimButton && !task.assigned_operator"
           class="mt-3 text-right"
         >
-          <button
-            class="btn btn-primary btn-sm"
-            :disabled="claimingTaskId === task.id"
+          <BaseButton
+            variant="primary"
+            size="sm"
+            :loading="claimingTaskId === task.id"
             @click.stop="emit('claim', task)"
           >
             认领
-          </button>
+          </BaseButton>
         </div>
         <div
           v-if="showUpdateButtons && isMyTask(task)"
           class="mt-3 flex justify-end gap-2"
         >
-          <button
-            class="btn btn-secondary btn-sm"
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            icon="edit"
             @click.stop="emit('update', task)"
           >
-            <Icon
-              name="edit"
-              class="h-3 w-3"
-            /> 更新
-          </button>
-          <button
+            更新
+          </BaseButton>
+          <BaseButton
             v-if="canComplete(task)"
-            class="btn btn-success btn-sm"
+            variant="success"
+            size="sm"
+            icon="check"
             @click.stop="emit('complete', task)"
           >
-            <Icon
-              name="check"
-              class="h-3 w-3"
-            /> 完成
-          </button>
+            完成
+          </BaseButton>
         </div>
       </div>
     </div>
@@ -88,9 +87,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Icon } from '@/components/common'
+import { BaseButton, StatusTag } from '@/components/common'
 import { useUserStore } from '@/stores'
-import { StatusTag } from '@/components/common'
 
 const props = defineProps({
   tasks: { type: Array as any, default: () => [] },
