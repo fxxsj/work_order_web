@@ -819,7 +819,7 @@ const deleteLoading = ref(false)
 const showConvertDialog = ref(false)
 const converting = ref(false)
 const convertForm = reactive({
-  production_quantity: undefined as number | null | undefined,
+  production_quantity: undefined as number | undefined,
   delivery_date: '',
   priority: 'normal',
   notes: '',
@@ -885,7 +885,7 @@ const formatAmount = (value: any) => {
 
 const handleConvert = () => {
   // 初始化表单默认值
-  convertForm.production_quantity = detailData.total_quantity || null
+  convertForm.production_quantity = detailData.total_quantity || undefined
   convertForm.delivery_date = detailData.delivery_date || ''
   convertForm.priority = 'normal'
   convertForm.notes = ''
@@ -896,7 +896,7 @@ const confirmConvert = async () => {
   converting.value = true
   try {
     const payload: Record<string, unknown> = {}
-    if (convertForm.production_quantity !== undefined && convertForm.production_quantity > 0) {
+    if (convertForm.production_quantity != null && convertForm.production_quantity > 0) {
       payload.production_quantity = convertForm.production_quantity
     }
     if (convertForm.delivery_date) {
@@ -909,8 +909,21 @@ const confirmConvert = async () => {
       payload.notes = convertForm.notes
     }
     const result: any = await salesOrderAPI.convertToWorkOrder(String(route.params.id), payload)
-    useUIStore().showSuccess('施工单创建成功')
     showConvertDialog.value = false
+
+    // 展示自动关联的资产结果
+    const autoLinked = result?.asset_link_result?.auto_linked
+    if (autoLinked && Object.keys(autoLinked).length > 0) {
+      const parts: string[] = []
+      if (autoLinked.artworks?.length) parts.push(`图稿 ${autoLinked.artworks.length} 个`)
+      if (autoLinked.dies?.length) parts.push(`刀模 ${autoLinked.dies.length} 个`)
+      if (autoLinked.foiling_plates?.length) parts.push(`烫金版 ${autoLinked.foiling_plates.length} 个`)
+      if (autoLinked.embossing_plates?.length) parts.push(`压凸版 ${autoLinked.embossing_plates.length} 个`)
+      useUIStore().showSuccess(`施工单创建成功，已自动关联：${parts.join('、')}`)
+    } else {
+      useUIStore().showWarning('施工单创建成功，但未找到产品关联的已确认图稿/刀模/版类资产，请在施工单详情中补充')
+    }
+
     if (result?.id) {
       router.push(`/workorders/${result.id}`)
     } else {
