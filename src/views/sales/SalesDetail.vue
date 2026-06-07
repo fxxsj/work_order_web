@@ -723,6 +723,62 @@
       @confirm="confirmDelete"
       @cancel="showDeleteDialog = false"
     />
+    <!-- 对话框：生成施工单向导 -->
+    <ConfirmDialog
+      :show="showConvertDialog"
+      title="生成施工单"
+      message=""
+      confirm-text="确认生成"
+      cancel-text="取消"
+      :loading="converting"
+      loading-text="创建中..."
+      @confirm="confirmConvert"
+      @cancel="showConvertDialog = false"
+    >
+      <div class="space-y-3">
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          从订单 <strong>{{ detailData.order_number }}</strong> 生成施工单，系统将自动复制订单产品、工序、物料和关联资产。
+        </p>
+        <div>
+          <label class="input-label mb-1.5 block">生产数量</label>
+          <InputNumber
+            v-model="convertForm.production_quantity"
+            :min="1"
+            class="w-full"
+          />
+        </div>
+        <div>
+          <label class="input-label mb-1.5 block">交货日期</label>
+          <Input
+            v-model="convertForm.delivery_date"
+            type="date"
+          />
+        </div>
+        <div>
+          <label class="input-label mb-1.5 block">优先级</label>
+          <select
+            v-model="convertForm.priority"
+            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-dark-600 dark:bg-dark-700 dark:text-gray-200"
+          >
+            <option value="low">低</option>
+            <option value="normal">正常</option>
+            <option value="high">高</option>
+            <option value="urgent">紧急</option>
+          </select>
+        </div>
+        <div>
+          <label class="input-label mb-1.5 block">备注</label>
+          <TextArea
+            v-model="convertForm.notes"
+            :rows="2"
+            placeholder="请输入施工单备注"
+          />
+        </div>
+        <div class="rounded-md bg-blue-50 p-2 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+          <p>提示：请确保产品已配置图稿/刀模等资产，或在施工单创建后补充。</p>
+        </div>
+      </div>
+    </ConfirmDialog>
   </div>
 </template>
 
@@ -760,6 +816,14 @@ const cancelReason = ref('')
 const cancelLoading = ref(false)
 const showDeleteDialog = ref(false)
 const deleteLoading = ref(false)
+const showConvertDialog = ref(false)
+const converting = ref(false)
+const convertForm = reactive({
+  production_quantity: undefined as number | null | undefined,
+  delivery_date: '',
+  priority: 'normal',
+  notes: '',
+})
 const activeDetailTab = ref<'detail' | 'finance'>('detail')
 
 const detailTabs: Array<{ key: 'detail' | 'finance'; label: string }> = [
@@ -819,7 +883,45 @@ const formatAmount = (value: any) => {
   return `¥${Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-const handleConvert = () => { router.push(`/workorders/create?sales_order_id=${route.params.id}`) }
+const handleConvert = () => {
+  // 初始化表单默认值
+  convertForm.production_quantity = detailData.total_quantity || null
+  convertForm.delivery_date = detailData.delivery_date || ''
+  convertForm.priority = 'normal'
+  convertForm.notes = ''
+  showConvertDialog.value = true
+}
+
+const confirmConvert = async () => {
+  converting.value = true
+  try {
+    const payload: Record<string, unknown> = {}
+    if (convertForm.production_quantity !== undefined && convertForm.production_quantity > 0) {
+      payload.production_quantity = convertForm.production_quantity
+    }
+    if (convertForm.delivery_date) {
+      payload.delivery_date = convertForm.delivery_date
+    }
+    if (convertForm.priority) {
+      payload.priority = convertForm.priority
+    }
+    if (convertForm.notes) {
+      payload.notes = convertForm.notes
+    }
+    const result: any = await salesOrderAPI.convertToWorkOrder(String(route.params.id), payload)
+    useUIStore().showSuccess('施工单创建成功')
+    showConvertDialog.value = false
+    if (result?.id) {
+      router.push(`/workorders/${result.id}`)
+    } else {
+      router.push('/workorders')
+    }
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '创建施工单失败')
+  } finally {
+    converting.value = false
+  }
+}
 
 const handleCreateDeliveryOrder = () => {
   router.push(`/inventory/delivery/create?sales_order_id=${route.params.id}`)
