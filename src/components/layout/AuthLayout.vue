@@ -62,6 +62,7 @@ const currentYear = computed(() => new Date().getFullYear())
 
 <style>
 .auth-layout {
+  isolation: isolate;
   position: relative;
   display: flex;
   align-items: center;
@@ -74,6 +75,8 @@ const currentYear = computed(() => new Date().getFullYear())
 .auth-bg {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background: linear-gradient(to bottom right, #f9fafb, rgba(204, 251, 241, 0.3), #f3f4f6);
 }
 

@@ -110,11 +110,38 @@ const router = createRouter({
 let isAuthChecking = false
 let authCheckPromise: Promise<boolean> | null = null
 
+function hasUsableStoredCredentials(): boolean {
+  const userStore = useUserStore()
+  const user = userStore.currentUser
+
+  if (!user) {
+    return false
+  }
+
+  if (user.refresh_token) {
+    return true
+  }
+
+  if (!user.access_token) {
+    return false
+  }
+
+  if (!user.access_expires_at) {
+    return true
+  }
+
+  return user.access_expires_at > Math.floor(Date.now() / 1000)
+}
+
 async function checkAuthentication(): Promise<boolean> {
   const userStore = useUserStore()
 
   if (userStore.currentUser) {
-    return true
+    if (hasUsableStoredCredentials()) {
+      return true
+    }
+    userStore.clearUser()
+    return false
   }
 
   if (isAuthChecking && authCheckPromise) {
@@ -159,10 +186,13 @@ router.beforeEach(async (to, from, next) => {
     // 公开路由：已登录用户访问登录页则跳转
     if (to.path === '/login') {
       const userStore = useUserStore()
-      if (userStore.currentUser) {
+      if (userStore.currentUser && hasUsableStoredCredentials()) {
         const redirect = (to.query.redirect as string) || from.fullPath || '/dashboard'
         next(redirect)
         return
+      }
+      if (userStore.currentUser) {
+        userStore.clearUser()
       }
     }
     next()

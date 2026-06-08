@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div class="app-shell">
     <router-view />
     <Toast />
     <GlobalConfirm />
@@ -15,7 +15,7 @@ import { GlobalConfirm, Toast } from '@/components/common'
 </script>
 
 <style>
-#app {
+.app-shell {
   min-height: 100vh;
 }
 </style>
