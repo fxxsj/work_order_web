@@ -28,6 +28,6 @@ export const taskRoutes: RouteRecordRaw[] = [
     path: 'tasks/assignment-rules',
     name: 'AssignmentRule',
     component: AssignmentRule,
-    meta: { title: '分派规则配置', requiresAuth: true, requiresAdmin: true, requiresPermission: ['workorder.view_taskassignmentrule'] }
+    meta: { title: '默认分派部门', requiresAuth: true, requiresAdmin: true, requiresPermission: ['workorder.view_taskassignmentrule'] }
   }
 ]
