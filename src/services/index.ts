@@ -7,6 +7,7 @@
 import baseService from './base/BaseService'
 import taskService from './TaskService'
 import workOrderService from './WorkOrderService'
+import workOrderFormService from './WorkOrderFormService'
 import formValidationService from './FormValidationService'
 import permissionService from './PermissionService'
 import exportService from './ExportService'
@@ -18,6 +19,7 @@ export {
   // 业务服务
   taskService,
   workOrderService,
+  workOrderFormService,
 
   // 功能服务
   formValidationService,
@@ -29,6 +31,7 @@ export default {
   baseService,
   taskService,
   workOrderService,
+  workOrderFormService,
   formValidationService,
   permissionService,
   exportService

@@ -188,7 +188,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { workOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
-import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
+import { useCrudList, useCrudPermission, useCRUD, useExport } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
 import { BaseButton, StatusTag, SearchInput, Select, DateRangePicker, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
@@ -200,7 +200,6 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const exporting = ref(false)
 const deleting = ref(false)
 const sortKey = ref('created_at')
 const sortOrder = ref<'asc' | 'desc'>('desc')
@@ -401,40 +400,41 @@ const handleRowAction = (action: RowAction, row: any) => {
   }
 }
 
+const DELIVERY_DATE_WARNING_DAYS = 3
+const DELIVERY_DATE_DANGER_COLOR = '#ef4444'
+const DELIVERY_DATE_WARNING_COLOR = '#f59e0b'
+
 const getDeliveryDateStyle = (date: any, status: any) => {
   if (status === 'completed' || status === 'cancelled') return {}
   const diffDays = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-  if (diffDays < 0) return { color: '#ef4444', fontWeight: 'bold' }
-  if (diffDays <= 3) return { color: '#f59e0b', fontWeight: 'bold' }
+  if (diffDays < 0) return { color: DELIVERY_DATE_DANGER_COLOR, fontWeight: 'bold' }
+  if (diffDays <= DELIVERY_DATE_WARNING_DAYS) return { color: DELIVERY_DATE_WARNING_COLOR, fontWeight: 'bold' }
   return {}
 }
 
+const { exporting, exportData } = useExport(
+  (params) => workOrderAPI.export(params),
+  { fileNamePrefix: '施工单列表', fileExtension: 'xlsx' }
+)
+
 const handleExport = async () => {
+  const params = {}
+  if ((filters.value as any).search) (params as any).search = filters.value.search
+  if ((filters.value as any).status) (params as any).status = filters.value.status
+  if ((filters.value as any).priority) (params as any).priority = filters.value.priority
+  if ((filters.value as any).approval_status) (params as any).approval_status = filters.value.approval_status
+  if ((filters.value as any).order_date_after) (params as any).order_date_after = filters.value.order_date_after
+  if ((filters.value as any).order_date_before) (params as any).order_date_before = filters.value.order_date_before
+  if ((filters.value as any).delivery_date_after) (params as any).delivery_date_after = filters.value.delivery_date_after
+  if ((filters.value as any).delivery_date_before) (params as any).delivery_date_before = filters.value.delivery_date_before
+  const now = new Date()
+  const filename = `施工单列表_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.xlsx`
+  ;(params as any).filename = filename
   try {
-    exporting.value = true
-    const params = {}
-    if ((filters.value as any).search) (params as any).search = filters.value.search
-    if ((filters.value as any).status) (params as any).status = filters.value.status
-    if ((filters.value as any).priority) (params as any).priority = filters.value.priority
-    if ((filters.value as any).approval_status) (params as any).approval_status = filters.value.approval_status
-    if ((filters.value as any).order_date_after) (params as any).order_date_after = filters.value.order_date_after
-    if ((filters.value as any).order_date_before) (params as any).order_date_before = filters.value.order_date_before
-    if ((filters.value as any).delivery_date_after) (params as any).delivery_date_after = filters.value.delivery_date_after
-    if ((filters.value as any).delivery_date_before) (params as any).delivery_date_before = filters.value.delivery_date_before
-    const now = new Date()
-    const filename = `施工单列表_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.xlsx`;
-    (params as any).filename = filename
-    const response: any = await workOrderAPI.export(params)
-    const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-    useUIStore().showSuccess('导出成功')
+    const success = await exportData(params, filename)
+    if (success) {
+      useUIStore().showSuccess('导出成功')
+    }
   } catch (error: any) {
     if (error.response && error.response.data) {
       const reader = new FileReader()
@@ -443,8 +443,6 @@ const handleExport = async () => {
     } else {
       ErrorHandler.showMessage(error, '导出')
     }
-  } finally {
-    exporting.value = false
   }
 }
 

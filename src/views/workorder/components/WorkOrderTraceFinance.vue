@@ -26,18 +26,18 @@
         >
           <button
             v-for="item in group.items"
-            :key="itemKey(item)"
+            :key="getItemKey(item)"
             type="button"
             class="w-full rounded-md bg-gray-50 px-3 py-2 text-left text-sm hover:bg-gray-100 dark:bg-dark-800 dark:hover:bg-dark-700"
-            @click="openItem(group, item)"
+            @click="openItem(router, group, item)"
           >
             <div class="font-medium text-gray-900 dark:text-white">
-              {{ itemNumber(item) }}
+              {{ getItemNumber(item) }}
             </div>
             <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-dark-400">
-              <span v-if="itemStatus(item)">{{ itemStatus(item) }}</span>
-              <span v-if="itemAmount(item)">{{ itemAmount(item) }}</span>
-              <span v-if="itemDate(item)">{{ itemDate(item) }}</span>
+              <span v-if="getItemStatus(item)">{{ getItemStatus(item) }}</span>
+              <span v-if="getItemAmount(item)">{{ getItemAmount(item) }}</span>
+              <span v-if="getItemDate(item)">{{ getItemDate(item) }}</span>
             </div>
           </button>
         </div>
@@ -99,6 +99,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { formatDate } from '@/utils/filter'
+import { getItemKey, getItemNumber, getItemStatus, getItemAmount, getItemDate, openItem } from '@/utils/listDisplay'
 
 const props = defineProps<{
   workOrder: Record<string, any>
@@ -141,21 +142,4 @@ const financeItems = computed(() => [
   { label: '未结清订单', value: props.workOrder?.unsettled_sales_order_count ?? 0 },
   { label: '关联发票', value: props.workOrder?.invoice_count ?? 0 },
 ])
-
-const itemKey = (item: any) => item?.id || item?.number || item?.order_number || item?.invoice_number || JSON.stringify(item)
-const itemNumber = (item: any) => item?.number || item?.order_number || item?.invoice_number || item?.code || item?.name || '-'
-const itemStatus = (item: any) => item?.status_display || item?.status || item?.payment_status_display || ''
-const itemAmount = (item: any) => {
-  const value = item?.total_amount ?? item?.amount
-  return value === undefined || value === null ? '' : formatAmount(value)
-}
-const itemDate = (item: any) => formatDate(item?.date || item?.order_date || item?.created_at)
-
-const openItem = (group: any, item: any) => {
-  if (group.detailPrefix && item?.id) {
-    router.push(`${group.detailPrefix}/${item.id}`)
-    return
-  }
-  if (group.route) router.push(group.route)
-}
 </script>

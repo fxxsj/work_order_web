@@ -89,7 +89,7 @@
       </div>
       <div class="space-y-4">
         <TextArea
-          v-model="resubmitForm.reason"
+          v-model="localResubmitReason"
           label="修改说明"
           :rows="3"
           placeholder="请说明修改了什么内容（可选）"
@@ -165,7 +165,6 @@ const props = defineProps({
   approving: { type: Boolean, default: false },
   resubmitting: { type: Boolean, default: false },
   approvalForm: { type: Object, default: () => ({}) },
-  resubmitForm: { type: Object, default: () => ({}) },
   approvalRules: { type: Object, default: () => ({}) },
   showRejectionReason: { type: Boolean, default: false },
   taskGenerationSummary: { type: Object, default: null },
@@ -174,6 +173,7 @@ const props = defineProps({
 
 const emit = defineEmits(['approve', 'resubmit'])
 const rejecting = ref(false)
+const localResubmitReason = ref('')
 const approvalFormState = reactive({
   comment: '',
   rejection_reason: ''

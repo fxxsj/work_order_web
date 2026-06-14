@@ -760,10 +760,18 @@
             v-model="convertForm.priority"
             class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-dark-600 dark:bg-dark-700 dark:text-gray-200"
           >
-            <option value="low">低</option>
-            <option value="normal">正常</option>
-            <option value="high">高</option>
-            <option value="urgent">紧急</option>
+            <option value="low">
+              低
+            </option>
+            <option value="normal">
+              正常
+            </option>
+            <option value="high">
+              高
+            </option>
+            <option value="urgent">
+              紧急
+            </option>
           </select>
         </div>
         <div>
