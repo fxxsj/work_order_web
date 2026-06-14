@@ -79,7 +79,7 @@ export function useWorkOrderDetail() {
     try {
       const res: any = await purchaseOrderAPI.getList({ work_order: workOrderId })
       purchaseOrders.value = Array.isArray(res) ? res : (res?.results || [])
-    } catch (e: any) {
+    } catch (_e: any) {
       /* 忽略，采购单可能为空 */
     }
   }
@@ -92,7 +92,7 @@ export function useWorkOrderDetail() {
       ])
       availableMaterials.value = Array.isArray(materialsRes) ? materialsRes : (materialsRes?.results || [])
       availableProcesses.value = Array.isArray(processesRes) ? processesRes : (processesRes?.results || processesRes?.data || [])
-    } catch (e: any) {
+    } catch (_e: any) {
       // 候选列表加载失败不影响详情阅读。
     }
   }
@@ -103,7 +103,7 @@ export function useWorkOrderDetail() {
     try {
       const processIds = processList.value.map((item: any) => item.id).filter(Boolean)
       syncCheck.value = await workOrderAPI.checkSyncNeeded(String(route.params.id), processIds)
-    } catch (e: any) {
+    } catch (_e: any) {
       syncCheck.value = null
     }
   }
@@ -246,7 +246,7 @@ export function useWorkOrderDetail() {
     try {
       await loadData()
       loadSelectionOptions()
-    } catch (e: any) {
+    } catch (_e: any) {
       useUIStore().showError('加载失败')
     } finally {
       loading.value = false

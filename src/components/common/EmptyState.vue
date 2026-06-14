@@ -74,7 +74,11 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   description: '',
   actionIcon: true,
-  title: '暂无数据'
+  title: '暂无数据',
+  icon: undefined,
+  actionText: undefined,
+  actionTo: undefined,
+  message: undefined
 })
 
 const displayTitle = computed(() => props.title || '暂无数据')

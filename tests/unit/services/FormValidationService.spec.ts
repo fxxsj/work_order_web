@@ -2,6 +2,7 @@
  * FormValidationService 单元测试
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { describe, it, expect, beforeEach } from 'vitest'
 import formValidationService from '@/services/FormValidationService'
 
@@ -359,6 +360,7 @@ describe('FormValidationService', () => {
 
     it('应该收集所有批量验证错误', () => {
       const rules = {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
         name: (value: unknown) => ({
           valid: false,
           message: '名称错误'

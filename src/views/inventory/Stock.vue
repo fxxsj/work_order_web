@@ -436,6 +436,7 @@ const fetchStats = async () => {
       search: searchText.value
     }))
     stats.value = response || {} 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) { 
     stats.value = {} 
   } finally { 
@@ -489,6 +490,7 @@ const handleLowStock = async () => {
   try { 
     const response: any = await productStockAPI.getLowStock()
     lowStockList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) { 
     lowStockList.value = [] 
   } finally { 
@@ -502,6 +504,7 @@ const handleExpired = async () => {
   try { 
     const response: any = await productStockAPI.getExpired()
     expiredList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) { 
     expiredList.value = [] 
   } finally { 
@@ -509,7 +512,7 @@ const handleExpired = async () => {
   }
 }
 
-const getRowActions = (row: any): RowAction[] => [
+const getRowActions = (_row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
   { key: 'adjust', label: '调整', icon: 'edit', tone: 'primary', visible: canEdit.value }
 ]

@@ -21,7 +21,9 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   variant: 'rect',
-  width: '100%'
+  width: '100%',
+  height: undefined,
+  class: undefined
 })
 
 const customClass = computed(() => props.class || '')

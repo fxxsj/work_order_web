@@ -52,7 +52,7 @@ import { BaseButton, StatusTag, EmptyState, SummaryTable } from '@/components/co
 import type { Column } from '@/components/common/types'
 import { formatDate } from '@/utils/filter'
 
-const props = defineProps({ materials: { type: Array as any, default: () => [] } })
+defineProps({ materials: { type: Array as any, default: () => [] } })
 const emit = defineEmits(['add-material', 'update-material'])
 
 const columns: Column[] = [

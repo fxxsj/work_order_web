@@ -3,7 +3,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { flushPromises } from '@vue/test-utils'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { mount, flushPromises as vueFlushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
 

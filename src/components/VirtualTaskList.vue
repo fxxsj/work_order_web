@@ -141,7 +141,7 @@ import { useRouter } from 'vue-router'
 import { StatusTag } from '@/components/common'
 import VirtualList from './VirtualList.vue'
 
-const props = defineProps({
+defineProps({
   tasks: { type: Array as any, default: () => [] },
   listHeight: { type: Number, default: 400 },
   hasMore: { type: Boolean, default: false },

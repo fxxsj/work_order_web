@@ -156,7 +156,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const props = defineProps({
+defineProps({
   previewData: { type: Array as any, default: () => [] },
   loading: { type: Boolean, default: false },
   globalDispatchEnabled: { type: Boolean, default: true }

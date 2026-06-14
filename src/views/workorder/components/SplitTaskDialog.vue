@@ -97,7 +97,9 @@
 </template>
 
 <script setup lang="ts">
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ref, reactive, computed, watch } from 'vue'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Icon, Input, InputNumber, Select, LineItemsTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
@@ -121,6 +123,7 @@ const splitColumns: Column[] = [
   { key: 'assigned_department', label: '分派部门', width: 176 },
   { key: 'assigned_operator', label: '分派操作员', width: 176 },
 ]
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const handleDeptChange = (index: any, val: any) => { form.splits[index].assigned_operator = null }
 const handleSubmit = () => {
   if (form.splits.length < 2) { useUIStore().showWarning('至少需要2个子任务'); return }

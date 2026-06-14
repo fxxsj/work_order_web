@@ -60,7 +60,6 @@
 import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { authAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
-import unwrapApiResponse from '@/utils/apiResponse'
 import { Select, TextArea } from '@/components/common'
 
 const props = defineProps({
@@ -74,11 +73,9 @@ const emit = defineEmits(['confirm', 'update:visible'])
 const formRef = ref<any>(null)
 const operatorList = ref<any[]>([])
 const loadingOperators = ref(false)
-const loadingDepartments = ref(false)
 const submitting = ref(false)
 
 const form = reactive({ assigned_department: null, assigned_operator: null, reason: '', notes: '' })
-const rules = { assigned_department: [{ required: true, message: '请选择分派部门', trigger: 'change' }] }
 
 const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
 

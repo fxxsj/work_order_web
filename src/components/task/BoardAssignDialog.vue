@@ -59,7 +59,6 @@ const emit = defineEmits(['confirm', 'update:visible'])
 const formRef = ref<any>(null)
 const FORM_INITIAL = { assigned_operator: null, notes: '' }
 const form = reactive({ ...FORM_INITIAL })
-const rules = { assigned_operator: [{ required: true, message: '请选择操作员', trigger: 'change' }] }
 
 const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
 

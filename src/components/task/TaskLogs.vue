@@ -39,11 +39,10 @@
 </template>
 
 <script setup lang="ts">
-import { formatDateTime } from '@/utils/filter'
 import { SummaryTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 
-const props = defineProps({ task: { type: Object, required: true } })
+defineProps({ task: { type: Object, required: true } })
 const getStatusText = (s: any) => ({ pending: '待开始', in_progress: '进行中', completed: '已完成', cancelled: '已取消' } as any)[s] || s
 
 const columns: Column[] = [

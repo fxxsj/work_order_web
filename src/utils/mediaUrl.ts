@@ -5,7 +5,7 @@ export function resolveMediaUrl(raw?: string | null): string {
   try {
     const parsed = new URL(value)
     if (parsed.protocol) return parsed.toString()
-  } catch (_) {
+  } catch (_err) {
     // Relative paths are resolved below.
   }
 

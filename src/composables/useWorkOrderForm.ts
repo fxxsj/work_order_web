@@ -1,4 +1,4 @@
-import { ref, computed, watch, reactive } from 'vue'
+import { computed, watch, reactive } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 
 export interface WorkOrderFormState {
@@ -53,7 +53,7 @@ export interface UseWorkOrderFormReturn {
 }
 
 export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrderFormReturn {
-  const { productList, artworkList, processList } = options
+  const { productList, artworkList } = options
 
   const form = reactive<WorkOrderFormState>({
     sales_order_id: undefined,

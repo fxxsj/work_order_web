@@ -90,7 +90,7 @@ import { computed } from 'vue'
 import { BaseButton, StatusTag } from '@/components/common'
 import { useUserStore } from '@/stores'
 
-const props = defineProps({
+defineProps({
   tasks: { type: Array as any, default: () => [] },
   showClaimButton: { type: Boolean, default: false },
   showUpdateButtons: { type: Boolean, default: false },

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { StatsCards } from '@/components/common'
 
 const props = defineProps({
   stats: { type: Object, default: () => ({}) }
 })
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const statItems = computed(() => [
   { key: 'total', label: '总任务数', value: props.stats.total, format: 'number', iconName: 'document', tone: 'primary' },
   { key: 'pending', label: '待开始', value: props.stats.pending, format: 'number', iconName: 'clock', tone: 'info' },

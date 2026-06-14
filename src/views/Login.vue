@@ -185,6 +185,7 @@ onMounted(async () => {
       if (userStore.currentUser?.access_expires_at) {
         scheduleRefresh(userStore.currentUser.access_expires_at)
       }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error: any) {
       // 忽略错误
     }

@@ -110,9 +110,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import Icon from '@/components/icons/Icon.vue'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps({
   title: { type: String, default: '' },
   items: { type: Array as any, default: () => [] },
@@ -125,8 +125,6 @@ const props = defineProps({
   },
   loading: { type: Boolean, default: false }
 })
-
-const layoutClass = computed(() => `is-${props.layout}`)
 
 const formatValue = (value: any, format: any) => {
   const normalizedValue = value ?? 0

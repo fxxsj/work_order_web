@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Column } from './types'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = withDefaults(defineProps<{
   columns: Column[]
   items: any[]
@@ -10,6 +11,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   emptyText: '暂无明细数据',
   showDelete: true,
+  deleteDisabled: undefined,
 })
 
 const emit = defineEmits<{

@@ -103,6 +103,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { supervisorAPI } from '@/api/modules'
 import { BaseButton, Icon } from '@/components/common'
 import { useUIStore } from '@/stores/ui'
@@ -126,6 +127,7 @@ const loadData = async () => {
       { name: '糊盒组', current: 5, capacity: 20, ratio: 25 },
       { name: '质检组', current: 22, capacity: 20, ratio: 110 }
     ]
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     useUIStore().showError('加载看板数据失败')
   } finally {

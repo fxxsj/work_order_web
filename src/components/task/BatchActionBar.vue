@@ -62,7 +62,7 @@
 <script setup lang="ts">
 import { Icon, BaseButton } from '@/components/common'
 
-const props = defineProps({
+defineProps({
   selectedCount: { type: Number, default: 0 },
   loading: { type: Boolean, default: false }
 })

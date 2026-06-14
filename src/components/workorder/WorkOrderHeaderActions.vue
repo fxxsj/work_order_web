@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/common'
 
-const props = defineProps({
+defineProps({
   canEdit: { type: Boolean, default: false }
 })
 const emit = defineEmits(['back', 'print', 'edit'])

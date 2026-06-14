@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   trigger: 'hover',
   widthClass: 'w-64',
+  content: ''
 })
 
 const show = ref(false)

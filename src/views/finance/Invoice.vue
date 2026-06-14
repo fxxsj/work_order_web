@@ -489,6 +489,7 @@ const fetchStats = async () => {
       pending_amount: summary.pending_payment_amount || 0,
       total_amount: summary.total_amount || 0
     }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) {
     stats.value = {}
   } finally {
@@ -513,7 +514,7 @@ const fetchCustomers = async () => {
   try {
     const response: any = await customerAPI.getList({ page_size: 50 })
     customerList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
-  } catch (error: any) {}
+  } catch (_error: any) { /* no-op */ }
 }
 
 const handleCustomerCreated = (customer: any) => {

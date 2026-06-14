@@ -286,6 +286,7 @@ import {
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const userStore = useUserStore()
 const { canCreate, canEdit, canDelete } = useCrudPermission('taskassignmentrule')
 
@@ -440,6 +441,7 @@ const loadGlobalState = async () => {
   try {
     const res: any = await taskAssignmentRuleAPI.getGlobalState()
     globalDispatchEnabled.value = res?.enabled || false
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) {
     // 忽略错误，使用默认值
   }

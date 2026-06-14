@@ -84,5 +84,6 @@ import { Icon } from '@/components/common'
 
 defineProps({ statistics: { type: Object, default: () => ({}) } })
 const emit = defineEmits(['navigate'])
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getStatusCount = (status: any) => 0 // Placeholder
 </script>

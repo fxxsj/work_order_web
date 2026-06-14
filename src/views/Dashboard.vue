@@ -65,6 +65,7 @@
 </template>
 
 <script setup lang="ts">
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -158,6 +159,7 @@ const loadData = async () => {
     if (isDesigner.value) {
       await loadPendingPlates()
     }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) {
     ErrorHandler.showError('加载数据失败，请刷新重试')
   } finally {

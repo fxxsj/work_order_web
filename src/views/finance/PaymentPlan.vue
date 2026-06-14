@@ -304,6 +304,7 @@ const fetchStats = async () => {
     }))
     const payload = response?.data || response
     stats.value = payload?.summary || {}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) {
     stats.value = {}
   } finally {

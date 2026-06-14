@@ -486,6 +486,7 @@ const fetchStats = async () => {
       total_credit: summary.total_credit || 0,
       closing_balance: summary.closing_balance || 0
     }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) {
     stats.value = {}
   } finally {

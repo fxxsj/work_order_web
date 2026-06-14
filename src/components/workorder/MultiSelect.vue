@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { Select } from '@/components/common'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps({
   modelValue: { type: Array as any, default: () => [] },
   options: { type: Array as any, default: () => [] },

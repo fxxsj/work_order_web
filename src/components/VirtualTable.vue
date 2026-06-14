@@ -68,12 +68,7 @@ const props = defineProps({
   pageSizes: { type: Array, default: () => [10, 20, 50, 100] }
 })
 
-const emit = defineEmits(['size-change', 'current-change'])
-
 const displayData = computed(() => props.data)
-
-const handleSizeChange = (size: any) => emit('size-change', size)
-const handleCurrentChange = (page: any) => emit('current-change', page)
 </script>
 
 <style>

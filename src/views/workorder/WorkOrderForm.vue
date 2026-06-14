@@ -420,8 +420,11 @@ const {
   productDefaultProcessIds,
   selectedProductIds,
   syncMaterialsFromProducts,
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   syncColorsFromArtworks,
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   syncPrepressFromArtworks,
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   syncImpositionFromArtworks,
   recalcProductQuantities,
   cleanupPrepressSelections,
@@ -862,30 +865,6 @@ const doSave = async (autoApprove: boolean) => {
     ErrorHandler.showMessage(e, '保存失败')
   } finally {
     saving.value = false
-  }
-}
-
-// Submit for approval (edit mode)
-const handleSubmitForApproval = async () => {
-  if (!isEdit.value) {
-    useUIStore().showWarning('请先保存施工单')
-    return
-  }
-
-  submitting.value = true
-  try {
-    // First save any changes
-    const payload = formatPayload(isEdit.value)
-    await workOrderFormService.updateWorkOrder(id.value!, payload)
-
-    // Then submit for approval
-    await workOrderFormService.submitApproval(id.value!, {})
-    useUIStore().showSuccess('施工单已提交审核')
-    router.push('/workorders')
-  } catch (e: any) {
-    ErrorHandler.showMessage(e, '提交失败')
-  } finally {
-    submitting.value = false
   }
 }
 

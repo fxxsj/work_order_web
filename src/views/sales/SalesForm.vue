@@ -387,6 +387,7 @@ import QuickProductCreateDialog from '@/views/product/components/QuickProductCre
 
 const router = useRouter()
 const route = useRoute()
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const userStore = useUserStore()
 
 const id = computed(() => route.params.id as string | undefined)
@@ -446,6 +447,7 @@ const loadCustomers = async () => {
   try {
     const res: any = await customerAPI.getList({ page_size: 50 })
     customerOptions.value = res?.results || []
+// eslint-disable-next-line no-empty
   } catch (_error: any) {}
 }
 
@@ -453,6 +455,7 @@ const loadProducts = async () => {
   try {
     const res: any = await productAPI.getList({ page_size: 50 })
     productOptions.value = res?.results || []
+// eslint-disable-next-line no-empty
   } catch (_error: any) {}
 }
 

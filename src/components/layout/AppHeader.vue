@@ -325,7 +325,7 @@ const fetchNotifications = async () => {
     notifications.value = response?.data?.results || response?.data || response?.results || []
     connectionError.value = false
     retryCount = 0
-  } catch (error: any) {
+  } catch {
     connectionError.value = true
     retryCount++
     if (retryCount <= MAX_RETRY_COUNT) {

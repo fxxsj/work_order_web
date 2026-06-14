@@ -65,7 +65,8 @@ const props = withDefaults(defineProps<{
   label: '',
   hint: '',
   error: '',
-  required: false
+  required: false,
+  id: ''
 })
 
 const emit = defineEmits<{

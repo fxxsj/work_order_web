@@ -10,6 +10,7 @@ export interface UseTableSelectionOptions<T> {
   getId: (row: T) => number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface UseTableSelectionReturn<T> {
   /** 当前选中的 ID 集合 */
   selectedSet: Ref<Set<number>>
@@ -41,7 +42,7 @@ export interface UseTableSelectionReturn<T> {
   batchUpdate: (updater: (draft: Set<number>) => void) => void
 }
 
-export function useTableSelection<T>({ rows, getId }: UseTableSelectionOptions<T>): UseTableSelectionReturn<T> {
+export function useTableSelection({ rows, getId }: UseTableSelectionOptions<any>): UseTableSelectionReturn<any> {
   const selectedSet = ref<Set<number>>(new Set())
 
   const selectedIds = computed(() => Array.from(selectedSet.value))

@@ -89,7 +89,13 @@ const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   disabled: false,
   required: false,
-  readonly: false
+  readonly: false,
+  label: '',
+  placeholder: '',
+  error: '',
+  hint: '',
+  id: '',
+  autocomplete: ''
 })
 
 const emit = defineEmits<{

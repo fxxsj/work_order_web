@@ -487,6 +487,7 @@ const fetchStats = async () => {
       pending_writeoff_count: summary.pending_writeoff_count || 0,
       missing_invoice_link_count: summary.missing_invoice_link_count || 0
     }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) { stats.value = {} } finally { statsLoading.value = false }
 }
 
@@ -508,7 +509,7 @@ const fetchCustomers = async () => {
     const response: any = await customerAPI.getList({ page_size: 50 })
     const list = Array.isArray(response) ? response : (response?.results || response?.data || [])
     customerList.value = list
-  } catch (error: any) {}
+  } catch (_error: any) { /* no-op */ }
 }
 
 const handleCustomerCreated = (customer: any) => {
@@ -585,7 +586,7 @@ const getRemainingClass = (row: any) => {
   return 'text-success'
 }
 
-const getRowActions = (row: any): RowAction[] => [
+const getRowActions = (_row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
   { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value },
   { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete.value }

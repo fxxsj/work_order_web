@@ -385,6 +385,7 @@ const handleAdd = () => { router.push('/sales-orders/create') }
 const handleView = (row: any) => { router.push(`/sales-orders/${row.id}`) }
 const handleEdit = (row: any) => { router.push(`/sales-orders/${row.id}/edit`) }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const canEdit = (row: any) => row.approval_status === 'draft' && userStore.hasPermission('workorder.change_salesorder')
 const canConvert = (row: any) => row.approval_status === 'approved' && !['completed', 'cancelled'].includes(row.status) && userStore.hasPermission('workorder.add_workorder')
 

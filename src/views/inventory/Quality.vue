@@ -357,6 +357,7 @@ const fetchStats = async () => {
       end_date: filters.value.end_date
     }))
     stats.value = response || {} 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) { 
     stats.value = {} 
   } finally { 
@@ -368,7 +369,7 @@ const fetchProducts = async () => {
   try { 
     const response: any = await productAPI.getList({ page_size: 100 })
     productList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
-  } catch (error: any) {} 
+  } catch (_error: any) { /* no-op */ }
 }
 
 const handleView = (row: any) => { currentQuality.value = row; detailDialogVisible.value = true }

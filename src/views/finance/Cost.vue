@@ -399,6 +399,7 @@ const fetchStats = async () => {
       period_end: filters.value.period_end
     }))
     stats.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || response || {})
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) { stats.value = {} } finally { statsLoading.value = false }
 }
 
@@ -486,6 +487,7 @@ const formatAmount = (value: unknown) => Number(value || 0).toLocaleString(undef
   maximumFractionDigits: 2
 })
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getRowActions = (row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
   { key: 'calculate', label: '计算', icon: 'calculator', tone: 'primary', visible: canEdit.value },

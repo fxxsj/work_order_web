@@ -688,7 +688,7 @@ import { Icon } from '@/components/common'
 import { useUserStore, useUIStore } from '@/stores'
 import { branding } from '@/config/branding'
 
-const props = defineProps({
+defineProps({
   collapsed: { type: Boolean, default: false },
   mobileOpen: { type: Boolean, default: false }
 })

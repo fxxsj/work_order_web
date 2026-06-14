@@ -135,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { Input, TextArea, InputNumber, Select } from '@/components/common'
 import { useUIStore } from '@/stores/ui'
 import { artworkAPI, dieAPI } from '@/api/modules'

@@ -117,8 +117,8 @@ const columns: Column[] = [
 
 onMounted(async () => {
   loading.value = true
-  try { const res: any = await workOrderAPI.getStatistics(); Object.assign(statistics, res || {}) } catch (e: any) {}
-  try { const res: any = await workOrderAPI.getList({ page_size: 5 }); recentOrders.value = res?.results || [] } catch (e: any) {}
+  try { const res: any = await workOrderAPI.getStatistics(); Object.assign(statistics, res || {}) } catch (_error: any) { /* no-op */ }
+  try { const res: any = await workOrderAPI.getList({ page_size: 5 }); recentOrders.value = res?.results || [] } catch (_error: any) { /* no-op */ }
   loading.value = false
 })
 

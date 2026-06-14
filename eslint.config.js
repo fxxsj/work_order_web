@@ -29,7 +29,11 @@ export default [
     },
     rules: {
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      }],
       'no-console': 'off',
       'no-undef': 'off',
     },
@@ -73,7 +77,11 @@ export default [
       'vue/no-use-v-if-with-v-for': 'warn',
       'vue/valid-v-slot': 'warn',
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      }],
       'no-console': 'off',
       'no-empty': 'warn',
       'no-unexpected-multiline': 'warn',

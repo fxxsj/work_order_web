@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { StatusTag, Pagination, Icon, DataTable, RowActions } from '@/components/common'
+import { StatusTag, Pagination, DataTable, RowActions } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { formatDate } from '@/utils/filter'
 

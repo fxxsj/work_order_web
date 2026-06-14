@@ -3,6 +3,7 @@
  */
 
 import { mount } from '@vue/test-utils'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { describe, expect, it, vi } from 'vitest'
 import LineItemsTable from '@/components/common/LineItemsTable.vue'
 import type { Column } from '@/components/common/types'

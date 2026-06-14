@@ -208,6 +208,7 @@ const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const {
   searchText, filters, tableData, loading, total, currentPage, pageSize,
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   loadData, handleSearch, handleSearchDebounced, handlePageChange, handleSizeChange, hasFilters
 } = useCrudList(dieAPI, 'getList', {
   initialFilters: { confirmed: '', die_type: '' },

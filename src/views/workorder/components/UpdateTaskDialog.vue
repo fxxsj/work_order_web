@@ -90,6 +90,7 @@ import { Input, TextArea, InputNumber } from '@/components/common'
 const props = defineProps({ visible: { type: Boolean, default: false }, task: { type: Object, default: null }, loading: { type: Boolean, default: false } })
 const emit = defineEmits(['submit', 'update:visible'])
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formRef = ref(null)
 const form = reactive({ quantity_completed: 0, quantity_defective: 0, notes: '' })
 

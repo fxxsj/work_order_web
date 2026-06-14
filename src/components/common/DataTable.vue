@@ -155,21 +155,22 @@
       </thead>
       <tbody class="table-body divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-900">
         <!-- Loading skeleton -->
-        <tr
-          v-for="i in 5"
-          v-if="loading"
-          :key="i"
-        >
-          <td
-            v-for="column in columns"
-            :key="column.key"
-            :class="['whitespace-nowrap py-4', getAdaptivePaddingClass()]"
+        <template v-if="loading">
+          <tr
+            v-for="i in 5"
+            :key="i"
           >
-            <div class="animate-pulse">
-              <div class="h-4 w-3/4 rounded bg-gray-200 dark:bg-dark-700" />
-            </div>
-          </td>
-        </tr>
+            <td
+              v-for="column in columns"
+              :key="column.key"
+              :class="['whitespace-nowrap py-4', getAdaptivePaddingClass()]"
+            >
+              <div class="animate-pulse">
+                <div class="h-4 w-3/4 rounded bg-gray-200 dark:bg-dark-700" />
+              </div>
+            </td>
+          </tr>
+        </template>
 
         <!-- Empty state -->
         <tr v-else-if="!data || data.length === 0">
@@ -402,7 +403,14 @@ const props = withDefaults(defineProps<Props>(), {
   stickyActionsColumn: true,
   expandableActions: true,
   defaultSortOrder: 'asc',
-  serverSideSort: false
+  serverSideSort: false,
+  actionsCount: undefined,
+  rowKey: undefined,
+  defaultSortKey: undefined,
+  sortStorageKey: undefined,
+  estimateRowHeight: undefined,
+  overscan: undefined,
+  rowClass: undefined
 })
 
 const sortKey = ref<string>('')

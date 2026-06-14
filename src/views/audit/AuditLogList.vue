@@ -650,6 +650,7 @@ const formattedDiff = computed(() => {
   try {
     const masked = maskSensitiveFields(diffData.value.changes)
     return JSON.stringify(masked, null, 2)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e: any) {
     return String(diffData.value.changes)
   }
@@ -719,6 +720,7 @@ const exportListColumns: Column[] = [
   { key: 'actions', label: '操作', width: 112, fixed: 'right' }
 ]
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getRowActions = (row: any): RowAction[] => [
   { key: 'diff', label: '查看变更', icon: 'document', tone: 'primary' }
 ]

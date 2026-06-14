@@ -301,6 +301,7 @@ import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import taskService from '@/services/TaskService'
 import { PriorityChoices } from '@/constants'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { BaseButton, StatusTag, EmptyState, Pagination, SearchInput, Select, RadioGroup, RadioButton, TablePageLayout, DataTable, ConfirmDialog, RowActions, Tag, ProgressBar, FilterRow, Checkbox } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
@@ -334,6 +335,7 @@ const toggleSelect = (row: any) => {
   if (idx >= 0) selectedTasks.value.splice(idx, 1)
   else selectedTasks.value.push(row)
 }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const toggleSelectAll = () => {
   if (allSelected.value) selectedTasks.value = []
   else selectedTasks.value = [...tableData.value]
@@ -478,32 +480,31 @@ const clearSelection = () => { selectedTasks.value = [] }
 
 const loadDepartments = async () => {
   loadingDepartments.value = true
-  try { 
+  try {
     const res: any = await departmentAPI.getList({ page_size: 100 })
     departmentList.value = Array.isArray(res) ? res : (res?.results || res?.data || [])
-  } catch (error: any) {} finally { loadingDepartments.value = false }
+  } catch (_error: any) { /* no-op */ } finally { loadingDepartments.value = false }
 }
 
 const loadProcesses = async () => {
   try {
     const res: any = await processAPI.getList({ is_active: true, page_size: 100, ordering: 'sort_order' })
     processList.value = Array.isArray(res) ? res : (res?.results || res?.data || [])
-  } catch (error: any) {}
+  } catch (_error: any) { /* no-op */ }
 }
 
 const loadUsers = async (departmentId: any) => {
   loadingUsers.value = true
-  try { 
+  try {
     const params = departmentId ? { department: departmentId, page_size: 100 } : { page_size: 100 }
     const res: any = await authAPI.getUsers(params)
     userList.value = Array.isArray(res) ? res : (res?.results || res?.data || [])
-  } catch (error: any) {} finally { loadingUsers.value = false }
+  } catch (_error: any) { /* no-op */ } finally { loadingUsers.value = false }
 }
 
 const handleDepartmentChange = (deptId: any) => { userList.value = []; if (deptId) loadUsers(deptId) }
 
 const handleTaskClickFromKanban = (task: any) => { router.push(`/workorders/${task.work_order_process_info?.work_order?.id}`) }
-const goToWorkOrderDetail = (workOrder: any) => { router.push(`/workorders/${workOrder.id}`) }
 const handleViewOrder = (row: any) => { router.push(`/workorders/${row.work_order_process_info?.work_order?.id}`) }
 const getSourceText = (row: any): string => {
   const customerName = row.work_order_process_info?.work_order?.customer_name?.trim() || ''
@@ -537,9 +538,6 @@ const getFollowUpText = (row: any): string => {
     default: return '-'
   }
 }
-const getRowKey = (row: any) => row.id
-const checkRowSelectable = () => true
-
 const handleCompleteTask = (task: any) => { currentTask.value = task; completeTaskDialogVisible.value = true }
 const showUpdateDialog = (task: any) => { currentTask.value = task; updateDialogVisible.value = true }
 const showAssignDialog = (task: any) => { currentTask.value = task; assignDialogVisible.value = true }

@@ -25,14 +25,6 @@ export const useCacheStore = defineStore('cache', () => {
     return Date.now() - timestamp > CACHE_TTL
   }
 
-  function setCacheItem<T>(key: string, value: T): void {
-    cache.value[key] = {
-      data: value,
-      timestamp: Date.now(),
-      ttl: CACHE_TTL
-    }
-  }
-
   function getCacheItem<T>(key: string): T | null {
     const item = cache.value[key] as CacheItem<T> | undefined
     if (!item) return null

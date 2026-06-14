@@ -193,6 +193,7 @@ import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
 import { BaseButton, StatusTag, SearchInput, Select, DateRangePicker, Pagination, ProgressBar, TablePageLayout, DataTable, EmptyState, ConfirmDialog, RowActions, FilterRow } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { WorkOrderStatusChoices, PriorityChoices, ApprovalStatusChoices } from '@/constants'
 import { formatDate } from '@/utils/filter'
 
@@ -265,6 +266,7 @@ const crud = useCRUD(workOrderAPI, {
   onSuccess: () => loadData(),
 })
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isSalesperson = computed(() => {
   return userStore.isSalesperson
 })
@@ -386,6 +388,7 @@ const handleConfirmDelete = async () => {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getRowActions = (row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
   { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value },

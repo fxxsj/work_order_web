@@ -2,6 +2,7 @@
  * UI Store 单元测试
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useUIStore } from '@/stores/ui'
@@ -24,6 +25,7 @@ describe('UI Store', () => {
 
     it('showError 应该显示错误 toast', () => {
       const store = useUIStore()
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
       const id = store.showError('出错了', 5000)
 
       expect(store.toasts[0].type).toBe('error')

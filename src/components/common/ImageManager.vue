@@ -302,7 +302,7 @@ const uploadFile = async (file: File) => {
     requireImageUploadResponseData(response)
     uiStore.showSuccess('图片上传成功')
     emit('changed')
-  } catch (_) {
+  } catch {
     uiStore.showError('图片上传失败')
   } finally {
     uploading.value = false
@@ -336,7 +336,7 @@ const handleDelete = async (image: NormalizedImage) => {
     await props.api.deleteImage(props.resourceId, image.id)
     uiStore.showSuccess('图片已删除')
     emit('changed')
-  } catch (_) {
+  } catch {
     uiStore.showError('删除图片失败')
   } finally {
     deletingId.value = null

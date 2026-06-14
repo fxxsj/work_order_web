@@ -274,7 +274,11 @@ const props = withDefaults(defineProps<Props>(), {
   maxTags: 3,
   remote: false,
   remoteMethod: undefined,
-  loading: false
+  loading: false,
+  placeholder: '',
+  id: '',
+  searchPlaceholder: '',
+  emptyText: ''
 })
 
 const emit = defineEmits<Emits>()

@@ -355,7 +355,8 @@ class FormValidationService {
     }
   }
 
-  clearErrors(_errors: Record<string, string> = {}, fields?: string | string[]): Record<string, string> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+  clearErrors(errors: Record<string, string> = {}, fields?: string | string[]): Record<string, string> {
     if (!fields) {
       this._errors = {}
       return {}

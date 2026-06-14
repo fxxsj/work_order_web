@@ -343,6 +343,7 @@ const fetchStats = async () => {
       end_date: filters.value.end_date
     }))
     stats.value = response || {} 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) { 
     stats.value = {} 
   } finally { 
@@ -354,7 +355,7 @@ const fetchCustomers = async () => {
   try { 
     const response: any = await customerAPI.getList({ page_size: 50 })
     customerList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
-  } catch (error: any) {} 
+  } catch (_error: any) { /* no-op */ }
 }
 
 const handleView = (row: any) => { currentDelivery.value = row; detailDialogVisible.value = true }

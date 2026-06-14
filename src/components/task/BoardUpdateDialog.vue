@@ -67,7 +67,6 @@ const emit = defineEmits(['confirm', 'update:visible'])
 const formRef = ref<any>(null)
 const FORM_INITIAL = { quantity_completed: 0, notes: '' }
 const form = reactive({ ...FORM_INITIAL })
-const rules = { quantity_completed: [{ required: true, message: '请输入完成数量', trigger: 'blur' }] }
 
 const dialogVisible = computed({ get: () => props.visible, set: (val: any) => emit('update:visible', val) })
 

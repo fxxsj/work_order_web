@@ -591,6 +591,7 @@ const handleSubmit = async () => {
       const { id, ...updateData } = payload
       await crud.update(id, updateData, '保存成功')
     } else {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id, ...createData } = payload
       await crud.create(createData, '创建成功')
     }

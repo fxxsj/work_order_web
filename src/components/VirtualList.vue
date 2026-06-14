@@ -89,8 +89,6 @@ const displayItems = computed(() => props.items)
 
 const handleRowClick = (item: any, index: any) => emit('row-click', item, index)
 const handleLoadMore = () => emit('load-more')
-const handleSizeChange = (size: any) => emit('size-change', size)
-const handleCurrentChange = (page: any) => emit('current-change', page)
 </script>
 
 <style>

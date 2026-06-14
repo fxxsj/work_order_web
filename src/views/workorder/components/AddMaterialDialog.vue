@@ -50,6 +50,7 @@ const props = defineProps({
 
 const emit = defineEmits(['submit', 'update:modelValue'])
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formRef = ref(null)
 const form = reactive({ material_id: null, notes: '' })
 

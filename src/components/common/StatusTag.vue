@@ -43,7 +43,8 @@ const props = withDefaults(defineProps<Props>(), {
   effect: 'light',
   hit: false,
   disableTransitions: false,
-  color: ''
+  color: '',
+  variant: ''
 })
 
 // Variant color mapping

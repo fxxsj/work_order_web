@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { Icon } from '@/components/common'
 
-const props = defineProps({
+defineProps({
   text: {
     type: String,
     default: '组件加载失败'

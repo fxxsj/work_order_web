@@ -191,6 +191,7 @@
 </template>
 
 <script setup lang="ts">
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { Icon, Input, InputNumber, TextArea, CheckboxGroup, Select, SectionDivider, LineItemsTable, ImageManager } from '@/components/common'
 import type { Column } from '@/components/common/types'

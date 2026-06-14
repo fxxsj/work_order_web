@@ -99,6 +99,7 @@ describe('useCrudList', () => {
       const mockApi = createMockApi()
       mockApi.list.mockResolvedValue({ data: { items: [{ id: 1 }] }, count: 1 })
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { tableData, total } = useCrudList(mockApi, 'list', {
         resolveList: (response: any) => ({
           rows: response.data?.items || [],
@@ -295,7 +296,9 @@ describe('useCrudList', () => {
       const { loadData } = useCrudList(mockApi, 'list', { enableAbort: true })
 
       // 快速连续调用 3 次
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
       const promise1 = loadData()
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
       const promise2 = loadData()
       const promise3 = loadData()
 

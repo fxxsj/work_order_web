@@ -175,7 +175,7 @@ export const useUIStore = defineStore('ui', () => {
     incLoading()
     try {
       return await operation()
-    } catch (error: any) {
+    } catch (_error: any) {
       showError(errorMessage)
       return null
     } finally {

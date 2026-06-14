@@ -2,7 +2,9 @@
  * WorkOrderService 单元测试
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { describe, it, expect, beforeEach } from 'vitest'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import workOrderService, { WorkOrderService, WorkOrderStatus, ApprovalStatus, Priority } from '@/services/WorkOrderService'
 
 describe('WorkOrderService', () => {

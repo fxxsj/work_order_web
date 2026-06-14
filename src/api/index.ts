@@ -6,9 +6,8 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { useUserStore } from '@/stores'
 import router from '@/router'
-import logger from '@/utils/logger'
-import type { ApiResponse } from '@/types'
 import { runtimeConfig } from '@/config/runtime'
+import logger from '@/utils/logger'
 
 // Token 刷新提前量（秒）- 过期前 30 秒主动刷新
 const REFRESH_BEFORE_SECONDS = 30
@@ -198,7 +197,7 @@ service.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const { status, data } = error.response
+    const { status } = error.response
 
     if (status === 401 && !originalRequest._retry) {
       if (originalRequest.url?.includes('/auth/refresh/')) {

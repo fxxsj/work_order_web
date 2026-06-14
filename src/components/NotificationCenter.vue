@@ -222,7 +222,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
 import { Icon } from '@/components/common'
 
 const props = defineProps({
@@ -249,7 +248,6 @@ const props = defineProps({
 
 const emit = defineEmits(['mark-all-read', 'click'])
 
-const router = useRouter()
 const isModalOpen = ref(false)
 
 const unreadCount = computed(() => {

@@ -147,7 +147,8 @@ const organizeTasks = () => {
 }
 
 const initializeOperatorTasks = () => { props.operators.forEach((op: any) => { if (!(operatorTasks.value as any)[op.id]) (operatorTasks.value as any)[op.id] = [] }) }
-const getOperatorTaskCount = (id: any) => (operatorTasks.value as any)[id]?.length || 0
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const getOperatorTaskCount = (_id: any) => (operatorTasks.value as any)[_id]?.length || 0
 
 const onDragStart = (task: any, event: any) => { draggedTask.value = task; draggedFromOperator.value = task.assigned_operator; event.dataTransfer.effectAllowed = 'move' }
 

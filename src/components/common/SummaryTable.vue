@@ -54,19 +54,20 @@ const columnStyle = (column: Column) => ({
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-        <tr
-          v-for="index in 3"
-          v-if="loading"
-          :key="`loading-${index}`"
-        >
-          <td
-            v-for="column in columns"
-            :key="column.key"
-            class="px-3 py-2"
+        <template v-if="loading">
+          <tr
+            v-for="index in 3"
+            :key="`loading-${index}`"
           >
-            <div class="h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-dark-700" />
-          </td>
-        </tr>
+            <td
+              v-for="column in columns"
+              :key="column.key"
+              class="px-3 py-2"
+            >
+              <div class="h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-dark-700" />
+            </td>
+          </tr>
+        </template>
         <tr v-else-if="data.length === 0">
           <td
             :colspan="columns.length"
@@ -77,29 +78,30 @@ const columnStyle = (column: Column) => ({
             </slot>
           </td>
         </tr>
-        <tr
-          v-for="(row, index) in data"
-          v-else
-          :key="resolveRowKey(row, index)"
-          class="hover:bg-gray-50 dark:hover:bg-dark-800"
-        >
-          <td
-            v-for="column in columns"
-            :key="column.key"
-            class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-            :class="[alignClass(column.align), column.className]"
-            :style="columnStyle(column)"
+        <template v-else>
+          <tr
+            v-for="(row, index) in data"
+            :key="resolveRowKey(row, index)"
+            class="hover:bg-gray-50 dark:hover:bg-dark-800"
           >
-            <slot
-              :name="`cell-${column.key}`"
-              :row="row"
-              :value="row?.[column.key]"
-              :index="index"
+            <td
+              v-for="column in columns"
+              :key="column.key"
+              class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+              :class="[alignClass(column.align), column.className]"
+              :style="columnStyle(column)"
             >
-              {{ column.formatter ? column.formatter(row?.[column.key], row) : row?.[column.key] }}
-            </slot>
-          </td>
-        </tr>
+              <slot
+                :name="`cell-${column.key}`"
+                :row="row"
+                :value="row?.[column.key]"
+                :index="index"
+              >
+                {{ column.formatter ? column.formatter(row?.[column.key], row) : row?.[column.key] }}
+              </slot>
+            </td>
+          </tr>
+        </template>
       </tbody>
     </table>
   </div>

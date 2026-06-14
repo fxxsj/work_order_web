@@ -335,6 +335,7 @@ const {
   }
 })
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { canCreate, canEdit, canDelete } = useCrudPermission('purchaseorder')
 
 const showCreateDialog = () => { 
@@ -454,6 +455,7 @@ const handleRowAction = (action: RowAction, row: any) => {
 }
 
 const handleReceiveSuccess = () => { receiveDialogVisible.value = false; loadData() }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const handleCreateFromLowStock = (data: any) => { lowStockDialogVisible.value = false; showCreateDialog() }
 const showLowStockDialog = () => { lowStockDialogVisible.value = true }
 
