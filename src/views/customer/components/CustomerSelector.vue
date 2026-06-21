@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Select } from '@/components/common'
-import { customerAPI } from '@/api/modules/customer'
+import { customerAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
 const props = defineProps({

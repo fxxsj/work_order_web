@@ -1,17 +1,16 @@
 import dayjs from 'dayjs'
+import { formatDate as formatDateBase, formatDateTime as formatDateTimeBase } from './date'
 
 export function formatDate(value: string | number | Date | null | undefined): string {
   if (!value) return '-'
-  const date = dayjs(value)
-  if (!date.isValid()) return String(value)
-  return date.format('YYYY-MM-DD')
+  const formatted = formatDateBase(value, { fallback: '' })
+  return formatted === '' ? String(value) : formatted
 }
 
 export function formatDateTime(value: string | number | Date | null | undefined): string {
   if (!value) return '-'
-  const date = dayjs(value)
-  if (!date.isValid()) return String(value)
-  return date.format('YYYY-MM-DD HH:mm:ss')
+  const formatted = formatDateTimeBase(value, { fallback: '' })
+  return formatted === '' ? String(value) : formatted
 }
 
 export function formatTime(value: string | number | Date | null | undefined): string {

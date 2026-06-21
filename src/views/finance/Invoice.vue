@@ -339,8 +339,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import { invoiceAPI } from '@/api/modules'
-import { customerAPI } from '@/api/modules/customer'
+import { invoiceAPI, customerAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { StatusTag, Select, SearchInput, BaseButton, TextArea, InputNumber, TablePageLayout, DataTable, EmptyState, Pagination, BaseDialog, ConfirmDialog, DescriptionGrid, DescriptionItem, RowActions, FilterRow } from '@/components/common'

@@ -211,8 +211,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon, Input, InputNumber, LineItemsTable, SectionDivider, Select, TextArea } from '@/components/common'
-import { customerAPI } from '@/api/modules/customer'
-import { deliveryOrderAPI, productAPI, salesOrderAPI } from '@/api/modules'
+import { deliveryOrderAPI, productAPI, salesOrderAPI, customerAPI } from '@/api/modules'
 import { useUIStore } from '@/stores/ui'
 import ErrorHandler from '@/utils/errorHandler'
 

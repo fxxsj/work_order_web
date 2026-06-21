@@ -318,8 +318,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { authAPI } from '@/api/modules'
-import { customerAPI } from '@/api/modules/customer'
+import { authAPI, customerAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD, useExport } from '@/composables'
 import { BaseButton, TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'

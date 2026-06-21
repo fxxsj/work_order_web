@@ -54,7 +54,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { Input, TextArea } from '@/components/common'
-import { customerAPI } from '@/api/modules/customer'
+import { customerAPI } from '@/api/modules'
 import { useUIStore } from '@/stores/ui'
 
 const props = defineProps({

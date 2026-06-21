@@ -10,33 +10,40 @@ import 'dayjs/locale/zh-cn'
 dayjs.extend(relativeTime)
 dayjs.locale('zh-cn')
 
+type DateValue = string | number | Date | null | undefined
+
+interface FormatOptions {
+  /** 当输入为空或无效时返回的占位符，默认为空字符串 */
+  fallback?: string
+}
+
 /**
  * 格式化日期为 YYYY-MM-DD
  */
-export function formatDate(value: string | number | Date | null | undefined): string {
-  if (!value) return ''
+export function formatDate(value: DateValue, options: FormatOptions = {}): string {
+  if (!value) return options.fallback ?? ''
   const date = dayjs(value)
-  if (!date.isValid()) return ''
+  if (!date.isValid()) return options.fallback ?? ''
   return date.format('YYYY-MM-DD')
 }
 
 /**
  * 格式化日期时间为 YYYY-MM-DD HH:mm:ss
  */
-export function formatDateTime(value: string | number | Date | null | undefined): string {
-  if (!value) return ''
+export function formatDateTime(value: DateValue, options: FormatOptions = {}): string {
+  if (!value) return options.fallback ?? ''
   const date = dayjs(value)
-  if (!date.isValid()) return ''
+  if (!date.isValid()) return options.fallback ?? ''
   return date.format('YYYY-MM-DD HH:mm:ss')
 }
 
 /**
  * 格式化日期时间为 YYYY-MM-DD HH:mm（无秒）
  */
-export function formatDateTimeShort(value: string | number | Date | null | undefined): string {
-  if (!value) return ''
+export function formatDateTimeShort(value: DateValue, options: FormatOptions = {}): string {
+  if (!value) return options.fallback ?? ''
   const date = dayjs(value)
-  if (!date.isValid()) return ''
+  if (!date.isValid()) return options.fallback ?? ''
   return date.format('YYYY-MM-DD HH:mm')
 }
 
@@ -44,10 +51,10 @@ export function formatDateTimeShort(value: string | number | Date | null | undef
  * 获取相对时间描述
  * 今天、明天、X天后、已逾期X天
  */
-export function getRelativeTime(value: string | number | Date | null | undefined): string {
-  if (!value) return ''
+export function getRelativeTime(value: DateValue, options: FormatOptions = {}): string {
+  if (!value) return options.fallback ?? ''
   const date = dayjs(value)
-  if (!date.isValid()) return ''
+  if (!date.isValid()) return options.fallback ?? ''
 
   const now = dayjs()
   const today = now.startOf('day')

@@ -359,9 +359,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { statementAPI } from '@/api/modules'
-import { customerAPI } from '@/api/modules/customer'
-import { supplierAPI } from '@/api/modules/supplier'
+import { statementAPI, customerAPI, supplierAPI } from '@/api/modules'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
 import { useUIStore } from '@/stores/ui'
