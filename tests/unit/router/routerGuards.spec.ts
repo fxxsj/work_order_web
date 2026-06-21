@@ -17,6 +17,7 @@ const mockUserStore = vi.hoisted(() => ({
   permissions: [] as string[],
   hasAnyPermission: vi.fn(() => false),
   setUser: vi.fn(),
+  clearUser: vi.fn(),
 }))
 
 vi.mock('@/api/modules', () => ({
@@ -72,7 +73,7 @@ describe('Router Guards', () => {
     })
 
     it('should redirect authenticated user away from login page', async () => {
-      mockUserStore.currentUser = { id: 1, username: 'test' }
+      mockUserStore.currentUser = { id: 1, username: 'test', refresh_token: 'valid' }
 
       // Navigate to dashboard first, then to login to trigger the redirect
       await router.push('/dashboard')
@@ -103,7 +104,7 @@ describe('Router Guards', () => {
 
   describe('admin routes', () => {
     it('should redirect non-admin user away from admin route', async () => {
-      mockUserStore.currentUser = { id: 1, username: 'test' }
+      mockUserStore.currentUser = { id: 1, username: 'test', refresh_token: 'valid' }
       mockAuthAPI.getCurrentUser.mockResolvedValue({
         success: true,
         data: { id: 1, username: 'test', is_staff: false, is_superuser: false },
@@ -114,7 +115,7 @@ describe('Router Guards', () => {
     })
 
     it('should allow staff user to access admin route', async () => {
-      mockUserStore.currentUser = { id: 1, username: 'test' }
+      mockUserStore.currentUser = { id: 1, username: 'test', refresh_token: 'valid' }
       mockUserStore.isStaff = true
       mockAuthAPI.getCurrentUser.mockResolvedValue({
         success: true,
@@ -128,7 +129,7 @@ describe('Router Guards', () => {
 
   describe('permission routes', () => {
     it('should redirect user without required permission', async () => {
-      mockUserStore.currentUser = { id: 1, username: 'test' }
+      mockUserStore.currentUser = { id: 1, username: 'test', refresh_token: 'valid' }
       mockUserStore.isStaff = true
       mockUserStore.permissions = ['other.permission']
       mockUserStore.hasAnyPermission.mockReturnValue(false)
@@ -142,7 +143,7 @@ describe('Router Guards', () => {
     })
 
     it('should allow user with required permission', async () => {
-      mockUserStore.currentUser = { id: 1, username: 'test' }
+      mockUserStore.currentUser = { id: 1, username: 'test', refresh_token: 'valid' }
       mockUserStore.isStaff = true
       mockUserStore.permissions = ['workorder.view_systemnotificationsettings']
       mockUserStore.hasAnyPermission.mockReturnValue(true)
