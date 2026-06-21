@@ -2,29 +2,10 @@
  * TaskService 单元测试
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import taskService, { TaskStatus, TaskType } from '@/services/TaskService'
 
-// Mock dependencies
-vi.mock('@/api', () => ({
-  default: {
-    workorder: {
-      list: vi.fn(),
-      getDetail: vi.fn(),
-      updateQuantity: vi.fn(),
-      complete: vi.fn(),
-      assign: vi.fn(),
-      split: vi.fn(),
-      export: vi.fn()
-    }
-  }
-}))
-
 describe('TaskService', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   describe('TaskStatus 常量', () => {
     it('应该定义正确的状态值', () => {
       expect(TaskStatus.PENDING).toBe('pending')

@@ -1,21 +1,8 @@
 /**
  * 施工单服务
  *
- * 处理施工单相关的所有业务逻辑
+ * 处理施工单相关的展示与业务规则计算（纯工具函数集合，不再承担 API 调用）。
  */
-
-import BaseService from './base/BaseService'
-import formValidationService from './FormValidationService'
-
-// 延迟加载 workOrderAPI 以避免循环依赖
-let _workOrderAPI: unknown = null
-async function getWorkOrderAPI() {
-  if (!_workOrderAPI) {
-    const module = await import('@/api/modules/workorder')
-    _workOrderAPI = (module as Record<string, unknown>).workOrderAPI
-  }
-  return _workOrderAPI as Record<string, (...args: unknown[]) => Promise<unknown>>
-}
 
 export const WorkOrderStatus = {
   PENDING: 'pending',
@@ -70,159 +57,7 @@ export interface WorkOrderStatistics {
   rejected: number
 }
 
-class WorkOrderService extends BaseService {
-  static WorkOrderStatus: typeof WorkOrderStatus
-  static ApprovalStatus: typeof ApprovalStatus
-  static Priority: typeof Priority
-  validationService: typeof formValidationService
-  private _lazyApiClient: Record<string, (...args: unknown[]) => Promise<unknown>> | null
-
-  constructor() {
-    super(null)
-    this.validationService = formValidationService
-    this._lazyApiClient = null
-  }
-
-  // 覆盖父类方法，延迟获取 API 客户端
-  async getApiClient(): Promise<Record<string, (...args: unknown[]) => Promise<unknown>>> {
-    if (!this._lazyApiClient) {
-      this._lazyApiClient = await getWorkOrderAPI()
-    }
-    return this._lazyApiClient
-  }
-
-  async getWorkOrders(params: Record<string, unknown> = {}): Promise<ReturnType<BaseService['execute']>> {
-    const defaultParams = {
-      page: 1,
-      page_size: 20,
-      ordering: '-created_at'
-    }
-
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.list({ ...defaultParams, ...params }) as Promise<{ data: unknown }>,
-      { showLoading: true }
-    )
-  }
-
-  async getWorkOrderDetail(id: number): Promise<ReturnType<BaseService['execute']>> {
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.getDetail(id) as Promise<{ data: unknown }>,
-      { showLoading: true }
-    )
-  }
-
-  async createWorkOrder(formData: Record<string, unknown>): Promise<ReturnType<BaseService['execute']>> {
-    const validation = this.validationService.validateWorkOrderForm(formData)
-    if (!validation.valid) {
-      return {
-        success: false,
-        error: '表单验证失败',
-        data: null
-      }
-    }
-
-    const submitData = this._prepareSubmitData(formData)
-    const client = await this.getApiClient()
-
-    return this.execute(
-      () => client.create(submitData) as Promise<{ data: unknown }>,
-      {
-        showLoading: true,
-        successMessage: '施工单创建成功'
-      }
-    )
-  }
-
-  async updateWorkOrder(id: number, formData: Record<string, unknown>): Promise<ReturnType<BaseService['execute']>> {
-    const validation = this.validationService.validateWorkOrderForm(formData)
-    if (!validation.valid) {
-      return {
-        success: false,
-        error: '表单验证失败',
-        data: null
-      }
-    }
-
-    const submitData = this._prepareSubmitData(formData)
-    const client = await this.getApiClient()
-
-    return this.execute(
-      () => client.update(id, submitData) as Promise<{ data: unknown }>,
-      {
-        showLoading: true,
-        successMessage: '施工单更新成功'
-      }
-    )
-  }
-
-  async deleteWorkOrder(id: number): Promise<ReturnType<BaseService['execute']>> {
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.delete(id) as Promise<{ data: unknown }>,
-      {
-        showLoading: true,
-        successMessage: '施工单删除成功'
-      }
-    )
-  }
-
-  async submitForApproval(id: number): Promise<ReturnType<BaseService['execute']>> {
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.submitForApproval(id) as Promise<{ data: unknown }>,
-      {
-        showLoading: true,
-        successMessage: '已提交审核'
-      }
-    )
-  }
-
-  async reviewWorkOrder(id: number, action: string, comment = ''): Promise<ReturnType<BaseService['execute']>> {
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.review(id, { action, comment }) as Promise<{ data: unknown }>,
-      {
-        showLoading: true,
-        successMessage: action === 'approve' ? '已通过审核' : '已拒绝审核'
-      }
-    )
-  }
-
-  async startWorkOrder(id: number): Promise<ReturnType<BaseService['execute']>> {
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.start(id) as Promise<{ data: unknown }>,
-      {
-        showLoading: true,
-        successMessage: '施工单已开始'
-      }
-    )
-  }
-
-  async completeWorkOrder(id: number): Promise<ReturnType<BaseService['execute']>> {
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.complete(id) as Promise<{ data: unknown }>,
-      {
-        showLoading: true,
-        successMessage: '施工单已完成'
-      }
-    )
-  }
-
-  async cancelWorkOrder(id: number, reason = ''): Promise<ReturnType<BaseService['execute']>> {
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.cancel(id, { reason }) as Promise<{ data: unknown }>,
-      {
-        showLoading: true,
-        successMessage: '施工单已取消'
-      }
-    )
-  }
-
+class WorkOrderService {
   calculateProgress(workOrder: Record<string, unknown>): number {
     const progressPercentage = workOrder.progress_percentage as number | undefined
     if (!progressPercentage) {
@@ -450,30 +285,6 @@ class WorkOrderService extends BaseService {
     })
 
     return stats
-  }
-
-  async getWorkOrderProcesses(workOrderId: number): Promise<ReturnType<BaseService['execute']>> {
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.getProcesses(workOrderId) as Promise<{ data: unknown }>,
-      { showLoading: true }
-    )
-  }
-
-  async getWorkOrderTasks(workOrderId: number): Promise<ReturnType<BaseService['execute']>> {
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.getTasks(workOrderId) as Promise<{ data: unknown }>,
-      { showLoading: true }
-    )
-  }
-
-  async getWorkOrderLogs(workOrderId: number): Promise<ReturnType<BaseService['execute']>> {
-    const client = await this.getApiClient()
-    return this.execute(
-      () => client.getLogs(workOrderId) as Promise<{ data: unknown }>,
-      { showLoading: false }
-    )
   }
 }
 

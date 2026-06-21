@@ -1,11 +1,10 @@
 /**
  * 任务业务逻辑服务
  *
- * 处理任务相关的业务逻辑，将业务逻辑从 Vue 组件中分离
+ * 处理任务相关的业务逻辑，将业务逻辑从 Vue 组件中分离（纯工具函数集合，不再承担 API 调用）。
  */
 
-import BaseService from './base/BaseService'
-import api from '@/api'
+import { formatDateTime } from '@/utils/date'
 
 export const TaskStatus = {
   PENDING: 'pending',
@@ -43,85 +42,7 @@ export interface StatusOption {
   label: string
 }
 
-class TaskService extends BaseService {
-  constructor() {
-    super(api)
-  }
-
-  async getTasks(params: Record<string, unknown> = {}): Promise<ReturnType<BaseService['execute']>> {
-    return this.execute(
-      () => (this.apiClient as Record<string, (...args: unknown[]) => Promise<{ data: unknown }>>).list(params),
-      { showLoading: true }
-    )
-  }
-
-  async getTaskDetail(taskId: number): Promise<ReturnType<BaseService['execute']>> {
-    return this.execute(
-      () => (this.apiClient as Record<string, (...args: unknown[]) => Promise<{ data: unknown }>>).getDetail(taskId),
-      { showLoading: true }
-    )
-  }
-
-  async updateTaskQuantity(taskId: number, increment: number, version: number): Promise<ReturnType<BaseService['execute']>> {
-    return this.execute(
-      () => (this.apiClient as Record<string, (...args: unknown[]) => Promise<{ data: unknown }>>).updateQuantity(taskId, {
-        quantity_increment: increment,
-        version
-      }),
-      {
-        showLoading: true,
-        errorMessage: (error: unknown) => {
-          const err = error as Record<string, unknown>
-          const response = err.response as Record<string, unknown> | undefined
-          if (response?.status === 409) {
-            return '任务已被其他操作员更新，请刷新后重试'
-          }
-          return '' // 使用默认错误处理
-        }
-      }
-    )
-  }
-
-  async completeTask(taskId: number, options: CompleteTaskOptions = {}): Promise<ReturnType<BaseService['execute']>> {
-    const {
-      completionReason = '',
-      notes = '',
-      artworkIds = [],
-      dieIds = [],
-      quantityDefective = 0,
-      version = null
-    } = options
-
-    return this.execute(
-      () => (this.apiClient as Record<string, (...args: unknown[]) => Promise<{ data: unknown }>>).complete(taskId, {
-        completion_reason: completionReason,
-        notes,
-        artwork_ids: artworkIds,
-        die_ids: dieIds,
-        quantity_defective: quantityDefective,
-        version
-      }),
-      { showLoading: true }
-    )
-  }
-
-  async assignTask(taskId: number, departmentId: number, operatorId: number | null = null): Promise<ReturnType<BaseService['execute']>> {
-    return this.execute(
-      () => (this.apiClient as Record<string, (...args: unknown[]) => Promise<{ data: unknown }>>).assign(taskId, {
-        assigned_department: departmentId,
-        assigned_operator: operatorId
-      }),
-      { showLoading: true }
-    )
-  }
-
-  async splitTask(taskId: number, splits: Array<Record<string, unknown>>): Promise<ReturnType<BaseService['execute']>> {
-    return this.execute(
-      () => (this.apiClient as Record<string, (...args: unknown[]) => Promise<{ data: unknown }>>).split(taskId, { splits }),
-      { showLoading: true }
-    )
-  }
-
+class TaskService {
   calculateProgress(task: Record<string, unknown>): number {
     const productionQuantity = task.production_quantity as number
     if (!productionQuantity || productionQuantity === 0) {
@@ -278,27 +199,7 @@ class TaskService extends BaseService {
   }
 
   formatDateTime(dateTime: string | null | undefined): string {
-    if (!dateTime) {
-      return ''
-    }
-
-    try {
-      const date = new Date(dateTime)
-      if (isNaN(date.getTime())) {
-        return ''
-      }
-
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-      const seconds = String(date.getSeconds()).padStart(2, '0')
-
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-    } catch (_e: any) {
-      return ''
-    }
+    return formatDateTime(dateTime)
   }
 
   getStatusOptions(): StatusOption[] {
@@ -347,15 +248,9 @@ class TaskService extends BaseService {
       errors
     }
   }
-
-  async exportTasks(filters: Record<string, unknown> = {}): Promise<ReturnType<BaseService['execute']>> {
-    return this.execute(
-      () => (this.apiClient as Record<string, (...args: unknown[]) => Promise<{ data: unknown }>>).export(filters),
-      { showLoading: true }
-    )
-  }
 }
 
 const taskService = new TaskService()
 
 export default taskService
+export { TaskService }

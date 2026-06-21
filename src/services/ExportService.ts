@@ -4,7 +4,6 @@
  * 提供统一的导出功能，支持导出为 Excel、CSV 等格式
  */
 
-import BaseService from './base/BaseService'
 import * as XLSX from 'xlsx'
 import logger from '@/utils/logger'
 import { branding } from '@/config/branding'
@@ -46,10 +45,7 @@ export interface PrintData {
   printTime: string
 }
 
-class ExportService extends BaseService {
-  constructor() {
-    super(null) // ExportService 不需要 API 客户端
-  }
+class ExportService {
 
   async exportToExcel(data: Record<string, unknown>[], options: ExportOptions = {}): Promise<ExportResult> {
     const {

@@ -5,12 +5,21 @@
 
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { useUserStore } from '@/stores'
-import router from '@/router'
 import { runtimeConfig } from '@/config/runtime'
 import logger from '@/utils/logger'
 
 // Token 刷新提前量（秒）- 过期前 30 秒主动刷新
 const REFRESH_BEFORE_SECONDS = 30
+
+/**
+ * 未登录时重定向到登录页
+ * 使用 window.location 而非 vue-router，避免 api/index.ts 与 router 之间的模块级循环依赖
+ */
+function redirectToLogin() {
+  if (typeof window === 'undefined') return
+  const currentPath = window.location.pathname + window.location.search
+  window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`
+}
 
 function getCsrfToken(): string | null {
   const name = 'csrftoken'
@@ -203,11 +212,8 @@ service.interceptors.response.use(
       if (originalRequest.url?.includes('/auth/refresh/')) {
         userStore.clearUser()
         clearRefreshTimer()
-        if (router.currentRoute.value.path !== '/login') {
-          router.push({
-            path: '/login',
-            query: { redirect: router.currentRoute.value.fullPath }
-          })
+        if (window.location.pathname !== '/login') {
+          redirectToLogin()
         }
         return Promise.reject(error)
       }
@@ -255,11 +261,8 @@ service.interceptors.response.use(
         processQueue(err as Error, null)
         userStore.clearUser()
         clearRefreshTimer()
-        if (router.currentRoute.value.path !== '/login' && !originalRequest.url?.includes('/auth/user/')) {
-          router.push({
-            path: '/login',
-            query: { redirect: router.currentRoute.value.fullPath }
-          })
+        if (window.location.pathname !== '/login' && !originalRequest.url?.includes('/auth/user/')) {
+          redirectToLogin()
         }
         return Promise.reject(err)
       } finally {
@@ -273,11 +276,8 @@ service.interceptors.response.use(
       }
       userStore.clearUser()
       clearRefreshTimer()
-      if (router.currentRoute.value.path !== '/login') {
-        router.push({
-          path: '/login',
-          query: { redirect: router.currentRoute.value.fullPath }
-        })
+      if (window.location.pathname !== '/login') {
+        redirectToLogin()
       }
       return Promise.reject(error)
     }
