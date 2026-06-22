@@ -2,7 +2,7 @@
  * TaskService 单元测试
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import taskService, { TaskStatus, TaskType } from '@/services/TaskService'
 
 describe('TaskService', () => {
