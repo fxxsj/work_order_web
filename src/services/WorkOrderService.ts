@@ -288,10 +288,6 @@ class WorkOrderService {
   }
 }
 
-WorkOrderService.WorkOrderStatus = WorkOrderStatus
-WorkOrderService.ApprovalStatus = ApprovalStatus
-WorkOrderService.Priority = Priority
-
 const workOrderService = new WorkOrderService()
 
 export default workOrderService
