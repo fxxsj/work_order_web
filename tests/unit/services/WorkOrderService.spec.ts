@@ -324,26 +324,26 @@ describe('WorkOrderService', () => {
 
   describe('枚举导出', () => {
     it('应该导出WorkOrderStatus枚举', () => {
-      expect(WorkOrderService.WorkOrderStatus).toBeDefined()
-      expect(WorkOrderService.WorkOrderStatus.PENDING).toBe('pending')
-      expect(WorkOrderService.WorkOrderStatus.IN_PROGRESS).toBe('in_progress')
-      expect(WorkOrderService.WorkOrderStatus.COMPLETED).toBe('completed')
-      expect(WorkOrderService.WorkOrderStatus.CANCELLED).toBe('cancelled')
+      expect(WorkOrderStatus).toBeDefined()
+      expect(WorkOrderStatus.PENDING).toBe('pending')
+      expect(WorkOrderStatus.IN_PROGRESS).toBe('in_progress')
+      expect(WorkOrderStatus.COMPLETED).toBe('completed')
+      expect(WorkOrderStatus.CANCELLED).toBe('cancelled')
     })
 
     it('应该导出ApprovalStatus枚举', () => {
-      expect(WorkOrderService.ApprovalStatus).toBeDefined()
-      expect(WorkOrderService.ApprovalStatus.PENDING).toBe('pending')
-      expect(WorkOrderService.ApprovalStatus.APPROVED).toBe('approved')
-      expect(WorkOrderService.ApprovalStatus.REJECTED).toBe('rejected')
+      expect(ApprovalStatus).toBeDefined()
+      expect(ApprovalStatus.PENDING).toBe('pending')
+      expect(ApprovalStatus.APPROVED).toBe('approved')
+      expect(ApprovalStatus.REJECTED).toBe('rejected')
     })
 
     it('应该导出Priority枚举', () => {
-      expect(WorkOrderService.Priority).toBeDefined()
-      expect(WorkOrderService.Priority.LOW).toBe('low')
-      expect(WorkOrderService.Priority.NORMAL).toBe('normal')
-      expect(WorkOrderService.Priority.HIGH).toBe('high')
-      expect(WorkOrderService.Priority.URGENT).toBe('urgent')
+      expect(Priority).toBeDefined()
+      expect(Priority.LOW).toBe('low')
+      expect(Priority.NORMAL).toBe('normal')
+      expect(Priority.HIGH).toBe('high')
+      expect(Priority.URGENT).toBe('urgent')
     })
   })
 })
