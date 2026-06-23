@@ -108,8 +108,8 @@
         </template>
         <template #cell-status="{ row }">
           <StatusTag
-            :status="['draft', 'submitted', 'rejected'].includes(row.approval_status) ? row.approval_status : row.status"
-            category="workOrder"
+            :status="getWorkOrderUserStatus(row)"
+            category="workOrderUser"
           />
         </template>
         <template #cell-priority="{ row }">
@@ -196,6 +196,7 @@ import type { Column, RowAction } from '@/components/common/types'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { WorkOrderStatusChoices, PriorityChoices, ApprovalStatusChoices } from '@/constants'
 import { formatDate } from '@/utils/filter'
+import { getWorkOrderUserStatus } from '@/constants/statusMeta'
 
 const router = useRouter()
 const route = useRoute()

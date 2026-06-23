@@ -149,7 +149,7 @@
                   </span>
                   <StatusTag
                     :status="task.status"
-                    category="task"
+                    category="taskUser"
                     :label="task.status_display"
                     size="small"
                   />

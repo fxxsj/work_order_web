@@ -120,7 +120,49 @@ export const StatusMetaMaps = {
     normal: { text: '普通', type: 'primary' },
     high: { text: '高', type: 'warning' },
     urgent: { text: '紧急', type: 'danger' }
+  },
+  // 用户可见合成状态：把业务状态与审批状态合并为可行动的单一状态
+  salesOrderUser: {
+    draft: { text: '草稿', type: 'info' },
+    submitted: { text: '待确认', type: 'primary' },
+    rejected: { text: '已退回', type: 'danger' },
+    pending: { text: '可生产', type: 'warning' },
+    in_progress: { text: '生产中', type: 'warning' },
+    completed: { text: '已完成', type: 'success' },
+    cancelled: { text: '已取消', type: 'info' }
+  },
+  workOrderUser: {
+    draft: { text: '草稿', type: 'info' },
+    submitted: { text: '待确认', type: 'primary' },
+    rejected: { text: '已退回', type: 'danger' },
+    pending: { text: '待开始', type: 'info' },
+    in_progress: { text: '生产中', type: 'warning' },
+    paused: { text: '已暂停', type: 'warning' },
+    completed: { text: '已完成', type: 'success' },
+    cancelled: { text: '已取消', type: 'info' }
+  },
+  taskUser: {
+    draft: { text: '草稿', type: 'info' },
+    pending: { text: '待开始', type: 'info' },
+    in_progress: { text: '进行中', type: 'primary' },
+    completed: { text: '已完成', type: 'success' },
+    skipped: { text: '已跳过', type: 'info' },
+    cancelled: { text: '已取消', type: 'danger' }
   }
+}
+
+export function getSalesOrderUserStatus(row: { approval_status?: string; status?: string }): string {
+  if (row.approval_status === 'rejected') return 'rejected'
+  if (row.approval_status === 'draft') return 'draft'
+  if (row.approval_status === 'submitted') return 'submitted'
+  return row.status || 'pending'
+}
+
+export function getWorkOrderUserStatus(row: { approval_status?: string; status?: string }): string {
+  if (row.approval_status === 'rejected') return 'rejected'
+  if (row.approval_status === 'draft') return 'draft'
+  if (row.approval_status === 'submitted') return 'submitted'
+  return row.status || 'pending'
 }
 
 export function getStatusMeta(category: any, value: any, fallback = {}) {

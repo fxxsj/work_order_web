@@ -170,7 +170,7 @@
           <template #cell-status="{ row }">
             <StatusTag
               :status="row.status"
-              category="task"
+              category="taskUser"
               :label="row.status_display"
               size="small"
             />

@@ -101,8 +101,8 @@
 
         <template #cell-status="{ row }">
           <StatusTag
-            :status="['draft', 'submitted', 'rejected'].includes(row.approval_status) ? row.approval_status : row.status"
-            category="salesOrder"
+            :status="getSalesOrderUserStatus(row)"
+            category="salesOrderUser"
             effect="plain"
           />
         </template>
@@ -289,6 +289,7 @@ import { useCrudList } from '@/composables'
 import { BaseButton, StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow, TextArea, Input, InputNumber } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
+import { getSalesOrderUserStatus } from '@/constants/statusMeta'
 
 const router = useRouter()
 const userStore = useUserStore()

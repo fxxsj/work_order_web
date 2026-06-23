@@ -85,9 +85,9 @@
         >
           <template #cell-status="{ row }">
             <StatusTag
-              :status="row.status"
+              :status="getWorkOrderUserStatus(row)"
               :label="row.status_display"
-              category="workOrder"
+              category="workOrderUser"
               size="small"
             />
           </template>
@@ -103,6 +103,7 @@ import { useRouter } from 'vue-router'
 import { workOrderAPI } from '@/api/modules'
 import { Icon, StatusTag, SummaryTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
+import { getWorkOrderUserStatus } from '@/constants/statusMeta'
 
 const router = useRouter()
 const loading = ref(false)

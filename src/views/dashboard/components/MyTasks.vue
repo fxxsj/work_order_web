@@ -28,7 +28,7 @@
           <StatusTag
             :status="row.status"
             :label="row.status_display"
-            category="task"
+            category="taskUser"
             size="small"
           />
         </template>

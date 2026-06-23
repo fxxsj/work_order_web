@@ -16,9 +16,9 @@
       >
         <template #cell-status="{ row }">
           <StatusTag
-            :status="row.status"
+            :status="getWorkOrderUserStatus(row)"
             :label="row.status_display"
-            category="workOrder"
+            category="workOrderUser"
             size="small"
           />
         </template>
@@ -49,6 +49,7 @@ import { useRouter } from 'vue-router'
 import { StatusTag, SummaryTable } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { formatDate } from '@/utils/filter'
+import { getWorkOrderUserStatus } from '@/constants/statusMeta'
 
 defineProps({ recentOrders: { type: Array as any, default: () => [] } })
 const router = useRouter()
