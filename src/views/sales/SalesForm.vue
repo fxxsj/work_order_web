@@ -44,6 +44,7 @@
             label="客户"
             :customers="customerOptions"
             @update:model-value="handleCustomerChange"
+            @select="handleCustomerSelect"
             @create="showQuickCustomerCreate = true"
           />
           <Input
@@ -106,18 +107,21 @@
               <span>总数量</span>
               <span class="font-bold text-primary-600 dark:text-primary-400">{{ totalQuantity }}</span>
             </div>
-            <div class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700 dark:border-dark-700 dark:bg-dark-900 dark:text-gray-300">
-              <span>小计</span>
-              <span class="font-bold text-primary-600 dark:text-primary-400">¥{{ itemsSubtotal.toLocaleString() }}</span>
-            </div>
-            <div class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700 dark:border-dark-700 dark:bg-dark-900 dark:text-gray-300">
-              <span>税额合计</span>
-              <span class="font-bold text-primary-600 dark:text-primary-400">¥{{ orderTax.toLocaleString() }}</span>
-            </div>
             <div class="inline-flex items-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-3 py-1.5 text-sm text-primary-700 dark:border-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
               <span>合计</span>
               <span class="font-bold text-primary-600 dark:text-primary-400">¥{{ totalAmount.toLocaleString() }}</span>
             </div>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm inline-flex items-center gap-1"
+              @click="showAdvancedColumns = !showAdvancedColumns"
+            >
+              <Icon
+                :name="showAdvancedColumns ? 'eyeOff' : 'eye'"
+                class="h-3 w-3"
+              />
+              {{ showAdvancedColumns ? '隐藏高级字段' : '显示税率/折扣' }}
+            </button>
           </div>
           <div class="mt-3">
             <LineItemsTable
@@ -156,20 +160,24 @@
               </template>
               <template #cell-tax_rate="{ row }">
                 <InputNumber
+                  v-if="showAdvancedColumns"
                   v-model="row.tax_rate"
                   :min="0"
                   :max="100"
                   :precision="2"
                   class="w-full"
                 />
+                <span v-else class="text-gray-400 text-sm">-</span>
               </template>
               <template #cell-discount_amount="{ row }">
                 <InputNumber
+                  v-if="showAdvancedColumns"
                   v-model="row.discount_amount"
                   :min="0"
                   :precision="2"
                   class="w-full"
                 />
+                <span v-else class="text-gray-400 text-sm">-</span>
               </template>
               <template #cell-amount="{ row }">
                 <div class="space-y-0.5 text-xs">
@@ -195,8 +203,22 @@
         </div>
 
         <!-- 金额与结算 -->
-        <SectionDivider title="金额与结算" />
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <SectionDivider title="金额与结算">
+          <template #action>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm inline-flex items-center gap-1"
+              @click="showFinanceSection = !showFinanceSection"
+            >
+              <Icon
+                :name="showFinanceSection ? 'chevronUp' : 'chevronDown'"
+                class="h-3 w-3"
+              />
+              {{ showFinanceSection ? '收起' : '展开' }}
+            </button>
+          </template>
+        </SectionDivider>
+        <div v-if="showFinanceSection" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label class="input-label mb-1.5 block">税率 (%)</label>
             <InputNumber
@@ -235,12 +257,14 @@
             />
           </div>
         </div>
-        <div>
-          <label class="input-label mb-1.5 block">付款日期</label>
-          <Input
-            v-model="form.payment_date"
-            type="date"
-          />
+        <div v-if="showFinanceSection">
+          <div>
+            <label class="input-label mb-1.5 block">付款日期</label>
+            <Input
+              v-model="form.payment_date"
+              type="date"
+            />
+          </div>
         </div>
         <div class="flex flex-wrap items-center gap-3">
           <div class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-dark-700 dark:bg-dark-900 dark:text-gray-300">
@@ -392,7 +416,8 @@ const userStore = useUserStore()
 const id = computed(() => route.params.id as string | undefined)
 const isEdit = computed(() => !!id.value && id.value !== 'create')
 
-const submitting = ref(false)
+const showAdvancedColumns = ref(false)
+const showFinanceSection = ref(false)
 const showQuickCustomerCreate = ref(false)
 const showQuickProductCreate = ref(false)
 const pendingProductCreateIndex = ref<number | null>(null)
@@ -430,17 +455,19 @@ const totalAmount = computed(() => itemsSubtotal.value + orderTax.value - (form.
 
 const toDate = (value: string) => value ? new Date(`${value}T00:00:00`) : null
 
-const lineItemColumns = [
+const lineItemColumns = computed(() => [
   { key: 'product', label: '产品', minWidth: 200 },
   { key: 'spec', label: '规格', width: 120 },
   { key: 'quantity', label: '数量', width: 100 },
   { key: 'unit', label: '单位', width: 80 },
   { key: 'unit_price', label: '单价', width: 120 },
-  { key: 'tax_rate', label: '税率', width: 100 },
-  { key: 'discount_amount', label: '折扣', width: 100 },
+  ...(showAdvancedColumns.value ? [
+    { key: 'tax_rate', label: '税率', width: 100 },
+    { key: 'discount_amount', label: '折扣', width: 100 },
+  ] : []),
   { key: 'amount', label: '金额', width: 140 },
   { key: 'notes', label: '备注', minWidth: 120 },
-]
+])
 
 const loadCustomers = async () => {
   try {
@@ -502,6 +529,18 @@ const loadData = async () => {
   }
 }
 
+const handleCustomerSelect = (customer: any) => {
+  if (customer?.default_tax_rate != null) {
+    form.tax_rate = Number(customer.default_tax_rate)
+    // 同步更新已有明细行的默认税率（当明细行税率为0或未设置时）
+    form.items.forEach((item: any) => {
+      if (!item.tax_rate) {
+        item.tax_rate = form.tax_rate
+      }
+    })
+  }
+}
+
 const handleCustomerChange = (value: any) => {
   form.customer = value
   const customer = customerOptions.value.find((c: any) => c.id === value)
@@ -509,6 +548,7 @@ const handleCustomerChange = (value: any) => {
     form.contact_person = customer.contact_person || ''
     form.contact_phone = customer.phone || ''
     form.shipping_address = customer.address || ''
+    handleCustomerSelect(customer)
   }
 }
 

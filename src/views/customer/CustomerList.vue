@@ -183,6 +183,16 @@
         />
       </div>
       <div>
+        <label class="input-label mb-1.5 block">默认税率 (%)</label>
+        <InputNumber
+          v-model="formData.default_tax_rate"
+          :min="0"
+          :max="100"
+          :precision="2"
+          placeholder="请输入默认税率"
+        />
+      </div>
+      <div>
         <TextArea
           v-model="formData.address"
           label="地址"
@@ -267,8 +277,14 @@
           <DescriptionItem label="联系电话">
             {{ currentDetail.phone || '-' }}
           </DescriptionItem>
+          <DescriptionItem label="联系电话">
+            {{ currentDetail.phone || '-' }}
+          </DescriptionItem>
           <DescriptionItem label="邮箱">
             {{ currentDetail.email || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="默认税率">
+            {{ currentDetail.default_tax_rate != null ? currentDetail.default_tax_rate + '%' : '-' }}
           </DescriptionItem>
           <DescriptionItem label="创建时间">
             {{ formatDateTime(currentDetail.created_at) }}
@@ -371,7 +387,7 @@ const { exporting, exportData } = useExport(
   { fileNamePrefix: 'customers', fileExtension: 'xlsx' }
 )
 
-const formInitialValues = { name: '', contact_person: '', phone: '', email: '', address: '', salesperson: null as any, notes: '' }
+const formInitialValues = { name: '', contact_person: '', phone: '', email: '', address: '', salesperson: null as any, default_tax_rate: 13, notes: '' }
 const formData = reactive({ ...formInitialValues })
 
 // 监听名称变化，清除错误提示
@@ -423,6 +439,7 @@ const editRow = (row: any) => {
     email: row.email || '',
     address: row.address || '',
     salesperson: row.salesperson || null,
+    default_tax_rate: row.default_tax_rate ?? 13,
     notes: row.notes || ''
   })
   showEditModal.value = true

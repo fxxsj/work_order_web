@@ -22,6 +22,7 @@
       creatable
       class="w-full"
       @update:model-value="v => emit('update:modelValue', v)"
+      @change="handleSelect"
       @create="handleCreate"
     />
   </div>
@@ -42,7 +43,7 @@ const props = defineProps({
   label: { type: String, default: '' }
 })
 
-const emit = defineEmits(['update:modelValue', 'create'])
+const emit = defineEmits(['update:modelValue', 'create', 'select'])
 
 const loading = ref(false)
 const customerList = ref<any[]>([])
@@ -115,6 +116,13 @@ watch(
 
 const handleCreate = (query: string) => {
   emit('create', query)
+}
+
+const handleSelect = (id: number) => {
+  const customer = customerList.value.find((c: any) => c.id === id)
+  if (customer) {
+    emit('select', customer)
+  }
 }
 
 const appendCustomer = (customer: any) => {
