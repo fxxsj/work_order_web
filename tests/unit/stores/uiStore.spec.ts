@@ -204,6 +204,23 @@ describe('UI Store', () => {
       expect(store.theme).toBe('light')
     })
 
+    it('setMenuMode 应该设置菜单模式', () => {
+      const store = useUIStore()
+      store.setMenuMode('full')
+      expect(store.menuMode).toBe('full')
+      store.setMenuMode('production')
+      expect(store.menuMode).toBe('production')
+    })
+
+    it('toggleMenuMode 应该切换菜单模式', () => {
+      const store = useUIStore()
+      store.setMenuMode('production')
+      store.toggleMenuMode()
+      expect(store.menuMode).toBe('full')
+      store.toggleMenuMode()
+      expect(store.menuMode).toBe('production')
+    })
+
     it('setLanguage 应该设置语言', () => {
       const store = useUIStore()
       store.setLanguage('en-US')

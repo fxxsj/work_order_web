@@ -25,6 +25,9 @@ export const useUIStore = defineStore('ui', () => {
 
   const sidebarCollapsed = ref(false)
   const theme = ref<'light' | 'dark'>('light')
+  const menuMode = ref<'production' | 'full'>(
+    (localStorage.getItem('menuMode') as 'production' | 'full') || 'production'
+  )
   const language = ref('zh-CN')
   const toasts = ref<Toast[]>([])
   const globalLoading = ref(false)
@@ -206,6 +209,15 @@ export const useUIStore = defineStore('ui', () => {
     setTheme(newTheme)
   }
 
+  function setMenuMode(mode: 'production' | 'full'): void {
+    menuMode.value = mode
+    localStorage.setItem('menuMode', mode)
+  }
+
+  function toggleMenuMode(): void {
+    setMenuMode(menuMode.value === 'production' ? 'full' : 'production')
+  }
+
   function setLanguage(lang: string): void {
     language.value = lang
   }
@@ -213,6 +225,7 @@ export const useUIStore = defineStore('ui', () => {
   return {
     sidebarCollapsed,
     theme,
+    menuMode,
     language,
     toasts,
     globalLoading,
@@ -237,6 +250,8 @@ export const useUIStore = defineStore('ui', () => {
     setSidebarCollapsed,
     toggleTheme,
     setTheme,
+    setMenuMode,
+    toggleMenuMode,
     setLanguage
   }
 })

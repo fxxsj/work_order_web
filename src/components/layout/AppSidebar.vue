@@ -37,7 +37,7 @@
       <!-- Main Nav Items -->
       <div class="sidebar-section">
         <router-link
-          v-for="item in mainNavItems"
+          v-for="item in primaryNavItems"
           :key="item.path"
           :to="item.path"
           class="sidebar-link mb-1"
@@ -59,7 +59,7 @@
       </div>
 
       <!-- 任务管理 -->
-      <template v-if="canViewWorkOrderTask && !collapsed">
+      <template v-if="isFullMode && canViewWorkOrderTask && !collapsed">
         <div class="sidebar-section">
           <div class="sidebar-section-title">
             任务管理
@@ -108,7 +108,7 @@
 
       <!-- 产品物料 -->
       <div
-        v-if="(canViewProduct || canViewMaterial || canViewProductGroup) && !collapsed"
+        v-if="isFullMode && (canViewProduct || canViewMaterial || canViewProductGroup) && !collapsed"
         class="sidebar-section"
       >
         <div class="sidebar-section-title">
@@ -160,7 +160,7 @@
 
       <!-- 制版管理 -->
       <div
-        v-if="(canViewArtwork || canViewDie || canViewFoilingPlate || canViewEmbossingPlate) && !collapsed"
+        v-if="isFullMode && (canViewArtwork || canViewDie || canViewFoilingPlate || canViewEmbossingPlate) && !collapsed"
         class="sidebar-section"
       >
         <div class="sidebar-section-title">
@@ -226,7 +226,7 @@
 
       <!-- 采购销售 -->
       <div
-        v-if="(canViewPurchaseOrder || canViewSalesOrder) && !collapsed"
+        v-if="isFullMode && (canViewPurchaseOrder || canViewSalesOrder) && !collapsed"
         class="sidebar-section"
       >
         <div class="sidebar-section-title">
@@ -264,7 +264,7 @@
 
       <!-- 库存管理 -->
       <div
-        v-if="(canViewStock || canViewStockIn || canViewStockOut || canViewDelivery || canViewQuality) && !collapsed"
+        v-if="isFullMode && (canViewStock || canViewStockIn || canViewStockOut || canViewDelivery || canViewQuality) && !collapsed"
         class="sidebar-section"
       >
         <div class="sidebar-section-title">
@@ -344,7 +344,7 @@
 
       <!-- 财务管理 -->
       <div
-        v-if="(canViewInvoice || canViewPayment || canViewPaymentPlan || canViewCostCenter || canViewCostItem || canViewCost || canViewStatement) && !collapsed"
+        v-if="isFullMode && (canViewInvoice || canViewPayment || canViewPaymentPlan || canViewCostCenter || canViewCostItem || canViewCost || canViewStatement) && !collapsed"
         class="sidebar-section"
       >
         <div class="sidebar-section-title">
@@ -452,7 +452,7 @@
 
       <!-- 系统设置 -->
       <div
-        v-if="(canViewCustomer || canViewSupplier || canViewDepartment || canViewProcess || canViewTaskRule || canViewSystemNotification || canViewAuditLog) && !collapsed"
+        v-if="isFullMode && (canViewCustomer || canViewSupplier || canViewDepartment || canViewProcess || canViewTaskRule || canViewSystemNotification || canViewAuditLog) && !collapsed"
         class="sidebar-section"
       >
         <div class="sidebar-section-title">
@@ -583,6 +583,50 @@
 
     <!-- Bottom Section -->
     <div class="mt-auto border-t border-gray-100 p-3 dark:border-dark-800">
+      <!-- Menu Mode Toggle -->
+      <button
+        class="sidebar-link mb-2 w-full"
+        :class="{ 'sidebar-link-collapsed': collapsed }"
+        :title="collapsed ? (isFullMode ? '精简菜单' : '完整菜单') : undefined"
+        @click="toggleMenuMode"
+      >
+        <svg
+          v-if="isFullMode"
+          class="h-5 w-5 flex-shrink-0"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+          />
+        </svg>
+        <svg
+          v-else
+          class="h-5 w-5 flex-shrink-0"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+          />
+        </svg>
+        <span
+          class="sidebar-label"
+          :class="{ 'sidebar-label-collapsed': collapsed }"
+          :aria-hidden="collapsed ? 'true' : 'false'"
+        >
+          {{ isFullMode ? '精简菜单' : '完整菜单' }}
+        </span>
+      </button>
+
       <!-- Theme Toggle -->
       <button
         class="sidebar-link mb-2 w-full"
@@ -701,6 +745,7 @@ const userStore = useUserStore()
 const uiStore = useUIStore()
 
 const isDark = computed(() => uiStore.theme === 'dark')
+const isFullMode = computed(() => uiStore.menuMode === 'full')
 
 // 权限检查
 const canViewCustomer = computed(() => userStore.hasPermission('workorder.view_customer'))
@@ -735,11 +780,33 @@ const canViewStatement = computed(() => userStore.hasPermission('workorder.view_
 const canViewTaskRule = computed(() => userStore.hasPermission('workorder.view_taskassignmentrule'))
 const canViewSystemNotification = computed(() => userStore.hasPermission('workorder.view_systemnotificationsettings'))
 
-// 主要导航项
-const mainNavItems = [
-  { path: '/dashboard', label: '工作台', icon: 'home' },
-  { path: '/workorders', label: '施工单', icon: 'document' }
-]
+// 主要导航项：production 模式只展示 MVP 入口，full 模式保留原快捷入口
+const primaryNavItems = computed(() => {
+  if (isFullMode.value) {
+    return [
+      { path: '/dashboard', label: '工作台', icon: 'home' },
+      { path: '/workorders', label: '施工单', icon: 'document' }
+    ]
+  }
+
+  const items: { path: string; label: string; icon: string }[] = [
+    { path: '/dashboard', label: '工作台', icon: 'home' }
+  ]
+  if (canViewSalesOrder.value) {
+    items.push({ path: '/sales-orders', label: '客户订单', icon: 'tag' })
+  }
+  items.push({ path: '/workorders', label: '施工单', icon: 'document' })
+  if (canViewWorkOrderTask.value) {
+    items.push({ path: '/tasks', label: '任务中心', icon: 'tickets' })
+  }
+  if (canViewProduct.value) {
+    items.push({ path: '/products', label: '产品管理', icon: 'package' })
+  }
+  if (canViewCustomer.value) {
+    items.push({ path: '/customers', label: '客户管理', icon: 'user' })
+  }
+  return items
+})
 
 // Collapsed menu items
 const collapsedMenuItems = computed(() => {
@@ -751,6 +818,10 @@ const collapsedMenuItems = computed(() => {
   if (canViewSupplier.value) items.push({ path: '/suppliers', label: '供应商管理' })
   return items
 })
+
+const toggleMenuMode = () => {
+  uiStore.toggleMenuMode()
+}
 
 // 路由激活判断
 const isActiveRoute = (path: any) => {
