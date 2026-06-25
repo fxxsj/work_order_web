@@ -30,7 +30,14 @@
             </Tag>
           </DescriptionItem>
           <DescriptionItem label="所属产品组">
-            {{ product.product_group_name || '-' }}
+            <template v-if="product.product_group_name">
+              {{ product.product_group_name }}
+              <span
+                v-if="product.product_group_code"
+                class="text-gray-400"
+              >({{ product.product_group_code }})</span>
+            </template>
+            <template v-else>-</template>
           </DescriptionItem>
           <DescriptionItem label="规格">
             {{ product.specification || '-' }}
@@ -122,11 +129,14 @@
       </section>
 
       <!-- 默认工序 -->
-      <section v-if="product.default_processes && product.default_processes.length > 0">
+      <section>
         <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
           默认工序
         </h3>
-        <div class="flex flex-wrap gap-2">
+        <div
+          v-if="product.default_processes && product.default_processes.length > 0"
+          class="flex flex-wrap gap-2"
+        >
           <Tag
             v-for="id in product.default_processes"
             :key="id"
@@ -135,14 +145,23 @@
             {{ getProcessName(id) }}
           </Tag>
         </div>
+        <p
+          v-else
+          class="text-sm text-gray-400 dark:text-gray-500"
+        >
+          暂无默认工序
+        </p>
       </section>
 
       <!-- 默认物料 -->
-      <section v-if="product.default_materials && product.default_materials.length > 0">
+      <section>
         <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
           默认物料
         </h3>
-        <div class="space-y-2">
+        <div
+          v-if="product.default_materials && product.default_materials.length > 0"
+          class="space-y-2"
+        >
           <div
             v-for="m in product.default_materials"
             :key="m.id"
@@ -170,14 +189,23 @@
             </Tag>
           </div>
         </div>
+        <p
+          v-else
+          class="text-sm text-gray-400 dark:text-gray-500"
+        >
+          暂无默认物料
+        </p>
       </section>
 
       <!-- 产品图片 -->
-      <section v-if="images.length > 0">
+      <section>
         <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
           产品图片
         </h3>
-        <div class="flex flex-wrap gap-3">
+        <div
+          v-if="images.length > 0"
+          class="flex flex-wrap gap-3"
+        >
           <img
             v-for="img in images"
             :key="img.id"
@@ -186,6 +214,12 @@
             @click="previewImage(img.image)"
           >
         </div>
+        <p
+          v-else
+          class="text-sm text-gray-400 dark:text-gray-500"
+        >
+          暂无产品图片
+        </p>
       </section>
 
       <!-- 描述 -->
@@ -196,6 +230,21 @@
         <p class="text-sm whitespace-pre-wrap">
           {{ product.description }}
         </p>
+      </section>
+
+      <!-- 系统信息 -->
+      <section>
+        <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
+          系统信息
+        </h3>
+        <DescriptionGrid :columns="2">
+          <DescriptionItem label="创建时间">
+            {{ formatDateTime(product.created_at) || '-' }}
+          </DescriptionItem>
+          <DescriptionItem label="更新时间">
+            {{ formatDateTime(product.updated_at) || '-' }}
+          </DescriptionItem>
+        </DescriptionGrid>
       </section>
     </div>
 
@@ -222,6 +271,7 @@ import { ref, computed, watch } from 'vue'
 import { BaseDialog, DescriptionGrid, DescriptionItem, Tag } from '@/components/common'
 import ImageViewer from '@/components/common/ImageViewer.vue'
 import { resolveMediaUrl } from '@/utils/mediaUrl'
+import { formatDateTime } from '@/utils/date'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
