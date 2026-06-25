@@ -26,6 +26,7 @@ const Dashboard = () => import('@/views/Dashboard.vue')
 const Notification = () => import('@/views/Notification.vue')
 const NotificationAdmin = () => import('@/views/notification/NotificationAdmin.vue')
 const Profile = () => import('@/views/Profile.vue')
+const ApprovalSettings = () => import('@/views/ApprovalSettings.vue')
 const AuditLogList = () => import('@/views/audit/AuditLogList.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
@@ -81,6 +82,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Profile',
         component: Profile,
         meta: { title: '个人信息', requiresAuth: true }
+      },
+      {
+        path: 'approval-settings',
+        name: 'ApprovalSettings',
+        component: ApprovalSettings,
+        meta: { title: '审核设置', requiresAuth: true, requiresAdmin: true, requiresPermission: ['workorder.change_approvalconfig'] }
       },
       {
         path: 'audit-logs',

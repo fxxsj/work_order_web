@@ -452,7 +452,7 @@
 
       <!-- 系统设置 -->
       <div
-        v-if="isFullMode && (canViewCustomer || canViewSupplier || canViewDepartment || canViewProcess || canViewTaskRule || canViewSystemNotification || canViewAuditLog) && !collapsed"
+        v-if="isFullMode && (canViewCustomer || canViewSupplier || canViewDepartment || canViewProcess || canViewTaskRule || canViewSystemNotification || canViewAuditLog || canManageApprovalConfig) && !collapsed"
         class="sidebar-section"
       >
         <div class="sidebar-section-title">
@@ -555,6 +555,20 @@
             class="flex-shrink-0"
           />
           <span>审计日志</span>
+        </router-link>
+        <router-link
+          v-if="canManageApprovalConfig"
+          to="/approval-settings"
+          class="sidebar-link mb-0.5 py-1.5 text-sm"
+          :class="{ 'sidebar-link-active': route.path.startsWith('/approval-settings') }"
+          @click="$emit('close-mobile')"
+        >
+          <Icon
+            name="sliders"
+            size="sm"
+            class="flex-shrink-0"
+          />
+          <span>审核设置</span>
         </router-link>
       </div>
 
@@ -779,6 +793,7 @@ const canViewCost = computed(() => userStore.hasPermission('workorder.view_produ
 const canViewStatement = computed(() => userStore.hasPermission('workorder.view_statement'))
 const canViewTaskRule = computed(() => userStore.hasPermission('workorder.view_taskassignmentrule'))
 const canViewSystemNotification = computed(() => userStore.hasPermission('workorder.view_systemnotificationsettings'))
+const canManageApprovalConfig = computed(() => userStore.isSuperuser || userStore.isStaff || userStore.hasPermission('workorder.change_approvalconfig'))
 
 // 主要导航项：production 模式只展示 MVP 入口，full 模式保留原快捷入口
 const primaryNavItems = computed(() => {
