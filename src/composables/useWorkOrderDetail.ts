@@ -1,7 +1,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
-import { useUserStore } from '@/stores'
+import { useUserStore, useApprovalConfigStore } from '@/stores'
 import { materialAPI, processAPI, workOrderAPI, workOrderFlowAPI } from '@/api/modules'
 import { purchaseOrderAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
@@ -10,6 +10,7 @@ export function useWorkOrderDetail() {
   const router = useRouter()
   const route = useRoute()
   const userStore = useUserStore()
+  const approvalConfigStore = useApprovalConfigStore()
 
   const loading = ref(false)
   const workOrder = ref<any>(null)
@@ -27,8 +28,15 @@ export function useWorkOrderDetail() {
   const completenessErrors = ref<string[]>([])
 
   const canEdit = computed(() => userStore.hasPermission('workorder.change_workorder'))
-  const canApprove = computed(() => userStore.hasPermission('workorder.approve_workorder') && workOrder.value?.approval_status === 'submitted')
-  const canResubmit = computed(() => workOrder.value?.approval_status === 'rejected')
+  const canApprove = computed(() =>
+    approvalConfigStore.isEnabled('workorder') &&
+    userStore.hasPermission('workorder.approve_workorder') &&
+    workOrder.value?.approval_status === 'submitted'
+  )
+  const canResubmit = computed(() =>
+    approvalConfigStore.isEnabled('workorder') &&
+    workOrder.value?.approval_status === 'rejected'
+  )
   const canSyncTasks = computed(() => Boolean(userStore.isSuperuser) && Boolean(syncCheck.value?.sync_needed))
   const showApprovalSection = computed(() =>
     canApprove.value ||

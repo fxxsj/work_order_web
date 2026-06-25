@@ -306,6 +306,7 @@
             存为草稿
           </BaseButton>
           <BaseButton
+            v-if="invoiceApprovalEnabled"
             variant="primary"
             class="min-w-0 flex-1 sm:flex-none"
             icon="send"
@@ -339,6 +340,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
+import { useApprovalConfigStore } from '@/stores'
 import { invoiceAPI, customerAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
@@ -350,6 +352,8 @@ import QuickCustomerCreateDialog from '@/views/customer/components/QuickCustomer
 
 const statsLoading = ref(false)
 const submitting = ref(false)
+const approvalConfigStore = useApprovalConfigStore()
+const invoiceApprovalEnabled = computed(() => approvalConfigStore.isEnabled('invoice'))
 const customerList = ref<any[]>([])
 const currentInvoice = ref(null)
 const stats = ref({})
@@ -613,7 +617,7 @@ const handleSave = async (autoApprove: boolean = false) => {
 const getRowActions = (row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
   { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value && row.status === 'draft' },
-  { key: 'submit', label: '提交', icon: 'upload', tone: 'warning', visible: canEdit.value && row.status === 'draft' }
+  { key: 'submit', label: '提交', icon: 'upload', tone: 'warning', visible: invoiceApprovalEnabled.value && canEdit.value && row.status === 'draft' }
 ]
 
 const handleRowAction = (action: RowAction, row: any) => {

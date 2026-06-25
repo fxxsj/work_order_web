@@ -124,6 +124,7 @@
           存为草稿
         </button>
         <button
+          v-if="purchaseorderApprovalEnabled"
           class="btn btn-primary min-w-0 flex-1 sm:flex-none"
           :disabled="submitting"
           @click="handleSubmit(true)"
@@ -161,6 +162,7 @@ import { Icon, InputNumber, LineItemsTable, SectionDivider, Select, TextArea } f
 import type { Column } from '@/components/common/types'
 import { materialAPI, purchaseOrderAPI, supplierAPI, workOrderAPI } from '@/api/modules'
 import { useUIStore } from '@/stores/ui'
+import { useApprovalConfigStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import QuickSupplierCreateDialog from './components/QuickSupplierCreateDialog.vue'
 import MaterialSelector from '@/views/material/components/MaterialSelector.vue'
@@ -168,6 +170,8 @@ import QuickMaterialCreateDialog from '@/views/material/components/QuickMaterial
 import SupplierSelector from '@/views/supplier/components/SupplierSelector.vue'
 
 const router = useRouter()
+const approvalConfigStore = useApprovalConfigStore()
+const purchaseorderApprovalEnabled = computed(() => approvalConfigStore.isEnabled('purchaseorder'))
 
 const submitting = ref(false)
 const showQuickSupplierCreate = ref(false)

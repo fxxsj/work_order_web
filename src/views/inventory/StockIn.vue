@@ -361,6 +361,7 @@ import {
 } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
+import { useApprovalConfigStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 
 const statusOptions = [
@@ -417,6 +418,8 @@ const {
 })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('stockin')
+const approvalConfigStore = useApprovalConfigStore()
+const stockinApprovalEnabled = computed(() => approvalConfigStore.isEnabled('stockin'))
 const summaryStats = ref<any>({})
 const formDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
@@ -566,8 +569,8 @@ const handleFormSubmit = async () => {
 const getRowActions = (row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
   { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value && row.status === 'draft' },
-  { key: 'submit', label: '提交', icon: 'send', tone: 'warning', visible: canEdit.value && row.status === 'draft' },
-  { key: 'approve', label: '审核', icon: 'checkCircle', tone: 'success', visible: canEdit.value && row.status === 'submitted' },
+  { key: 'submit', label: '提交', icon: 'send', tone: 'warning', visible: stockinApprovalEnabled.value && canEdit.value && row.status === 'draft' },
+  { key: 'approve', label: '审核', icon: 'checkCircle', tone: 'success', visible: stockinApprovalEnabled.value && canEdit.value && row.status === 'submitted' },
   { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete.value && row.status === 'draft' }
 ]
 

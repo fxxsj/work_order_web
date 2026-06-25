@@ -365,6 +365,7 @@
           {{ isEdit ? '保存草稿' : '存为草稿' }}
         </button>
         <button
+          v-if="salesorderApprovalEnabled"
           class="btn btn-primary min-w-0 flex-1 sm:flex-none"
           :disabled="submitting"
           @click="handleSubmit(true)"
@@ -403,7 +404,7 @@ import CustomerSelector from '@/views/customer/components/CustomerSelector.vue'
 import ProductSelector from '@/views/product/components/ProductSelector.vue'
 import { useUIStore } from '@/stores/ui'
 import { salesOrderAPI, productAPI, customerAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
+import { useUserStore, useApprovalConfigStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import QuickCustomerCreateDialog from '@/views/customer/components/QuickCustomerCreateDialog.vue'
 import QuickProductCreateDialog from '@/views/product/components/QuickProductCreateDialog.vue'
@@ -412,6 +413,8 @@ const router = useRouter()
 const route = useRoute()
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const userStore = useUserStore()
+const approvalConfigStore = useApprovalConfigStore()
+const salesorderApprovalEnabled = computed(() => approvalConfigStore.isEnabled('salesorder'))
 
 const id = computed(() => route.params.id as string | undefined)
 const isEdit = computed(() => !!id.value && id.value !== 'create')

@@ -306,6 +306,7 @@
           {{ isEdit ? '保存草稿' : '存为草稿' }}
         </BaseButton>
         <BaseButton
+          v-if="workorderApprovalEnabled"
           variant="primary"
           class="min-w-0 flex-1 sm:flex-none"
           icon="send"
@@ -325,6 +326,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { BaseButton, Input, TextArea, InputNumber, Select, CheckboxGroup, SectionDivider } from '@/components/common'
 import { useUIStore } from '@/stores/ui'
+import { useApprovalConfigStore } from '@/stores'
 import { workOrderFormService } from '@/services'
 import { useWorkOrderForm } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
@@ -338,6 +340,8 @@ import QuickMaterialCreateDialog from '@/views/material/components/QuickMaterial
 
 const router = useRouter()
 const route = useRoute()
+const approvalConfigStore = useApprovalConfigStore()
+const workorderApprovalEnabled = computed(() => approvalConfigStore.isEnabled('workorder'))
 
 const id = computed(() => route.params.id as string | undefined)
 const isEdit = computed(() => !!id.value && id.value !== 'create')

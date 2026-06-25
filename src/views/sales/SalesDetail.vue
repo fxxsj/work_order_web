@@ -124,6 +124,7 @@
           <div class="flex items-center gap-3 border-t border-warning-200 pt-3 dark:border-warning-800">
             <span class="text-xs text-gray-500 dark:text-dark-400">下一步：</span>
             <button
+              v-if="salesorderApprovalEnabled"
               class="btn btn-primary btn-sm"
               @click="handleSubmitOrder"
             >
@@ -528,7 +529,7 @@
           </div>
           <div class="flex flex-wrap gap-3">
             <button
-              v-if="detailData.approval_status === 'draft'"
+              v-if="detailData.approval_status === 'draft' && salesorderApprovalEnabled"
               class="btn btn-primary"
               @click="handleSubmitOrder"
             >
@@ -538,7 +539,7 @@
               />
               提交审核
             </button>
-            <template v-if="detailData.approval_status === 'submitted'">
+            <template v-if="detailData.approval_status === 'submitted' && salesorderApprovalEnabled">
               <button
                 v-if="canApprove"
                 class="btn btn-success"
@@ -795,7 +796,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { salesOrderAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
+import { useUserStore, useApprovalConfigStore } from '@/stores'
 import { ConfirmDialog, StatusTag, DescriptionGrid, DescriptionItem, SummaryTable, TextArea, Input, InputNumber, Icon, LoadingOverlay } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { formatDate } from '@/utils/filter'
@@ -804,6 +805,8 @@ import ErrorHandler from '@/utils/errorHandler'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const approvalConfigStore = useApprovalConfigStore()
+const salesorderApprovalEnabled = computed(() => approvalConfigStore.isEnabled('salesorder'))
 
 const loading = ref(false)
 const detailData = reactive<any>({})

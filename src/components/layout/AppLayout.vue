@@ -30,14 +30,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
+import { useApprovalConfigStore } from '@/stores'
 
 const route = useRoute()
+const approvalConfigStore = useApprovalConfigStore()
 const sidebarCollapsed = ref(false)
 const mobileSidebarOpen = ref(false)
+
+onMounted(() => {
+  approvalConfigStore.load()
+})
 
 // Close mobile sidebar on route change
 watch(() => route.fullPath, () => {

@@ -284,7 +284,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { salesOrderAPI } from '@/api/modules'
-import { useUserStore } from '@/stores'
+import { useUserStore, useApprovalConfigStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import { BaseButton, StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, ConfirmDialog, RowActions, FilterRow, TextArea, Input, InputNumber } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
@@ -293,6 +293,8 @@ import { getSalesOrderUserStatus } from '@/constants/statusMeta'
 
 const router = useRouter()
 const userStore = useUserStore()
+const approvalConfigStore = useApprovalConfigStore()
+const salesorderApprovalEnabled = computed(() => approvalConfigStore.isEnabled('salesorder'))
 
 // 操作对话框状态
 const rejecting = ref(false)
@@ -400,9 +402,9 @@ const getRowActions = (row: any): RowAction[] => {
   return [
     { key: 'edit', label: '编辑', icon: 'edit', visible: approval_status === 'draft' && canChange },
     { key: 'convert', label: '生成施工单', icon: 'list', tone: 'success', visible: canConvert(row) },
-    { key: 'submit', label: '提交', icon: 'upload', tone: 'primary', visible: approval_status === 'draft' },
-    { key: 'approve', label: '审核', icon: 'check', tone: 'success', visible: approval_status === 'submitted' && canApprove },
-    { key: 'reject', label: '拒绝', icon: 'x', tone: 'danger', visible: approval_status === 'submitted' && canApprove },
+    { key: 'submit', label: '提交', icon: 'upload', tone: 'primary', visible: salesorderApprovalEnabled.value && approval_status === 'draft' },
+    { key: 'approve', label: '审核', icon: 'check', tone: 'success', visible: salesorderApprovalEnabled.value && approval_status === 'submitted' && canApprove },
+    { key: 'reject', label: '拒绝', icon: 'x', tone: 'danger', visible: salesorderApprovalEnabled.value && approval_status === 'submitted' && canApprove },
     { key: 'updatePayment', label: '更新付款', icon: 'creditCard', tone: 'primary', visible: canChange && approval_status === 'approved' && !['completed', 'cancelled'].includes(status) },
     { key: 'complete', label: '完成', icon: 'checkCircle', tone: 'success', visible: canChange && approval_status === 'approved' && !['completed', 'cancelled'].includes(status) },
     { key: 'cancel', label: '取消', icon: 'xCircle', tone: 'danger', visible: canChange && !['completed', 'cancelled'].includes(status) },

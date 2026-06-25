@@ -138,19 +138,19 @@
                 更多
               </option>
               <option
-                v-if="row.approval_status === 'draft'"
+                v-if="row.approval_status === 'draft' && purchaseorderApprovalEnabled"
                 value="submit"
               >
                 提交
               </option>
               <option
-                v-if="row.approval_status === 'submitted'"
+                v-if="row.approval_status === 'submitted' && purchaseorderApprovalEnabled"
                 value="approve"
               >
                 批准
               </option>
               <option
-                v-if="row.approval_status === 'submitted'"
+                v-if="row.approval_status === 'submitted' && purchaseorderApprovalEnabled"
                 value="reject"
               >
                 拒绝
@@ -250,11 +250,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { purchaseOrderAPI, workOrderAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
+import { useApprovalConfigStore } from '@/stores'
 import ErrorHandler from '@/utils/errorHandler'
 import { BaseButton, TablePageLayout, DataTable, EmptyState, SearchInput, Select, Icon, StatusTag, Pagination, ConfirmDialog, FilterRow, RowActions } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
@@ -271,6 +272,8 @@ const inspectionDialogVisible = ref(false)
 const currentPurchaseId = ref<any>(null)
 const currentPurchaseOrder = ref<any>(null)
 const currentDetailData = ref<any>(null)
+const approvalConfigStore = useApprovalConfigStore()
+const purchaseorderApprovalEnabled = computed(() => approvalConfigStore.isEnabled('purchaseorder'))
 const form = reactive({ supplier: null as any, work_order: null as any, work_order_number: '', notes: '', items: [] as any[] })
 
 const showCancelDialog = ref(false)
