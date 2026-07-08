@@ -129,126 +129,16 @@
     </template>
   </TablePageLayout>
 
-  <!-- Create/Edit Modal -->
-  <BaseDialog
-    :show="showCreateModal || showEditModal"
-    :title="showEditModal ? '编辑客户' : '新建客户'"
-    width="normal"
-    @close="closeModals"
-  >
-    <form
-      id="customer-form"
-      class="space-y-5"
-      @submit.prevent="handleSubmit"
-    >
-      <div>
-        <Input
-          v-model="(formData as any).name"
-          label="客户名称"
-          required
-          placeholder="请输入客户名称"
-          :error="nameError"
-        />
-      </div>
-      <div>
-        <Input
-          v-model="formData.contact_person"
-          label="联系人"
-          placeholder="请输入联系人"
-        />
-      </div>
-      <div>
-        <Input
-          v-model="formData.phone"
-          label="联系电话"
-          placeholder="请输入联系电话"
-        />
-      </div>
-      <div>
-        <Input
-          v-model="formData.email"
-          label="邮箱"
-          placeholder="请输入邮箱"
-          type="email"
-        />
-      </div>
-      <div>
-        <label class="input-label mb-1.5 block">业务员</label>
-        <Select
-          v-model="formData.salesperson"
-          placeholder="请选择业务员"
-          :options="salespersonOptions"
-          filterable
-          clearable
-        />
-      </div>
-      <div>
-        <label class="input-label mb-1.5 block">默认税率 (%)</label>
-        <InputNumber
-          v-model="formData.default_tax_rate"
-          :min="0"
-          :max="100"
-          :precision="2"
-          placeholder="请输入默认税率"
-        />
-      </div>
-      <div>
-        <TextArea
-          v-model="formData.address"
-          label="地址"
-          placeholder="请输入地址"
-          :rows="2"
-        />
-      </div>
-      <div>
-        <TextArea
-          v-model="formData.notes"
-          label="备注"
-          placeholder="请输入备注"
-          :rows="3"
-        />
-      </div>
-    </form>
-    <template #footer>
-      <div class="flex justify-end gap-3">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="closeModals"
-        >
-          取消
-        </button>
-        <button
-          form="customer-form"
-          type="submit"
-          :disabled="submitting"
-          class="btn btn-primary"
-        >
-          <svg
-            v-if="submitting"
-            class="-ml-1 mr-2 h-4 w-4 animate-spin"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            />
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-          {{ submitting ? '保存中...' : showEditModal ? '更新' : '创建' }}
-        </button>
-      </div>
-    </template>
-  </BaseDialog>
+  <CustomerFormDialog
+    ref="customerFormDialogRef"
+    :visible="showCreateModal || showEditModal"
+    :dialog-type="showEditModal ? 'edit' : 'create'"
+    :customer="selectedRow"
+    :loading="submitting"
+    :salesperson-options="salespersonOptions"
+    @update:visible="(val: boolean) => { if (!val) closeModals() }"
+    @confirm="handleSubmit"
+  />
 
   <BaseDialog
     :show="showDetailModal"
@@ -333,10 +223,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { authAPI, customerAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD, useExport } from '@/composables'
-import { BaseButton, TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
+import { BaseButton, TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
+import CustomerFormDialog from './components/CustomerFormDialog.vue'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -376,26 +267,16 @@ const showEditModal = ref(false)
 const showDetailModal = ref(false)
 const showDeleteDialog = ref(false)
 const submitting = ref(false)
-const nameError = ref('')
 const selectedRow = ref<any>(null)
 const currentDetail = ref<any>(null)
 const salespersonList = ref<any[]>([])
 const fileInput = ref<HTMLInputElement | null>(null)
+const customerFormDialogRef = ref<InstanceType<typeof CustomerFormDialog> | null>(null)
 
 const { exporting, exportData } = useExport(
   (params) => customerAPI.exportCustomers(params),
   { fileNamePrefix: 'customers', fileExtension: 'xlsx' }
 )
-
-const formInitialValues = { name: '', contact_person: '', phone: '', email: '', address: '', salesperson: null as any, default_tax_rate: 13, notes: '' }
-const formData = reactive({ ...formInitialValues })
-
-// 监听名称变化，清除错误提示
-watch(() => formData.name, () => {
-  if (nameError.value) {
-    nameError.value = ''
-  }
-})
 
 const crud = useCRUD(customerAPI, {
   onSuccess: () => {
@@ -418,30 +299,14 @@ const loadSalespersons = async () => {
   }
 }
 
-const resetForm = () => {
-  Object.assign(formData, formInitialValues)
-  nameError.value = ''
-}
-
 const closeModals = () => {
   showCreateModal.value = false
   showEditModal.value = false
-  resetForm()
+  selectedRow.value = null
 }
 
 const editRow = (row: any) => {
   selectedRow.value = row
-  nameError.value = ''
-  Object.assign(formData, {
-    name: row.name,
-    contact_person: row.contact_person || '',
-    phone: row.phone || '',
-    email: row.email || '',
-    address: row.address || '',
-    salesperson: row.salesperson || null,
-    default_tax_rate: row.default_tax_rate ?? 13,
-    notes: row.notes || ''
-  })
   showEditModal.value = true
 }
 
@@ -460,45 +325,7 @@ const closeDetail = () => {
   currentDetail.value = null
 }
 
-const handleSubmit = async () => {
-  // 校验客户名称
-  const name = (formData.name || '').trim()
-  if (!name) {
-    nameError.value = '请输入客户名称'
-    return
-  }
-  if (name.length < 2) {
-    nameError.value = '客户名称长度需至少2个字符'
-    return
-  }
-  if (name.length > 200) {
-    nameError.value = '客户名称长度不能超过200个字符'
-    return
-  }
-
-  // 校验手机号格式（可选）
-  const phone = (formData.phone || '').trim()
-  if (phone && !/^[\d\-+() ]+$/.test(phone)) {
-    useUIStore().showWarning('电话号码格式不正确，只能包含数字和-+()空格')
-    return
-  }
-
-  // 检查重复名称
-  if (name.length >= 2) {
-    const excludeId = showEditModal.value ? selectedRow.value?.id : undefined
-    const exists = await customerAPI.checkName(name, excludeId)
-    if (exists) {
-      nameError.value = '该客户名称已存在'
-      return
-    }
-  }
-
-  const payload = {
-    ...formData,
-    name,
-    phone
-  }
-
+const handleSubmit = async (payload: any) => {
   submitting.value = true
   try {
     if (showEditModal.value) {
@@ -520,7 +347,7 @@ const handleSubmit = async () => {
     if (errors && typeof errors === 'object' && errors.name) {
       const nameErrors = Array.isArray(errors.name) ? errors.name : [errors.name]
       if (nameErrors.length > 0) {
-        nameError.value = nameErrors[0]
+        customerFormDialogRef.value?.setNameError(nameErrors[0])
         return
       }
     }

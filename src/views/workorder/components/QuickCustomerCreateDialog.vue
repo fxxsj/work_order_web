@@ -1,60 +1,20 @@
 <template>
-  <BaseDialog
-    :show="dialogVisible"
-    title="新建客户"
-    width="narrow"
-    @close="handleClose"
-  >
-    <div class="space-y-4">
-      <Input
-        v-model="form.name"
-        label="客户名称"
-        placeholder="请输入客户名称"
-        required
-      />
-      <Input
-        v-model="form.contact_person"
-        label="联系人"
-        placeholder="请输入联系人"
-      />
-      <Input
-        v-model="form.phone"
-        label="联系电话"
-        placeholder="请输入联系电话"
-      />
-      <TextArea
-        v-model="form.address"
-        label="地址"
-        :rows="2"
-        placeholder="请输入地址"
-      />
-    </div>
-    <template #footer>
-      <button
-        class="btn btn-secondary"
-        @click="handleClose"
-      >
-        取消
-      </button>
-      <button
-        class="btn btn-primary"
-        :disabled="loading || !form.name"
-        @click="handleSubmit"
-      >
-        <span
-          v-if="loading"
-          class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-1"
-        />
-        创建
-      </button>
-    </template>
-  </BaseDialog>
+  <CustomerFormDialog
+    ref="customerFormDialogRef"
+    :visible="dialogVisible"
+    dialog-type="create"
+    :loading="loading"
+    :salesperson-options="salespersonOptions"
+    @update:visible="dialogVisible = $event"
+    @confirm="handleConfirm"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { Input, TextArea } from '@/components/common'
-import { customerAPI } from '@/api/modules'
+import { computed, onMounted, ref } from 'vue'
+import { authAPI, customerAPI } from '@/api/modules'
+import CustomerFormDialog from '@/views/customer/components/CustomerFormDialog.vue'
+import ErrorHandler from '@/utils/errorHandler'
 import { useUIStore } from '@/stores/ui'
 
 const props = defineProps({
@@ -65,12 +25,12 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'update:visible', 'created'])
 
 const loading = ref(false)
-const form = reactive({
-  name: '',
-  contact_person: '',
-  phone: '',
-  address: ''
-})
+const salespersonList = ref<any[]>([])
+const customerFormDialogRef = ref<InstanceType<typeof CustomerFormDialog> | null>(null)
+
+const salespersonOptions = computed(() =>
+  salespersonList.value.map((u: any) => ({ value: u.id, label: u.username }))
+)
 
 const dialogVisible = computed({
   get: () => props.modelValue ?? props.visible,
@@ -80,39 +40,36 @@ const dialogVisible = computed({
   }
 })
 
-const handleClose = () => {
-  dialogVisible.value = false
-  resetForm()
-}
-
-const resetForm = () => {
-  form.name = ''
-  form.contact_person = ''
-  form.phone = ''
-  form.address = ''
-}
-
-const handleSubmit = async () => {
-  if (!form.name) {
-    useUIStore().showWarning('请输入客户名称')
-    return
+const loadSalespersons = async () => {
+  try {
+    const response: any = await authAPI.getSalespersons()
+    salespersonList.value = Array.isArray(response) ? response : (response?.results || response?.data || [])
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载业务员列表失败')
   }
+}
 
+const handleConfirm = async (payload: any) => {
   loading.value = true
   try {
-    const created: any = await customerAPI.create({
-      name: form.name,
-      contact_person: form.contact_person || undefined,
-      phone: form.phone || undefined,
-      address: form.address || undefined
-    })
+    const created: any = await customerAPI.create(payload)
     useUIStore().showSuccess('客户创建成功')
     emit('created', created)
-    handleClose()
+    dialogVisible.value = false
   } catch (error: any) {
-    useUIStore().showError(error?.message || '创建失败')
+    const errors = error?.response?.data?.errors
+    if (errors && typeof errors === 'object' && errors.name) {
+      const nameErrors = Array.isArray(errors.name) ? errors.name : [errors.name]
+      if (nameErrors.length > 0) {
+        customerFormDialogRef.value?.setNameError(nameErrors[0])
+        return
+      }
+    }
+    ErrorHandler.showMessage(error, '创建客户失败')
   } finally {
     loading.value = false
   }
 }
+
+onMounted(loadSalespersons)
 </script>

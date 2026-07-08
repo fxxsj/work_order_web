@@ -118,7 +118,8 @@ const handleCreate = (query: string) => {
   emit('create', query)
 }
 
-const handleSelect = (id: number) => {
+const handleSelect = (id: string | number | boolean | (string | number | boolean)[] | null) => {
+  if (typeof id !== 'number') return
   const customer = customerList.value.find((c: any) => c.id === id)
   if (customer) {
     emit('select', customer)

@@ -427,6 +427,7 @@ const pendingProductCreateIndex = ref<number | null>(null)
 const customerOptions = ref<any[]>([])
 const productOptions = ref<any[]>([])
 const editContext = ref<any>(null)
+const submitting = ref(false)
 
 const form = reactive({
   customer: null as number | null,

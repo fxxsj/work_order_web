@@ -90,90 +90,14 @@
     </template>
   </TablePageLayout>
 
-  <BaseDialog
-    :show="showCreateModal || showEditModal"
-    :title="showEditModal ? '编辑供应商' : '新增供应商'"
-    width="normal"
-    @close="closeModals"
-  >
-    <form
-      id="supplier-form"
-      class="space-y-5"
-      @submit.prevent="handleSubmit"
-    >
-      <div>
-        <Input
-          v-model="formData.code"
-          label="供应商编码"
-          placeholder="请输入编码（留空自动生成）"
-          :disabled="showEditModal"
-        />
-        <div
-          v-if="!showEditModal"
-          class="text-xs text-gray-400 mt-1"
-        >
-          编码只能包含中文、字母、数字和连字符
-        </div>
-      </div>
-      <Input
-        v-model="formData.name"
-        label="供应商名称"
-        required
-        placeholder="请输入供应商名称"
-      />
-      <Input
-        v-model="formData.contact_person"
-        label="联系人"
-        placeholder="请输入联系人"
-      />
-      <Input
-        v-model="formData.phone"
-        label="联系电话"
-        placeholder="请输入联系电话"
-      />
-      <Input
-        v-model="formData.email"
-        label="邮箱"
-        placeholder="请输入邮箱"
-        type="email"
-      />
-      <TextArea
-        v-model="formData.address"
-        label="地址"
-        :rows="2"
-        placeholder="请输入地址"
-      />
-      <RadioGroup
-        v-model="formData.status"
-        :options="statusOptions"
-      />
-      <TextArea
-        v-model="formData.notes"
-        label="备注"
-        :rows="3"
-        placeholder="请输入备注"
-      />
-    </form>
-    <template #footer>
-      <div class="flex justify-end gap-3">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="closeModals"
-        >
-          取消
-        </button>
-        <button
-          form="supplier-form"
-          type="submit"
-          :disabled="submitting"
-          class="btn btn-primary"
-        >
-          {{ submitting ? '保存中...' : showEditModal ? '更新' : '创建' }}
-        </button>
-      </div>
-    </template>
-  </BaseDialog>
+  <SupplierFormDialog
+    :visible="showCreateModal || showEditModal"
+    :dialog-type="showEditModal ? 'edit' : 'create'"
+    :supplier="selectedRow"
+    :loading="submitting"
+    @update:visible="(val: boolean) => { if (!val) closeModals() }"
+    @confirm="handleSubmit"
+  />
 
   <BaseDialog
     :show="showDetailModal"
@@ -264,10 +188,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { supplierAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
-import { BaseButton, TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Select, Tag, Input, TextArea, RadioGroup, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
+import { BaseButton, TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Select, Tag, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
+import SupplierFormDialog from './components/SupplierFormDialog.vue'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
@@ -314,19 +239,6 @@ const statusOptions = [
   { value: 'inactive', label: '停用' }
 ]
 
-const formInitialValues: Record<string, any> = {
-  id: undefined as number | undefined,
-  code: '',
-  name: '',
-  contact_person: '',
-  phone: '',
-  email: '',
-  address: '',
-  status: 'active',
-  notes: ''
-}
-const formData = reactive({ ...formInitialValues })
-
 const crud = useCRUD(supplierAPI, {
   onSuccess: () => {
     closeModals()
@@ -334,29 +246,14 @@ const crud = useCRUD(supplierAPI, {
   }
 })
 
-const resetForm = () => {
-  Object.assign(formData, formInitialValues)
-}
-
 const closeModals = () => {
   showCreateModal.value = false
   showEditModal.value = false
-  resetForm()
+  selectedRow.value = null
 }
 
 const editRow = (row: any) => {
   selectedRow.value = row
-  Object.assign(formData, {
-    id: row.id,
-    code: row.code || '',
-    name: row.name || '',
-    contact_person: row.contact_person || '',
-    phone: row.phone || '',
-    email: row.email || '',
-    address: row.address || '',
-    status: row.status === 'inactive' ? 'inactive' : 'active',
-    notes: row.notes || ''
-  })
   showEditModal.value = true
 }
 
@@ -375,46 +272,11 @@ const closeDetail = () => {
   currentDetail.value = null
 }
 
-const validateForm = () => {
-  const code = (formData.code || '').trim()
-  const name = (formData.name || '').trim()
-  const phone = (formData.phone || '').trim()
-  const email = (formData.email || '').trim()
-
-  if (code) {
-    if (code.length < 2 || code.length > 50) return '供应商编码长度必须在2-50个字符之间'
-    if (!/^[\u4e00-\u9fa5A-Za-z0-9-]+$/.test(code)) return '编码只能包含中文、字母、数字和连字符'
-  }
-  if (!name) return '请输入供应商名称'
-  if (name.length > 200) return '供应商名称不能超过200个字符'
-  if (phone && !/^(1[3-9]\d{9}|0\d{2,3}-?\d{7,8})$/.test(phone)) return '请输入正确的联系电话（手机号或座机号）'
-  if (email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) return '请输入正确的邮箱地址'
-  return ''
-}
-
-const buildPayload = () => ({
-  code: (formData.code || '').trim(),
-  name: (formData.name || '').trim(),
-  contact_person: (formData.contact_person || '').trim(),
-  phone: (formData.phone || '').trim(),
-  email: (formData.email || '').trim(),
-  address: (formData.address || '').trim(),
-  status: formData.status,
-  notes: (formData.notes || '').trim()
-})
-
-const handleSubmit = async () => {
-  const validationError = validateForm()
-  if (validationError) {
-    ErrorHandler.showMessage(validationError, '校验失败')
-    return
-  }
-
+const handleSubmit = async (payload: any) => {
   submitting.value = true
   try {
-    const payload = buildPayload()
     if (showEditModal.value) {
-      await crud.update(formData.id, payload, '保存成功')
+      await crud.update(selectedRow.value.id, payload, '保存成功')
     } else {
       await crud.create(payload, '创建成功')
     }

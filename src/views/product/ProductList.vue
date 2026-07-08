@@ -161,15 +161,14 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ref, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import { productAPI, processAPI, materialAPI, productMaterialAPI, productGroupAPI } from '@/api/modules'
+import { productAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD, useExport } from '@/composables'
 import { BaseButton, TablePageLayout, DataTable, EmptyState, SearchInput, Select, Tag, ConfirmDialog, Pagination, RowActions, FilterRow } from '@/components/common'
 import ProductFormDialog from './components/ProductFormDialog.vue'
 import ProductDetailDialog from './components/ProductDetailDialog.vue'
+import { useProductFormSupportData, useProductFormWorkflow } from './composables/useProductFormWorkflow'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
-import logger from '@/utils/logger'
-import { uploadPendingImages } from '@/utils/pendingImageUpload'
 
 const columns: Column[] = [
   { key: 'code', label: '产品编码', sortable: true, class: 'w-28' },
@@ -213,13 +212,20 @@ const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showDetailModal = ref(false)
 const showDeleteDialog = ref(false)
-const formLoading = ref(false)
 const currentProduct = ref<any>(null)
 
-const allProcesses = ref<any[]>([])
-const materialList = ref<any[]>([])
-const productGroupList = ref([])
 const fileInput = ref<HTMLInputElement | null>(null)
+const {
+  materialList,
+  processList: allProcesses,
+  productGroupList,
+  loadSupportData
+} = useProductFormSupportData()
+const {
+  saving: formLoading,
+  createProduct,
+  updateProduct
+} = useProductFormWorkflow()
 
 // Export
 const { exporting, exportData } = useExport(
@@ -253,46 +259,6 @@ const handleImportFile = async (event: Event) => {
     ErrorHandler.showMessage(error, '导入失败')
   } finally {
     target.value = ''
-  }
-}
-
-const loadAllProcesses = async () => {
-  try {
-    let allProcessesArr: any[] = []; let page = 1; let hasMore = true
-    while (hasMore) {
-      const response: any = await processAPI.getList({ is_active: true, page_size: 100, page: page })
-      const list = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
-      if (list.length > 0) {
-        allProcessesArr = allProcessesArr.concat(list);
-        hasMore = response.next !== null && response.next !== undefined;
-        page++
-      } else {
-        hasMore = false
-      }
-    }
-    allProcesses.value = allProcessesArr
-  } catch (error: any) {
-    ErrorHandler.showMessage(error, '加载工序列表')
-  }
-}
-
-const loadMaterialList = async () => {
-  try {
-    const response: any = await materialAPI.getList({ page_size: 100 });
-    const list = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
-    materialList.value = list
-  } catch (error: any) {
-    ErrorHandler.showMessage(error, '加载物料列表')
-  }
-}
-
-const loadProductGroupList = async () => {
-  try {
-    const response: any = await productGroupAPI.getList({ page_size: 100, is_active: true });
-    const list = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || [])
-    productGroupList.value = list
-  } catch (error: any) {
-    ErrorHandler.showMessage(error, '加载产品组列表')
   }
 }
 
@@ -348,58 +314,20 @@ const closeModals = () => {
 }
 
 const handleFormConfirm = async (payload: any) => {
-  const { form: formData, materialItems, pendingImages = [] } = payload;
-  formLoading.value = true
   try {
-    let productId
     if (showEditModal.value) {
-      await productAPI.update(currentProduct.value.id, formData);
-      productId = currentProduct.value.id;
-      useUIStore().showSuccess('保存成功')
+      await updateProduct(currentProduct.value.id, payload, { successMessage: '保存成功' })
     }
     else {
-      const result: any = await productAPI.create(formData);
-      productId = result.id;
-      useUIStore().showSuccess('创建成功')
-    }
-    await saveProductMaterials(productId, materialItems)
-    if (!showEditModal.value && pendingImages.length > 0) {
-      try {
-        await uploadPendingImages(productAPI, productId, pendingImages)
-      } catch (error: any) {
-        ErrorHandler.showMessage(error, '产品已创建，部分图片上传失败，请进入编辑页重试')
-      }
+      await createProduct(payload, {
+        successMessage: '创建成功',
+        imageFailureMessage: '产品已创建，部分图片上传失败，请进入编辑页重试'
+      })
     }
     closeModals()
     await loadData()
   } catch (error: any) {
     ErrorHandler.showMessage(error, showEditModal.value ? '保存失败' : '创建失败')
-  } finally {
-    formLoading.value = false
-  }
-}
-
-const saveProductMaterials = async (productId: any, materialItems: any) => {
-  if (showEditModal.value) {
-    try {
-      const existingMaterials: any = await productMaterialAPI.getList({ product: productId });
-      const list = Array.isArray(existingMaterials) ? existingMaterials : (existingMaterials?.results || existingMaterials?.data || [])
-      for (const material of list) {
-        await productMaterialAPI.delete(material.id)
-      }
-    } catch (error: any) {
-      logger.warn('删除现有物料失败', error)
-    }
-  }
-  for (let i = 0; i < materialItems.length; i++) {
-    const item = materialItems[i]
-    if (item.material) {
-      try {
-        await productMaterialAPI.create({ product: productId, material: item.material, material_size: item.material_size || '', material_usage: item.material_usage || '', need_cutting: item.need_cutting || false, notes: item.notes || '', sort_order: i })
-      } catch (error: any) {
-        logger.warn('保存物料失败', error)
-      }
-    }
   }
 }
 
@@ -414,5 +342,5 @@ const handleSort = (key: string, order: 'asc' | 'desc') => {
   loadData()
 }
 
-onMounted(() => { loadData(); loadAllProcesses(); loadMaterialList(); loadProductGroupList() })
+onMounted(() => { loadData(); loadSupportData() })
 </script>

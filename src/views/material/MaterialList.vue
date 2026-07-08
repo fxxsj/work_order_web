@@ -112,113 +112,15 @@
     </template>
   </TablePageLayout>
 
-  <BaseDialog
-    :show="showCreateModal || showEditModal"
-    :title="showEditModal ? '编辑物料' : '新建物料'"
-    width="normal"
-    @close="closeModals"
-  >
-    <form
-      id="entity-form"
-      class="space-y-5"
-      @submit.prevent="handleSubmit"
-    >
-      <div>
-        <Input
-          v-model="form.code"
-          label="物料编码"
-          placeholder="请输入编码（留空自动生成）"
-          :disabled="showEditModal"
-        />
-      </div>
-      <div>
-        <Input
-          v-model="form.name"
-          label="物料名称"
-          required
-          placeholder="请输入物料名称"
-        />
-      </div>
-      <div>
-        <Input
-          v-model="form.specification"
-          label="规格"
-          placeholder="请输入规格"
-        />
-      </div>
-      <div>
-        <Input
-          v-model="form.unit"
-          label="单位"
-          required
-          placeholder="如：个、张、本"
-        />
-      </div>
-      <InputNumber
-        v-model="form.unit_price"
-        label="单价"
-        :min="0"
-        :step="0.01"
-        :precision="2"
-      />
-      <InputNumber
-        v-model="form.stock_quantity"
-        label="库存数量"
-        :min="0"
-      />
-      <InputNumber
-        v-model="form.min_stock_quantity"
-        label="最小库存"
-        :min="0"
-      />
-      <InputNumber
-        v-model="form.lead_time_days"
-        label="采购周期（天）"
-        :min="0"
-      />
-      <Toggle
-        v-model="form.need_cutting"
-        label="需要开料"
-      />
-      <Select
-        v-model="form.default_supplier"
-        label="默认供应商"
-        placeholder="请选择供应商"
-        :options="supplierOptions"
-        filterable
-        clearable
-      />
-      
-      <div>
-        <TextArea
-          v-model="form.notes"
-          label="备注"
-          placeholder="请输入备注"
-          :rows="3"
-        />
-      </div>
-    </form>
-
-    <template #footer>
-      <div class="flex justify-end gap-3">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="closeModals"
-        >
-          取消
-        </button>
-        <BaseButton
-          form="entity-form"
-          type="submit"
-          variant="primary"
-          :loading="submitting"
-        >
-          {{ showEditModal ? '更新' : '创建' }}
-        </BaseButton>
-      </div>
-    </template>
-  </BaseDialog>
+  <MaterialFormDialog
+    :visible="showCreateModal || showEditModal"
+    :dialog-type="showEditModal ? 'edit' : 'create'"
+    :material="selectedRow"
+    :loading="submitting"
+    :supplier-options="supplierOptions"
+    @update:visible="(val: boolean) => { if (!val) closeModals() }"
+    @confirm="handleSubmit"
+  />
 
   <ConfirmDialog
     :show="showDeleteDialog"
@@ -235,11 +137,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { materialAPI, supplierAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission, useCRUD, useExport } from '@/composables'
-import { BaseButton, TablePageLayout, DataTable, EmptyState, SearchInput, BaseDialog, ConfirmDialog, Pagination, Input, InputNumber, Select, TextArea, Toggle, RowActions, FilterRow } from '@/components/common'
+import { BaseButton, TablePageLayout, DataTable, EmptyState, SearchInput, ConfirmDialog, Pagination, RowActions, FilterRow } from '@/components/common'
+import MaterialFormDialog from './components/MaterialFormDialog.vue'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -321,35 +224,6 @@ const handleImportFile = async (event: Event) => {
   }
 }
 
-type MaterialForm = {
-  code: string
-  name: string
-  specification: string
-  unit: string
-  unit_price: number
-  stock_quantity: number
-  min_stock_quantity: number
-  lead_time_days: number
-  need_cutting: boolean
-  default_supplier: number | null
-  notes: string
-}
-
-const formInitialValues: MaterialForm = {
-  code: '',
-  name: '',
-  specification: '',
-  unit: '个',
-  unit_price: 0,
-  stock_quantity: 0,
-  min_stock_quantity: 0,
-  lead_time_days: 7,
-  need_cutting: false,
-  default_supplier: null,
-  notes: ''
-}
-const form = reactive({ ...formInitialValues })
-
 const supplierOptions = computed(() =>
   supplierList.value.map((s: any) => ({ value: s.id, label: `${s.code} - ${s.name}` }))
 )
@@ -365,7 +239,6 @@ const loadSuppliers = async () => {
 }
 
 const showCreateDialog = () => { 
-  resetForm(); 
   showCreateModal.value = true; 
   selectedRow.value = null 
 }
@@ -373,61 +246,15 @@ const showCreateDialog = () => {
 const closeModals = () => {
   showCreateModal.value = false;
   showEditModal.value = false;
+  selectedRow.value = null
 }
-
-const resetForm = () => { Object.assign(form, formInitialValues) }
 
 const handleEdit = (row: any) => {
   showEditModal.value = true; 
   selectedRow.value = row
-  Object.assign(form, {
-    code: row.code || '',
-    name: row.name || '',
-    specification: row.specification || '',
-    unit: row.unit || '个',
-    unit_price: Number(row.unit_price || 0),
-    stock_quantity: Number(row.stock_quantity || 0),
-    min_stock_quantity: Number(row.min_stock_quantity || 0),
-    lead_time_days: Number(row.lead_time_days ?? 7),
-    need_cutting: !!row.need_cutting,
-    default_supplier: row.default_supplier || null,
-    notes: row.notes || ''
-  })
 }
 
-const handleSubmit = async () => {
-  const trimmedCode = form.code.trim()
-  const trimmedName = form.name.trim()
-  const trimmedUnit = form.unit.trim()
-
-  if (!trimmedName || !trimmedUnit) {
-    ErrorHandler.showWarning('请填写必填项(名称、单位)')
-    return
-  }
-
-  if (trimmedCode) {
-    if (trimmedCode.length < 2 || trimmedCode.length > 50) {
-      ErrorHandler.showWarning('物料编码长度应在 2-50 个字符之间')
-      return
-    }
-    if (!/^[A-Za-z0-9-]+$/.test(trimmedCode)) {
-      ErrorHandler.showWarning('物料编码只能包含字母、数字和连字符')
-      return
-    }
-  }
-
-  if (showEditModal.value && form.min_stock_quantity > form.stock_quantity) {
-    ErrorHandler.showWarning('最小库存不能大于当前库存')
-    return
-  }
-
-  const payload: MaterialForm = {
-    ...form,
-    code: trimmedCode,
-    name: trimmedName,
-    unit: trimmedUnit
-  }
-
+const handleSubmit = async (payload: any) => {
   submitting.value = true
   try {
     if (showEditModal.value) {

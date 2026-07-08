@@ -1,66 +1,21 @@
 <template>
-  <BaseDialog
-    :show="dialogVisible"
-    title="新建产品"
-    width="narrow"
-    @close="handleClose"
-  >
-    <div class="space-y-4">
-      <Input
-        v-model="form.name"
-        label="产品名称"
-        placeholder="请输入产品名称"
-        required
-      />
-      <Input
-        v-model="form.code"
-        label="产品编码"
-        placeholder="请输入产品编码"
-      />
-      <Input
-        v-model="form.specification"
-        label="规格"
-        placeholder="请输入规格"
-      />
-      <Input
-        v-model="form.unit"
-        label="单位"
-        placeholder="请输入单位，默认：件"
-      />
-      <Input
-        v-model="form.unit_price"
-        label="单价"
-        type="number"
-        placeholder="请输入单价"
-      />
-    </div>
-    <template #footer>
-      <button
-        class="btn btn-secondary"
-        @click="handleClose"
-      >
-        取消
-      </button>
-      <button
-        class="btn btn-primary"
-        :disabled="loading || !form.name"
-        @click="handleSubmit"
-      >
-        <span
-          v-if="loading"
-          class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-1"
-        />
-        创建
-      </button>
-    </template>
-  </BaseDialog>
+  <ProductFormDialog
+    :visible="dialogVisible"
+    dialog-type="create"
+    :loading="loading"
+    :materials="materialList"
+    :processes="processList"
+    :product-groups="productGroupList"
+    @update:visible="dialogVisible = $event"
+    @confirm="handleConfirm"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { Input } from '@/components/common'
-import { productAPI } from '@/api/modules'
-import { useUIStore } from '@/stores/ui'
+import { computed, watch } from 'vue'
+import ProductFormDialog from '@/views/product/components/ProductFormDialog.vue'
+import { useProductFormSupportData, useProductFormWorkflow } from '@/views/product/composables/useProductFormWorkflow'
+import ErrorHandler from '@/utils/errorHandler'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: undefined },
@@ -69,14 +24,16 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'update:visible', 'created'])
 
-const loading = ref(false)
-const form = reactive({
-  name: '',
-  code: '',
-  specification: '',
-  unit: '',
-  unit_price: null as number | null
-})
+const {
+  materialList,
+  processList,
+  productGroupList,
+  loadSupportData
+} = useProductFormSupportData()
+const {
+  saving: loading,
+  createProduct
+} = useProductFormWorkflow()
 
 const dialogVisible = computed({
   get: () => props.modelValue ?? props.visible,
@@ -86,41 +43,20 @@ const dialogVisible = computed({
   }
 })
 
-const handleClose = () => {
-  dialogVisible.value = false
-  resetForm()
-}
+watch(dialogVisible, (visible) => {
+  if (visible) loadSupportData()
+}, { immediate: true })
 
-const resetForm = () => {
-  form.name = ''
-  form.code = ''
-  form.specification = ''
-  form.unit = ''
-  form.unit_price = null
-}
-
-const handleSubmit = async () => {
-  if (!form.name) {
-    useUIStore().showWarning('请输入产品名称')
-    return
-  }
-
-  loading.value = true
+const handleConfirm = async (payload: any) => {
   try {
-    const created: any = await productAPI.create({
-      name: form.name,
-      code: form.code || undefined,
-      specification: form.specification || undefined,
-      unit: form.unit || '件',
-      unit_price: form.unit_price || undefined
+    const created = await createProduct(payload, {
+      successMessage: '产品创建成功',
+      imageFailureMessage: '产品已创建，部分图片上传失败，请进入产品管理编辑页重试'
     })
-    useUIStore().showSuccess('产品创建成功')
     emit('created', created)
-    handleClose()
+    dialogVisible.value = false
   } catch (error: any) {
-    useUIStore().showError(error?.message || '创建失败')
-  } finally {
-    loading.value = false
+    ErrorHandler.showMessage(error, '创建产品失败')
   }
 }
 </script>
