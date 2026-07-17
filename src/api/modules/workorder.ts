@@ -44,8 +44,8 @@ class WorkOrderAPI extends BaseAPI {
   }
 
   // 获取统计数据
-  getStatistics(params?: Record<string, unknown>) {
-    return this.customAction(`${this.baseUrl}statistics/`, 'get', null, params)
+  getStatistics(params?: Record<string, unknown>, config?: { signal?: AbortSignal }) {
+    return this.customAction(`${this.baseUrl}statistics/`, 'get', null, params, config)
   }
 
   // 获取施工单汇总

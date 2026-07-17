@@ -4,7 +4,7 @@
  * 提供统一的导出功能，支持导出为 Excel、CSV 等格式
  */
 
-import * as XLSX from 'xlsx'
+import type { WorkBook, WorkSheet } from 'xlsx'
 import logger from '@/utils/logger'
 import { branding } from '@/config/branding'
 
@@ -57,9 +57,10 @@ class ExportService {
     } = options
 
     try {
-      const workbook = XLSX.utils.book_new()
+      const XLSX = await import('xlsx')
+      const workbook: WorkBook = XLSX.utils.book_new()
       const worksheetData = this._prepareWorksheetData(data, columns)
-      const worksheet = XLSX.utils.json_to_sheet(worksheetData)
+      const worksheet: WorkSheet = XLSX.utils.json_to_sheet(worksheetData)
 
       if (columns.length > 0) {
         const colWidths = columns.map((col: any) => {

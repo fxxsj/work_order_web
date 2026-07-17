@@ -130,9 +130,17 @@ const columns = computed(() => {
     in_progress: { title: '进行中', status: 'in_progress' },
     completed: { title: '已完成', status: 'completed' }
   }
-  return Object.values(statusMap).map((col: any) => ({
-    ...col,
-    tasks: props.tasks.filter((task: any) => task.status === col.status)
+  const tasksByStatus = Object.fromEntries(
+    Object.keys(statusMap).map(status => [status, [] as any[]])
+  ) as Record<string, any[]>
+
+  for (const task of props.tasks as any[]) {
+    if (tasksByStatus[task.status]) tasksByStatus[task.status].push(task)
+  }
+
+  return Object.values(statusMap).map((column: any) => ({
+    ...column,
+    tasks: tasksByStatus[column.status]
   }))
 })
 

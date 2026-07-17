@@ -320,17 +320,43 @@ const formDialogVisible = computed({
   }
 })
 
-const loadProductList = async () => {
-  try { const response: any = await productAPI.getList({ is_active: true, page_size: 100 }); productList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || []) } catch (error: any) { ErrorHandler.showMessage(error, '加载产品列表失败') }
+let referenceDataPromise: Promise<void> | null = null
+
+const getResults = (response: unknown): any[] => {
+  if (Array.isArray(response)) return response
+  const payload = response as { results?: any[]; data?: any[] }
+  return payload?.results || payload?.data || []
 }
-const loadDieList = async () => {
-  try { const response: any = await dieAPI.getList({ page_size: 100 }); dieList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || []) } catch (error: any) { ErrorHandler.showMessage(error, '加载刀模列表失败') }
+
+const loadReferenceData = async () => {
+  const [products, dies, foilingPlates, embossingPlates] = await Promise.allSettled([
+    productAPI.getList({ is_active: true, page_size: 100 }),
+    dieAPI.getList({ page_size: 100 }),
+    foilingPlateAPI.getList({ page_size: 100 }),
+    embossingPlateAPI.getList({ page_size: 100 })
+  ])
+
+  if (products.status === 'fulfilled') productList.value = getResults(products.value)
+  else ErrorHandler.showMessage(products.reason, '加载产品列表失败')
+
+  if (dies.status === 'fulfilled') dieList.value = getResults(dies.value)
+  else ErrorHandler.showMessage(dies.reason, '加载刀模列表失败')
+
+  if (foilingPlates.status === 'fulfilled') foilingPlateList.value = getResults(foilingPlates.value)
+  else ErrorHandler.showMessage(foilingPlates.reason, '加载烫金版列表失败')
+
+  if (embossingPlates.status === 'fulfilled') embossingPlateList.value = getResults(embossingPlates.value)
+  else ErrorHandler.showMessage(embossingPlates.reason, '加载压凸版列表失败')
 }
-const loadFoilingPlateList = async () => {
-  try { const response: any = await foilingPlateAPI.getList({ page_size: 100 }); foilingPlateList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || []) } catch (error: any) { ErrorHandler.showMessage(error, '加载烫金版列表失败') }
-}
-const loadEmbossingPlateList = async () => {
-  try { const response: any = await embossingPlateAPI.getList({ page_size: 100 }); embossingPlateList.value = Array.isArray(response) ? response : ((response as any)?.results || (response as any)?.data || []) } catch (error: any) { ErrorHandler.showMessage(error, '加载压凸版列表失败') }
+
+const ensureReferenceData = () => {
+  if (!referenceDataPromise) {
+    referenceDataPromise = loadReferenceData().catch(error => {
+      referenceDataPromise = null
+      throw error
+    })
+  }
+  return referenceDataPromise
 }
 
 const openConfirmDialog = (row: any) => {
@@ -392,17 +418,29 @@ const createNewVersion = async () => {
   }
 }
 
-const openCreateModal = () => {
+const openCreateModal = async () => {
+  try {
+    await ensureReferenceData()
+  } catch {
+    return
+  }
   currentArtwork.value = null
   showEditModal.value = false
   showCreateModal.value = true
 }
 
 const openEditModal = async (row: any) => {
-  showCreateModal.value = false
-  if (row) {
-    try { const detail: any = await artworkAPI.getDetail((row as any).id); currentArtwork.value = detail } catch (error: any) { ErrorHandler.showMessage(error, '加载图稿详情失败'); return }
+  try {
+    const [detail] = await Promise.all([
+      artworkAPI.getDetail(row.id),
+      ensureReferenceData()
+    ])
+    currentArtwork.value = detail
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载图稿编辑数据失败')
+    return
   }
+  showCreateModal.value = false
   showEditModal.value = true
 }
 
@@ -473,5 +511,5 @@ const handleSort = (key: string, order: 'asc' | 'desc') => {
   loadData()
 }
 
-onMounted(() => { loadData(); loadProductList(); loadDieList(); loadFoilingPlateList(); loadEmbossingPlateList() })
+onMounted(loadData)
 </script>

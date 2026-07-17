@@ -65,8 +65,7 @@
 </template>
 
 <script setup lang="ts">
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   workOrderAPI,
@@ -102,10 +101,10 @@ const pendingEmbossingPlates = ref<any[]>([])
 const confirmingItem = ref<string | null>(null)
 const loading = ref(false)
 
-const isSalesperson = computed(() => userStore.hasRole('业务员'))
-const isSupervisor = computed(() => userStore.hasAnyRole(['主管', '经理', '管理员']))
-const isOperator = computed(() => userStore.hasAnyRole(['操作员', '主管', '经理']))
-const isDesigner = computed(() => userStore.hasRole('设计员'))
+const isSalesperson = computed(() => userStore.isSalesperson)
+const isSupervisor = computed(() => userStore.isSupervisor || userStore.isManager || userStore.isSuperuser)
+const isOperator = computed(() => userStore.isOperator || userStore.isSupervisor || userStore.isManager)
+const isDesigner = computed(() => userStore.hasRole('designer'))
 const isAdmin = computed(() => userStore.isSuperuser)
 const businessAnalysis = computed(() => (statistics.value as any).business_analysis || {})
 const departmentStatistics = computed(() => taskStatistics.value.department_statistics || [])
@@ -117,53 +116,55 @@ const upcomingDeadlineCount = computed(() => (statistics.value as any).upcoming_
 const taskStatistics = computed(() => (statistics.value as any).task_statistics || {})
 const efficiencyAnalysis = computed(() => (statistics.value as any).efficiency_analysis || {})
 
+let dashboardRequestController: AbortController | null = null
+
+const isRequestAborted = (error: unknown, controller: AbortController) =>
+  controller.signal.aborted || (error as { code?: string })?.code === 'ERR_CANCELED'
+
 onMounted(() => {
-  loadData()
+  void loadData()
+})
+
+onBeforeUnmount(() => {
+  dashboardRequestController?.abort()
 })
 
 const loadData = async () => {
+  dashboardRequestController?.abort()
+  const controller = new AbortController()
+  dashboardRequestController = controller
   loading.value = true
+
+  const userId = userStore.currentUser?.id
   try {
-    const stats: any = await workOrderAPI.getStatistics().catch(() => null)
-    statistics.value = stats || {}
+    const [statsResult, recentOrdersResult, unreadResult, myTasksResult] = await Promise.allSettled([
+      workOrderAPI.getStatistics(undefined, { signal: controller.signal }),
+      workOrderAPI.getList({ page_size: 10, ordering: '-created_at' }, { signal: controller.signal }),
+      notificationAPI.getUnreadCount({ signal: controller.signal }),
+      isOperator.value && userId
+        ? workOrderTaskAPI.getList({ assigned_operator: userId, page_size: 10, ordering: '-created_at' }, { signal: controller.signal })
+        : Promise.resolve(null)
+    ])
 
-    const response: any = await workOrderAPI.getList({
-      page_size: 10,
-      ordering: '-created_at'
-    }).catch(() => ({ results: [] }))
-    recentOrders.value = response.results || []
+    if (controller.signal.aborted) return
 
-    if (isOperator.value) {
-      const userInfo = userStore.currentUser
-      if (userInfo && userInfo.id) {
-        try {
-          const taskResponse: any = await workOrderTaskAPI.getList({
-            assigned_operator: userInfo.id,
-            page_size: 10,
-            ordering: '-created_at'
-          })
-          myTasks.value = taskResponse.results || []
-        } catch (error: any) {
-          ErrorHandler.handle(error, 'Dashboard.loadMyTasks')
-        }
-      }
-    }
+    if (statsResult.status === 'fulfilled') statistics.value = statsResult.value || {}
+    else ErrorHandler.handle(statsResult.reason, 'Dashboard.loadStatistics')
 
-    try {
-      const unreadResponse: any = await notificationAPI.getUnreadCount()
-      unreadNotificationCount.value = unreadResponse?.unread_count || 0
-    } catch (error: any) {
-      ErrorHandler.handle(error, 'Dashboard.loadUnreadNotifications')
-    }
+    if (recentOrdersResult.status === 'fulfilled') recentOrders.value = (recentOrdersResult.value as any)?.results || []
+    else ErrorHandler.handle(recentOrdersResult.reason, 'Dashboard.loadRecentOrders')
 
-    if (isDesigner.value) {
-      await loadPendingPlates()
-    }
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error: any) {
-    ErrorHandler.showError('加载数据失败，请刷新重试')
+    if (unreadResult.status === 'fulfilled') unreadNotificationCount.value = (unreadResult.value as any)?.unread_count || 0
+    else ErrorHandler.handle(unreadResult.reason, 'Dashboard.loadUnreadNotifications')
+
+    if (myTasksResult.status === 'fulfilled') myTasks.value = (myTasksResult.value as any)?.results || []
+    else ErrorHandler.handle(myTasksResult.reason, 'Dashboard.loadMyTasks')
+
+    if (isDesigner.value) await loadPendingPlates(controller.signal)
+  } catch (error: unknown) {
+    if (!isRequestAborted(error, controller)) ErrorHandler.showError('加载数据失败，请刷新重试')
   } finally {
-    loading.value = false
+    if (dashboardRequestController === controller) loading.value = false
   }
 }
 
@@ -198,58 +199,37 @@ const goToUrgentPriority = () => {
   router.push({ path: '/workorders', query: { priority: 'urgent' } })
 }
 
-const loadPendingPlates = async () => {
-  try {
-    const artworkResponse: any = await artworkAPI.getList({
-      page_size: 50,
-      ordering: '-created_at'
-    })
-    pendingArtworks.value = (artworkResponse.results || [])
+const loadPendingPlates = async (signal?: AbortSignal) => {
+  const pendingPlateRequests = [
+    artworkAPI.getList({ page_size: 50, ordering: '-created_at' }, { signal }),
+    dieAPI.getList({ page_size: 50, ordering: '-created_at' }, { signal }),
+    foilingPlateAPI.getList({ page_size: 50, ordering: '-created_at' }, { signal }),
+    embossingPlateAPI.getList({ page_size: 50, ordering: '-created_at' }, { signal })
+  ]
+  const [artworks, dies, foilingPlates, embossingPlates] = await Promise.allSettled(pendingPlateRequests)
+
+  if (signal?.aborted) return
+
+  if (artworks.status === 'fulfilled') {
+    pendingArtworks.value = ((artworks.value as any).results || [])
       .filter((item: any) => !item.confirmed)
       .slice(0, 10)
       .map((item: any) => ({
         ...item,
         code: item.code || (item.base_code ? (item.base_code + (item.version > 1 ? '-v' + item.version : '')) : '-')
       }))
-  } catch (error: any) {
-    ErrorHandler.handle(error, 'Dashboard.loadPendingArtworks')
+  } else {
+    ErrorHandler.handle(artworks.reason, 'Dashboard.loadPendingArtworks')
   }
 
-  try {
-    const dieResponse: any = await dieAPI.getList({
-      page_size: 50,
-      ordering: '-created_at'
-    })
-    pendingDies.value = (dieResponse.results || [])
-      .filter((item: any) => !item.confirmed)
-      .slice(0, 10)
-  } catch (error: any) {
-    ErrorHandler.handle(error, 'Dashboard.loadPendingDies')
-  }
+  if (dies.status === 'fulfilled') pendingDies.value = ((dies.value as any).results || []).filter((item: any) => !item.confirmed).slice(0, 10)
+  else ErrorHandler.handle(dies.reason, 'Dashboard.loadPendingDies')
 
-  try {
-    const foilingPlateResponse: any = await foilingPlateAPI.getList({
-      page_size: 50,
-      ordering: '-created_at'
-    })
-    pendingFoilingPlates.value = (foilingPlateResponse.results || [])
-      .filter((item: any) => !item.confirmed)
-      .slice(0, 10)
-  } catch (error: any) {
-    ErrorHandler.handle(error, 'Dashboard.loadPendingFoilingPlates')
-  }
+  if (foilingPlates.status === 'fulfilled') pendingFoilingPlates.value = ((foilingPlates.value as any).results || []).filter((item: any) => !item.confirmed).slice(0, 10)
+  else ErrorHandler.handle(foilingPlates.reason, 'Dashboard.loadPendingFoilingPlates')
 
-  try {
-    const embossingPlateResponse: any = await embossingPlateAPI.getList({
-      page_size: 50,
-      ordering: '-created_at'
-    })
-    pendingEmbossingPlates.value = (embossingPlateResponse.results || [])
-      .filter((item: any) => !item.confirmed)
-      .slice(0, 10)
-  } catch (error: any) {
-    ErrorHandler.handle(error, 'Dashboard.loadPendingEmbossingPlates')
-  }
+  if (embossingPlates.status === 'fulfilled') pendingEmbossingPlates.value = ((embossingPlates.value as any).results || []).filter((item: any) => !item.confirmed).slice(0, 10)
+  else ErrorHandler.handle(embossingPlates.reason, 'Dashboard.loadPendingEmbossingPlates')
 }
 
 const handlePlateConfirm = async (payload: any) => {

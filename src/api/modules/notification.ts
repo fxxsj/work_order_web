@@ -26,10 +26,11 @@ class NotificationAPI extends BaseAPI {
   }
 
   // 获取未读数量
-  getUnreadCount() {
+  getUnreadCount(config?: { signal?: AbortSignal }) {
     return this.request({
       url: `${this.baseUrl}unread_count/`,
-      method: 'get'
+      method: 'get',
+      signal: config?.signal
     })
   }
 
