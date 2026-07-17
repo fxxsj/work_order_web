@@ -34,7 +34,7 @@ import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
-import { useApprovalConfigStore } from '@/stores'
+import { useApprovalConfigStore } from '@/stores/approvalConfig'
 
 const route = useRoute()
 const approvalConfigStore = useApprovalConfigStore()

@@ -162,7 +162,7 @@ import { Icon, InputNumber, LineItemsTable, SectionDivider, Select, TextArea } f
 import type { Column } from '@/components/common/types'
 import { materialAPI, purchaseOrderAPI, supplierAPI, workOrderAPI } from '@/api/modules'
 import { useUIStore } from '@/stores/ui'
-import { useApprovalConfigStore } from '@/stores'
+import { useApprovalConfigStore } from '@/stores/approvalConfig'
 import ErrorHandler from '@/utils/errorHandler'
 import QuickSupplierCreateDialog from './components/QuickSupplierCreateDialog.vue'
 import MaterialSelector from '@/views/material/components/MaterialSelector.vue'

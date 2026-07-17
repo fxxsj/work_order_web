@@ -340,7 +340,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import { useApprovalConfigStore } from '@/stores'
+import { useApprovalConfigStore } from '@/stores/approvalConfig'
 import { invoiceAPI, customerAPI } from '@/api/modules'
 import { useCrudList, useCrudPermission } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
