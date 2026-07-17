@@ -385,7 +385,7 @@ import {
 } from '@/components/common'
 import type { Column, RowAction } from '@/components/common/types'
 import { useUIStore } from '@/stores/ui'
-import { useApprovalConfigStore } from '@/stores'
+import { useApprovalConfigStore } from '@/stores/approvalConfig'
 import ErrorHandler from '@/utils/errorHandler'
 
 const statusOptions = [

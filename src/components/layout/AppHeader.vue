@@ -315,25 +315,34 @@ const notifications = ref<any[]>([])
 const notificationLoading = ref(false)
 const connectionError = ref(false)
 let notificationPolling: any = null
+let notificationRetryTimer: ReturnType<typeof setTimeout> | null = null
 let retryCount = 0
 const MAX_RETRY_COUNT = 3
 const BASE_RETRY_DELAY = 5000
 
 const fetchNotifications = async () => {
+  if (notificationLoading.value) return
+  notificationLoading.value = true
   try {
     const response: any = await notificationAPI.list({ page: 1, page_size: 10 })
     notifications.value = response?.data?.results || response?.data || response?.results || []
     connectionError.value = false
     retryCount = 0
+    if (notificationRetryTimer) {
+      clearTimeout(notificationRetryTimer)
+      notificationRetryTimer = null
+    }
   } catch {
     connectionError.value = true
     retryCount++
     if (retryCount <= MAX_RETRY_COUNT) {
       const delay = BASE_RETRY_DELAY * Math.pow(2, retryCount - 1)
-      setTimeout(fetchNotifications, delay)
+      notificationRetryTimer = setTimeout(fetchNotifications, delay)
     } else {
       retryCount = 0
     }
+  } finally {
+    notificationLoading.value = false
   }
 }
 
@@ -425,6 +434,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
   if (notificationPolling) clearInterval(notificationPolling)
+  if (notificationRetryTimer) clearTimeout(notificationRetryTimer)
 })
 </script>
 
