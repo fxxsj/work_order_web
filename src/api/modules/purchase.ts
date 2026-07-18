@@ -111,8 +111,8 @@ class PurchaseOrderAPI extends BaseAPI {
   /**
    * 从施工单创建采购单
    * @param {number} workOrderId - 施工单ID
-   * @param {Array} materialIds - 物料ID列表（可选，不传则创建所有 pending 状态的物料）
-   * @param {object} options - 可选参数 { supplier_id, notes }
+   * @param {Array} materialIds - 材料要求或具体采购 SKU ID（兼容参数）
+   * @param {object} options - 可选参数 { work_order_material_ids, items, notes }
    */
   createFromWorkOrder(workOrderId: number | string, materialIds: number | string | null = null, options: Record<string, unknown> = {}) {
     return this.request({

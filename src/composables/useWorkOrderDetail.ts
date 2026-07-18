@@ -258,7 +258,10 @@ export function useWorkOrderDetail() {
       const poList = result.purchase_orders || []
       const createdItemCount = result.created_item_count || 0
       const skippedItemCount = result.skipped_item_count || 0
-      useUIStore().showSuccess(`已创建 ${poList.length} 个采购单，包含 ${createdItemCount} 个物料明细${skippedItemCount ? `，跳过 ${skippedItemCount} 项` : ''}`)
+      const blockedItemCount = result.blocked_item_count || 0
+      const summary = `已创建 ${poList.length} 个采购单，包含 ${createdItemCount} 个物料明细${skippedItemCount ? `，跳过 ${skippedItemCount} 项` : ''}${blockedItemCount ? `，${blockedItemCount} 项待处理` : ''}`
+      if (!poList.length && blockedItemCount) useUIStore().showWarning(summary)
+      else useUIStore().showSuccess(summary)
       await loadData()
     }, '创建采购单失败')
   }

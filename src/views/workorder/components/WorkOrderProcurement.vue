@@ -7,7 +7,7 @@
         variant="primary"
         size="sm"
         icon="plus"
-        title="按待采购物料创建采购单，创建后仍需提交、审核并下单"
+        title="只为规格、数量和供应商均已确认的物料创建采购单"
         @click="emit('create-purchase')"
       >
         创建采购单
@@ -23,7 +23,19 @@
       <span
         v-if="missingSupplierCount"
         class="rounded-md bg-danger-50 px-2 py-1 text-danger-700"
-      >缺默认供应商 {{ missingSupplierCount }}</span>
+      >具体规格缺供应商 {{ missingSupplierCount }}</span>
+      <span
+        v-if="planningPendingCount"
+        class="rounded-md bg-warning-50 px-2 py-1 text-warning-700"
+      >待确认规格 {{ planningPendingCount }}</span>
+      <span
+        v-if="coveredCount"
+        class="rounded-md bg-success-50 px-2 py-1 text-success-700"
+      >库存/在途已覆盖 {{ coveredCount }}</span>
+      <span
+        v-if="generatedCount"
+        class="rounded-md bg-primary-50 px-2 py-1 text-primary-700"
+      >已生成待处理采购单 {{ generatedCount }}</span>
     </div>
 
     <div
@@ -39,7 +51,28 @@
         :row-key="materialRowKey"
       >
         <template #cell-material_name="{ row }">
-          {{ row.material_name }} ({{ row.material_code }})
+          <div>{{ row.material_name }} ({{ row.material_code }})</div>
+          <div
+            v-if="row.procurement_material_id && row.procurement_material_id !== row.material"
+            class="mt-1 text-xs text-primary-600"
+          >
+            采购：{{ row.procurement_material_name }} ({{ row.procurement_material_code }})
+          </div>
+          <div
+            v-if="row.procurement_supplier_name"
+            class="mt-1 text-xs text-gray-500"
+          >
+            供应商：{{ row.procurement_supplier_name }}
+          </div>
+        </template>
+        <template #cell-procurement_quantity="{ row }">
+          <span v-if="Number(row.procurement_quantity || 0) > 0">
+            {{ row.procurement_quantity }} {{ row.procurement_material_unit || row.material_unit }}
+          </span>
+          <span
+            v-else
+            class="text-success-600"
+          >无需采购</span>
         </template>
         <template #cell-purchase_status="{ row }">
           <StatusTag
@@ -127,19 +160,19 @@ const props = defineProps({
 const emit = defineEmits(['create-purchase', 'view-purchase', 'plan-material'])
 const requiresPlanning = (material: any) => Boolean(material.planning_required)
 const hasPurchasableMaterials = computed(() =>
-  props.materials.some((m: any) => !m.purchase_status || m.purchase_status === 'pending') &&
-  props.materials
-    .filter(requiresPlanning)
-    .every((m: any) => m.planning_status === 'confirmed')
+  props.materials.some((m: any) => m.procurement_ready)
 )
 const pendingMaterialCount = computed(() => props.materials.filter((m: any) => !m.purchase_status || m.purchase_status === 'pending').length)
 const missingSupplierCount = computed(() =>
-  props.materials.filter((m: any) => (!m.purchase_status || m.purchase_status === 'pending') && !m.default_supplier && !m.default_supplier_id && !m.supplier_name).length
+  props.materials.filter((m: any) => m.procurement_block_reason === '具体采购规格未配置有效供应商').length
 )
+const planningPendingCount = computed(() => props.materials.filter((m: any) => m.procurement_block_reason === '物料规格计划尚未确认').length)
+const coveredCount = computed(() => props.materials.filter((m: any) => m.procurement_block_reason === '库存和在途已覆盖需求').length)
+const generatedCount = computed(() => props.materials.filter((m: any) => m.procurement_block_reason === '已生成待处理采购单').length)
 
 const materialColumns: Column[] = [
   { key: 'material_name', label: '物料', minWidth: 176 },
-  { key: 'material_usage', label: '用量', width: 120, align: 'center' },
+  { key: 'procurement_quantity', label: '采购缺口', width: 132, align: 'center' },
   { key: 'planning_status', label: '物料规划', minWidth: 120 },
   { key: 'purchase_status', label: '采购状态', minWidth: 120 },
   { key: 'purchase_date', label: '采购日期', minWidth: 120, formatter: value => formatDate(value) },
