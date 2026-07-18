@@ -310,6 +310,7 @@ import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import { BaseButton, TablePageLayout, DataTable, BaseDialog, ConfirmDialog, EmptyState, Pagination, SearchInput, Input, Select, InputNumber, CheckboxGroup, Toggle, Tag, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
+import { invalidateReferenceCache, referenceCacheKeys } from '@/utils/referenceDataCache'
 import { formatDateTime } from '@/utils/filter'
 
 const columns: Column[] = [
@@ -341,7 +342,14 @@ const {
 })
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('department')
-const crud = useCRUD(departmentAPI, { onSuccess: () => { closeModals(); loadData(); loadAllDepartments() } })
+const crud = useCRUD(departmentAPI, {
+  onSuccess: () => {
+    invalidateReferenceCache(referenceCacheKeys.departments)
+    closeModals()
+    loadData()
+    loadAllDepartments()
+  }
+})
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)

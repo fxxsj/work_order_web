@@ -285,6 +285,7 @@ import {
 } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
+import { getCachedReference, referenceCacheKeys } from '@/utils/referenceDataCache'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const userStore = useUserStore()
@@ -419,10 +420,14 @@ const loadData = async () => {
 }
 
 // 加载基础数据
+const getResults = (response: any): any[] => Array.isArray(response) ? response : (response?.results || response?.data || [])
+
 const loadProcesses = async () => {
   try {
-    const res: any = await processAPI.getList({ is_active: true, page_size: 100 })
-    processList.value = res?.results || res?.data || []
+    processList.value = await getCachedReference(
+      referenceCacheKeys.activeProcesses,
+      async () => getResults(await processAPI.getList({ is_active: true, page_size: 100 }))
+    )
   } catch (error: any) {
     ErrorHandler.showMessage(error, '加载工序')
   }
@@ -430,8 +435,10 @@ const loadProcesses = async () => {
 
 const loadDepartments = async () => {
   try {
-    const res: any = await departmentAPI.getList({ page_size: 100 })
-    departmentList.value = res?.results || res?.data || []
+    departmentList.value = await getCachedReference(
+      referenceCacheKeys.departments,
+      async () => getResults(await departmentAPI.getList({ page_size: 100 }))
+    )
   } catch (error: any) {
     ErrorHandler.showMessage(error, '加载部门')
   }

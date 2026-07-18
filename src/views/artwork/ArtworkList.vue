@@ -291,7 +291,13 @@ const confirmedOptions = [
 
 const { canCreate, canEdit, canDelete } = useCrudPermission('artwork')
 const canConfirm = canEdit
-const crud = useCRUD(artworkAPI, { onSuccess: () => { closeFormDialog(); loadData() } })
+const crud = useCRUD(artworkAPI, {
+  onSuccess: () => {
+    clearReferenceData()
+    closeFormDialog()
+    loadData()
+  }
+})
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -322,6 +328,14 @@ const formDialogVisible = computed({
 
 let referenceDataPromise: Promise<void> | null = null
 
+const clearReferenceData = () => {
+  referenceDataPromise = null
+  productList.value = []
+  dieList.value = []
+  foilingPlateList.value = []
+  embossingPlateList.value = []
+}
+
 const getResults = (response: unknown): any[] => {
   if (Array.isArray(response)) return response
   const payload = response as { results?: any[]; data?: any[] }
@@ -336,24 +350,27 @@ const loadReferenceData = async () => {
     embossingPlateAPI.getList({ page_size: 100 })
   ])
 
+  const failures: unknown[] = []
   if (products.status === 'fulfilled') productList.value = getResults(products.value)
-  else ErrorHandler.showMessage(products.reason, '加载产品列表失败')
+  else { ErrorHandler.showMessage(products.reason, '加载产品列表失败'); failures.push(products.reason) }
 
   if (dies.status === 'fulfilled') dieList.value = getResults(dies.value)
-  else ErrorHandler.showMessage(dies.reason, '加载刀模列表失败')
+  else { ErrorHandler.showMessage(dies.reason, '加载刀模列表失败'); failures.push(dies.reason) }
 
   if (foilingPlates.status === 'fulfilled') foilingPlateList.value = getResults(foilingPlates.value)
-  else ErrorHandler.showMessage(foilingPlates.reason, '加载烫金版列表失败')
+  else { ErrorHandler.showMessage(foilingPlates.reason, '加载烫金版列表失败'); failures.push(foilingPlates.reason) }
 
   if (embossingPlates.status === 'fulfilled') embossingPlateList.value = getResults(embossingPlates.value)
-  else ErrorHandler.showMessage(embossingPlates.reason, '加载压凸版列表失败')
+  else { ErrorHandler.showMessage(embossingPlates.reason, '加载压凸版列表失败'); failures.push(embossingPlates.reason) }
+
+  if (failures.length > 0) throw failures[0]
 }
 
 const ensureReferenceData = () => {
   if (!referenceDataPromise) {
-    referenceDataPromise = loadReferenceData().catch(error => {
-      referenceDataPromise = null
-      throw error
+    referenceDataPromise = loadReferenceData()
+    referenceDataPromise.catch(() => {
+      clearReferenceData()
     })
   }
   return referenceDataPromise

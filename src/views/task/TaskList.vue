@@ -299,6 +299,7 @@ import { workOrderTaskAPI, departmentAPI, authAPI, processAPI } from '@/api/modu
 import { useUserStore } from '@/stores'
 import { useCrudList } from '@/composables'
 import ErrorHandler from '@/utils/errorHandler'
+import { getCachedReference, referenceCacheKeys } from '@/utils/referenceDataCache'
 import taskService from '@/services/TaskService'
 import { PriorityChoices } from '@/constants'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -478,18 +479,24 @@ const handleReset = () => {
 
 const clearSelection = () => { selectedTasks.value = [] }
 
+const getResults = (response: any): any[] => Array.isArray(response) ? response : (response?.results || response?.data || [])
+
 const loadDepartments = async () => {
   loadingDepartments.value = true
   try {
-    const res: any = await departmentAPI.getList({ page_size: 100 })
-    departmentList.value = Array.isArray(res) ? res : (res?.results || res?.data || [])
+    departmentList.value = await getCachedReference(
+      referenceCacheKeys.departments,
+      async () => getResults(await departmentAPI.getList({ page_size: 100 }))
+    )
   } catch (_error: any) { /* no-op */ } finally { loadingDepartments.value = false }
 }
 
 const loadProcesses = async () => {
   try {
-    const res: any = await processAPI.getList({ is_active: true, page_size: 100, ordering: 'sort_order' })
-    processList.value = Array.isArray(res) ? res : (res?.results || res?.data || [])
+    processList.value = await getCachedReference(
+      referenceCacheKeys.activeProcesses,
+      async () => getResults(await processAPI.getList({ is_active: true, page_size: 100, ordering: 'sort_order' }))
+    )
   } catch (_error: any) { /* no-op */ }
 }
 

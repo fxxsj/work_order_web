@@ -350,6 +350,7 @@ import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
 import { TablePageLayout, DataTable, EmptyState, Pagination, SearchInput, Input, Select, TextArea, Toggle, BaseButton, Tag, BaseDialog, ConfirmDialog, RowActions, FilterRow, DescriptionGrid, DescriptionItem } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
+import { invalidateReferenceCache, referenceCacheKeys } from '@/utils/referenceDataCache'
 import { formatDateTime } from '@/utils/filter'
 
 const columns: Column[] = [
@@ -427,6 +428,7 @@ const formData = reactive({ ...formInitialValues })
 
 const crud = useCRUD(processAPI, {
   onSuccess: () => {
+    invalidateReferenceCache(referenceCacheKeys.activeProcesses)
     closeModals()
     loadData()
   }
