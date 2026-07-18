@@ -8,6 +8,12 @@ interface CacheEntry<T> {
 
 const entries = new Map<string, CacheEntry<unknown>>()
 const inFlight = new Map<string, Promise<unknown>>()
+const keyGenerations = new Map<string, number>()
+let cacheGeneration = 0
+
+function generationFor(key: string): string {
+  return `${cacheGeneration}:${keyGenerations.get(key) ?? 0}`
+}
 
 /**
  * Reads stable reference data from a bounded, in-memory cache. Concurrent
@@ -26,15 +32,18 @@ export async function getCachedReference<T>(
   const pending = inFlight.get(key) as Promise<T> | undefined
   if (pending) return pending
 
+  const requestGeneration = generationFor(key)
   const request = loader()
     .then(value => {
-      entries.delete(key)
-      while (entries.size >= MAX_ENTRIES) entries.delete(entries.keys().next().value!)
-      entries.set(key, { value, expiresAt: Date.now() + ttl })
+      if (requestGeneration === generationFor(key)) {
+        entries.delete(key)
+        while (entries.size >= MAX_ENTRIES) entries.delete(entries.keys().next().value!)
+        entries.set(key, { value, expiresAt: Date.now() + ttl })
+      }
       return value
     })
     .finally(() => {
-      inFlight.delete(key)
+      if (inFlight.get(key) === request) inFlight.delete(key)
     })
 
   inFlight.set(key, request)
@@ -43,6 +52,15 @@ export async function getCachedReference<T>(
 
 export function invalidateReferenceCache(key: string): void {
   entries.delete(key)
+  inFlight.delete(key)
+  keyGenerations.set(key, (keyGenerations.get(key) ?? 0) + 1)
+}
+
+export function clearReferenceCache(): void {
+  entries.clear()
+  inFlight.clear()
+  keyGenerations.clear()
+  cacheGeneration++
 }
 
 export const referenceCacheKeys = {

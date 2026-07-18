@@ -2,15 +2,17 @@
  * User Store 单元测试
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useUserStore } from '@/stores/user'
 import type { User } from '@/types'
+import { clearReferenceCache, getCachedReference } from '@/utils/referenceDataCache'
 
 describe('User Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
+    clearReferenceCache()
   })
 
   describe('setUser', () => {
@@ -59,6 +61,20 @@ describe('User Store', () => {
 
       expect(store.currentUser?.access_token).toBe('access-token')
       expect(store.currentUser?.refresh_token).toBe('refresh-token')
+    })
+
+    it('切换用户时应该清除引用数据缓存', async () => {
+      const store = useUserStore()
+      const loader = vi.fn()
+        .mockResolvedValueOnce([{ id: 1 }])
+        .mockResolvedValueOnce([{ id: 2 }])
+
+      store.setUser({ id: 1, username: 'user-1' })
+      await getCachedReference('departments', loader)
+      store.setUser({ id: 2, username: 'user-2' })
+
+      await expect(getCachedReference('departments', loader)).resolves.toEqual([{ id: 2 }])
+      expect(loader).toHaveBeenCalledTimes(2)
     })
   })
 

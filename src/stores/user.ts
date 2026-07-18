@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User } from '@/types'
+import { clearReferenceCache } from '@/utils/referenceDataCache'
 
 export const useUserStore = defineStore('user', () => {
   // ==================== State ====================
@@ -30,6 +31,7 @@ export const useUserStore = defineStore('user', () => {
   // ==================== Actions ====================
 
   function setUser(userData: User | null) {
+    const previousUserId = currentUser.value?.id ?? null
     const mappedData = userData
       ? {
           ...userData,
@@ -37,6 +39,10 @@ export const useUserStore = defineStore('user', () => {
           refresh_token: userData.refresh_token || (userData as unknown as Record<string, unknown>).refresh as string | undefined
         }
       : null
+
+    if (previousUserId !== (mappedData?.id ?? null)) {
+      clearReferenceCache()
+    }
 
     currentUser.value = mappedData
     isAuthenticated.value = !!mappedData
@@ -48,6 +54,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   function clearUser() {
+    clearReferenceCache()
     currentUser.value = null
     isAuthenticated.value = false
     permissions.value = []
