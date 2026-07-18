@@ -692,6 +692,7 @@ const handleProductSelected = (index: number, productValue: any) => {
           material_size: dm.material_size || '',
           material_usage: dm.material_usage || '',
           need_cutting: dm.need_cutting || false,
+          planning_required: dm.planning_required || false,
           notes: dm.notes || '',
           auto_filled: true,
         })
@@ -706,7 +707,7 @@ const handleMaterialsChange = (newItems: any[]) => {
 }
 
 const handleAddMaterial = () => {
-  form.materials.push({ material: null, material_size: '', material_usage: '', need_cutting: false, notes: '', auto_filled: false })
+  form.materials.push({ material: null, material_size: '', material_usage: '', need_cutting: false, planning_required: false, notes: '', auto_filled: false })
 }
 
 const handleRemoveMaterial = (index: number) => {
@@ -811,7 +812,7 @@ const formWarnings = computed(() => {
 
   // Materials needing cutting
   for (const m of form.materials) {
-    if (m.material && m.need_cutting && !m.material_usage) {
+    if (m.material && m.need_cutting && !m.planning_required && !m.material_usage) {
       errors.push('需要开料的物料请填写物料用量')
       break
     }

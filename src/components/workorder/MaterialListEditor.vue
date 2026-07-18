@@ -61,6 +61,15 @@
           @change="handleFieldChange(index, 'need_cutting', !row.need_cutting)"
         >
       </template>
+      <template #cell-planning_required="{ row, index }">
+        <input
+          type="checkbox"
+          :checked="row.planning_required"
+          :disabled="disabled"
+          class="h-4 w-4 rounded border-gray-300"
+          @change="handleFieldChange(index, 'planning_required', !row.planning_required)"
+        >
+      </template>
       <template #cell-notes="{ row, index }">
         <Input
           :model-value="row.notes"
@@ -91,6 +100,7 @@ const columns = [
   { key: 'material_size', label: '规格', width: 120 },
   { key: 'material_usage', label: '用量', width: 120 },
   { key: 'need_cutting', label: '需切割', width: 80 },
+  { key: 'planning_required', label: '拼版后规划', width: 96 },
   { key: 'notes', label: '备注', minWidth: 150 }
 ]
 

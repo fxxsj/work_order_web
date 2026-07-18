@@ -20,6 +20,18 @@ class WorkOrderAPI extends BaseAPI {
     return this.customAction(`${this.baseUrl}${id}/add_material/`, 'post', data)
   }
 
+  calculateMaterialPlan(id: number | string, data: unknown) {
+    return this.customAction(`/workorder-materials/${id}/calculate_plan/`, 'post', data)
+  }
+
+  confirmMaterialPlan(id: number | string) {
+    return this.customAction(`/workorder-materials/${id}/confirm_plan/`, 'post')
+  }
+
+  invalidateMaterialPlan(id: number | string, reason: string) {
+    return this.customAction(`/workorder-materials/${id}/invalidate_plan/`, 'post', { reason })
+  }
+
   // 业务员审核施工单
   approve(id: number | string, data?: unknown) {
     return this.customAction(`/workorders-flow/${id}/approve/`, 'post', data)

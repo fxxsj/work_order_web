@@ -19,10 +19,14 @@ export function useWorkOrderDetail() {
   const materialList = ref<any[]>([])
   const productList = ref<any[]>([])
   const availableMaterials = ref<any[]>([])
+  const planningStockMaterials = ref<any[]>([])
   const availableProcesses = ref<any[]>([])
   const addMaterialDialog = ref(false)
   const addProcessDialog = ref(false)
   const printDialog = ref(false)
+  const materialPlanDialog = ref(false)
+  const materialPlanLoading = ref(false)
+  const selectedMaterialPlan = ref<any>(null)
   const purchaseOrders = ref<any[]>([])
   const syncCheck = ref<any>(null)
   const taskGenerationSummary = ref<any>(null)
@@ -95,11 +99,20 @@ export function useWorkOrderDetail() {
 
   const loadSelectionOptions = async () => {
     try {
-      const [materialsRes, processesRes]: any[] = await Promise.all([
+      const [materialsRes, stockMaterialsRes, processesRes]: any[] = await Promise.all([
         materialAPI.getList({ page_size: 100 }),
+        materialAPI.getList({
+          page_size: 200,
+          specification_level: 'stock',
+          material_type: 'paper',
+          is_active: true
+        }),
         processAPI.getAll({ is_active: true })
       ])
       availableMaterials.value = Array.isArray(materialsRes) ? materialsRes : (materialsRes?.results || [])
+      planningStockMaterials.value = Array.isArray(stockMaterialsRes)
+        ? stockMaterialsRes
+        : (stockMaterialsRes?.results || [])
       availableProcesses.value = Array.isArray(processesRes) ? processesRes : (processesRes?.results || processesRes?.data || [])
     } catch (_e: any) {
       // 候选列表加载失败不影响详情阅读。
@@ -250,6 +263,60 @@ export function useWorkOrderDetail() {
     router.push(id ? `/purchase-orders?purchase_order=${id}` : '/purchase-orders')
   }
 
+  const refreshSelectedMaterialPlan = () => {
+    if (!selectedMaterialPlan.value?.id) return
+    selectedMaterialPlan.value = materialList.value.find(
+      (item: any) => item.id === selectedMaterialPlan.value.id
+    ) || selectedMaterialPlan.value
+  }
+
+  const handlePlanMaterial = (material: any) => {
+    selectedMaterialPlan.value = material
+    materialPlanDialog.value = true
+  }
+
+  const handleCalculateMaterialPlan = async (payload: any) => {
+    materialPlanLoading.value = true
+    try {
+      await workOrderAPI.calculateMaterialPlan(selectedMaterialPlan.value.id, payload)
+      await loadData()
+      refreshSelectedMaterialPlan()
+      useUIStore().showSuccess('物料计划计算完成，请核对后确认')
+    } catch (error: any) {
+      ErrorHandler.showMessage(error, '物料计划计算失败')
+    } finally {
+      materialPlanLoading.value = false
+    }
+  }
+
+  const handleConfirmMaterialPlan = async () => {
+    materialPlanLoading.value = true
+    try {
+      await workOrderAPI.confirmMaterialPlan(selectedMaterialPlan.value.id)
+      await loadData()
+      refreshSelectedMaterialPlan()
+      useUIStore().showSuccess('物料计划已确认，库存已预留')
+    } catch (error: any) {
+      ErrorHandler.showMessage(error, '确认物料计划失败')
+    } finally {
+      materialPlanLoading.value = false
+    }
+  }
+
+  const handleInvalidateMaterialPlan = async (reason: string) => {
+    materialPlanLoading.value = true
+    try {
+      await workOrderAPI.invalidateMaterialPlan(selectedMaterialPlan.value.id, reason)
+      await loadData()
+      refreshSelectedMaterialPlan()
+      useUIStore().showSuccess('物料计划已作废，库存预留已释放')
+    } catch (error: any) {
+      ErrorHandler.showMessage(error, '作废物料计划失败')
+    } finally {
+      materialPlanLoading.value = false
+    }
+  }
+
   onMounted(async () => {
     loading.value = true
     try {
@@ -271,10 +338,14 @@ export function useWorkOrderDetail() {
     materialList,
     productList,
     availableMaterials,
+    planningStockMaterials,
     availableProcesses,
     addMaterialDialog,
     addProcessDialog,
     printDialog,
+    materialPlanDialog,
+    materialPlanLoading,
+    selectedMaterialPlan,
     purchaseOrders,
     syncCheck,
     taskGenerationSummary,
@@ -309,6 +380,10 @@ export function useWorkOrderDetail() {
     handleAddProcess,
     handleCreatePurchaseOrder,
     handleViewPurchaseOrder,
+    handlePlanMaterial,
+    handleCalculateMaterialPlan,
+    handleConfirmMaterialPlan,
+    handleInvalidateMaterialPlan,
     formatSyncPreviewMessage
   }
 }

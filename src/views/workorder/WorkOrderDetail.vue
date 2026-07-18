@@ -77,6 +77,7 @@
         :purchase-orders="purchaseOrders"
         @create-purchase="handleCreatePurchaseOrder"
         @view-purchase="handleViewPurchaseOrder"
+        @plan-material="handlePlanMaterial"
       />
     </div>
     <div
@@ -109,6 +110,17 @@
         :processes="processList"
       />
     </BaseDialog>
+    <MaterialPlanDialog
+      :show="materialPlanDialog"
+      :material="selectedMaterialPlan"
+      :stock-materials="planningStockMaterials"
+      :artworks="workOrder?.artwork_details || []"
+      :loading="materialPlanLoading"
+      @close="materialPlanDialog = false"
+      @calculate="handleCalculateMaterialPlan"
+      @confirm="handleConfirmMaterialPlan"
+      @invalidate="handleInvalidateMaterialPlan"
+    />
   </div>
 </template>
 
@@ -128,6 +140,7 @@ import WorkOrderNotes from './components/WorkOrderNotes.vue'
 import WorkOrderProcurement from './components/WorkOrderProcurement.vue'
 import WorkOrderTraceFinance from './components/WorkOrderTraceFinance.vue'
 import WorkOrderPrint from './components/WorkOrderPrint.vue'
+import MaterialPlanDialog from './components/MaterialPlanDialog.vue'
 import AddMaterialDialog from './components/AddMaterialDialog.vue'
 import AddProcessDialog from './components/AddProcessDialog.vue'
 
@@ -139,10 +152,14 @@ const {
   materialList,
   productList,
   availableMaterials,
+  planningStockMaterials,
   availableProcesses,
   addMaterialDialog,
   addProcessDialog,
   printDialog,
+  materialPlanDialog,
+  materialPlanLoading,
+  selectedMaterialPlan,
   purchaseOrders,
   taskGenerationSummary,
   completenessErrors,
@@ -171,6 +188,10 @@ const {
   handleAddMaterial,
   handleAddProcess,
   handleCreatePurchaseOrder,
-  handleViewPurchaseOrder
+  handleViewPurchaseOrder,
+  handlePlanMaterial,
+  handleCalculateMaterialPlan,
+  handleConfirmMaterialPlan,
+  handleInvalidateMaterialPlan
 } = useWorkOrderDetail()
 </script>

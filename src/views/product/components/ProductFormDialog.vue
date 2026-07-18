@@ -115,6 +115,9 @@
           <template #cell-need_cutting="{ row }">
             <Toggle v-model="row.need_cutting" />
           </template>
+          <template #cell-planning_required="{ row }">
+            <Toggle v-model="row.planning_required" />
+          </template>
         </LineItemsTable>
       </div>
 
@@ -250,6 +253,7 @@ const materialColumns: Column[] = [
   { key: 'material_size', label: '尺寸', width: 144 },
   { key: 'material_usage', label: '用量', width: 144 },
   { key: 'need_cutting', label: '需要开料', width: 80, align: 'center' },
+  { key: 'planning_required', label: '拼版后规划', width: 96, align: 'center' },
 ]
 
 const initFormFromProduct = () => {
@@ -269,7 +273,7 @@ const initFormFromProduct = () => {
     default_processes: props.product.default_processes || []
   })
   materialItems.value = (props.product.default_materials || []).map((m: any) => ({
-    id: m.id, material: m.material, material_size: m.material_size || '', material_usage: m.material_usage || '', need_cutting: m.need_cutting || false, notes: m.notes || '', sort_order: m.sort_order || 0
+    id: m.id, material: m.material, material_size: m.material_size || '', material_usage: m.material_usage || '', need_cutting: m.need_cutting || false, planning_required: m.planning_required || false, notes: m.notes || '', sort_order: m.sort_order || 0
   }))
   loadProductImages()
 }
@@ -283,7 +287,7 @@ const resetForm = () => {
 }
 
 const handleProductTypeChange = (value: any) => { if (value === 'single') form.product_group = null }
-const addMaterialItem = () => { materialItems.value.push({ material: null, material_size: '', material_usage: '', need_cutting: false, notes: '', sort_order: materialItems.value.length }) }
+const addMaterialItem = () => { materialItems.value.push({ material: null, material_size: '', material_usage: '', need_cutting: false, planning_required: false, notes: '', sort_order: materialItems.value.length }) }
 const removeMaterialItem = (index: any) => { materialItems.value.splice(index, 1) }
 const openQuickMaterialCreate = (index: number | null = null) => {
   pendingMaterialCreateIndex.value = typeof index === 'number' ? index : null
@@ -310,6 +314,15 @@ const handleSubmit = () => {
   if (form.stock_quantity !== null && form.stock_quantity !== undefined && form.stock_quantity < 0) { useUIStore().showWarning('库存数量不能为负数'); return }
   if (form.min_stock_quantity !== null && form.min_stock_quantity !== undefined && form.min_stock_quantity < 0) { useUIStore().showWarning('最小库存不能为负数'); return }
   if (props.dialogType === 'edit' && form.min_stock_quantity > form.stock_quantity) { useUIStore().showWarning('最小库存不能大于库存数量'); return }
+  const invalidPlannedMaterial = materialItems.value.find((item: any) => {
+    if (!item.planning_required) return false
+    const material = materialList.value.find((candidate: any) => candidate.id === item.material)
+    return material?.specification_level !== 'requirement'
+  })
+  if (invalidPlannedMaterial) {
+    useUIStore().showWarning('拼版后规划的物料必须选择“材料要求”层级')
+    return
+  }
   emit('confirm', { form: { ...form, code, name }, materialItems: [...materialItems.value], pendingImages: [...pendingImages.value] })
 }
 

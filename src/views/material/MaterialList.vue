@@ -118,6 +118,7 @@
     :material="selectedRow"
     :loading="submitting"
     :supplier-options="supplierOptions"
+    :requirement-options="requirementOptions"
     @update:visible="(val: boolean) => { if (!val) closeModals() }"
     @confirm="handleSubmit"
   />
@@ -149,6 +150,8 @@ import ErrorHandler from '@/utils/errorHandler'
 const columns: Column[] = [
   { key: 'code', label: '物料编码', sortable: true },
   { key: 'name', label: '物料名称', sortable: true },
+  { key: 'specification_level_display', label: '规格层级', width: 120 },
+  { key: 'base_material_name', label: '对应材料要求', minWidth: 150 },
   { key: 'specification', label: '规格', sortable: false },
   { key: 'unit', label: '单位', sortable: true, class: 'w-20 text-center' },
   { key: 'unit_price', label: '单价', sortable: true, class: 'w-28 text-right' },
@@ -187,6 +190,7 @@ const submitting = ref(false)
 const deleting = ref(false)
 const selectedRow = ref<any>(null)
 const supplierList = ref<any[]>([])
+const requirementList = ref<any[]>([])
 const fileInput = ref<HTMLInputElement | null>(null)
 
 // Export
@@ -227,6 +231,12 @@ const handleImportFile = async (event: Event) => {
 const supplierOptions = computed(() =>
   supplierList.value.map((s: any) => ({ value: s.id, label: `${s.code} - ${s.name}` }))
 )
+const requirementOptions = computed(() =>
+  requirementList.value.map((item: any) => ({
+    value: item.id,
+    label: `${item.name} (${item.code})`
+  }))
+)
 
 const loadSuppliers = async () => {
   try { 
@@ -235,6 +245,21 @@ const loadSuppliers = async () => {
     supplierList.value = list
   } catch (error: any) { 
     ErrorHandler.handle(error, 'MaterialList.loadSuppliers') 
+  }
+}
+
+const loadRequirements = async () => {
+  try {
+    const response: any = await materialAPI.getList({
+      page_size: 200,
+      specification_level: 'requirement',
+      is_active: true
+    })
+    requirementList.value = Array.isArray(response)
+      ? response
+      : (response?.results || response?.data || [])
+  } catch (error: any) {
+    ErrorHandler.handle(error, 'MaterialList.loadRequirements')
   }
 }
 
@@ -304,5 +329,5 @@ const handleSort = (key: string, order: 'asc' | 'desc') => {
   loadData()
 }
 
-onMounted(() => { loadData(); loadSuppliers() })
+onMounted(() => { loadData(); loadSuppliers(); loadRequirements() })
 </script>

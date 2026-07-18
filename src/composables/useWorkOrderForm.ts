@@ -157,8 +157,9 @@ export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrder
           form.materials.push({
             material: materialId,
             material_size: dm.material_size || '',
-            material_usage: dm.material_usage || '',
-            need_cutting: dm.need_cutting || false,
+          material_usage: dm.material_usage || '',
+          need_cutting: dm.need_cutting || false,
+          planning_required: dm.planning_required || false,
             notes: dm.notes || '',
             auto_filled: true,
           })
@@ -384,6 +385,7 @@ export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrder
         material_size: m.material_size || '',
         material_usage: m.material_usage || '',
         need_cutting: !!m.need_cutting,
+        planning_required: !!m.planning_required,
         notes: m.notes || ''
       }))
     }
@@ -462,6 +464,7 @@ export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrder
         material_size: m.material_size || '',
         material_usage: m.material_usage || '',
         need_cutting: !!m.need_cutting,
+        planning_required: !!m.planning_required,
         notes: m.notes?.trim() || undefined
       }))
 

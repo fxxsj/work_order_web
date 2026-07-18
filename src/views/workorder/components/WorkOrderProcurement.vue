@@ -3,7 +3,7 @@
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <span class="text-lg font-bold">采购信息</span>
       <BaseButton
-        v-if="hasPendingMaterials"
+        v-if="hasPurchasableMaterials"
         variant="primary"
         size="sm"
         icon="plus"
@@ -17,7 +17,9 @@
       v-if="materials?.length"
       class="mb-4 flex flex-wrap gap-2 text-xs text-gray-600 dark:text-dark-300"
     >
-      <span class="rounded-md bg-warning-50 px-2 py-1 text-warning-700">待采购 {{ pendingMaterialCount }}</span>
+      <span
+        class="rounded-md bg-warning-50 px-2 py-1 text-warning-700"
+      >待采购 {{ pendingMaterialCount }}</span>
       <span
         v-if="missingSupplierCount"
         class="rounded-md bg-danger-50 px-2 py-1 text-danger-700"
@@ -45,6 +47,28 @@
             category="materialPurchase"
             size="small"
           />
+        </template>
+        <template #cell-planning_status="{ row }">
+          <span
+            v-if="!row.planning_required"
+            class="text-gray-400"
+          >无需规划</span>
+          <span
+            v-else
+            :class="row.planning_status === 'confirmed' ? 'text-success-600' : 'text-warning-600'"
+          >
+            {{ row.planning_status_display || row.planning_status }}
+          </span>
+        </template>
+        <template #cell-actions="{ row }">
+          <BaseButton
+            v-if="row.planning_required"
+            variant="ghost"
+            size="sm"
+            @click="emit('plan-material', row)"
+          >
+            {{ row.planning_status === 'confirmed' ? '查看计划' : '规划' }}
+          </BaseButton>
         </template>
       </SummaryTable>
     </div>
@@ -100,8 +124,13 @@ const props = defineProps({
   purchaseOrders: { type: Array as any, default: () => [] }
 })
 
-const emit = defineEmits(['create-purchase', 'view-purchase'])
-const hasPendingMaterials = computed(() => props.materials.some((m: any) => !m.purchase_status || m.purchase_status === 'pending'))
+const emit = defineEmits(['create-purchase', 'view-purchase', 'plan-material'])
+const hasPurchasableMaterials = computed(() =>
+  props.materials.some((m: any) => !m.purchase_status || m.purchase_status === 'pending') &&
+  props.materials
+    .filter((m: any) => m.planning_required)
+    .every((m: any) => m.planning_status === 'confirmed')
+)
 const pendingMaterialCount = computed(() => props.materials.filter((m: any) => !m.purchase_status || m.purchase_status === 'pending').length)
 const missingSupplierCount = computed(() =>
   props.materials.filter((m: any) => (!m.purchase_status || m.purchase_status === 'pending') && !m.default_supplier && !m.default_supplier_id && !m.supplier_name).length
@@ -110,9 +139,11 @@ const missingSupplierCount = computed(() =>
 const materialColumns: Column[] = [
   { key: 'material_name', label: '物料', minWidth: 176 },
   { key: 'material_usage', label: '用量', width: 120, align: 'center' },
+  { key: 'planning_status', label: '物料规划', minWidth: 120 },
   { key: 'purchase_status', label: '采购状态', minWidth: 120 },
   { key: 'purchase_date', label: '采购日期', minWidth: 120, formatter: value => formatDate(value) },
   { key: 'received_date', label: '到货日期', minWidth: 120, formatter: value => formatDate(value) },
+  { key: 'actions', label: '操作', width: 96, align: 'center' },
 ]
 
 const purchaseColumns: Column[] = [

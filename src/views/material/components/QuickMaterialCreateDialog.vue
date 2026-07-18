@@ -4,6 +4,7 @@
     dialog-type="create"
     :loading="loading"
     :supplier-options="supplierOptions"
+    :requirement-options="requirementOptions"
     @update:visible="dialogVisible = $event"
     @confirm="handleConfirm"
   />
@@ -25,9 +26,16 @@ const emit = defineEmits(['update:modelValue', 'update:visible', 'created'])
 
 const loading = ref(false)
 const supplierList = ref<any[]>([])
+const requirementList = ref<any[]>([])
 
 const supplierOptions = computed(() =>
   supplierList.value.map((s: any) => ({ value: s.id, label: `${s.code} - ${s.name}` }))
+)
+const requirementOptions = computed(() =>
+  requirementList.value.map((item: any) => ({
+    value: item.id,
+    label: `${item.name} (${item.code})`
+  }))
 )
 
 const dialogVisible = computed({
@@ -47,6 +55,21 @@ const loadSuppliers = async () => {
   }
 }
 
+const loadRequirements = async () => {
+  try {
+    const response: any = await materialAPI.getList({
+      page_size: 200,
+      specification_level: 'requirement',
+      is_active: true
+    })
+    requirementList.value = Array.isArray(response)
+      ? response
+      : (response?.results || response?.data || [])
+  } catch (error: any) {
+    ErrorHandler.handle(error, 'QuickMaterialCreateDialog.loadRequirements')
+  }
+}
+
 const handleConfirm = async (payload: any) => {
   loading.value = true
   try {
@@ -61,5 +84,8 @@ const handleConfirm = async (payload: any) => {
   }
 }
 
-onMounted(loadSuppliers)
+onMounted(() => {
+  loadSuppliers()
+  loadRequirements()
+})
 </script>
