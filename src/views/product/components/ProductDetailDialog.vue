@@ -37,7 +37,9 @@
                 class="text-gray-400"
               >({{ product.product_group_code }})</span>
             </template>
-            <template v-else>-</template>
+            <template v-else>
+              -
+            </template>
           </DescriptionItem>
           <DescriptionItem label="规格">
             {{ product.specification || '-' }}

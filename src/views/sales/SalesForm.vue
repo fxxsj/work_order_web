@@ -167,7 +167,10 @@
                   :precision="2"
                   class="w-full"
                 />
-                <span v-else class="text-gray-400 text-sm">-</span>
+                <span
+                  v-else
+                  class="text-gray-400 text-sm"
+                >-</span>
               </template>
               <template #cell-discount_amount="{ row }">
                 <InputNumber
@@ -177,7 +180,10 @@
                   :precision="2"
                   class="w-full"
                 />
-                <span v-else class="text-gray-400 text-sm">-</span>
+                <span
+                  v-else
+                  class="text-gray-400 text-sm"
+                >-</span>
               </template>
               <template #cell-amount="{ row }">
                 <div class="space-y-0.5 text-xs">
@@ -218,7 +224,10 @@
             </button>
           </template>
         </SectionDivider>
-        <div v-if="showFinanceSection" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div
+          v-if="showFinanceSection"
+          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
           <div>
             <label class="input-label mb-1.5 block">税率 (%)</label>
             <InputNumber

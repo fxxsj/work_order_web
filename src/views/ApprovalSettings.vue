@@ -49,7 +49,9 @@
     </div>
 
     <div class="card border border-amber-100 bg-amber-50/60 px-6 py-4 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
-      <p class="font-medium">注意</p>
+      <p class="font-medium">
+        注意
+      </p>
       <ul class="mt-2 list-disc space-y-1 pl-5">
         <li>关闭审核仅影响开关变更后的<strong>新提交</strong>单据，已处于「待审核」的单据不会被自动通过。</li>
         <li>系统自动通过的动作会写入审计日志，可在「审计日志」中追溯。</li>
