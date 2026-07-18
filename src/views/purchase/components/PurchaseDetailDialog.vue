@@ -67,6 +67,7 @@ const dialogVisible = computed({ get: () => props.visible, set: (val: any) => em
 const columns: Column[] = [
   { key: 'material_name', label: '物料', width: 200 },
   { key: 'material_code', label: '物料编码', width: 120 },
+  { key: 'material_specification', label: '规格', minWidth: 160, formatter: value => value || '未填写' },
   { key: 'quantity', label: '数量', width: 100, align: 'right' },
   { key: 'unit_price', label: '单价', width: 100, align: 'right' },
   { key: 'subtotal', label: '小计', width: 100, align: 'right' }

@@ -65,6 +65,15 @@
             供应商：{{ row.procurement_supplier_name }}
           </div>
         </template>
+        <template #cell-procurement_material_specification="{ row }">
+          <span v-if="row.procurement_material_specification">
+            {{ row.procurement_material_specification }}
+          </span>
+          <span
+            v-else
+            class="text-gray-400"
+          >未填写</span>
+        </template>
         <template #cell-procurement_quantity="{ row }">
           <span v-if="Number(row.procurement_quantity || 0) > 0">
             {{ row.procurement_quantity }} {{ row.procurement_material_unit || row.material_unit }}
@@ -172,6 +181,7 @@ const generatedCount = computed(() => props.materials.filter((m: any) => m.procu
 
 const materialColumns: Column[] = [
   { key: 'material_name', label: '物料', minWidth: 176 },
+  { key: 'procurement_material_specification', label: '采购规格', minWidth: 160 },
   { key: 'procurement_quantity', label: '采购缺口', width: 132, align: 'center' },
   { key: 'planning_status', label: '物料规划', minWidth: 120 },
   { key: 'purchase_status', label: '采购状态', minWidth: 120 },

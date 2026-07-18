@@ -64,6 +64,7 @@ const handlePurchase = () => emit('purchase')
 const columns: Column[] = [
   { key: 'code', label: '物料编码', width: 120 },
   { key: 'name', label: '物料名称', width: 200 },
+  { key: 'specification', label: '规格', minWidth: 160, formatter: value => value || '未填写' },
   { key: 'stock_quantity', label: '当前库存', width: 120, align: 'right' },
   { key: 'min_stock_quantity', label: '最小库存', width: 120, align: 'right' },
   { key: 'needed_quantity', label: '需要采购', width: 120, align: 'right' }

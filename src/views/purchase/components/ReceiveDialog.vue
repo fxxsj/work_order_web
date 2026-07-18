@@ -64,6 +64,9 @@
                 {{ item.material_code || '-' }} {{ item.material_name || '-' }}
               </div>
               <div class="text-xs text-gray-500 dark:text-dark-400">
+                规格：{{ item.material_specification || '未填写' }}
+              </div>
+              <div class="text-xs text-gray-500 dark:text-dark-400">
                 采购 {{ formatQty(item.quantity) }}，已收 {{ formatQty(item.received_quantity) }}，剩余 {{ formatQty(item.remaining_quantity) }}
               </div>
             </div>

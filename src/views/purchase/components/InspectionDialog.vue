@@ -71,6 +71,7 @@ const handleClose = () => emit('update:visible', false)
 const columns: Column[] = [
   { key: 'material_name', label: '物料名称', minWidth: 150 },
   { key: 'material_code', label: '物料编码', width: 120 },
+  { key: 'material_specification', label: '规格', minWidth: 160, formatter: value => value || '未填写' },
   { key: 'received_quantity', label: '收货数量', width: 100, align: 'right' },
   { key: 'inspection_status', label: '质检状态', width: 100 },
   { key: 'actions', label: '操作', width: 150 }

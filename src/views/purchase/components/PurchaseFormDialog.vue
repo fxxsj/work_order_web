@@ -72,6 +72,9 @@
               class="w-full"
             />
           </template>
+          <template #cell-material_specification="{ row }">
+            <span>{{ row.material_specification || '未填写' }}</span>
+          </template>
           <template #cell-unit_price="{ row }">
             <InputNumber
               v-model="row.unit_price"
@@ -165,6 +168,7 @@ const workOrderSelectOptions = computed(() => workOrderOptions.value.map((o: any
 
 const lineItemColumns = [
   { key: 'material', label: '物料', width: 250 },
+  { key: 'material_specification', label: '规格', width: 180 },
   { key: 'quantity', label: '采购数量', width: 150 },
   { key: 'unit_price', label: '单价', width: 150 },
   { key: 'subtotal', label: '小计', width: 120, align: 'right' as const },
@@ -184,7 +188,7 @@ const fetchOptions = async () => {
   try {
     const [supplierRes, materialRes, workOrderRes] = await Promise.all([
       supplierAPI.getList({ page_size: 50, status: 'active' }),
-      materialAPI.getList({ page_size: 50 }),
+      materialAPI.getList({ page_size: 200, specification_level: 'stock', is_active: true }),
       workOrderAPI.getList({ page_size: 50, ordering: '-created_at', approval_status: 'approved' })
     ])
     supplierOptions.value = (supplierRes as any)?.results || []
@@ -205,12 +209,13 @@ const syncWorkOrderNumber = () => {
   if (selected) localForm.work_order_number = selected.order_number
 }
 
-const handleAddItem = () => { localForm.items.push({ material: null, quantity: 1, unit_price: 0 }) }
+const handleAddItem = () => { localForm.items.push({ material: null, material_specification: '', quantity: 1, unit_price: 0 }) }
 const handleDeleteItem = (index: any) => { localForm.items.splice(index, 1) }
 
 const handleMaterialChange = (row: any, value: any) => {
   row.material = value
   const material = materialOptions.value.find((m: any) => m.id === row.material)
+  row.material_specification = material?.specification || ''
   if (material?.unit_price) row.unit_price = material.unit_price
 }
 
