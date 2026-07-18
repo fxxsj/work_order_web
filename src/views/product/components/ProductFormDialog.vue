@@ -77,6 +77,9 @@
       />
 
       <SectionDivider title="物料配置" />
+      <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">
+        只需选择已知的物料名称；规格、开料和备料方式由系统在施工单阶段引导相关人员确认。尺寸、用量不知道时可以留空。
+      </p>
       <div>
         <button
           class="btn btn-primary btn-sm mb-3"
@@ -96,7 +99,9 @@
             <MaterialSelector
               :model-value="row.material"
               :materials="materialList"
+              prefer-requirements
               @update:model-value="value => row.material = value"
+              @select="material => handleProductMaterialSelection(row, material)"
               @create="openQuickMaterialCreate(index)"
             />
           </template>
@@ -111,12 +116,6 @@
               v-model="row.material_usage"
               placeholder="如：1000张"
             />
-          </template>
-          <template #cell-need_cutting="{ row }">
-            <Toggle v-model="row.need_cutting" />
-          </template>
-          <template #cell-planning_required="{ row }">
-            <Toggle v-model="row.planning_required" />
           </template>
         </LineItemsTable>
       </div>
@@ -238,7 +237,6 @@ const productTypeOptions = [
   { value: 'group_main', label: '套装主产品' },
   { value: 'group_item', label: '套装子产品' }
 ]
-
 const dialogTitle = computed(() => props.dialogType === 'edit' ? '编辑产品' : '新建产品')
 const isEditMode = computed(() => props.dialogType === 'edit')
 const processOptions = computed(() => props.processes.map((p: any) => ({ value: p.id, label: p.name, disabled: !p.is_active })))
@@ -252,8 +250,6 @@ const materialColumns: Column[] = [
   { key: 'material', label: '物料名称', width: 200 },
   { key: 'material_size', label: '尺寸', width: 144 },
   { key: 'material_usage', label: '用量', width: 144 },
-  { key: 'need_cutting', label: '需要开料', width: 80, align: 'center' },
-  { key: 'planning_required', label: '拼版后规划', width: 96, align: 'center' },
 ]
 
 const initFormFromProduct = () => {
@@ -273,7 +269,14 @@ const initFormFromProduct = () => {
     default_processes: props.product.default_processes || []
   })
   materialItems.value = (props.product.default_materials || []).map((m: any) => ({
-    id: m.id, material: m.material, material_size: m.material_size || '', material_usage: m.material_usage || '', need_cutting: m.need_cutting || false, planning_required: m.planning_required || false, notes: m.notes || '', sort_order: m.sort_order || 0
+    id: m.id,
+    material: m.material,
+    material_size: m.material_size || '',
+    material_usage: m.material_usage || '',
+    calculation_mode: m.calculation_mode || (m.planning_required ? 'sheet_imposition' : 'fixed'),
+    preparation_mode: m.preparation_mode || (m.need_cutting ? 'internal_cutting' : (m.planning_required ? 'supplier_cutting' : 'direct')),
+    notes: m.notes || '',
+    sort_order: m.sort_order || 0
   }))
   loadProductImages()
 }
@@ -287,7 +290,19 @@ const resetForm = () => {
 }
 
 const handleProductTypeChange = (value: any) => { if (value === 'single') form.product_group = null }
-const addMaterialItem = () => { materialItems.value.push({ material: null, material_size: '', material_usage: '', need_cutting: false, planning_required: false, notes: '', sort_order: materialItems.value.length }) }
+const addMaterialItem = () => { materialItems.value.push({ material: null, material_size: '', material_usage: '', calculation_mode: 'fixed', preparation_mode: 'direct', notes: '', sort_order: materialItems.value.length }) }
+const handleProductMaterialSelection = (row: any, material: any) => {
+  if (material?.specification_level === 'requirement' && material?.material_type === 'paper') {
+    row.calculation_mode = 'sheet_imposition'
+    row.preparation_mode = 'pending'
+  } else if (material?.specification_level === 'requirement') {
+    row.calculation_mode = 'specification_selection'
+    row.preparation_mode = 'pending'
+  } else if (material?.specification_level === 'stock') {
+    row.calculation_mode = 'fixed'
+    row.preparation_mode = 'direct'
+  }
+}
 const removeMaterialItem = (index: any) => { materialItems.value.splice(index, 1) }
 const openQuickMaterialCreate = (index: number | null = null) => {
   pendingMaterialCreateIndex.value = typeof index === 'number' ? index : null
@@ -296,7 +311,9 @@ const openQuickMaterialCreate = (index: number | null = null) => {
 const handleMaterialCreated = (material: any) => {
   materialList.value.push(material)
   if (pendingMaterialCreateIndex.value !== null && materialItems.value[pendingMaterialCreateIndex.value]) {
-    materialItems.value[pendingMaterialCreateIndex.value].material = material.id
+    const row = materialItems.value[pendingMaterialCreateIndex.value]
+    row.material = material.id
+    handleProductMaterialSelection(row, material)
   }
   pendingMaterialCreateIndex.value = null
 }
@@ -314,15 +331,6 @@ const handleSubmit = () => {
   if (form.stock_quantity !== null && form.stock_quantity !== undefined && form.stock_quantity < 0) { useUIStore().showWarning('库存数量不能为负数'); return }
   if (form.min_stock_quantity !== null && form.min_stock_quantity !== undefined && form.min_stock_quantity < 0) { useUIStore().showWarning('最小库存不能为负数'); return }
   if (props.dialogType === 'edit' && form.min_stock_quantity > form.stock_quantity) { useUIStore().showWarning('最小库存不能大于库存数量'); return }
-  const invalidPlannedMaterial = materialItems.value.find((item: any) => {
-    if (!item.planning_required) return false
-    const material = materialList.value.find((candidate: any) => candidate.id === item.material)
-    return material?.specification_level !== 'requirement'
-  })
-  if (invalidPlannedMaterial) {
-    useUIStore().showWarning('拼版后规划的物料必须选择“材料要求”层级')
-    return
-  }
   emit('confirm', { form: { ...form, code, name }, materialItems: [...materialItems.value], pendingImages: [...pendingImages.value] })
 }
 

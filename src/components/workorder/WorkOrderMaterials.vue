@@ -20,9 +20,6 @@
       <template #cell-material_name="{ row }">
         {{ row.material_name }} ({{ row.material_code }})
       </template>
-      <template #cell-need_cutting="{ row }">
-        {{ row.need_cutting ? '是' : '否' }}
-      </template>
       <template #cell-purchase_status="{ row }">
         <StatusTag
           :status="row.purchase_status"
@@ -60,7 +57,8 @@ const columns: Column[] = [
   { key: 'material_size', label: '尺寸', minWidth: 120 },
   { key: 'material_usage', label: '用量', minWidth: 120 },
   { key: 'material_unit', label: '单位', width: 96, align: 'center', formatter: value => value || '-' },
-  { key: 'need_cutting', label: '需开料', width: 96, align: 'center' },
+  { key: 'calculation_mode_display', label: '需求计算', minWidth: 128, formatter: value => value || '固定/直接填写' },
+  { key: 'preparation_mode_display', label: '备料方式', minWidth: 128, formatter: value => value || '直接领用/采购' },
   { key: 'notes', label: '备注', minWidth: 160, className: 'max-w-[200px] truncate', formatter: value => value || '-' },
   { key: 'purchase_status', label: '采购状态', minWidth: 120 },
   { key: 'purchase_date', label: '采购日期', minWidth: 120, formatter: value => formatDate(value) },

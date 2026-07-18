@@ -11,7 +11,7 @@
     :clearable="clearable"
     creatable
     class="w-full"
-    @update:model-value="v => emit('update:modelValue', v)"
+    @update:model-value="handleUpdate"
     @create="handleCreate"
   />
 </template>
@@ -26,21 +26,30 @@ const props = defineProps({
   modelValue: { type: Number, default: null },
   materials: { type: Array as any, default: () => [] },
   disabled: { type: Boolean, default: false },
-  clearable: { type: Boolean, default: true }
+  clearable: { type: Boolean, default: true },
+  preferRequirements: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['update:modelValue', 'create'])
+const emit = defineEmits(['update:modelValue', 'create', 'select'])
 
 const loading = ref(false)
 const materialList = ref<any[]>([])
 
-const materialOptions = computed(() =>
-  materialList.value.map((m: any) => ({
+const materialOptions = computed(() => {
+  const materials = [...materialList.value]
+  if (props.preferRequirements) {
+    materials.sort((left: any, right: any) => {
+      const leftRank = left.specification_level === 'requirement' ? 0 : 1
+      const rightRank = right.specification_level === 'requirement' ? 0 : 1
+      return leftRank - rightRank
+    })
+  }
+  return materials.map((m: any) => ({
     value: m.id,
-    label: `${m.name} (${m.code || '无编码'})`,
+    label: `${props.preferRequirements ? (m.specification_level === 'requirement' ? '[材料要求] ' : '[固定规格] ') : ''}${m.name} (${m.code || '无编码'})`,
     extra: m.specification || m.unit || null
   }))
-)
+})
 
 let cacheTimestamp = 0
 const CACHE_DURATION = 5 * 60 * 1000
@@ -112,6 +121,12 @@ watch(
 
 const handleCreate = (query: string) => {
   emit('create', query)
+}
+
+const handleUpdate = (value: string | number | boolean | (string | number | boolean)[] | null) => {
+  const materialId = typeof value === 'number' ? value : null
+  emit('update:modelValue', materialId)
+  emit('select', materialList.value.find((item: any) => item.id === materialId) || null)
 }
 
 const appendMaterial = (material: any) => {

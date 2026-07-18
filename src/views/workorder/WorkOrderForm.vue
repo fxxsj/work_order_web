@@ -691,8 +691,8 @@ const handleProductSelected = (index: number, productValue: any) => {
           material: materialId,
           material_size: dm.material_size || '',
           material_usage: dm.material_usage || '',
-          need_cutting: dm.need_cutting || false,
-          planning_required: dm.planning_required || false,
+          calculation_mode: dm.calculation_mode || (dm.planning_required ? 'sheet_imposition' : 'fixed'),
+          preparation_mode: dm.preparation_mode || (dm.need_cutting ? 'internal_cutting' : (dm.planning_required ? 'supplier_cutting' : 'direct')),
           notes: dm.notes || '',
           auto_filled: true,
         })
@@ -707,7 +707,7 @@ const handleMaterialsChange = (newItems: any[]) => {
 }
 
 const handleAddMaterial = () => {
-  form.materials.push({ material: null, material_size: '', material_usage: '', need_cutting: false, planning_required: false, notes: '', auto_filled: false })
+  form.materials.push({ material: null, material_size: '', material_usage: '', calculation_mode: 'fixed', preparation_mode: 'direct', notes: '', auto_filled: false })
 }
 
 const handleRemoveMaterial = (index: number) => {
@@ -810,10 +810,29 @@ const formWarnings = computed(() => {
     errors.push(`选择了需要压凸版的工序（${names}），请至少选择一个压凸版`)
   }
 
-  // Materials needing cutting
+  // Material calculation/preparation combinations
   for (const m of form.materials) {
-    if (m.material && m.need_cutting && !m.planning_required && !m.material_usage) {
-      errors.push('需要开料的物料请填写物料用量')
+    if (!m.material) continue
+    const material = materialList.value.find((item: any) => item.id === m.material)
+    if (m.calculation_mode === 'sheet_imposition') {
+      if (material?.specification_level !== 'requirement' || material?.material_type !== 'paper') {
+        errors.push('拼版后算纸只适用于纸张类“材料要求”')
+        break
+      }
+      if (m.preparation_mode === 'direct') {
+        errors.push('拼版后算纸请选择“厂内开料”或“供应商裁切”')
+        break
+      }
+    } else if (m.calculation_mode === 'specification_selection') {
+      if (material?.specification_level !== 'requirement') {
+        errors.push('待规格确认必须选择“材料要求”')
+        break
+      }
+    } else if (material?.specification_level === 'requirement') {
+      errors.push('固定用量必须选择具体库存/采购规格')
+      break
+    } else if (m.preparation_mode === 'internal_cutting' && !m.material_usage) {
+      errors.push('厂内开料的固定用量物料请填写物料用量')
       break
     }
   }

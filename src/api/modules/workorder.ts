@@ -24,6 +24,10 @@ class WorkOrderAPI extends BaseAPI {
     return this.customAction(`/workorder-materials/${id}/calculate_plan/`, 'post', data)
   }
 
+  resolveMaterialSpecification(id: number | string, data: unknown) {
+    return this.customAction(`/workorder-materials/${id}/resolve_specification/`, 'post', data)
+  }
+
   confirmMaterialPlan(id: number | string) {
     return this.customAction(`/workorder-materials/${id}/confirm_plan/`, 'post')
   }

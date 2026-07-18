@@ -114,10 +114,12 @@
       :show="materialPlanDialog"
       :material="selectedMaterialPlan"
       :stock-materials="planningStockMaterials"
+      :suppliers="planningSuppliers"
       :artworks="workOrder?.artwork_details || []"
       :loading="materialPlanLoading"
       @close="materialPlanDialog = false"
       @calculate="handleCalculateMaterialPlan"
+      @resolve="handleResolveMaterialSpecification"
       @confirm="handleConfirmMaterialPlan"
       @invalidate="handleInvalidateMaterialPlan"
     />
@@ -153,6 +155,7 @@ const {
   productList,
   availableMaterials,
   planningStockMaterials,
+  planningSuppliers,
   availableProcesses,
   addMaterialDialog,
   addProcessDialog,
@@ -191,6 +194,7 @@ const {
   handleViewPurchaseOrder,
   handlePlanMaterial,
   handleCalculateMaterialPlan,
+  handleResolveMaterialSpecification,
   handleConfirmMaterialPlan,
   handleInvalidateMaterialPlan
 } = useWorkOrderDetail()

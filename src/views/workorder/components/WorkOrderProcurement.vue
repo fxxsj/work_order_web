@@ -50,7 +50,7 @@
         </template>
         <template #cell-planning_status="{ row }">
           <span
-            v-if="!row.planning_required"
+            v-if="!requiresPlanning(row)"
             class="text-gray-400"
           >无需规划</span>
           <span
@@ -62,7 +62,7 @@
         </template>
         <template #cell-actions="{ row }">
           <BaseButton
-            v-if="row.planning_required"
+            v-if="requiresPlanning(row)"
             variant="ghost"
             size="sm"
             @click="emit('plan-material', row)"
@@ -125,10 +125,11 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['create-purchase', 'view-purchase', 'plan-material'])
+const requiresPlanning = (material: any) => Boolean(material.planning_required)
 const hasPurchasableMaterials = computed(() =>
   props.materials.some((m: any) => !m.purchase_status || m.purchase_status === 'pending') &&
   props.materials
-    .filter((m: any) => m.planning_required)
+    .filter(requiresPlanning)
     .every((m: any) => m.planning_status === 'confirmed')
 )
 const pendingMaterialCount = computed(() => props.materials.filter((m: any) => !m.purchase_status || m.purchase_status === 'pending').length)

@@ -3,7 +3,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useUserStore } from '@/stores'
 import { useApprovalConfigStore } from '@/stores/approvalConfig'
-import { materialAPI, processAPI, workOrderAPI, workOrderFlowAPI } from '@/api/modules'
+import { materialAPI, processAPI, supplierAPI, workOrderAPI, workOrderFlowAPI } from '@/api/modules'
 import { purchaseOrderAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
 
@@ -20,6 +20,7 @@ export function useWorkOrderDetail() {
   const productList = ref<any[]>([])
   const availableMaterials = ref<any[]>([])
   const planningStockMaterials = ref<any[]>([])
+  const planningSuppliers = ref<any[]>([])
   const availableProcesses = ref<any[]>([])
   const addMaterialDialog = ref(false)
   const addProcessDialog = ref(false)
@@ -99,20 +100,23 @@ export function useWorkOrderDetail() {
 
   const loadSelectionOptions = async () => {
     try {
-      const [materialsRes, stockMaterialsRes, processesRes]: any[] = await Promise.all([
+      const [materialsRes, stockMaterialsRes, suppliersRes, processesRes]: any[] = await Promise.all([
         materialAPI.getList({ page_size: 100 }),
         materialAPI.getList({
           page_size: 200,
           specification_level: 'stock',
-          material_type: 'paper',
           is_active: true
         }),
+        supplierAPI.getList({ page_size: 100, status: 'active' }),
         processAPI.getAll({ is_active: true })
       ])
       availableMaterials.value = Array.isArray(materialsRes) ? materialsRes : (materialsRes?.results || [])
       planningStockMaterials.value = Array.isArray(stockMaterialsRes)
         ? stockMaterialsRes
         : (stockMaterialsRes?.results || [])
+      planningSuppliers.value = Array.isArray(suppliersRes)
+        ? suppliersRes
+        : (suppliersRes?.results || [])
       availableProcesses.value = Array.isArray(processesRes) ? processesRes : (processesRes?.results || processesRes?.data || [])
     } catch (_e: any) {
       // 候选列表加载失败不影响详情阅读。
@@ -289,6 +293,20 @@ export function useWorkOrderDetail() {
     }
   }
 
+  const handleResolveMaterialSpecification = async (payload: any) => {
+    materialPlanLoading.value = true
+    try {
+      await workOrderAPI.resolveMaterialSpecification(selectedMaterialPlan.value.id, payload)
+      await loadData()
+      refreshSelectedMaterialPlan()
+      useUIStore().showSuccess('具体物料规格已选择，请核对后确认')
+    } catch (error: any) {
+      ErrorHandler.showMessage(error, '物料规格确认失败')
+    } finally {
+      materialPlanLoading.value = false
+    }
+  }
+
   const handleConfirmMaterialPlan = async () => {
     materialPlanLoading.value = true
     try {
@@ -339,6 +357,7 @@ export function useWorkOrderDetail() {
     productList,
     availableMaterials,
     planningStockMaterials,
+    planningSuppliers,
     availableProcesses,
     addMaterialDialog,
     addProcessDialog,
@@ -382,6 +401,7 @@ export function useWorkOrderDetail() {
     handleViewPurchaseOrder,
     handlePlanMaterial,
     handleCalculateMaterialPlan,
+    handleResolveMaterialSpecification,
     handleConfirmMaterialPlan,
     handleInvalidateMaterialPlan,
     formatSyncPreviewMessage

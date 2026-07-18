@@ -268,7 +268,7 @@
                 <th>物料名称</th>
                 <th>规格/尺寸</th>
                 <th>用量</th>
-                <th>是否开料</th>
+                <th>备料方式</th>
                 <th>备注</th>
               </tr>
             </thead>
@@ -284,7 +284,7 @@
                 <td>{{ textValue(material.material_size) }}</td>
                 <td>{{ textValue(material.material_usage || material.quantity) }}</td>
                 <td class="text-center">
-                  {{ material.need_cutting ? '是' : '否' }}
+                  {{ textValue(material.preparation_mode_display, material.need_cutting ? '厂内开料' : '直接领用/采购') }}
                 </td>
                 <td>{{ textValue(material.notes, '') }}</td>
               </tr>

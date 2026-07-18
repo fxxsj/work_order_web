@@ -80,8 +80,8 @@ export const useProductFormWorkflow = () => {
           material: item.material,
           material_size: item.material_size || '',
           material_usage: item.material_usage || '',
-          need_cutting: item.need_cutting || false,
-          planning_required: item.planning_required || false,
+          calculation_mode: item.calculation_mode || 'fixed',
+          preparation_mode: item.preparation_mode || 'direct',
           notes: item.notes || '',
           sort_order: i
         })

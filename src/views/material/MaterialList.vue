@@ -80,11 +80,15 @@
           <span class="text-right">¥{{ value }}</span>
         </template>
 
+        <template #cell-data_scope="{ row }">
+          <span>{{ row.is_temporary ? '施工单专用' : '公共物料' }}</span>
+        </template>
+
         <template #cell-actions="{ row }">
           <RowActions
             :actions="[
-              { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit },
-              { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete },
+              { key: 'edit', label: '编辑', icon: 'edit', visible: canEdit && !row.is_temporary },
+              { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete && !row.is_temporary },
             ]"
             @action="action => handleRowAction(action.key, row)"
           />
@@ -151,6 +155,7 @@ const columns: Column[] = [
   { key: 'code', label: '物料编码', sortable: true },
   { key: 'name', label: '物料名称', sortable: true },
   { key: 'specification_level_display', label: '规格层级', width: 120 },
+  { key: 'data_scope', label: '数据来源', width: 110 },
   { key: 'base_material_name', label: '对应材料要求', minWidth: 150 },
   { key: 'specification', label: '规格', sortable: false },
   { key: 'unit', label: '单位', sortable: true, class: 'w-20 text-center' },
@@ -171,7 +176,7 @@ const {
   initialFilters: { is_active: '' },
   buildParams: (params) => {
     const ordering = sortOrder.value === 'desc' ? `-${sortKey.value}` : sortKey.value
-    return { ...params, ordering }
+    return { ...params, ordering, include_temporary: true }
   }
 })
 

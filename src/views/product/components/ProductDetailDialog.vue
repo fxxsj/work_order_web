@@ -183,11 +183,17 @@
               class="text-gray-500"
             >用量: {{ m.material_usage }}</span>
             <Tag
-              v-if="m.need_cutting"
+              v-if="m.calculation_mode_display"
+              size="small"
+            >
+              {{ m.calculation_mode_display }}
+            </Tag>
+            <Tag
+              v-if="m.preparation_mode_display"
               size="small"
               type="warning"
             >
-              需开料
+              {{ m.preparation_mode_display }}
             </Tag>
           </div>
         </div>

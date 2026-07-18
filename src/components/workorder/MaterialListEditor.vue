@@ -24,6 +24,7 @@
             :materials="materials"
             :disabled="disabled"
             @update:model-value="v => handleMaterialChange(index, v)"
+            @select="material => handleMaterialSelection(index, material)"
             @create="emit('create', index)"
           />
           <span
@@ -51,24 +52,6 @@
           :disabled="disabled"
           @update:model-value="v => handleFieldChange(index, 'material_usage', v)"
         />
-      </template>
-      <template #cell-need_cutting="{ row, index }">
-        <input
-          type="checkbox"
-          :checked="row.need_cutting"
-          :disabled="disabled"
-          class="h-4 w-4 rounded border-gray-300"
-          @change="handleFieldChange(index, 'need_cutting', !row.need_cutting)"
-        >
-      </template>
-      <template #cell-planning_required="{ row, index }">
-        <input
-          type="checkbox"
-          :checked="row.planning_required"
-          :disabled="disabled"
-          class="h-4 w-4 rounded border-gray-300"
-          @change="handleFieldChange(index, 'planning_required', !row.planning_required)"
-        >
       </template>
       <template #cell-notes="{ row, index }">
         <Input
@@ -99,13 +82,26 @@ const columns = [
   { key: 'material', label: '物料', minWidth: 200 },
   { key: 'material_size', label: '规格', width: 120 },
   { key: 'material_usage', label: '用量', width: 120 },
-  { key: 'need_cutting', label: '需切割', width: 80 },
-  { key: 'planning_required', label: '拼版后规划', width: 96 },
   { key: 'notes', label: '备注', minWidth: 150 }
 ]
 
 const handleMaterialChange = (index: any, value: any) => {
   const item = { ...props.items[index], material: value, auto_filled: false }
+  const newItems = [...props.items]
+  newItems[index] = item
+  emit('change', newItems)
+}
+
+const handleMaterialSelection = (index: number, material: any) => {
+  if (!material) return
+  const item = { ...props.items[index] }
+  if (material.specification_level === 'requirement') {
+    item.calculation_mode = material.material_type === 'paper' ? 'sheet_imposition' : 'specification_selection'
+    item.preparation_mode = 'pending'
+  } else {
+    item.calculation_mode = 'fixed'
+    item.preparation_mode = 'direct'
+  }
   const newItems = [...props.items]
   newItems[index] = item
   emit('change', newItems)

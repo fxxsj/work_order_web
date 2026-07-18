@@ -157,9 +157,9 @@ export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrder
           form.materials.push({
             material: materialId,
             material_size: dm.material_size || '',
-          material_usage: dm.material_usage || '',
-          need_cutting: dm.need_cutting || false,
-          planning_required: dm.planning_required || false,
+            material_usage: dm.material_usage || '',
+            calculation_mode: dm.calculation_mode || (dm.planning_required ? 'sheet_imposition' : 'fixed'),
+            preparation_mode: dm.preparation_mode || (dm.need_cutting ? 'internal_cutting' : (dm.planning_required ? 'supplier_cutting' : 'direct')),
             notes: dm.notes || '',
             auto_filled: true,
           })
@@ -384,8 +384,8 @@ export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrder
         quantity: m.quantity || 1,
         material_size: m.material_size || '',
         material_usage: m.material_usage || '',
-        need_cutting: !!m.need_cutting,
-        planning_required: !!m.planning_required,
+        calculation_mode: m.calculation_mode || (m.planning_required ? 'sheet_imposition' : 'fixed'),
+        preparation_mode: m.preparation_mode || (m.need_cutting ? 'internal_cutting' : (m.planning_required ? 'supplier_cutting' : 'direct')),
         notes: m.notes || ''
       }))
     }
@@ -463,8 +463,8 @@ export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrder
         material: typeof m.material === 'object' ? m.material.id : m.material,
         material_size: m.material_size || '',
         material_usage: m.material_usage || '',
-        need_cutting: !!m.need_cutting,
-        planning_required: !!m.planning_required,
+        calculation_mode: m.calculation_mode || 'fixed',
+        preparation_mode: m.preparation_mode || 'direct',
         notes: m.notes?.trim() || undefined
       }))
 
