@@ -1,0 +1,24 @@
+/**
+ * 运行时配置（示例文件）
+ *
+ * 使用方式：复制为 env.js 并按需修改
+ *   cp public/env.js.example public/env.js
+ *
+ * 此文件在应用入口前加载，修改后无需重新构建前端。
+ * 生产部署时由 Nginx 或容器启动脚本覆盖此文件。
+ *
+ * 注意：不要在此文件中放置密钥、Token、数据库连接等敏感信息。
+ */
+window.__APP_CONFIG__ = {
+  // API_BASE_URL: 后端接口基础路径（不含 /v1，前端会自动拼接）
+  //   同域部署（Nginx 反向代理）：'/api'
+  //     Nginx 配置示例：location /api { proxy_pass http://backend:8000/api; }
+  //   跨域部署（前后端不同域名）：'https://api.example.com/api'
+  //   本地开发对接远程后端：'http://192.168.1.100:8000/api'
+  // API_BASE_URL: '/api',
+  APP_NAME: '印刷生产管理系统',
+  APP_SHORT_NAME: '施工单系统',
+  APP_TAGLINE: '高效管理施工单，提升生产效率',
+  LOGO_TEXT: '印',
+  COMPANY_NAME: ''
+}

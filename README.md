@@ -52,6 +52,26 @@ npm run lint:check
 npm run test:run
 ```
 
+## Cloudflare Pages 部署
+
+Cloudflare Pages 可直接连接本仓库的 `main` 分支：
+
+```text
+构建命令：npm run build
+输出目录：dist
+```
+
+在 Pages 的生产环境变量中设置后端地址（不含 `/v1`）：
+
+```dotenv
+VITE_API_BASE_URL=https://api.example.com/api
+```
+
+`public/env.js` 默认不覆盖 API 地址，因此 Pages 构建时注入的
+`VITE_API_BASE_URL` 会生效。若使用容器或 Nginx 部署，也可以在部署阶段
+生成 `env.js`，通过 `window.__APP_CONFIG__.API_BASE_URL` 覆盖构建配置。
+后端域名、内部地址或其他环境专用信息不要提交到公共仓库。
+
 ## 开发约定
 
 - 页面使用 `<script setup lang="ts">`。
