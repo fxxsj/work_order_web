@@ -52,7 +52,14 @@
         @sort="handleSort"
       >
         <template #cell-code="{ row }">
-          {{ row.code || (row.base_code + (row.version > 1 ? '-v' + row.version : '')) }}
+          <button
+            type="button"
+            class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium hover:underline"
+            title="点击查看图稿详情"
+            @click="handleView(row)"
+          >
+            {{ row.code || (row.base_code + (row.version > 1 ? '-v' + row.version : '')) }}
+          </button>
         </template>
         <template #cell-color_display="{ value }">
           <Tag v-if="value && value !== '-'">
@@ -192,6 +199,12 @@
     @confirm="handleFormConfirm"
   />
 
+  <ArtworkDetailDialog
+    :visible="showDetailDialog"
+    :artwork="currentArtwork"
+    @update:visible="(val: boolean) => { if (!val) closeDetailDialog() }"
+  />
+
   <ConfirmDialog
     :show="showConfirmDialog"
     title="确认操作"
@@ -240,6 +253,7 @@ import type { Column } from '@/components/common/types'
 import ErrorHandler from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/filter'
 import ArtworkFormDialog from './components/ArtworkFormDialog.vue'
+import ArtworkDetailDialog from './components/ArtworkDetailDialog.vue'
 import { uploadPendingImages } from '@/utils/pendingImageUpload'
 
 const sortKey = ref('code')
@@ -318,6 +332,7 @@ const targetCodeForVersion = ref('')
 const showDeleteDialog = ref(false)
 const deleting = ref(false)
 const targetArtworkForDelete = ref<any>(null)
+const showDetailDialog = ref(false)
 
 const formDialogVisible = computed({
   get: () => showCreateModal.value || showEditModal.value,
@@ -459,6 +474,20 @@ const openEditModal = async (row: any) => {
   }
   showCreateModal.value = false
   showEditModal.value = true
+}
+
+const handleView = async (row: any) => {
+  try {
+    const detail: any = await artworkAPI.getDetail(row.id)
+    currentArtwork.value = detail
+    showDetailDialog.value = true
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '加载图稿详情失败')
+  }
+}
+
+const closeDetailDialog = () => {
+  showDetailDialog.value = false
 }
 
 const handleFormConfirm = async (formData: any) => {
