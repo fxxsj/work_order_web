@@ -44,6 +44,26 @@ export interface WithErrorHandlingOptions {
 }
 
 export class ErrorHandler {
+  /**
+   * 判断一个错误是否是 axios / fetch 的"请求被取消"错误。
+   * 用于全局豁免，避免把取消请求当作错误弹 toast（典型『canceled』提示来源）。
+   *
+   * 覆盖三种形态：
+   *   - axios CanceledError: error.name === 'CanceledError' / error.code === 'ERR_CANCELED'
+   *   - fetch/DOM AbortError: error.name === 'AbortError'
+   *   - 保守兜底: error.message === 'canceled'（axios 默认 message）
+   */
+  static isCancelError(error: unknown): boolean {
+    if (!error) return false
+    const err = error as Record<string, unknown>
+    return (
+      err.name === 'CanceledError' ||
+      err.name === 'AbortError' ||
+      err.code === 'ERR_CANCELED' ||
+      (typeof err.message === 'string' && err.message.toLowerCase() === 'canceled')
+    )
+  }
+
   static isConflictError(error: unknown): boolean {
     if (!error) return false
     const err = error as Record<string, unknown>
@@ -175,6 +195,8 @@ export class ErrorHandler {
   }
 
   static showMessage(error: unknown, context = ''): void {
+    // 取消的请求不是错误，不弹 toast（避免搜索框快速输入时弹出『canceled』提示）
+    if (this.isCancelError(error)) return
     const { message } = this.handle(error, context)
     useUIStore().showError(message)
   }
@@ -261,7 +283,8 @@ export class ErrorHandler {
 
       return result
     } catch (error: any) {
-      if ((error as Error)?.message === 'cancel') {
+      // 用户主动取消（确认弹窗的 'cancel' 或 请求被 abort）
+      if ((error as Error)?.message === 'cancel' || this.isCancelError(error)) {
         throw error
       }
 

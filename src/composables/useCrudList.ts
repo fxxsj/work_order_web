@@ -130,10 +130,15 @@ export function useCrudList<T = any>(
       abortController.abort()
     }
 
+    // 用局部变量记录本次请求的 controller，catch / finally 中只判断它，
+    // 避免下一次 loadData() 已把闭包 abortController 换成新实例后，旧请求的取消被漏判
+    let currentController: AbortController | null = null
+
     loading.value = true
     try {
       if (enableAbort) {
-        abortController = new AbortController()
+        currentController = new AbortController()
+        abortController = currentController
       }
 
       const fetchMethod = getFetchMethod()
@@ -144,15 +149,15 @@ export function useCrudList<T = any>(
 
       // Build config with signal for abort
       const config: { signal?: AbortSignal } = {}
-      if (enableAbort && abortController) {
-        config.signal = abortController.signal
+      if (enableAbort && currentController) {
+        config.signal = currentController.signal
       }
 
       // Call fetchMethod with params and config (for signal support)
       const response = await fetchMethod(params, config) as unknown
 
       // Check if aborted
-      if (enableAbort && abortController?.signal.aborted) {
+      if (enableAbort && currentController?.signal.aborted) {
         return null
       }
 
@@ -161,8 +166,8 @@ export function useCrudList<T = any>(
       total.value = payload.total
       return response
     } catch (error: any) {
-      // Ignore abort errors
-      if (enableAbort && abortController?.signal.aborted) {
+      // Ignore abort errors：优先判断本次请求的 controller，再用 ErrorHandler.isCancelError 兜底
+      if (currentController?.signal.aborted || ErrorHandler.isCancelError(error)) {
         return null
       }
       ErrorHandler.showMessage(error, errorContext)
@@ -170,7 +175,8 @@ export function useCrudList<T = any>(
       total.value = 0
       return null
     } finally {
-      if (!enableAbort || !abortController?.signal.aborted) {
+      // 只有当前请求仍是最新请求时才关闭 loading，避免被取消的旧请求把 loading 重置为 false
+      if (!enableAbort || !currentController || abortController === currentController) {
         loading.value = false
       }
     }
