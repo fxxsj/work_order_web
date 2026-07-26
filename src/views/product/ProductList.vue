@@ -83,6 +83,26 @@
           </Tag>
         </template>
 
+        <template #cell-customers_detail="{ row }">
+          <div
+            class="flex min-w-40 items-center justify-end gap-2 lg:justify-start"
+            :title="getCustomerNames(row)"
+          >
+            <Tag
+              :type="getCustomerScopeTagType(row.customer_scope)"
+              size="small"
+              class="shrink-0"
+            >
+              {{ row.customer_scope_display || getCustomerScopeLabel(row.customer_scope) }}
+            </Tag>
+            <span
+              class="max-w-44 truncate text-sm text-gray-600 dark:text-gray-300"
+            >
+              {{ getCustomerPreview(row) }}
+            </span>
+          </div>
+        </template>
+
         <template #cell-is_active="{ value }">
           <Tag :type="value ? 'success' : 'info'">
             {{ value ? '启用' : '禁用' }}
@@ -176,6 +196,7 @@ const columns: Column[] = [
   { key: 'name', label: '产品名称', sortable: true, class: 'w-48' },
   { key: 'product_type', label: '产品类型', sortable: true, class: 'w-28 text-center' },
   { key: 'product_group_name', label: '所属产品组', sortable: true, class: 'w-36' },
+  { key: 'customers_detail', label: '所属客户', sortable: false, class: 'w-72' },
   { key: 'specification', label: '规格', sortable: false },
   { key: 'unit', label: '单位', sortable: true, class: 'w-20 text-center' },
   { key: 'unit_price', label: '单价', sortable: true, class: 'w-28 text-right' },
@@ -336,6 +357,41 @@ const handleFormConfirm = async (payload: any) => {
 const getProductTypeLabel = (type: any) => {
   const labels = { single: '单品', group_main: '套装主产品', group_item: '套装子产品' };
   return (labels as any)[type] || '未知'
+}
+
+const getCustomerScopeLabel = (scope: string) => {
+  const labels: Record<string, string> = {
+    global: '通用产品',
+    exclusive: '客户专属',
+    shared: '多客户共享',
+  }
+  return labels[scope] || '未知范围'
+}
+
+const getCustomerScopeTagType = (scope: string) => {
+  const types: Record<string, string> = {
+    global: 'success',
+    exclusive: 'warning',
+    shared: 'primary',
+  }
+  return types[scope] || 'info'
+}
+
+const getCustomerNames = (product: any) => {
+  const customers = Array.isArray(product?.customers_detail) ? product.customers_detail : []
+  return customers.length > 0
+    ? customers.map((customer: any) => customer.name).join('、')
+    : '全部客户'
+}
+
+const getCustomerPreview = (product: any) => {
+  const customers = Array.isArray(product?.customers_detail) ? product.customers_detail : []
+  if (customers.length === 0) return '全部客户'
+  const preview = customers
+    .slice(0, 2)
+    .map((customer: any) => customer.name)
+    .join('、')
+  return customers.length > 2 ? `${preview} +${customers.length - 2}` : preview
 }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {

@@ -55,6 +55,49 @@
         </DescriptionGrid>
       </section>
 
+      <!-- 客户范围 -->
+      <section>
+        <h3 class="mb-3 text-sm font-semibold text-gray-500 dark:text-gray-400">
+          客户范围
+        </h3>
+        <DescriptionGrid :columns="2">
+          <DescriptionItem label="产品范围">
+            <Tag
+              :type="getCustomerScopeTagType(product.customer_scope)"
+              size="small"
+            >
+              {{ product.customer_scope_display || getCustomerScopeLabel(product.customer_scope) }}
+            </Tag>
+          </DescriptionItem>
+          <DescriptionItem label="所属客户">
+            <div
+              v-if="product.customers_detail?.length"
+              class="flex flex-wrap gap-2"
+            >
+              <Tag
+                v-for="customer in product.customers_detail"
+                :key="customer.id"
+                size="small"
+              >
+                {{ customer.name }}
+                <span
+                  v-if="customer.code"
+                  class="ml-1 opacity-70"
+                >
+                  {{ customer.code }}
+                </span>
+              </Tag>
+            </div>
+            <span
+              v-else
+              class="text-gray-500 dark:text-gray-400"
+            >
+              全部客户
+            </span>
+          </DescriptionItem>
+        </DescriptionGrid>
+      </section>
+
       <!-- 库存与价格 -->
       <section>
         <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
@@ -308,6 +351,24 @@ const isLowStock = computed(() => {
 const getTypeLabel = (type: string) => {
   const labels: Record<string, string> = { single: '单品', group_main: '套装主产品', group_item: '套装子产品' }
   return labels[type] || '未知'
+}
+
+const getCustomerScopeLabel = (scope: string) => {
+  const labels: Record<string, string> = {
+    global: '通用产品',
+    exclusive: '客户专属',
+    shared: '多客户共享',
+  }
+  return labels[scope] || '未知范围'
+}
+
+const getCustomerScopeTagType = (scope: string) => {
+  const types: Record<string, string> = {
+    global: 'success',
+    exclusive: 'warning',
+    shared: 'primary',
+  }
+  return types[scope] || 'info'
 }
 
 const getProcessName = (id: number) => {
