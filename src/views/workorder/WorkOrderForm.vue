@@ -276,6 +276,7 @@
       />
       <QuickProductCreateDialog
         v-model:visible="showQuickProductCreate"
+        :preset-customer-id="form.customer_id"
         @created="handleProductCreated"
       />
       <QuickMaterialCreateDialog

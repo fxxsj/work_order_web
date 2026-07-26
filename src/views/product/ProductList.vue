@@ -134,6 +134,7 @@
     :materials="materialList"
     :processes="allProcesses"
     :product-groups="productGroupList"
+    :customers="customerList"
     @update:visible="(val: boolean) => { if(!val) closeModals() }"
     @confirm="handleFormConfirm"
   />
@@ -219,6 +220,7 @@ const {
   materialList,
   processList: allProcesses,
   productGroupList,
+  customerList,
   loadSupportData
 } = useProductFormSupportData()
 const {

@@ -133,6 +133,28 @@
         label="是否启用"
       />
 
+      <SectionDivider title="客户范围" />
+      <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">
+        不关联任何客户即为通用产品（所有客户可用）；关联一个客户为专属；关联多个客户为共享。下单/生产时仅可选择通用产品或当前客户可用的产品。
+      </p>
+      <div>
+        <label class="input-label mb-1.5 block">所属客户</label>
+        <Select
+          v-model="form.customer_ids"
+          :options="customerOptions"
+          multiple
+          filterable
+          placeholder="留空表示通用产品"
+          class="w-full"
+        />
+        <div
+          v-if="customerScopeHint"
+          class="mt-1.5 text-xs text-gray-500 dark:text-gray-400"
+        >
+          产品范围：{{ customerScopeHint }}
+        </div>
+      </div>
+
       <SectionDivider title="图片管理" />
       <div>
         <ImageManager
@@ -189,13 +211,15 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   materials: { type: Array as any, default: () => [] },
   processes: { type: Array as any, default: () => [] },
-  productGroups: { type: Array as any, default: () => [] }
+  productGroups: { type: Array as any, default: () => [] },
+  customers: { type: Array as any, default: () => [] }
 })
 
 const emit = defineEmits(['confirm', 'update:visible'])
 
 const materialItems = ref<any[]>([])
 const materialList = ref<any[]>([])
+const customerList = ref<any[]>([])
 const showQuickMaterialCreate = ref(false)
 const pendingMaterialCreateIndex = ref<number | null>(null)
 const isOpen = ref(false)
@@ -227,7 +251,8 @@ const loadProductImages = async () => {
 
 const FORM_INITIAL = {
   code: '', name: '', product_type: 'single', product_group: null, specification: '', unit: '件',
-  unit_price: 0, stock_quantity: 0, min_stock_quantity: 0, description: '', is_active: true, default_processes: []
+  unit_price: 0, stock_quantity: 0, min_stock_quantity: 0, description: '', is_active: true, default_processes: [],
+  customer_ids: [] as number[]
 }
 
 const form = reactive({ ...FORM_INITIAL })
@@ -241,9 +266,26 @@ const dialogTitle = computed(() => props.dialogType === 'edit' ? '编辑产品' 
 const isEditMode = computed(() => props.dialogType === 'edit')
 const processOptions = computed(() => props.processes.map((p: any) => ({ value: p.id, label: p.name, disabled: !p.is_active })))
 const productGroupOptions = computed(() => props.productGroups.map((g: any) => ({ value: g.id, label: `${g.code} - ${g.name}` })))
+const customerOptions = computed(() =>
+  customerList.value.map((c: any) => ({
+    value: c.id,
+    label: c.code ? `${c.code} - ${c.name}` : c.name
+  }))
+)
+// 产品范围提示（由关联客户数量派生，与后端 customer_scope 保持一致）
+const customerScopeHint = computed(() => {
+  const count = (form.customer_ids || []).length
+  if (count === 0) return '通用产品'
+  if (count === 1) return '客户专属'
+  return '多客户共享'
+})
 
 watch(() => props.materials, (materials) => {
   materialList.value = [...(materials as any[])]
+}, { immediate: true, deep: true })
+
+watch(() => props.customers, (customers) => {
+  customerList.value = [...(customers as any[])]
 }, { immediate: true, deep: true })
 
 const materialColumns: Column[] = [
@@ -266,7 +308,8 @@ const initFormFromProduct = () => {
     min_stock_quantity: props.product.min_stock_quantity || 0,
     description: props.product.description || '',
     is_active: props.product.is_active !== false,
-    default_processes: props.product.default_processes || []
+    default_processes: props.product.default_processes || [],
+    customer_ids: (props.product.customer_ids || (props.product.customers_detail || []).map((c: any) => c.id)) as number[]
   })
   materialItems.value = (props.product.default_materials || []).map((m: any) => ({
     id: m.id,

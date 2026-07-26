@@ -6,6 +6,7 @@
     :materials="materialList"
     :processes="processList"
     :product-groups="productGroupList"
+    :customers="customerList"
     @update:visible="dialogVisible = $event"
     @confirm="handleConfirm"
   />
@@ -19,7 +20,9 @@ import ErrorHandler from '@/utils/errorHandler'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: undefined },
-  visible: { type: Boolean, default: false }
+  visible: { type: Boolean, default: false },
+  // 预设客户：从销售订单/施工单快速创建产品时自动带入当前客户
+  presetCustomerId: { type: Number, default: null }
 })
 
 const emit = defineEmits(['update:modelValue', 'update:visible', 'created'])
@@ -28,6 +31,7 @@ const {
   materialList,
   processList,
   productGroupList,
+  customerList,
   loadSupportData
 } = useProductFormSupportData()
 const {
@@ -49,6 +53,10 @@ watch(dialogVisible, (visible) => {
 
 const handleConfirm = async (payload: any) => {
   try {
+    // 快速创建时自动带入当前订单/施工单的客户（若未显式指定所属客户）
+    if (props.presetCustomerId && (!payload.form.customer_ids || payload.form.customer_ids.length === 0)) {
+      payload.form.customer_ids = [props.presetCustomerId]
+    }
     const created = await createProduct(payload, {
       successMessage: '产品创建成功',
       imageFailureMessage: '产品已创建，部分图片上传失败，请进入产品管理编辑页重试'

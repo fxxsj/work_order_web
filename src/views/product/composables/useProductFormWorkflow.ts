@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { materialAPI, processAPI, productAPI, productGroupAPI, productMaterialAPI } from '@/api/modules'
+import { materialAPI, processAPI, productAPI, productGroupAPI, productMaterialAPI, customerAPI } from '@/api/modules'
 import { useUIStore } from '@/stores/ui'
 import ErrorHandler from '@/utils/errorHandler'
 import logger from '@/utils/logger'
@@ -23,6 +23,7 @@ export const useProductFormSupportData = () => {
   const materialList = ref<any[]>([])
   const processList = ref<any[]>([])
   const productGroupList = ref<any[]>([])
+  const customerList = ref<any[]>([])
 
   const loadAllProcesses = async () => {
     let allProcesses: any[] = []
@@ -40,6 +41,22 @@ export const useProductFormSupportData = () => {
     processList.value = allProcesses
   }
 
+  const loadAllCustomers = async () => {
+    let allCustomers: any[] = []
+    let page = 1
+    let hasMore = true
+
+    while (hasMore) {
+      const response: any = await customerAPI.getList({ page_size: 100, page })
+      const list = toList(response)
+      allCustomers = allCustomers.concat(list)
+      hasMore = Boolean(response?.next) && list.length > 0
+      page += 1
+    }
+
+    customerList.value = allCustomers
+  }
+
   const loadSupportData = async () => {
     if (supportLoaded.value) return
 
@@ -51,7 +68,7 @@ export const useProductFormSupportData = () => {
 
       materialList.value = toList(materialsResponse)
       productGroupList.value = toList(productGroupsResponse)
-      await loadAllProcesses()
+      await Promise.all([loadAllProcesses(), loadAllCustomers()])
       supportLoaded.value = true
     } catch (error: any) {
       ErrorHandler.showMessage(error, '加载产品表单数据失败')
@@ -62,6 +79,7 @@ export const useProductFormSupportData = () => {
     materialList,
     processList,
     productGroupList,
+    customerList,
     loadSupportData
   }
 }

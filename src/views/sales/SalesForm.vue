@@ -400,6 +400,7 @@
     />
     <QuickProductCreateDialog
       v-model:visible="showQuickProductCreate"
+      :preset-customer-id="form.customer"
       @created="handleProductCreated"
     />
   </div>
@@ -491,9 +492,14 @@ const loadCustomers = async () => {
   } catch (_error: any) {}
 }
 
-const loadProducts = async () => {
+const loadProducts = async (customerId?: number | null) => {
   try {
-    const res: any = await productAPI.getList({ page_size: 50 })
+    const params: Record<string, unknown> = { page_size: 200 }
+    if (customerId) {
+      // 按客户过滤：返回通用产品 + 该客户关联产品
+      params.customer = customerId
+    }
+    const res: any = await productAPI.getList(params)
     productOptions.value = res?.results || []
 // eslint-disable-next-line no-empty
   } catch (_error: any) {}
@@ -555,7 +561,28 @@ const handleCustomerSelect = (customer: any) => {
   }
 }
 
-const handleCustomerChange = (value: any) => {
+const handleProductChange = (productId: any, index: any) => {
+  form.items[index].product = productId
+  const product = productOptions.value.find((p: any) => p.id === productId)
+  if (product) {
+    // 取价优先级：客户专属价格 > 产品全局单价
+    const customerPrice = getCustomerSpecificPrice(product, form.customer)
+    form.items[index].unit_price = customerPrice ?? product.unit_price ?? 0
+    if (!form.items[index].tax_rate) {
+      form.items[index].tax_rate = form.tax_rate || 0
+    }
+  }
+}
+
+// 从产品关联客户列表中取该客户的专属价格，无则返回 null（回退到产品全局价）
+const getCustomerSpecificPrice = (product: any, customerId: number | null): number | null => {
+  if (!customerId || !product?.customers_detail) return null
+  const link = (product.customers_detail as any[]).find((c: any) => c.id === customerId)
+  const price = link?.default_unit_price
+  return price != null && price !== '' ? Number(price) : null
+}
+
+const handleCustomerChange = async (value: any) => {
   form.customer = value
   const customer = customerOptions.value.find((c: any) => c.id === value)
   if (customer) {
@@ -564,17 +591,22 @@ const handleCustomerChange = (value: any) => {
     form.shipping_address = customer.address || ''
     handleCustomerSelect(customer)
   }
-}
-
-const handleProductChange = (productId: any, index: any) => {
-  form.items[index].product = productId
-  const product = productOptions.value.find((p: any) => p.id === productId)
-  if (product) {
-    form.items[index].unit_price = product.unit_price || 0
-    if (!form.items[index].tax_rate) {
-      form.items[index].tax_rate = form.tax_rate || 0
+  // 客户变更后重新加载该客户可用产品
+  await loadProducts(value)
+  // 校验现有明细产品：清空不再可用的，并按新客户刷新专属价格
+  form.items.forEach((item: any) => {
+    if (item.product && !productOptions.value.find((p: any) => p.id === item.product)) {
+      item.product = null
+      return
     }
-  }
+    if (item.product) {
+      const product = productOptions.value.find((p: any) => p.id === item.product)
+      const customerPrice = getCustomerSpecificPrice(product, value)
+      if (customerPrice != null) {
+        item.unit_price = customerPrice
+      }
+    }
+  })
 }
 
 const openQuickProductCreate = (index: number | null = null) => {
@@ -675,5 +707,10 @@ const handleSubmit = async (autoApprove: boolean = false) => {
   }
 }
 
-onMounted(() => { loadCustomers(); loadProducts(); loadData() })
+onMounted(() => {
+  loadCustomers()
+  // 不带客户加载通用产品作为初始可选项；选客户后会按客户重新加载
+  loadProducts()
+  loadData()
+})
 </script>
