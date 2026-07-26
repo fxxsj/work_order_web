@@ -299,7 +299,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { workOrderTaskAPI } from '@/api/modules'
 import ErrorHandler from '@/utils/errorHandler'
@@ -365,7 +365,6 @@ const filters = reactive({
   task_type: '',
   priority: ''
 })
-const filterTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const statusOptions = [
   { value: '', label: '全部状态' },
@@ -484,11 +483,9 @@ const loadOperatorCenter = async () => {
 }
 
 const handleFilterInput = () => {
-  if (filterTimer.value) clearTimeout(filterTimer.value)
-  filterTimer.value = setTimeout(() => {
-    resetLimits()
-    loadOperatorCenter()
-  }, 300)
+  // SearchInput 已负责防抖，此处直接查询，避免叠加两层 300ms 延迟。
+  resetLimits()
+  loadOperatorCenter()
 }
 
 const handleFilterChange = () => {
@@ -619,7 +616,4 @@ onMounted(() => {
   loadOperatorCenter()
 })
 
-onBeforeUnmount(() => {
-  if (filterTimer.value) clearTimeout(filterTimer.value)
-})
 </script>

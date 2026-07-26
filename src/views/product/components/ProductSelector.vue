@@ -25,6 +25,7 @@ import ErrorHandler from '@/utils/errorHandler'
 const props = defineProps({
   modelValue: { type: Number, default: null },
   products: { type: Array as any, default: () => [] },
+  customerId: { type: [Number, String], default: null },
   disabled: { type: Boolean, default: false },
   clearable: { type: Boolean, default: true }
 })
@@ -60,7 +61,13 @@ const mergeProducts = (products: any[]) => {
 const fetchProducts = async (query = '') => {
   loading.value = true
   try {
-    const res: any = await productAPI.getList({ search: query, page_size: 50 })
+    const params: Record<string, unknown> = {
+      search: query,
+      page_size: 50,
+      is_active: true
+    }
+    if (props.customerId) params.customer = props.customerId
+    const res: any = await productAPI.getList(params)
     productList.value = res?.results || res || []
     if (!query) cacheTimestamp = Date.now()
   } catch (error: any) {
@@ -80,9 +87,17 @@ const searchProducts = (query = '') => {
   }, 300)
 }
 
-fetchProducts()
-
 watch(() => props.products, (products) => mergeProducts(products as any[]), { immediate: true, deep: true })
+
+watch(
+  () => props.customerId,
+  () => {
+    productList.value = []
+    cacheTimestamp = 0
+    fetchProducts()
+  },
+  { immediate: true }
+)
 
 watch(
   () => props.modelValue,

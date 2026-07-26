@@ -133,6 +133,8 @@
                 <ProductSelector
                   :model-value="row.product"
                   :products="productOptions"
+                  :customer-id="form.customer ?? undefined"
+                  :disabled="!form.customer"
                   @update:model-value="(val) => handleProductChange(val, index)"
                   @create="openQuickProductCreate(index)"
                 />
@@ -544,6 +546,7 @@ const loadData = async () => {
         notes: i.notes || '',
       })) || [],
     })
+    await loadProducts(res.customer)
   } catch (error: any) {
     ErrorHandler.showMessage(error, '加载数据失败')
   }
@@ -707,10 +710,8 @@ const handleSubmit = async (autoApprove: boolean = false) => {
   }
 }
 
-onMounted(() => {
-  loadCustomers()
-  // 不带客户加载通用产品作为初始可选项；选客户后会按客户重新加载
-  loadProducts()
-  loadData()
+onMounted(async () => {
+  await loadCustomers()
+  await loadData()
 })
 </script>

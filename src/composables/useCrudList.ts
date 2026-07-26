@@ -167,7 +167,10 @@ export function useCrudList<T = any>(
       return response
     } catch (error: any) {
       // Ignore abort errors：优先判断本次请求的 controller，再用 ErrorHandler.isCancelError 兜底
-      if (currentController?.signal.aborted || ErrorHandler.isCancelError(error)) {
+      const isCancelError =
+        typeof ErrorHandler.isCancelError === 'function' &&
+        ErrorHandler.isCancelError(error)
+      if (currentController?.signal.aborted || isCancelError) {
         return null
       }
       ErrorHandler.showMessage(error, errorContext)

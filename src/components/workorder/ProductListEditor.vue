@@ -20,7 +20,8 @@
       <template #cell-product="{ row, index }">
         <ProductSelector
           :model-value="row.product"
-          :disabled="disabled"
+          :customer-id="customerId"
+          :disabled="disabled || !customerId"
           @update:model-value="v => handleProductChange(index, v)"
           @create="emit('create', $event)"
         />
@@ -56,6 +57,7 @@ import ProductSelector from '@/views/product/components/ProductSelector.vue'
 
 const props = defineProps({
   items: { type: Array as any, default: () => [] },
+  customerId: { type: [Number, String], default: null },
   disabled: { type: Boolean, default: false }
 })
 

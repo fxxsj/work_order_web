@@ -133,6 +133,7 @@
           </div>
           <ProductListEditor
             :items="form.products"
+            :customer-id="form.customer_id"
             @change="handleProductsChange"
             @add="handleAddProduct"
             @remove="handleRemoveProduct"
