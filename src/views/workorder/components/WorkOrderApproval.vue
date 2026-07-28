@@ -40,6 +40,44 @@
       </div>
     </div>
     <div
+      v-if="canSubmitApproval && workOrder?.approval_status === 'draft'"
+      class="card p-6"
+    >
+      <div class="mb-2 font-bold">
+        提交审核
+      </div>
+      <div
+        v-if="completenessErrors.length > 0"
+        class="mb-3 rounded-md bg-warning-50 p-3 text-sm text-warning-700 dark:bg-warning-900/30 dark:text-warning-300"
+      >
+        <div class="font-medium">
+          以下信息未补全，提交审核前请先完善：
+        </div>
+        <ul class="ml-4 mt-1 list-disc space-y-0.5">
+          <li
+            v-for="(err, idx) in completenessErrors"
+            :key="idx"
+          >
+            {{ err }}
+          </li>
+        </ul>
+      </div>
+      <div class="text-sm text-gray-600 dark:text-dark-300">
+        提交审核后将由业务员审核，审核通过后施工单进入生产任务流转。
+      </div>
+      <div class="mt-4">
+        <BaseButton
+          variant="primary"
+          icon="upload"
+          :loading="submittingApproval"
+          :disabled="completenessErrors.length > 0"
+          @click="emit('submit-approval')"
+        >
+          提交审核
+        </BaseButton>
+      </div>
+    </div>
+    <div
       v-if="canApprove && workOrder?.approval_status === 'submitted'"
       class="card p-6"
     >
@@ -162,6 +200,8 @@ const props = defineProps({
   workOrder: { type: Object, default: null },
   canApprove: { type: Boolean, default: false },
   canResubmit: { type: Boolean, default: false },
+  canSubmitApproval: { type: Boolean, default: false },
+  submittingApproval: { type: Boolean, default: false },
   approving: { type: Boolean, default: false },
   resubmitting: { type: Boolean, default: false },
   approvalForm: { type: Object, default: () => ({}) },
@@ -171,7 +211,7 @@ const props = defineProps({
   completenessErrors: { type: Array as () => string[], default: () => [] }
 })
 
-const emit = defineEmits(['approve', 'resubmit'])
+const emit = defineEmits(['approve', 'resubmit', 'submit-approval'])
 const rejecting = ref(false)
 const localResubmitReason = ref('')
 const approvalFormState = reactive({

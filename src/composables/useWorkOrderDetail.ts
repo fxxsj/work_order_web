@@ -32,8 +32,14 @@ export function useWorkOrderDetail() {
   const syncCheck = ref<any>(null)
   const taskGenerationSummary = ref<any>(null)
   const completenessErrors = ref<string[]>([])
+  const submittingApproval = ref(false)
 
   const canEdit = computed(() => userStore.hasPermission('workorder.change_workorder'))
+  const canSubmitApproval = computed(() =>
+    approvalConfigStore.isEnabled('workorder') &&
+    userStore.hasPermission('workorder.change_workorder') &&
+    workOrder.value?.approval_status === 'draft'
+  )
   const canApprove = computed(() =>
     approvalConfigStore.isEnabled('workorder') &&
     userStore.hasPermission('workorder.approve_workorder') &&
@@ -45,6 +51,7 @@ export function useWorkOrderDetail() {
   )
   const canSyncTasks = computed(() => Boolean(userStore.isSuperuser) && Boolean(syncCheck.value?.sync_needed))
   const showApprovalSection = computed(() =>
+    canSubmitApproval.value ||
     canApprove.value ||
     canResubmit.value ||
     workOrder.value?.approval_logs?.length ||
@@ -202,6 +209,16 @@ export function useWorkOrderDetail() {
       useUIStore().showSuccess(`审核完成${suffix}`)
       loadData()
     })
+  }
+
+  const handleSubmitApproval = async () => {
+    submittingApproval.value = true
+    await withErrorHandler(async () => {
+      await workOrderFlowAPI.submitApproval(String(route.params.id), {})
+      useUIStore().showSuccess('已提交审核')
+      loadData()
+    })
+    submittingApproval.value = false
   }
 
   const handleResubmit = async () => {
@@ -373,9 +390,11 @@ export function useWorkOrderDetail() {
     taskGenerationSummary,
     completenessErrors,
     canEdit,
+    canSubmitApproval,
     canApprove,
     canResubmit,
     canSyncTasks,
+    submittingApproval,
     showApprovalSection,
     artworkCodes,
     artworkNames,
@@ -395,6 +414,7 @@ export function useWorkOrderDetail() {
     handleEdit,
     handleStatusChange,
     handleApprove,
+    handleSubmitApproval,
     handleResubmit,
     handleProcessClick,
     handleSyncTasks,

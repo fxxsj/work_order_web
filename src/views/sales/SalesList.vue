@@ -141,6 +141,13 @@
           </Tag>
         </template>
 
+        <template #cell-actions="{ row }">
+          <RowActions
+            :actions="getRowActions(row)"
+            @action="(action) => handleRowAction(action, row)"
+          />
+        </template>
+
         <template #empty>
           <EmptyState
             :description="hasFilters ? '未找到匹配的订单' : '暂无客户订单数据'"
@@ -162,6 +169,19 @@
       />
     </template>
   </TablePageLayout>
+
+  <ConfirmDialog
+    :show="deleteConfirmVisible"
+    title="删除确认"
+    :message="`确定要删除客户订单「${rowToDelete?.order_number}」吗？此操作不可撤销。`"
+    confirm-text="删除"
+    cancel-text="取消"
+    :danger="true"
+    :loading="deleting"
+    loading-text="删除中..."
+    @confirm="handleConfirmDelete"
+    @cancel="deleteConfirmVisible = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -169,10 +189,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
-import { useCrudList } from '@/composables'
-import { BaseButton, StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, FilterRow } from '@/components/common'
-import type { Column } from '@/components/common/types'
+import { useCrudList, useCrudPermission, useCRUD } from '@/composables'
+import { BaseButton, StatusTag, EmptyState, Pagination, Icon, SearchInput, Select, Tag, TablePageLayout, DataTable, FilterRow, RowActions, ConfirmDialog } from '@/components/common'
+import type { Column, RowAction } from '@/components/common/types'
 import { getSalesOrderUserStatus } from '@/constants/statusMeta'
+import ErrorHandler from '@/utils/errorHandler'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -187,7 +208,8 @@ const columns: Column[] = [
   { key: 'payment_status', label: '付款状态', width: 96, align: 'center', sortable: true },
   { key: 'work_order_count', label: '施工单', width: 80, align: 'center', sortable: true },
   { key: 'next_step', label: '下一步', width: 180 },
-  { key: 'items_count', label: '明细数', width: 80, align: 'center', sortable: true }
+  { key: 'items_count', label: '明细数', width: 80, align: 'center', sortable: true },
+  { key: 'actions', label: '操作', width: 120, align: 'center', sortable: false }
 ]
 
 const sortKey = ref('created_at')
@@ -230,6 +252,14 @@ const {
 })
 
 const canCreate = computed(() => userStore.hasPermission('workorder.add_salesorder'))
+const { canEdit, canDelete } = useCrudPermission('salesorder')
+const crud = useCRUD(salesOrderAPI, { onSuccess: () => { loadData() } })
+
+// 仅草稿态可编辑/删除（与详情页门禁一致：已提交/已审核等状态不允许直接改）
+const isEditable = (row: any) => row.approval_status === 'draft'
+const rowToDelete = ref<any>(null)
+const deleteConfirmVisible = ref(false)
+const deleting = ref(false)
 
 const handleReset = () => {
   sortKey.value = 'created_at'
@@ -246,6 +276,41 @@ const handleSort = (key: string, order: 'asc' | 'desc') => {
 
 const handleAdd = () => { router.push('/sales-orders/create') }
 const handleView = (row: any) => { router.push(`/sales-orders/${row.id}`) }
+
+const handleEdit = (row: any) => { router.push(`/sales-orders/${row.id}/edit`) }
+
+const handleDelete = (row: any) => {
+  rowToDelete.value = row
+  deleteConfirmVisible.value = true
+}
+
+const handleConfirmDelete = async () => {
+  if (!rowToDelete.value) return
+  try {
+    deleting.value = true
+    await crud.remove(rowToDelete.value.id, '删除成功')
+  } catch (error: any) {
+    ErrorHandler.showMessage(error, '删除客户订单失败')
+  } finally {
+    deleting.value = false
+    deleteConfirmVisible.value = false
+    rowToDelete.value = null
+  }
+}
+
+const getRowActions = (row: any): RowAction[] => [
+  { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
+  { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value && isEditable(row) },
+  { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete.value && isEditable(row) }
+]
+
+const handleRowAction = (action: RowAction, row: any) => {
+  switch (action.key) {
+    case 'view': handleView(row); break
+    case 'edit': handleEdit(row); break
+    case 'delete': handleDelete(row); break
+  }
+}
 
 const isOverdue = (row: any) => row.delivery_date && new Date(row.delivery_date) < new Date() && !['completed', 'cancelled'].includes(row.status)
 const formatAmount = (amount: any) => amount ? amount.toLocaleString() : '0.00'

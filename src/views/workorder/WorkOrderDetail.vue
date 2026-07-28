@@ -33,10 +33,13 @@
         :work-order="workOrder"
         :can-approve="canApprove"
         :can-resubmit="canResubmit"
+        :can-submit-approval="canSubmitApproval"
+        :submitting-approval="submittingApproval"
         :task-generation-summary="taskGenerationSummary"
         :completeness-errors="completenessErrors"
         @approve="handleApprove"
         @resubmit="handleResubmit"
+        @submit-approval="handleSubmitApproval"
       />
       <WorkOrderArtworkDie
         v-if="hasPrepressResources"
@@ -169,6 +172,8 @@ const {
   canEdit,
   canApprove,
   canResubmit,
+  canSubmitApproval,
+  submittingApproval,
   canSyncTasks,
   showApprovalSection,
   artworkCodes,
@@ -185,6 +190,7 @@ const {
   handleEdit,
   handleStatusChange,
   handleApprove,
+  handleSubmitApproval,
   handleResubmit,
   handleProcessClick,
   handleSyncTasks,
