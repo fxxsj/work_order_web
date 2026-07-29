@@ -126,7 +126,8 @@ export const StatusMetaMaps = {
     draft: { text: '草稿', type: 'info' },
     submitted: { text: '待确认', type: 'primary' },
     rejected: { text: '已退回', type: 'danger' },
-    pending: { text: '可生产', type: 'warning' },
+    pending: { text: '待提交', type: 'info' },
+    approved: { text: '已审核', type: 'success' },
     in_progress: { text: '生产中', type: 'warning' },
     completed: { text: '已完成', type: 'success' },
     cancelled: { text: '已取消', type: 'info' }

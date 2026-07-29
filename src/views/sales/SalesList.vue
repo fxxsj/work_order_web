@@ -221,9 +221,9 @@ const sortFieldMap: Record<string, string> = {
 const statusOptions = [
   { value: 'draft', label: '草稿' },
   { value: 'submitted', label: '已提交' },
-  { value: 'approved', label: '已审核' },
   { value: 'rejected', label: '已拒绝' },
   { value: 'pending', label: '待处理' },
+  { value: 'approved', label: '已审核' },
   { value: 'in_production', label: '生产中' },
   { value: 'completed', label: '已完成' },
   { value: 'cancelled', label: '已取消' }
