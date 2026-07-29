@@ -338,7 +338,7 @@ export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrder
 
   function setFormFromDetail(res: any, productListRef: Ref<any[]>) {
     Object.assign(form, {
-      sales_order_id: res.sales_order_id || undefined,
+      sales_order_id: res.sales_order_id ?? undefined,
       customer_id: res.customer?.id || res.customer,
       status: res.status || 'pending',
       priority: res.priority || 'normal',
@@ -348,14 +348,17 @@ export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrder
       defective_quantity: res.defective_quantity || 0,
       actual_delivery_date: res.actual_delivery_date ? res.actual_delivery_date.split('T')[0] : '',
       notes: res.notes || '',
-      process_ids: res.process_ids || [],
+      // 工序回显：优先用后端派生的 process_ids，回退到 order_processes 提取
+      process_ids: res.process_ids
+        || (res.order_processes || []).map((p: any) => p.process?.id || p.process).filter(Boolean),
       printing_type: res.printing_type || 'none',
-      printing_cmyk: res.printing_cmyk || [],
+      printing_cmyk: res.printing_cmyk_colors || res.printing_cmyk || [],
       printing_other_colors: (res.printing_other_colors || []).join(', '),
-      artwork_ids: res.artwork_ids || [],
-      die_ids: res.die_ids || [],
-      foiling_plate_ids: res.foiling_plate_ids || [],
-      embossing_plate_ids: res.embossing_plate_ids || []
+      // 资产 ID 列表：后端字段名为 artworks/dies/...（PrimaryKeyRelatedField）
+      artwork_ids: res.artworks || res.artwork_ids || [],
+      die_ids: res.dies || res.die_ids || [],
+      foiling_plate_ids: res.foiling_plates || res.foiling_plate_ids || [],
+      embossing_plate_ids: res.embossing_plates || res.embossing_plate_ids || []
     })
 
     // Load products
