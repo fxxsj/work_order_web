@@ -529,7 +529,9 @@ let createdWorkOrderId: number | null = null
 
 // Load initial data
 onMounted(async () => {
-  const { lists, loading } = await workOrderFormService.loadFormData()
+  const { lists, loading } = await workOrderFormService.loadFormData(
+    isEdit.value ? id.value : undefined
+  )
   salesOrderList.value = lists.salesOrderList
   productList.value = lists.productList
   processList.value = lists.processList

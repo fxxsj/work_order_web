@@ -55,6 +55,12 @@ export interface UseWorkOrderFormReturn {
 export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrderFormReturn {
   const { productList, artworkList } = options
 
+  const normalizeOptionalId = (value: any): number | undefined => {
+    const rawValue = value && typeof value === 'object' ? value.id : value
+    const parsed = Number(rawValue)
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
+  }
+
   const form = reactive<WorkOrderFormState>({
     sales_order_id: undefined,
     customer_id: undefined,
@@ -338,7 +344,9 @@ export function useWorkOrderForm(options: UseWorkOrderFormOptions): UseWorkOrder
 
   function setFormFromDetail(res: any, productListRef: Ref<any[]>) {
     Object.assign(form, {
-      sales_order_id: res.sales_order_id ?? undefined,
+      sales_order_id: normalizeOptionalId(
+        res.sales_order_id ?? res.sales_order
+      ),
       customer_id: res.customer?.id || res.customer,
       status: res.status || 'pending',
       priority: res.priority || 'normal',

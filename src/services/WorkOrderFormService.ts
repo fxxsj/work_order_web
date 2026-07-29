@@ -28,7 +28,7 @@ class WorkOrderFormService {
   /**
    * Load all dropdown lists needed by the work order form in parallel.
    */
-  async loadFormData(): Promise<LoadFormDataResult> {
+  async loadFormData(excludeWorkOrderId?: string | number): Promise<LoadFormDataResult> {
     const lists: FormDataLists = {
       salesOrderList: [],
       productList: [],
@@ -56,7 +56,11 @@ class WorkOrderFormService {
     }
 
     await Promise.all([
-      workOrderAPI.getSalesOrderCandidates()
+      workOrderAPI.getSalesOrderCandidates(
+        excludeWorkOrderId
+          ? { exclude_work_order_id: excludeWorkOrderId }
+          : undefined
+      )
         .then((res: any) => setResults('salesOrderList', res))
         .catch(handleError),
       productAPI.getList({ page_size: 50 })
