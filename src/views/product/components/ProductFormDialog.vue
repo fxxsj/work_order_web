@@ -10,7 +10,6 @@
         v-model="form.code"
         label="产品编码"
         placeholder="请输入编码（留空自动生成）"
-        :disabled="isEditMode"
       />
       <Input
         v-model="form.name"
@@ -263,7 +262,6 @@ const productTypeOptions = [
   { value: 'group_item', label: '套装子产品' }
 ]
 const dialogTitle = computed(() => props.dialogType === 'edit' ? '编辑产品' : '新建产品')
-const isEditMode = computed(() => props.dialogType === 'edit')
 const processOptions = computed(() => props.processes.map((p: any) => ({ value: p.id, label: p.name, disabled: !p.is_active })))
 const productGroupOptions = computed(() => props.productGroups.map((g: any) => ({ value: g.id, label: `${g.code} - ${g.name}` })))
 const customerOptions = computed(() =>
@@ -367,6 +365,8 @@ const handleSubmit = () => {
   if (code) {
     if (code.length < 2 || code.length > 50) { useUIStore().showWarning('产品编码长度需在2-50个字符之间'); return }
     if (!/^[A-Za-z0-9-]+$/.test(code)) { useUIStore().showWarning('产品编码只能包含字母、数字和连字符'); return }
+  } else if (props.dialogType === 'edit') {
+    useUIStore().showWarning('产品编码不能为空'); return
   }
   if (!name) { useUIStore().showWarning('请输入产品名称'); return }
   if (form.product_type !== 'single' && !form.product_group) { useUIStore().showWarning('请选择产品组'); return }
