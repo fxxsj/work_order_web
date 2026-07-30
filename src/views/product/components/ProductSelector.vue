@@ -38,7 +38,7 @@ const productList = ref<any[]>([])
 const productOptions = computed(() =>
   productList.value.map((p: any) => ({
     value: p.id,
-    label: `${p.name} (${p.code || '无编码'})`,
+    label: p.code ? `${p.name} (${p.code})` : p.name,
     extra: p.unit_price ? `¥${p.unit_price}` : null
   }))
 )

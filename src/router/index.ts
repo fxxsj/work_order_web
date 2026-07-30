@@ -258,7 +258,9 @@ router.onError((error: Error) => {
     if (!lastReload || now - parseInt(lastReload) > 10000) {
       sessionStorage.setItem(reloadKey, now.toString())
       console.warn('Chunk load error detected, reloading page to fetch latest version...')
-      window.location.reload()
+      // Give rolling deployments time to make the new fingerprinted chunk
+      // available before retrying the route.
+      window.setTimeout(() => window.location.reload(), 1500)
     } else {
       console.error('Chunk load error persists after reload. Please clear browser cache.')
     }
