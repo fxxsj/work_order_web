@@ -85,7 +85,6 @@ const form = reactive<Record<ModuleKey, boolean>>({
 
 const moduleItems: { key: ModuleKey; label: string; hint: string }[] = [
   { key: 'workorder_approval_enabled', label: '施工单审核', hint: '关闭后施工单提交即自动通过并生成任务' },
-  { key: 'salesorder_approval_enabled', label: '客户订单审核', hint: '关闭后客户订单提交即自动通过' },
   { key: 'purchaseorder_approval_enabled', label: '采购单审核', hint: '关闭后采购单提交即自动批准' },
   { key: 'invoice_approval_enabled', label: '发票审核', hint: '关闭后发票提交即自动通过' },
   { key: 'supplierpayment_approval_enabled', label: '供应商付款审核', hint: '关闭后付款提交即自动通过并回写采购单' },

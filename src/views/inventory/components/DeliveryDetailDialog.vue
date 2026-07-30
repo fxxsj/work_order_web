@@ -45,6 +45,18 @@
           :label="data.status_display"
         />
       </DescriptionItem>
+      <DescriptionItem label="未税金额">
+        ¥{{ Number(data.subtotal || 0).toFixed(2) }}
+      </DescriptionItem>
+      <DescriptionItem label="税率">
+        {{ Number(data.tax_rate || 0).toFixed(2) }}%
+      </DescriptionItem>
+      <DescriptionItem label="税额">
+        ¥{{ Number(data.tax_amount || 0).toFixed(2) }}
+      </DescriptionItem>
+      <DescriptionItem label="价税合计">
+        ¥{{ Number(data.total_amount || 0).toFixed(2) }}
+      </DescriptionItem>
       <DescriptionItem
         label="送货地址"
         :span="2"

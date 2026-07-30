@@ -43,16 +43,6 @@
           clearable
         />
       </div>
-      <div>
-        <label class="input-label mb-1.5 block">默认税率 (%)</label>
-        <InputNumber
-          v-model="formData.default_tax_rate"
-          :min="0"
-          :max="100"
-          :precision="2"
-          placeholder="请输入默认税率"
-        />
-      </div>
       <TextArea
         v-model="formData.address"
         label="地址"
@@ -91,7 +81,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { customerAPI } from '@/api/modules'
-import { BaseDialog, Input, InputNumber, Select, TextArea } from '@/components/common'
+import { BaseDialog, Input, Select, TextArea } from '@/components/common'
 import { useUIStore } from '@/stores/ui'
 
 const props = defineProps({
@@ -104,7 +94,7 @@ const props = defineProps({
 
 const emit = defineEmits(['confirm', 'update:visible'])
 
-const formInitialValues = { name: '', contact_person: '', phone: '', email: '', address: '', salesperson: null as any, default_tax_rate: 13, notes: '' }
+const formInitialValues = { name: '', contact_person: '', phone: '', email: '', address: '', salesperson: null as any, notes: '' }
 const formData = reactive({ ...formInitialValues })
 const nameError = ref('')
 const isOpen = ref(false)
@@ -132,7 +122,6 @@ const initFormFromCustomer = () => {
     email: props.customer?.email || '',
     address: props.customer?.address || '',
     salesperson: props.customer?.salesperson || null,
-    default_tax_rate: props.customer?.default_tax_rate ?? 13,
     notes: props.customer?.notes || ''
   })
   nameError.value = ''

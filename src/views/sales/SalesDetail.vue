@@ -17,7 +17,7 @@
           </button>
           <div class="flex flex-wrap items-center gap-3">
             <button
-              v-if="canEdit && detailData.approval_status === 'draft'"
+              v-if="canEdit && !['completed', 'cancelled'].includes(detailData.status)"
               class="btn btn-primary"
               @click="handleEdit"
             >
@@ -28,7 +28,7 @@
               编辑
             </button>
             <button
-              v-if="canConvert && detailData.approval_status === 'approved' && !['completed', 'cancelled'].includes(detailData.status)"
+              v-if="canConvert && !['completed', 'cancelled'].includes(detailData.status)"
               class="btn btn-success"
               @click="handleConvert"
             >
@@ -39,7 +39,7 @@
               生成施工单
             </button>
             <button
-              v-if="canCreateDelivery && detailData.approval_status === 'approved'"
+              v-if="canCreateDelivery && !['completed', 'cancelled'].includes(detailData.status)"
               class="btn btn-secondary"
               @click="handleCreateDeliveryOrder"
             >
@@ -88,9 +88,16 @@
               <StatusTag
                 :status="detailData.status"
                 :label="detailData.status_display"
-                category="salesOrder"
+                category="salesOrderUser"
                 size="small"
               />
+            </DescriptionItem>
+            <DescriptionItem label="送货进度">
+              {{ detailData.delivered_quantity || 0 }} / {{ detailData.total_quantity || 0 }}
+              （{{ detailData.delivery_progress || 0 }}%）
+            </DescriptionItem>
+            <DescriptionItem label="待送数量">
+              {{ detailData.remaining_quantity || 0 }}
             </DescriptionItem>
             <DescriptionItem
               label="送货地址"
@@ -99,53 +106,6 @@
               {{ detailData.shipping_address || '-' }}
             </DescriptionItem>
           </DescriptionGrid>
-        </section>
-
-        <!-- 拒绝信息 -->
-        <section
-          v-if="detailData.status === 'rejected' && (detailData.rejection_reason || detailData.approval_comment)"
-          class="card border-l-4 border-warning-500 p-6"
-        >
-          <div class="mb-2 text-sm font-medium text-warning-600">
-            审核拒绝
-          </div>
-          <div
-            v-if="detailData.rejection_reason"
-            class="mb-1 text-sm text-gray-700 dark:text-dark-300"
-          >
-            <span class="text-gray-500 dark:text-dark-400">拒绝原因：</span>{{ detailData.rejection_reason }}
-          </div>
-          <div
-            v-if="detailData.approval_comment"
-            class="mb-3 text-sm text-gray-700 dark:text-dark-300"
-          >
-            <span class="text-gray-500 dark:text-dark-400">审批说明：</span>{{ detailData.approval_comment }}
-          </div>
-          <div class="flex items-center gap-3 border-t border-warning-200 pt-3 dark:border-warning-800">
-            <span class="text-xs text-gray-500 dark:text-dark-400">下一步：</span>
-            <button
-              v-if="salesorderApprovalEnabled"
-              class="btn btn-primary btn-sm"
-              @click="handleSubmitOrder"
-            >
-              <Icon
-                name="upload"
-                class="h-3 w-3"
-              />
-              重新提交
-            </button>
-            <button
-              v-if="canEdit"
-              class="btn btn-secondary btn-sm"
-              @click="handleEdit"
-            >
-              <Icon
-                name="edit"
-                class="h-3 w-3"
-              />
-              先去修改
-            </button>
-          </div>
         </section>
 
         <!-- 人工完结 -->
@@ -529,62 +489,6 @@
           </div>
           <div class="flex flex-wrap gap-3">
             <button
-              v-if="detailData.approval_status === 'draft' && salesorderApprovalEnabled"
-              class="btn btn-primary"
-              @click="handleSubmitOrder"
-            >
-              <Icon
-                name="upload"
-                class="h-4 w-4"
-              />
-              提交审核
-            </button>
-            <template v-if="detailData.approval_status === 'submitted' && salesorderApprovalEnabled">
-              <button
-                v-if="canApprove"
-                class="btn btn-success"
-                @click="handleApproveOrder"
-              >
-                <Icon
-                  name="check"
-                  class="h-4 w-4"
-                />
-                审核通过
-              </button>
-              <button
-                class="btn btn-warning"
-                @click="handleRejectOrder"
-              >
-                <Icon
-                  name="x"
-                  class="h-4 w-4"
-                />
-                审核拒绝
-              </button>
-            </template>
-            <template v-if="canChange && detailData.approval_status === 'approved' && !['completed', 'cancelled'].includes(detailData.status)">
-              <button
-                class="btn btn-secondary"
-                @click="handleUpdatePayment"
-              >
-                <Icon
-                  name="creditCard"
-                  class="h-4 w-4"
-                />
-                更新付款
-              </button>
-              <button
-                class="btn btn-success"
-                @click="handleCompleteOrder"
-              >
-                <Icon
-                  name="checkCircle"
-                  class="h-4 w-4"
-                />
-                完成订单
-              </button>
-            </template>
-            <button
               v-if="canChange && detailData.status && !['completed', 'cancelled'].includes(detailData.status)"
               class="btn btn-danger"
               @click="handleCancelOrder"
@@ -596,7 +500,7 @@
               取消订单
             </button>
             <button
-              v-if="detailData.approval_status === 'draft' && canChange"
+              v-if="canChange && !hasRelatedOrders"
               class="btn btn-danger"
               @click="handleDeleteOrder"
             >
@@ -797,7 +701,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { salesOrderAPI } from '@/api/modules'
 import { useUserStore } from '@/stores'
-import { useApprovalConfigStore } from '@/stores/approvalConfig'
 import { ConfirmDialog, StatusTag, DescriptionGrid, DescriptionItem, SummaryTable, TextArea, Input, InputNumber, Icon, LoadingOverlay } from '@/components/common'
 import type { Column } from '@/components/common/types'
 import { formatDate } from '@/utils/filter'
@@ -806,8 +709,6 @@ import ErrorHandler from '@/utils/errorHandler'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const approvalConfigStore = useApprovalConfigStore()
-const salesorderApprovalEnabled = computed(() => approvalConfigStore.isEnabled('salesorder'))
 
 const loading = ref(false)
 const detailData = reactive<any>({})
@@ -840,13 +741,11 @@ const activeDetailTab = ref<'detail' | 'finance'>('detail')
 
 const detailTabs: Array<{ key: 'detail' | 'finance'; label: string }> = [
   { key: 'detail', label: '订单明细' },
-  { key: 'finance', label: '金额信息' },
 ]
 
 const canEdit = computed(() => userStore.hasPermission('workorder.change_salesorder'))
 const canConvert = computed(() => userStore.hasPermission('workorder.add_workorder'))
 const canChange = computed(() => userStore.hasPermission('workorder.change_salesorder'))
-const canApprove = computed(() => userStore.hasPermission('workorder.approve_salesorder'))
 const canCreateDelivery = computed(() => userStore.hasPermission('workorder.add_deliveryorder'))
 
 const loadData = async () => {
@@ -952,15 +851,6 @@ const handleCreateDeliveryOrder = () => {
   router.push(`/inventory/delivery/create?sales_order_id=${route.params.id}`)
 }
 
-const handleSubmitOrder = async () => {
-  try { await salesOrderAPI.submit(String(route.params.id)); useUIStore().showSuccess('提交成功'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '提交失败') }
-}
-
-const handleApproveOrder = async () => {
-  try { await salesOrderAPI.approve(String(route.params.id)); useUIStore().showSuccess('审核通过'); loadData() } catch (error: any) { ErrorHandler.showMessage(error, '审核失败') }
-}
-
-const handleRejectOrder = () => { rejectReason.value = ''; showRejectDialog.value = true }
 const cancelReject = () => { showRejectDialog.value = false; rejectReason.value = '' }
 const confirmReject = async () => {
   if (!rejectReason.value.trim()) { useUIStore().showWarning('请填写拒绝原因'); return }
@@ -971,11 +861,6 @@ const confirmReject = async () => {
   } catch (error: any) { ErrorHandler.showMessage(error, '操作失败') } finally { rejecting.value = false }
 }
 
-const handleUpdatePayment = () => {
-  paymentAmount.value = detailData.paid_amount || 0
-  paymentDate.value = ''
-  showPaymentDialog.value = true
-}
 const confirmPayment = async () => {
   paymentLoading.value = true
   try {
@@ -987,7 +872,6 @@ const confirmPayment = async () => {
   } catch (error: any) { ErrorHandler.showMessage(error, '更新失败') } finally { paymentLoading.value = false }
 }
 
-const handleCompleteOrder = () => { completionReason.value = ''; showCompleteDialog.value = true }
 const confirmComplete = async () => {
   completeLoading.value = true
   try {
@@ -1023,8 +907,6 @@ const itemColumns: Column[] = [
   { key: 'quantity', label: '数量', width: 80, align: 'right' },
   { key: 'unit', label: '单位', width: 80, align: 'center' },
   { key: 'unit_price', label: '单价', width: 100, align: 'right' },
-  { key: 'tax_rate', label: '税率', width: 80, align: 'right' },
-  { key: 'discount_amount', label: '折扣', width: 100, align: 'right' },
   { key: 'amount', label: '金额', width: 120, align: 'right' },
   { key: 'notes', label: '备注', minWidth: 120 },
 ]

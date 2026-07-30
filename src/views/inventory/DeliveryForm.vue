@@ -87,6 +87,23 @@
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
+            <label class="input-label mb-1.5 block">税率 (%)</label>
+            <InputNumber
+              v-model="form.tax_rate"
+              :precision="2"
+              :min="0"
+              :max="100"
+              class="w-full"
+            />
+          </div>
+          <div class="flex flex-wrap items-center gap-3 self-end">
+            <span>未税金额：¥{{ deliverySubtotal.toFixed(2) }}</span>
+            <span>税额：¥{{ deliveryTaxAmount.toFixed(2) }}</span>
+            <strong>价税合计：¥{{ deliveryTotalAmount.toFixed(2) }}</strong>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
             <label class="input-label mb-1.5 block">包裹数量</label>
             <InputNumber
               v-model="form.package_count"
@@ -226,9 +243,9 @@ const salesOrderList = ref<any[]>([])
 const productList = ref<any[]>([])
 
 const ITEM_INITIAL = { product: null, sales_order_item: null, quantity: 1, unit: '件', unit_price: 0, stock_batch: '', notes: '' }
-const getFormInitialValues = () => ({ id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, package_count: 1, package_weight: 0, notes: '', items_data: [] as any[] })
+const getFormInitialValues = () => ({ id: null, sales_order: null, customer: null, delivery_date: '', receiver_name: '', receiver_phone: '', delivery_address: '', logistics_company: '', tracking_number: '', freight: 0, tax_rate: 0, package_count: 1, package_weight: 0, notes: '', items_data: [] as any[] })
 const form = reactive(getFormInitialValues())
-const deliveryEligibleSalesOrderStatuses = new Set(['approved', 'in_production', 'completed'])
+const blockedSalesOrderStatuses = new Set(['completed', 'cancelled'])
 
 const normalizeId = (value: any) => {
   if (value && typeof value === 'object') return normalizeId(value.id)
@@ -252,7 +269,7 @@ const salesOrderOptions = computed(() => {
   return salesOrderList.value
     .filter((order: any) => {
       const isCurrentOrder = selectedSalesOrderId !== null && sameId(order.id, selectedSalesOrderId)
-      const statusAllowed = deliveryEligibleSalesOrderStatuses.has(order.status) || isCurrentOrder
+      const statusAllowed = !blockedSalesOrderStatuses.has(order.status) || isCurrentOrder
       const customerMatched = !selectedCustomerId || sameId(getCustomerId(order), selectedCustomerId)
       return statusAllowed && customerMatched
     })
@@ -382,6 +399,7 @@ const mapDeliveryToForm = (delivery: any) => ({
   logistics_company: delivery.logistics_company || '',
   tracking_number: delivery.tracking_number || '',
   freight: Number(delivery.freight || 0),
+  tax_rate: Number(delivery.tax_rate || 0),
   package_count: Number(delivery.package_count || 1),
   package_weight: Number(delivery.package_weight || 0),
   notes: delivery.notes || '',
@@ -400,6 +418,9 @@ const loadDetail = async () => {
 const addItem = () => { form.items_data.push({ ...ITEM_INITIAL }) }
 const removeItem = (index: any) => form.items_data.splice(index, 1)
 const calculateSubtotal = (item: any) => (item.quantity || 0) * (item.unit_price || 0)
+const deliverySubtotal = computed(() => form.items_data.reduce((sum: number, item: any) => sum + calculateSubtotal(item), 0))
+const deliveryTaxAmount = computed(() => deliverySubtotal.value * Number(form.tax_rate || 0) / 100)
+const deliveryTotalAmount = computed(() => deliverySubtotal.value + deliveryTaxAmount.value)
 const trimText = (value: any) => (typeof value === 'string' ? value.trim() : value)
 const emptyToNull = (value: any) => (value === '' || value === undefined ? null : value)
 const normalizePayload = () => {
@@ -411,6 +432,7 @@ const normalizePayload = () => {
     logistics_company: trimText(form.logistics_company) || '',
     tracking_number: trimText(form.tracking_number) || '',
     freight: Number(form.freight || 0),
+    tax_rate: Number(form.tax_rate || 0),
     package_count: Number(form.package_count || 1),
     package_weight: emptyToNull(form.package_weight),
     notes: trimText(form.notes) || '',
@@ -449,6 +471,7 @@ const validateForm = () => {
   if (!form.delivery_address) { ErrorHandler.showWarning('请输入送货地址'); return false }
   if (!form.delivery_date) { ErrorHandler.showWarning('请选择发货日期'); return false }
   if (!form.package_count) { ErrorHandler.showWarning('请输入包裹数量'); return false }
+  if (form.tax_rate < 0 || form.tax_rate > 100) { ErrorHandler.showWarning('税率必须在 0-100 之间'); return false }
   return validateItems()
 }
 const handleSubmit = async () => {

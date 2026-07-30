@@ -20,14 +20,6 @@
           clearable
           @change="handleSearch"
         />
-        <Select
-          v-model="filters.payment_status"
-          :options="paymentStatusOptions"
-          class="w-full sm:w-36"
-          placeholder="付款状态"
-          clearable
-          @change="handleSearch"
-        />
         <BaseButton
           variant="secondary"
           icon="rotateCcw"
@@ -103,14 +95,6 @@
           <StatusTag
             :status="getSalesOrderUserStatus(row)"
             category="salesOrderUser"
-            effect="plain"
-          />
-        </template>
-
-        <template #cell-payment_status="{ row }">
-          <StatusTag
-            :status="row.payment_status"
-            category="payment"
             effect="plain"
           />
         </template>
@@ -205,7 +189,6 @@ const columns: Column[] = [
   { key: 'delivery_date', label: '交货日期', width: 112, sortable: true },
   { key: 'total_amount', label: '订单金额', width: 112, align: 'right', sortable: true },
   { key: 'status', label: '订单状态', width: 96, align: 'center', sortable: true },
-  { key: 'payment_status', label: '付款状态', width: 96, align: 'center', sortable: true },
   { key: 'work_order_count', label: '施工单', width: 80, align: 'center', sortable: true },
   { key: 'next_step', label: '下一步', width: 180 },
   { key: 'items_count', label: '明细数', width: 80, align: 'center', sortable: true },
@@ -219,34 +202,23 @@ const sortFieldMap: Record<string, string> = {
 }
 
 const statusOptions = [
-  { value: 'draft', label: '草稿' },
-  { value: 'submitted', label: '已提交' },
-  { value: 'rejected', label: '已拒绝' },
   { value: 'pending', label: '待处理' },
-  { value: 'approved', label: '已审核' },
   { value: 'in_production', label: '生产中' },
+  { value: 'ready_to_deliver', label: '待送货' },
+  { value: 'partially_delivered', label: '部分送货' },
   { value: 'completed', label: '已完成' },
   { value: 'cancelled', label: '已取消' }
-]
-const paymentStatusOptions = [
-  { value: 'unpaid', label: '未付款' },
-  { value: 'partial', label: '部分付款' },
-  { value: 'paid', label: '已付款' }
 ]
 
 const {
   filters, tableData, loading, total, currentPage, pageSize,
   loadData, handleSearch, handlePageChange, handleSizeChange, hasFilters, resetFilters
 } = useCrudList(salesOrderAPI, 'getList', {
-  initialFilters: { search: '', status: '', payment_status: '' },
+  initialFilters: { search: '', status: '' },
   buildParams: (params) => {
     const backendSortKey = sortFieldMap[sortKey.value] || sortKey.value
     const ordering = sortOrder.value === 'desc' ? `-${backendSortKey}` : backendSortKey
     const apiParams: Record<string, any> = { ...params, ordering }
-    if (['draft', 'submitted', 'approved', 'rejected'].includes(apiParams.status)) {
-      apiParams.approval_status = apiParams.status
-      delete apiParams.status
-    }
     return apiParams
   }
 })
@@ -255,8 +227,8 @@ const canCreate = computed(() => userStore.hasPermission('workorder.add_salesord
 const { canEdit, canDelete } = useCrudPermission('salesorder')
 const crud = useCRUD(salesOrderAPI, { onSuccess: () => { loadData() } })
 
-// 仅草稿态可编辑/删除（与详情页门禁一致：已提交/已审核等状态不允许直接改）
-const isEditable = (row: any) => row.approval_status === 'draft'
+const isEditable = (row: any) => !['completed', 'cancelled'].includes(row.status)
+const isDeletable = (row: any) => isEditable(row) && (row.work_order_count || 0) === 0
 const rowToDelete = ref<any>(null)
 const deleteConfirmVisible = ref(false)
 const deleting = ref(false)
@@ -301,7 +273,7 @@ const handleConfirmDelete = async () => {
 const getRowActions = (row: any): RowAction[] => [
   { key: 'view', label: '查看', icon: 'eye', tone: 'primary' },
   { key: 'edit', label: '编辑', icon: 'edit', tone: 'primary', visible: canEdit.value && isEditable(row) },
-  { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete.value && isEditable(row) }
+  { key: 'delete', label: '删除', icon: 'trash', tone: 'danger', visible: canDelete.value && isDeletable(row) }
 ]
 
 const handleRowAction = (action: RowAction, row: any) => {
@@ -318,11 +290,10 @@ const formatAmount = (amount: any) => amount ? amount.toLocaleString() : '0.00'
 const getNextStepHint = (row: any) => {
   const hasWorkOrders = (row.work_order_count || 0) > 0
   switch (row.status) {
-    case 'draft': return '待提交确认'
-    case 'submitted': return '待业务审核'
-    case 'rejected': return '待修改后重提'
-    case 'approved': return hasWorkOrders ? '可继续补施工单或直接发货' : '可生成施工单或直接发货'
+    case 'pending': return hasWorkOrders ? '可继续补施工单或直接送货' : '可生成施工单或送货单'
     case 'in_production': return hasWorkOrders ? '跟进生产进度，可分批发货' : '待补施工单或直接发货'
+    case 'ready_to_deliver': return '生产已完成，等待送货'
+    case 'partially_delivered': return '已部分送货，继续安排余量'
     case 'completed': return '订单已完结'
     case 'cancelled': return '订单已取消'
     default: return ''

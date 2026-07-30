@@ -173,9 +173,6 @@
           <DescriptionItem label="邮箱">
             {{ currentDetail.email || '-' }}
           </DescriptionItem>
-          <DescriptionItem label="默认税率">
-            {{ currentDetail.default_tax_rate != null ? currentDetail.default_tax_rate + '%' : '-' }}
-          </DescriptionItem>
           <DescriptionItem label="创建时间">
             {{ formatDateTime(currentDetail.created_at) }}
           </DescriptionItem>
