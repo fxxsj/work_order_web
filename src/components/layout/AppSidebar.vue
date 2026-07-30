@@ -224,13 +224,13 @@
         </router-link>
       </div>
 
-      <!-- 采购销售 -->
+      <!-- 采购管理 -->
       <div
-        v-if="isFullMode && (canViewPurchaseOrder || canViewSalesOrder) && !collapsed"
+        v-if="isFullMode && canViewPurchaseOrder && !collapsed"
         class="sidebar-section"
       >
         <div class="sidebar-section-title">
-          采购销售
+          采购管理
         </div>
         <router-link
           v-if="canViewPurchaseOrder"
@@ -245,20 +245,6 @@
             class="flex-shrink-0"
           />
           <span>采购订单</span>
-        </router-link>
-        <router-link
-          v-if="canViewSalesOrder"
-          to="/sales-orders"
-          class="sidebar-link mb-0.5 py-1.5 text-sm"
-          :class="{ 'sidebar-link-active': route.path.startsWith('/sales-orders') }"
-          @click="$emit('close-mobile')"
-        >
-          <Icon
-            name="tag"
-            size="sm"
-            class="flex-shrink-0"
-          />
-          <span>客户订单</span>
         </router-link>
       </div>
 
@@ -800,17 +786,18 @@ const primaryNavItems = computed(() => {
   if (isFullMode.value) {
     return [
       { path: '/dashboard', label: '工作台', icon: 'home' },
-      { path: '/workorders', label: '施工单', icon: 'document' }
+      { path: '/workorders', label: '施工单', icon: 'document' },
+      { path: '/sales-orders', label: '客户订单', icon: 'tag' }
     ]
   }
 
   const items: { path: string; label: string; icon: string }[] = [
     { path: '/dashboard', label: '工作台', icon: 'home' }
   ]
+  items.push({ path: '/workorders', label: '施工单', icon: 'document' })
   if (canViewSalesOrder.value) {
     items.push({ path: '/sales-orders', label: '客户订单', icon: 'tag' })
   }
-  items.push({ path: '/workorders', label: '施工单', icon: 'document' })
   if (canViewWorkOrderTask.value) {
     items.push({ path: '/tasks', label: '任务中心', icon: 'tickets' })
   }
