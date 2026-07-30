@@ -68,7 +68,13 @@ const fetchProducts = async (query = '') => {
     }
     if (props.customerId) params.customer = props.customerId
     const res: any = await productAPI.getList(params)
+    const selectedProduct = productList.value.find(
+      (product: any) => product.id === props.modelValue
+    )
     productList.value = res?.results || res || []
+    if (selectedProduct) {
+      mergeProducts([selectedProduct])
+    }
     if (!query) cacheTimestamp = Date.now()
   } catch (error: any) {
     ErrorHandler.handle(error)
