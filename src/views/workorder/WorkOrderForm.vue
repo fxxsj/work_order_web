@@ -47,6 +47,8 @@
             :options="salesOrderOptions"
             label="客户订单"
             placeholder="请选择客户订单（可选）"
+            hint="仅可选择已审核且仍有剩余可开数量的客户订单"
+            empty-text="暂无匹配的客户订单"
             clearable
             searchable
             @change="handleSalesOrderChange"
@@ -411,11 +413,14 @@ const cmykOptions = [
 // Computed options for selectors
 const salesOrderOptions = computed(() => {
   const list = form.customer_id
-    ? salesOrderList.value.filter((so: any) => so.customer === form.customer_id)
+    ? salesOrderList.value.filter(
+        (so: any) => Number(so.customer_id ?? so.customer) === Number(form.customer_id)
+      )
     : salesOrderList.value
   return list.map((so: any) => ({
     value: so.id,
-    label: `${so.order_number || ''} - ${so.customer_name || ''}`.trim()
+    label: `${so.order_number || ''} - ${so.customer_name || ''}${so.has_remaining_quantity === false ? '（已全部开单）' : ''}`.trim(),
+    disabled: so.has_remaining_quantity === false
   }))
 })
 
@@ -436,7 +441,6 @@ const {
   cleanupPrepressSelections,
   resetForm,
   setFormFromDetail,
-  prefillFromSalesOrderDetail,
   formatPayload
 } = useWorkOrderForm({ productList, artworkList, processList })
 
@@ -560,11 +564,13 @@ onMounted(async () => {
     // Pre-fill from sales order if navigated with ?sales_order_id=X
     const querySalesOrderId = route.query.sales_order_id
     if (querySalesOrderId) {
-      try {
-        const res = await workOrderFormService.getSalesOrderDetail(String(querySalesOrderId))
-        prefillFromSalesOrderDetail(res, productList)
-      } catch (error: any) {
-        ErrorHandler.handle(error)
+      const candidate = salesOrderList.value.find(
+        (so: any) => toComparableId(so.id) === toComparableId(querySalesOrderId)
+      )
+      if (candidate?.has_remaining_quantity === false) {
+        useUIStore().showWarning('该客户订单已全部开单，不能重复创建施工单')
+      } else if (candidate) {
+        await handleSalesOrderChange(candidate.id)
       }
     }
   }
@@ -574,53 +580,76 @@ onMounted(async () => {
 const handleCustomerChange = () => {
   // Clear sales order if it doesn't belong to the new customer
   if (form.sales_order_id) {
-    const so = salesOrderList.value.find((s: any) => s.id === form.sales_order_id)
-    if (so && so.customer !== form.customer_id) {
+    const so = salesOrderList.value.find(
+      (item: any) => toComparableId(item.id) === toComparableId(form.sales_order_id)
+    )
+    if (
+      so &&
+      toComparableId(so.customer_id ?? so.customer) !== toComparableId(form.customer_id)
+    ) {
       form.sales_order_id = undefined
     }
   }
 }
 
+const toComparableId = (value: any) => {
+  const raw = value && typeof value === 'object' ? value.id : value
+  const parsed = Number(raw)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
+}
+
 const handleSalesOrderChange = async (value: any) => {
-  if (!value) {
+  const salesOrderId = toComparableId(value)
+  if (!salesOrderId) {
     form.sales_order_id = undefined
     return
   }
 
-  const selected = salesOrderList.value.find((so: any) => so.id === value)
-  if (selected) {
-    form.sales_order_id = selected.id
-    // Auto-fill customer and dates from sales order
-    if (selected.customer_id) {
-      form.customer_id = selected.customer_id
-    }
-    if (selected.order_date) {
-      form.order_date = selected.order_date.split('T')[0]
-    }
-    if (selected.delivery_date) {
-      form.delivery_date = selected.delivery_date.split('T')[0]
-    }
+  const selected = salesOrderList.value.find(
+    (so: any) => toComparableId(so.id) === salesOrderId
+  )
+  if (!selected || selected.has_remaining_quantity === false) {
+    form.sales_order_id = undefined
+    return
   }
 
-  // Fetch full detail to pre-fill products
+  form.sales_order_id = selected.id
+  // Auto-fill customer and dates from sales order
+  const customerId = toComparableId(selected.customer_id ?? selected.customer)
+  if (customerId) {
+    form.customer_id = customerId
+  }
+  if (selected.order_date) {
+    form.order_date = selected.order_date.split('T')[0]
+  }
+  if (selected.delivery_date) {
+    form.delivery_date = selected.delivery_date.split('T')[0]
+  }
+
+  // 候选接口已经扣除了其他施工单占用量，必须按剩余数量回填。
+  if (Array.isArray(selected.available_products)) {
+    form.products = selected.available_products.map((item: any) => {
+      const productId = toComparableId(item.product_id ?? item.product)
+      const productData = productList.value.find(
+        (product: any) => toComparableId(product.id) === productId
+      )
+      return {
+        product: productId,
+        imposition_quantity: 1,
+        quantity: Number(item.remaining_quantity) || 0,
+        unit: productData?.unit || item.unit || '件',
+        specification: item.specification || '',
+        source_type: 'sales_order',
+        sales_order_item: toComparableId(item.sales_order_item_id ?? item.id),
+        manual_quantity: true,
+      }
+    })
+    syncMaterialsFromProducts()
+  }
+
+  // Fetch full detail only for fields not included in the candidate response.
   try {
-    const detail = await workOrderFormService.getSalesOrderDetail(String(value))
-    if (detail.items && detail.items.length > 0) {
-      form.products = detail.items.map((item: any) => {
-        const productData = productList.value.find((p: any) => p.id === item.product)
-        return {
-          product: item.product,
-          imposition_quantity: 1,
-          quantity: item.quantity || form.production_quantity,
-          unit: productData?.unit || item.unit || '件',
-          specification: item.specification || '',
-          sales_order_item: item.id,
-          manual_quantity: false,
-        }
-      })
-      // Sync materials from products
-      syncMaterialsFromProducts()
-    }
+    const detail = await workOrderFormService.getSalesOrderDetail(String(salesOrderId))
     if (detail.notes) {
       form.notes = detail.notes
     }
